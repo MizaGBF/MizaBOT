@@ -702,7 +702,12 @@ def save(sortBackup=True):
     try:
         data = {}
         data["exit"] = exit_flag
-        if bot_m: data['bot'] = bot_m
+        if bot_m:
+            data['bot'] = bot_m
+        data['banned_server'] = banned_server
+        data['banned_owner'] = banned_owner
+        data['pending_server'] = pending_server
+        data['prefixes'] = prefixes
         if gbfdm:
             data['baguette'] = gbfc.get()
         if maintenance:
