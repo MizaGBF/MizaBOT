@@ -26,7 +26,7 @@ bot_drive = None
 # log level setting
 logging.basicConfig(level=logging.INFO)
 # bot description
-description = '''MizaBOT version 4.0
+description = '''MizaBOT version 4.1
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.'''
 # various ids
@@ -1036,7 +1036,7 @@ async def on_command_error(ctx, error):
     elif msg.find('Command "') == 0:
         return
     else:
-        await debug_channel.send('Error: ' + msg)
+        await debug_channel.send('Error: `' + msg + "`\nCommand: `" + ctx.message.content + "`\nAuthor: `" + ctx.message.author.name + "`\nServer: `" + ctx.message.author.guild.name + "`")
 
 class General(commands.Cog):
     """General commands."""
@@ -1631,6 +1631,15 @@ class GBF_Utility(commands.Cog):
             else: msg += ":two: **" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**"
 
         await ctx.send(msg)
+        try:
+            cmds = self.bot.get_cog('GBF_Utility').get_commands()
+            if cmds:
+                for c in cmds:
+                    if c.name == 'gacha':
+                        await ctx.invoke(c)
+                        break
+        except Exception as e:
+            await debug_channel.send(str(e))
         if maintenance:
             try:
                 cmds = self.bot.get_cog('GBF_Utility').get_commands()
@@ -1678,6 +1687,64 @@ class GBF_Utility(commands.Cog):
         else:
             msg = "No Maintenance planned"
         await ctx.send(msg)
+
+    @commands.command(no_pm=True, aliases=['Gacha'])
+    async def gacha(self, ctx):
+        """Post when the current gacha end"""
+        global savePending
+        global maintenance
+        if not gbfdm:
+            return
+        # maintenance check
+        current_time = datetime.utcnow() + timedelta(seconds=32400)
+        if maintenance:
+            if current_time < maintenance:
+                pass
+            else:
+                d = current_time - maintenance
+                if maintenance_d <= 0:
+                    await ctx.send("I'm sorry, the game is in maintenance :bow:")
+                    return
+                elif (d.seconds // 3600) >= maintenance_d:
+                    maintenance = None
+                    savePending = True
+                else:
+                    await ctx.send("I'm sorry, the game is in maintenance :bow:")
+                    return
+        t = gbfc.getGachatime()
+        if t is not None:
+            d = t - current_time
+            await ctx.send(":slot_machine: Current gacha ends in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**")
+
+    @commands.command(no_pm=True, aliases=['rate'])
+    async def rateup(self, ctx):
+        """Post the current gacha rate up"""
+        global savePending
+        global maintenance
+        if not gbfdm:
+            return
+        # maintenance check
+        current_time = datetime.utcnow() + timedelta(seconds=32400)
+        if maintenance:
+            if current_time < maintenance:
+                pass
+            else:
+                d = current_time - maintenance
+                if maintenance_d <= 0:
+                    await ctx.send("I'm sorry, the game is in maintenance :bow:")
+                    return
+                elif (d.seconds // 3600) >= maintenance_d:
+                    maintenance = None
+                    savePending = True
+                else:
+                    await ctx.send("I'm sorry, the game is in maintenance :bow:")
+                    return
+        r = gbfc.getRateup()
+        if r is not None:
+            if len(r) > 1999:
+                await ctx.send(r[:1500] + "...\n\n**Please check in-game for more**")
+            else:
+                await ctx.send(r)
 
     @commands.command(no_pm=True, aliases=['poker'])
     async def pokerbot(self, ctx):
@@ -2166,7 +2233,7 @@ class MizaBOT(commands.Cog):
         msg += " ".join(terms)
         
         await debug_channel.send(msg)
-        await ctx.send('Message sent')
+        await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True)
     async def joined(self, ctx, member : discord.Member):
@@ -2439,6 +2506,7 @@ class Owner(commands.Cog):
     @commands.is_owner()
     async def _save(self, ctx):
         """Command to make a snapshot of the bot's settings (Owner only)"""
+        await ctx.message.add_reaction('✅') # white check mark
         await autosave(True)
 
 
@@ -2447,6 +2515,7 @@ class Owner(commands.Cog):
     async def _load(self, ctx, drive : str = ""):
         """Command to reload the bot settings (Owner only)"""
         global gw_task
+        await ctx.message.add_reaction('✅') # white check mark
         if drive == 'drive': 
             loadDrive()
         if load():
