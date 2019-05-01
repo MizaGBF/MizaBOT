@@ -26,7 +26,7 @@ bot_drive = None
 # log level setting
 logging.basicConfig(level=logging.INFO)
 # bot description
-description = '''MizaBOT version 4.1
+description = '''MizaBOT version 4.2
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.'''
 # various ids
@@ -1032,7 +1032,8 @@ async def global_check(ctx):
 async def on_command_error(ctx, error):
     msg = str(error)
     if msg.find('You are on cooldown.') == 0:
-        await ctx.send("**On Cooldown!** Don't spam this command, please :bow:")
+        await ctx.message.add_reaction('🆒') # :cool:
+        await ctx.message.add_reaction('⬇') # :arrow_down:
     elif msg.find('Command "') == 0:
         return
     else:
@@ -1715,10 +1716,13 @@ class GBF_Utility(commands.Cog):
         if t is not None:
             d = t - current_time
             await ctx.send(":slot_machine: Current gacha ends in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**")
+        else:
+            await debug_channel.send("gacha() error")
 
-    @commands.command(no_pm=True, aliases=['rate'])
-    async def rateup(self, ctx):
-        """Post the current gacha rate up"""
+    @commands.command(no_pm=True, aliases=['Banner', 'rateup', 'Rateup'])
+    @commands.cooldown(1, 60, commands.BucketType.guild)
+    async def banner(self, ctx):
+        """Post when the current gacha end"""
         global savePending
         global maintenance
         if not gbfdm:
@@ -1739,12 +1743,11 @@ class GBF_Utility(commands.Cog):
                 else:
                     await ctx.send("I'm sorry, the game is in maintenance :bow:")
                     return
-        r = gbfc.getRateup()
-        if r is not None:
-            if len(r) > 1999:
-                await ctx.send(r[:1500] + "...\n\n**Please check in-game for more**")
-            else:
-                await ctx.send(r)
+        b = gbfc.getGachabanner()
+        if b is not None:
+            await ctx.send(b)
+        else:
+            await debug_channel.send("banner() error")
 
     @commands.command(no_pm=True, aliases=['poker'])
     async def pokerbot(self, ctx):
@@ -2597,7 +2600,6 @@ class Owner(commands.Cog):
         except:
             await ctx.send('Failed to set Stream time')
 
-
     @commands.command(no_pm=True, aliases=['clearstream', 'cs'])
     @commands.is_owner()
     async def clearStream(self, ctx):
@@ -2684,6 +2686,15 @@ class Owner(commands.Cog):
                 else: i += 1
             await ctx.send(str(id) + ' is unbanned')
             savePending = True
+
+    @commands.command(no_pm=True)
+    @commands.is_owner()
+    async def resetGacha(self, ctx):
+        """Reset the gacha settings"""
+        if not gbfdm:
+            return
+        gbfc.resetGacha()
+        await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, hidden=True)
     @commands.is_owner()
