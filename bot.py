@@ -26,7 +26,7 @@ bot_drive = None
 # log level setting
 logging.basicConfig(level=logging.INFO)
 # bot description
-description = '''MizaBOT version 4.2
+description = '''MizaBOT version 4.3
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.'''
 # various ids
@@ -1034,7 +1034,7 @@ async def on_command_error(ctx, error):
     if msg.find('You are on cooldown.') == 0:
         await ctx.message.add_reaction('🆒') # :cool:
         await ctx.message.add_reaction('⬇') # :arrow_down:
-    elif msg.find('Command "') == 0:
+    elif msg.find('Command "') == 0 or msg == 'Command raised an exception: Forbidden: FORBIDDEN (status code: 403): Missing Permissions':
         return
     else:
         await debug_channel.send('Error: `' + msg + "`\nCommand: `" + ctx.message.content + "`\nAuthor: `" + ctx.message.author.name + "`\nServer: `" + ctx.message.author.guild.name + "`")
@@ -1460,6 +1460,7 @@ class GBF_Game(commands.Cog):
     @commands.cooldown(1, 60, commands.BucketType.user)
     async def quota(self, ctx):
         """Give you your GW quota for the day"""
+        chance = random.randint(1, 50)
         hr = random.randint(0, 300000000)
         mr = random.randint(0, 5000)
         hc = [[220000000, 0.01], [140000000, 0.1], [80000000, 0.4], [60000000, 0.6]]
@@ -1478,10 +1479,10 @@ class GBF_Game(commands.Cog):
                 m += d * xm[1]
         h = int(h + hr + 6000000)
         m = int(m + mr + 300)
-        if ctx.author.id == 157623260526280704:
+        if ctx.author.id == 157623260526280704 or chance == 1:
             h = h * 35
             m = m * 50
-        elif ctx.author.id == wawi_id:
+        elif ctx.author.id == wawi_id or chance == 2:
             h = h // 140
             m = m // 60
         await ctx.send(ctx.message.author.mention + '\'s quota for today:\n**{:,}** honors\n**{:,}** meats\nHave fun :relieved:'.format(h, m).replace(',', ' '))
@@ -1721,8 +1722,9 @@ class GBF_Utility(commands.Cog):
 
     @commands.command(no_pm=True, aliases=['Banner', 'rateup', 'Rateup'])
     @commands.cooldown(1, 60, commands.BucketType.guild)
-    async def banner(self, ctx):
-        """Post when the current gacha end"""
+    async def banner(self, ctx, jp : str = ""):
+        """Post when the current gacha end
+        add 'jp' for the japanese image"""
         global savePending
         global maintenance
         if not gbfdm:
@@ -1745,8 +1747,10 @@ class GBF_Utility(commands.Cog):
                     return
         b = gbfc.getGachabanner()
         if b is not None:
-            await ctx.send(b)
+            if jp == 'jp': await ctx.send(b.replace('/assets_en/', '/assets/'))
+            else: await ctx.send(b)
         else:
+            await ctx.send("Currently unavailable :bow:")
             await debug_channel.send("banner() error")
 
     @commands.command(no_pm=True, aliases=['poker'])
@@ -1966,7 +1970,7 @@ class GW(commands.Cog):
         self.bot = bot
 
     @commands.command(no_pm=True, aliases=['Gw', 'gW', 'gw'])
-    @commands.cooldown(10, 10, commands.BucketType.guild)
+    @commands.cooldown(1, 10, commands.BucketType.guild)
     async def GW(self, ctx):
         """Post the GW schedule"""
         global gw
@@ -1976,10 +1980,12 @@ class GW(commands.Cog):
             try:
                 current_time = datetime.utcnow() + timedelta(seconds=32400)
                 msg = ":crossed_swords: **Guild War** :black_small_square: Time: **{0:%m/%d %H:%M}**\n".format(current_time)
+                d = gw_dates["Preliminaries"] - timedelta(days=random.randint(1, 4))
+                if current_time < d and random.randint(1, 8) == 1: msg += ':no_mobile_phones: Ban Wave: **{0:%m/%d %H:%M}**\n'.format(d)
                 d = gw_dates["Interlude"] - current_time
-                if current_time < gw_dates["Interlude"] and d >= timedelta(seconds=25200): msg += ':regional_indicator_p: Preliminaries: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Preliminaries"])
+                if current_time < gw_dates["Interlude"] and d >= timedelta(seconds=25200): msg += ':traffic_light: Preliminaries: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Preliminaries"])
                 d = gw_dates["Day 1"] - current_time
-                if current_time < gw_dates["Day 1"] and d >= timedelta(seconds=25200): msg += ':information_source: Interlude: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Interlude"])
+                if current_time < gw_dates["Day 1"] and d >= timedelta(seconds=25200): msg += ':fuelpump: Interlude: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Interlude"])
                 d = gw_dates["Day 2"] - current_time
                 if current_time < gw_dates["Day 2"] and d >= timedelta(seconds=25200): msg += ':one: Day 1: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Day 1"])
                 d = gw_dates["Day 3"] - current_time
@@ -3141,7 +3147,7 @@ class Lucilius(commands.Cog):
                 for x in range(2, len(luciParty[i])):
                     try:
                         topic += ctx.author.guild.get_member(luciParty[i][x]).name
-                        if j < len(luciParty[i]) - 1:
+                        if x < len(luciParty[i]) - 1:
                             topic += ", "
                     except:
                         pass
