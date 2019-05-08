@@ -23,10 +23,12 @@ import itertools
 bot_token = None
 # google drive folder ID where is stored the save data
 bot_drive = None
+# pb account
+pb_token = None
 # log level setting
 logging.basicConfig(level=logging.INFO)
 # bot description
-description = '''MizaBOT version 4.3
+description = '''MizaBOT version 4.4
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.'''
 # various ids
@@ -114,6 +116,7 @@ gbfc = None
 # we load some of the stuff above here
 def loadConfig():
     global bot_token
+    global pb_token
     global debug_chid
     global owner_id
     global you_id
@@ -142,6 +145,8 @@ def loadConfig():
             data = json.load(f)
             bot_token = data['discord_token']
             bot_drive = data['drive_folder']
+            if 'baguette' in data:
+                pb_token = data['baguette']
             debug_chid = int(data['debug'])
             debug_id = int(data['debug_server'])
             owner_id = int(data['you']['owner'])
@@ -929,29 +934,28 @@ async def lucitask():
         await asyncio.sleep(0.001)
         # member check
         try:
-            fulllist = lucimain_channel.members
+            fulllist = lucimain_channel.members # members in the channel
             memberlist = {}
             to_add = {}
             to_del = {}
             msg = ""
-            for m in fulllist:
-                if m.id not in luciMember:
-                    msg += "**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + m.display_name + " joined the channel (discord id: " + str(m) + " / id: " + str(m.id) + ")\n"
-                    to_add[m.id] = 0
+            for m in fulllist: # reading the current real member list
+                if m.id not in luciMember: # if not in our database
+                    msg += "**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + m.display_name + " joined the channel (discord id: " + str(m) + " / id: " + str(m.id) + ")\n" # update the log
+                    to_add[m.id] = 0 # plan to add
                     if len(msg) > 1500: 
                         await lucilog_channel.send(msg)
                         msg = ""
-                else:
+                else: # take not we encountered tthis member
                     memberlist[m.id] = m
-            for i in luciMember:
-                if i not in memberlist:
-                    u = guild.get_member(i)
-                    if u is not None:
+            for i in luciMember: # reading our database
+                if i not in memberlist: # if not in the members we encountered, he/she left
+                    u = guild.get_member(i) # get the user
+                    if u is not None: # update the lod
                         msg += "**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + u.display_name + " left the channel (discord id: " + str(u) + " / id: " + str(u.id) + ")\n"
-                        to_del[u.id] = 0
                     else:
-                        msg += "**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: <deleted-user> left the channel\n"
-                        to_del[i] = 0
+                        msg += "**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: <deleted-user> left the channel (id: " + str(i) + ")\n"
+                    to_del[i] = 0
                     if len(msg) > 1500: 
                         await lucilog_channel.send(msg)
                         msg = ""
@@ -1715,8 +1719,13 @@ class GBF_Utility(commands.Cog):
                     return
         t = gbfc.getGachatime()
         if t is not None:
-            d = t - current_time
-            await ctx.send(":slot_machine: Current gacha ends in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**")
+            if t[0] != t[1]:
+                d = t[0] - current_time
+                f = t[1] - current_time
+                await ctx.send(":slot_machine: Current gacha ends in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m** (Spark period ends in **" + str(f.days) + "d" + str(f.seconds // 3600) + "h" + str((f.seconds // 60) % 60) + "m**)")
+            else:
+                d = t[0] - current_time
+                await ctx.send(":slot_machine: Current gacha ends in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**")
         else:
             await debug_channel.send("gacha() error")
 
@@ -1805,6 +1814,11 @@ class GBF_Utility(commands.Cog):
     async def motocal(self, ctx):
         """Post the motocal link"""
         await ctx.send(bot_msgs["motocal()"])
+
+    @commands.command(no_pm=True, aliases=['Leak', 'LEAK'])
+    async def leak(self, ctx):
+        """Post a link to the /gbfg/ leak pastebin"""
+        await ctx.send(bot_msgs["leak()"])
 
     @commands.command(no_pm=True, aliases=['raidfinder', 'python_raidfinder'])
     async def pyfinder(self, ctx):
@@ -2253,7 +2267,7 @@ class MizaBOT(commands.Cog):
 
     @commands.command(no_pm=True, aliases=['github'])
     @commands.cooldown(5, 60, commands.BucketType.default)
-    async def source(self, ctx, *terms : str):
+    async def source(self, ctx):
         """Post the bot.py file running right now"""
         if not isAuthorized(ctx.message.author.guild, ctx.channel):
             return
@@ -2702,7 +2716,7 @@ class Owner(commands.Cog):
         gbfc.resetGacha()
         await ctx.message.add_reaction('✅') # white check mark
 
-    @commands.command(no_pm=True, hidden=True)
+    @commands.command(no_pm=True)
     @commands.is_owner()
     async def logout(self, ctx):
         """Make the bot quit"""
@@ -3359,7 +3373,7 @@ bot.add_cog(Owner(bot))
 bot.add_cog(Lucilius(bot))
 bot.add_cog(WIP(bot))
 if gbfdm:
-    gbfc = baguette.Baguette(bot, gbfd, savePendingCallback)
+    gbfc = baguette.Baguette(bot, gbfd, savePendingCallback, pb_token)
     bot.add_cog(gbfc)
 
 #test
