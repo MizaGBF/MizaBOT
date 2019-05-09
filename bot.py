@@ -28,10 +28,10 @@ pb_token = None
 # log level setting
 logging.basicConfig(level=logging.INFO)
 # bot description
-description = '''MizaBOT version 4.4
+description = '''MizaBOT version 4.5
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.'''
-# various ids
+# various ids and discord stuff
 owner_id = None
 debug_channel = None
 lucilog_channel = None
@@ -46,6 +46,7 @@ wawi_id = None
 xil_str = []
 wawi_str = []
 gbfg_id = None
+bot_emotes = {}
 # used for debugging
 debug_str = ""
 # server settings
@@ -96,14 +97,6 @@ luciMain = None
 luciServer = None
 luciElemRole = [0, 0, 0, 0, 0, 0]
 luciWarning = [0, 0, 0, 0, 0, 0]
-luci_em = {
-    1: ':one:',
-    2: ':two:',
-    3: ':three:',
-    4: ':four:',
-    5: ':five:',
-    6: ':six:'
-}
 
 try:
     import baguette
@@ -140,6 +133,7 @@ def loadConfig():
     global luciServer
     global luciElemRole
     global gbfg_id
+    global bot_emotes
     try:
         with open('config.json') as f:
             data = json.load(f)
@@ -153,6 +147,10 @@ def loadConfig():
             you_announcement = int(data['you']['announcement'])
             you_id = int(data['you']['server'])
             gbfg_id = int(data['gbfg'])
+            bot_emotes = {}
+            if 'emote' in data:
+                for x in data['emote']:
+                    bot_emotes[x] = int(data['emote'][x])
             select_channel = {}
             for s in data['select']:
                 select_channel[int(s)] = []
@@ -160,7 +158,7 @@ def loadConfig():
                     select_channel[int(s)].append(int(c))
             buff_role_id = []
             for i in data['you']['buff']:
-                buff_role_id.append(int(i))
+                buff_role_id.append([int(i[0]), i[1]]) # buff role id + emote str (as put in bot_emotes)
             fo_role_id = []
             for i in data['you']['fo']:
                 fo_role_id.append(int(i))
@@ -256,10 +254,6 @@ def isLuciliusPartyChannel(channel):
     if channel.id in luciChannel:
         return True
     return False
-
-def savePendingCallback():
-    global savePending
-    savePending = True
 
 # function to fix the case (for $wiki)
 def fixCase(term): # term is a string
@@ -541,6 +535,52 @@ legfestWord = {"double", "x2", "legfest", "flashfest"}
 def isLegfest(word):
     if word.lower() in legfestWord: return 2
     return 1
+
+# other important stuff
+def savePendingCallback():
+    global savePending
+    savePending = True
+
+def getEmote(key):
+    if key in bot_emotes:
+        return bot_emotes[key]
+    return None
+
+def getEmoteStr(key):
+    e = getEmote(key)
+    if e is None: return ""
+    return str(e)
+
+async def react(ctx, key):
+    try:
+        await ctx.message.add_reaction(getEmote(key))
+    except Exception as e:
+        await ctx.send(str(e))
+
+async def maintenanceCheck(ctx, sendMsg=True):
+    global savePending
+    global maintenance
+    current_time = datetime.utcnow() + timedelta(seconds=32400)
+    if maintenance:
+        if current_time < maintenance:
+            d = maintenance - current_time
+            msg = getEmoteStr('cog') + " Maintenance in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**, for **" + str(maintenance_d) + " hour(s)**"
+        else:
+            d = current_time - maintenance
+            if maintenance_d <= 0:
+                msg = getEmoteStr('cog') + " Emergency maintenance on going"
+            elif (d.seconds // 3600) >= maintenance_d:
+                maintenance = None
+                msg = "No Maintenance planned"
+                savePending = True
+            else:
+                e = maintenance + timedelta(seconds=3600*maintenance_d)
+                d = e - current_time
+                msg = getEmoteStr('cog') + " Maintenance ends in **" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**"
+    else:
+        msg = "No Maintenance planned"
+    if sendMsg:
+        await ctx.send(msg)
 
 # google drive login
 def loginDrive():
@@ -870,7 +910,7 @@ def prefix(client, message):
 # we start the discord bot
 loadDrive()
 first_load = load() # we also load our stuff before starting the bot, to have everything ready at the start
-bot = commands.Bot(command_prefix=prefix, description=description, help_command=MizabotHelp())
+bot = commands.Bot(command_prefix=prefix, case_insensitive=True, description=description, help_command=MizabotHelp())
 isRunning = True
 savePending = False
 
@@ -927,7 +967,7 @@ async def lucitask():
                         luciParty[i] = None
                         luciWarning[i] = 0
                         savePending = True
-                        await lucimain_channel.send(":x: **Party** " + luci_em[i+1] + " has been automatically disbanded (Time Limit exceeded)")
+                        await lucimain_channel.send(":x: **Party** " + getEmoteStr(str(i+1)) + " has been automatically disbanded (Time Limit exceeded)")
                         await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: Party #" + str(i+1) + " has been automatically disbanded (Time Limit exceeded)")
         except Exception as e:
             await debug_channel.send("lucitask() A: " + str(e))
@@ -982,11 +1022,17 @@ async def on_ready():
     global first_load
     global gw_task
     global exit_flag
+    global bot_emotes
     debug_channel = bot.get_channel(debug_chid) # we set our debug channel here (where we'll dump various stuff, save files, etc..)
     if gbfdm:
         gbfc.setDebugChannel(debug_channel)
     lucilog_channel = bot.get_channel(luciLog)
     lucimain_channel = bot.get_channel(luciMain)
+    for e in bot_emotes:
+        try:
+            bot_emotes[e] = bot.get_emoji(bot_emotes[e])
+        except:
+            bot_emotes.pop(e)
     msg = ""
     if exit_flag:
         msg += 'Heroku forced a reboot\n'
@@ -1093,9 +1139,9 @@ class General(commands.Cog):
             if len(d) > 0: await ctx.send(':nerd: The result is: ' + str(evaluate(m[0], d)))
             else: await ctx.send(':nerd: The result is: ' + str(evaluate(m[0])))
         except:
-            await ctx.send(':monkey: I don\'t understand')
+            await ctx.send(getEmoteStr('kmr') + ' I don\'t understand')
 
-    @commands.command(no_pm=True, aliases=['rolestats'])
+    @commands.command(no_pm=True)
     async def roleStats(self, ctx, name : str, exact : str = ""):
         """Search how many users have a matching role
         use quotes if your match contain spaces
@@ -1131,9 +1177,9 @@ class GBF_Game(commands.Cog):
         else: msg = ""
         r = getRoll(300*l)
 
-        if r == 0: msg += "Luckshitter! {} rolled a **SSR**"
-        elif r == 1: msg += "{} got a **SR**"
-        else: msg += "{} got a **R**, too bad!"
+        if r == 0: msg += "Luckshitter! {} rolled a " + getEmoteStr('SSR')
+        elif r == 1: msg += "{} got a " + getEmoteStr('SR')
+        else: msg += "{} got a " + getEmoteStr('R') + ", too bad!"
         await ctx.send(msg.format(ctx.message.author.mention))
 
     @commands.command(no_pm=True, aliases=['10'])
@@ -1154,10 +1200,9 @@ class GBF_Game(commands.Cog):
             if r <= 1: sr_flag = True
             if i == 9 and not sr_flag:
                 continue
-            if r == 0: msg += "**SSR**"
-            elif r == 1: msg += "*SR*"
-            else: msg += "R"
-            if i != 9: msg += " , "
+            if r == 0: msg += getEmoteStr('SSR')
+            elif r == 1: msg += getEmoteStr('SR')
+            else: msg += getEmoteStr('R')
             i += 1
 
         await ctx.send(msg.format(ctx.message.author.mention))
@@ -1184,9 +1229,9 @@ class GBF_Game(commands.Cog):
                 result[r] += 1
                 i += 1
         msg += "{} rolled:\n"
-        msg += "SSR: " + str(result[0]) + "\n"
-        msg += "SR:  " + str(result[1]) + "\n"
-        msg += "R:   " + str(result[2]) + "\n"
+        msg += getEmoteStr('SSR') + ": " + str(result[0]) + "\n"
+        msg += getEmoteStr('SR') + ":  " + str(result[1]) + "\n"
+        msg += getEmoteStr('R') + ":   " + str(result[2]) + "\n"
         msg += "\nSSR rate: **" + str(100*result[0]/300) + "%**"
 
         await ctx.send(msg.format(ctx.message.author.mention))
@@ -1219,9 +1264,9 @@ class GBF_Game(commands.Cog):
             if ssr_flag:
                 break
         msg += "{} gachapin stopped at **" + str(count*10) + "** rolls\n"
-        msg += "SSR: " + str(result[0]) + "\n"
-        msg += "SR:  " + str(result[1]) + "\n"
-        msg += "R:   " + str(result[2]) + "\n"
+        msg += getEmoteStr('SSR') + ": " + str(result[0]) + "\n"
+        msg += getEmoteStr('SR') + ":  " + str(result[1]) + "\n"
+        msg += getEmoteStr('R') + ":   " + str(result[2]) + "\n"
         msg += "\nSSR rate: **" + str(100*result[0]/(count*10)) + "%**"
 
         await ctx.send(msg.format(ctx.message.author.mention))
@@ -1258,9 +1303,9 @@ class GBF_Game(commands.Cog):
             if limit <= 0:
                 break
         msg += "{} mukku stopped at **" + str(count*10) + "** rolls\n"
-        msg += "SSR: " + str(result[0]) + "\n"
-        msg += "SR:  " + str(result[1]) + "\n"
-        msg += "R:   " + str(result[2]) + "\n"
+        msg += getEmoteStr('SSR') + ": " + str(result[0]) + "\n"
+        msg += getEmoteStr('SR') + ":  " + str(result[1]) + "\n"
+        msg += getEmoteStr('R') + ":   " + str(result[2]) + "\n"
         msg += "\nSSR rate: **" + str(100*result[0]/(count*10)) + "%**"
 
         await ctx.send(msg.format(ctx.message.author.mention))
@@ -1284,7 +1329,7 @@ class GBF_Game(commands.Cog):
         """Post the yakuza rig"""
         await ctx.send('It\'s always SEN')
 
-    @commands.command(no_pm=True, aliases=['setcrystal', 'setCrystal', 'setroll', 'setSpark', 'setspark'])
+    @commands.command(no_pm=True, aliases=['setcrystal', 'setspark'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def setRoll(self, ctx, crystal : int, single : int = 0, ten : int = 0):
         """Set your roll count"""
@@ -1298,7 +1343,7 @@ class GBF_Game(commands.Cog):
             if crystal > 500000 or single > 1000 or ten > 100:
                 raise Exception('Big numbers')
             spark_list[ctx.message.author.id] = [crystal, single, ten]
-            await ctx.send("**" + str(crystal) + "** crystal(s), **" + str(single) + "** single roll ticket(s) and **" +str(ten) + "** ten roll ticket(s)")
+            await ctx.send(getEmoteStr('crystal') + " **" + str(crystal) + "** crystal(s), **" + str(single) + "** single roll ticket(s) and **" +str(ten) + "** ten roll ticket(s)")
             try:
                 cmds = self.bot.get_cog('GBF_Game').get_commands()
                 if cmds:
@@ -1315,7 +1360,7 @@ class GBF_Game(commands.Cog):
             await ctx.send(':bow: Give me your crystal, single ticket and ten roll ticket counts.')
             await debug_channel.send('setRoll() A: ' + str(e))
 
-    @commands.command(no_pm=True, aliases=['seecrystal', 'seeCrystal', 'seeroll', 'seeSpark', 'seespark'])
+    @commands.command(no_pm=True, aliases=['seecrystal', 'seespark'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def seeRoll(self, ctx):
         """Post your roll count"""
@@ -1329,7 +1374,7 @@ class GBF_Game(commands.Cog):
                 r = (s[0] / 300) + s[1] + s[2] * 10
                 fr = math.floor(r)
                 current_time = datetime.utcnow() + timedelta(days=((300 - (r % 300)) / 2.4), seconds=32400)
-                msg = "You have **" + str(fr) + " roll"
+                msg = getEmoteStr('crystal') + " You have **" + str(fr) + " roll"
                 if fr != 1: msg += "s"
                 msg += "**\n"
                 if r >= 900: msg += "I have no words :sweat: \n"
@@ -1352,7 +1397,7 @@ class GBF_Game(commands.Cog):
             await ctx.send('I can\'t calculate your rolls, sorry :bow:\nUse setRoll to fix it')
             await debug_channel.send('seeRoll(): ' + str(e))
 
-    @commands.command(no_pm=True, aliases=["rollranking", "sparkRanking", "sparkranking", "hoarders"])
+    @commands.command(no_pm=True, aliases=["sparkranking", "hoarders"])
     @commands.cooldown(1, 3, commands.BucketType.guild)
     async def rollRanking(self, ctx):
         """Show the ranking of everyone saving for a spark in the server
@@ -1378,7 +1423,7 @@ class GBF_Game(commands.Cog):
                 return
             ar = -1
             i = 0
-            msg = ":crown: **Spark ranking** of **" + guild.name + "**\n"
+            msg = getEmoteStr('crown') + " **Spark ranking** of **" + guild.name + "**\n"
             for key, value in sorted(ranking.items(), key = itemgetter(1), reverse = True):
                 if i < 10:
                     fr = math.floor(value)
@@ -1409,7 +1454,7 @@ class GBF_Game(commands.Cog):
             await ctx.send("Sorry, something went wrong :bow:")
             await debug_channel.send("rollRanking() : " + str(e))
 
-    @commands.command(no_pm=True, aliases=['diexil', 'nemo', 'killxil', 'Xil', 'XIL'])
+    @commands.command(no_pm=True, aliases=['diexil', 'nemo', 'killxil'])
     @commands.cooldown(3, 30, commands.BucketType.guild)
     async def xil(self, ctx):
         """Bully Xil"""
@@ -1419,7 +1464,7 @@ class GBF_Game(commands.Cog):
         except:
             pass
 
-    @commands.command(no_pm=True, aliases=['Wawi', 'WAWI'])
+    @commands.command(no_pm=True)
     @commands.cooldown(5, 30, commands.BucketType.guild)
     async def wawi(self, ctx):
         """Bully Wawi"""
@@ -1452,7 +1497,7 @@ class GBF_Game(commands.Cog):
 
             msg = author.mention # get the ping for the author
             n = random.randint(4, 6) # number between 4 and 6
-            await ctx.message.add_reaction('😡') # :rage:
+            await react(ctx, 'kmr') # reaction
             await asyncio.sleep(1) # wait one second
             for i in range(0, n):
                 await random.choice(chlist).send(msg) # send the ping in a random channel
@@ -1491,7 +1536,7 @@ class GBF_Game(commands.Cog):
             m = m // 60
         await ctx.send(ctx.message.author.mention + '\'s quota for today:\n**{:,}** honors\n**{:,}** meats\nHave fun :relieved:'.format(h, m).replace(',', ' '))
 
-    @commands.command(no_pm=True, aliases=['hgg2d', 'hgg2D', 'HGG2D'])
+    @commands.command(no_pm=True)
     @commands.cooldown(1, 3, commands.BucketType.default)
     async def hgg(self, ctx):
         """Post the latest /hgg2d/ threads"""
@@ -1560,7 +1605,7 @@ class GBF_Utility(commands.Cog):
         elif term == "raidpic":
             await ctx.send('To grab the artworks: <https://twitter.com/twihelp_pic>')
         elif term == "kmr":
-            await ctx.send('Give praise, for he has no equal :bow: : <https://twitter.com/kimurayuito>')
+            await ctx.send('Give praise, for he has no equal ' + getEmoteStr('kmr') + ' : <https://twitter.com/kimurayuito>')
         elif term == "kakage" or term == "jk" or term == "hag":
             await ctx.send('Young JK inside: <https://twitter.com/kakage0904>')
         elif term == "hecate" or term == "hecate_mk2" or term == "gbfverification":
@@ -1611,13 +1656,13 @@ class GBF_Utility(commands.Cog):
         global savePending
         current_time = datetime.utcnow() + timedelta(seconds=32400)
 
-        msg = ":clock1: **Current Time: " + str(current_time.hour).zfill(2) + ":" + str(current_time.minute).zfill(2) + "**\n"
+        msg = getEmoteStr('clock') + " **Current Time: " + str(current_time.hour).zfill(2) + ":" + str(current_time.minute).zfill(2) + "**\n"
 
         reset = current_time.replace(hour=5, minute=0, second=0, microsecond=0)
         if current_time.hour >= reset.hour:
             reset += timedelta(days=1)
         d = reset - current_time
-        msg += ":regional_indicator_r: Reset in **" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**"
+        msg += getEmoteStr('mark') + " Reset in **" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**"
 
         guild = ctx.message.author.guild
         if guild.id in st_list:
@@ -1630,11 +1675,11 @@ class GBF_Utility(commands.Cog):
                 st2 += timedelta(days=1)
 
             d = st1 - current_time
-            if d.seconds >= 82800: msg += "\n:crossed_swords: Strike times in :one: **NOW!** "
-            else: msg += "\n:crossed_swords: Strike times in :one: **" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m** "
+            if d.seconds >= 82800: msg += "\n" + getEmoteStr('st') + " Strike times in " + getEmoteStr('1') + " **NOW!** "
+            else: msg += "\n" + getEmoteStr('st') + " Strike times in " + getEmoteStr('1') + " **" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m** "
             d = st2 - current_time
-            if d.seconds >= 82800: msg += ":two: **right now!**"
-            else: msg += ":two: **" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**"
+            if d.seconds >= 82800: msg += getEmoteStr('2') + " **right now!**"
+            else: msg += getEmoteStr('2') + " **" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**"
 
         await ctx.send(msg)
         try:
@@ -1671,96 +1716,55 @@ class GBF_Utility(commands.Cog):
     @commands.cooldown(2, 2, commands.BucketType.guild)
     async def maintenance(self, ctx):
         """Post GBF maintenance status"""
-        global savePending
-        global maintenance
-        current_time = datetime.utcnow() + timedelta(seconds=32400)
-        if maintenance:
-            if current_time < maintenance:
-                d = maintenance - current_time
-                msg = ":construction: Maintenance in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**, for **" + str(maintenance_d) + " hour(s)**"
-            else:
-                d = current_time - maintenance
-                if maintenance_d <= 0:
-                    msg = ":construction: Emergency maintenance on going"
-                elif (d.seconds // 3600) >= maintenance_d:
-                    maintenance = None
-                    msg = "No Maintenance planned"
-                    savePending = True
-                else:
-                    e = maintenance + timedelta(seconds=3600*maintenance_d)
-                    d = e - current_time
-                    msg = ":construction: Maintenance ends in **" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**"
-        else:
-            msg = "No Maintenance planned"
-        await ctx.send(msg)
+        await maintenanceCheck(ctx)
 
-    @commands.command(no_pm=True, aliases=['Gacha'])
+    @commands.command(no_pm=True)
     async def gacha(self, ctx):
         """Post when the current gacha end"""
-        global savePending
-        global maintenance
         if not gbfdm:
             return
-        # maintenance check
+        ignore_update = False
         current_time = datetime.utcnow() + timedelta(seconds=32400)
+        # maintenance check
         if maintenance:
-            if current_time < maintenance:
-                pass
-            else:
-                d = current_time - maintenance
-                if maintenance_d <= 0:
-                    await ctx.send("I'm sorry, the game is in maintenance :bow:")
-                    return
-                elif (d.seconds // 3600) >= maintenance_d:
-                    maintenance = None
-                    savePending = True
-                else:
-                    await ctx.send("I'm sorry, the game is in maintenance :bow:")
-                    return
-        t = gbfc.getGachatime()
+            await maintenanceCheck(ctx, False)
+            if maintenance:
+                ignore_update = True
+        t = gbfc.getGachatime(ignore_update)
         if t is not None:
             if t[0] != t[1]:
                 d = t[0] - current_time
                 f = t[1] - current_time
-                await ctx.send(":slot_machine: Current gacha ends in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m** (Spark period ends in **" + str(f.days) + "d" + str(f.seconds // 3600) + "h" + str((f.seconds // 60) % 60) + "m**)")
+                await ctx.send(getEmoteStr('SSR') + " Current gacha ends in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m** (Spark period ends in **" + str(f.days) + "d" + str(f.seconds // 3600) + "h" + str((f.seconds // 60) % 60) + "m**)")
             else:
                 d = t[0] - current_time
-                await ctx.send(":slot_machine: Current gacha ends in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**")
+                await ctx.send(getEmoteStr('SSR') + " Current gacha ends in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**")
         else:
-            await debug_channel.send("gacha() error")
+            if not ignore_update:
+                await debug_channel.send("gacha() error")
 
-    @commands.command(no_pm=True, aliases=['Banner', 'rateup', 'Rateup'])
+    @commands.command(no_pm=True, aliases=['rateup'])
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def banner(self, ctx, jp : str = ""):
         """Post when the current gacha end
         add 'jp' for the japanese image"""
-        global savePending
-        global maintenance
         if not gbfdm:
             return
-        # maintenance check
+        ignore_update = False
         current_time = datetime.utcnow() + timedelta(seconds=32400)
+        # maintenance check
         if maintenance:
-            if current_time < maintenance:
-                pass
-            else:
-                d = current_time - maintenance
-                if maintenance_d <= 0:
-                    await ctx.send("I'm sorry, the game is in maintenance :bow:")
-                    return
-                elif (d.seconds // 3600) >= maintenance_d:
-                    maintenance = None
-                    savePending = True
-                else:
-                    await ctx.send("I'm sorry, the game is in maintenance :bow:")
-                    return
-        b = gbfc.getGachabanner()
+            await maintenanceCheck(ctx, False)
+            if maintenance:
+                ignore_update = True
+        b = gbfc.getGachabanner(ignore_update)
         if b is not None:
             if jp == 'jp': await ctx.send(b.replace('/assets_en/', '/assets/'))
             else: await ctx.send(b)
         else:
-            await ctx.send("Currently unavailable :bow:")
-            await debug_channel.send("banner() error")
+            if not ignore_update:
+                await debug_channel.send("banner() error")
+            await ctx.send("Unavailable right now :bow:")
 
     @commands.command(no_pm=True, aliases=['poker'])
     async def pokerbot(self, ctx):
@@ -1785,7 +1789,7 @@ class GBF_Utility(commands.Cog):
         """Post a link to my autistic Arcanum Sheet"""
         await ctx.send(bot_msgs["arcanum()"])
 
-    @commands.command(no_pm=True, aliases=['rolltracker', 'sparkTracker', 'sparktracker'])
+    @commands.command(no_pm=True, aliases=['sparktracker'])
     async def rollTracker(self, ctx):
         """Post a link to my autistic roll tracking Sheet"""
         await ctx.send(bot_msgs["rolltracker()"])
@@ -1795,7 +1799,7 @@ class GBF_Utility(commands.Cog):
         """Post a link to my autistic datamining Sheet"""
         await ctx.send(bot_msgs["datamining()"])
 
-    @commands.command(no_pm=True, aliases=['stayblue', 'gwskin', 'blueskin'])
+    @commands.command(no_pm=True, aliases=['gwskin', 'blueskin'])
     async def stayBlue(self, ctx):
         """Post a link to my autistic blue eternal outfit grinding Sheet"""
         await ctx.send(bot_msgs["stayblue()"])
@@ -1815,7 +1819,7 @@ class GBF_Utility(commands.Cog):
         """Post the motocal link"""
         await ctx.send(bot_msgs["motocal()"])
 
-    @commands.command(no_pm=True, aliases=['Leak', 'LEAK'])
+    @commands.command(no_pm=True)
     async def leak(self, ctx):
         """Post a link to the /gbfg/ leak pastebin"""
         await ctx.send(bot_msgs["leak()"])
@@ -1852,7 +1856,7 @@ class GBF_Utility(commands.Cog):
             else:
                 await ctx.send(msg)
 
-    @commands.command(no_pm=True, aliases=["Schedule"])
+    @commands.command(no_pm=True)
     @commands.cooldown(20, 30, commands.BucketType.guild)
     async def schedule(self, ctx):
         """Post the GBF schedule"""
@@ -1885,8 +1889,9 @@ async def checkGWBuff():
                 if (current_time - gw_buffs[0][0]) < timedelta(seconds=200):
                     if gw_buffs[0][1]:
                         for r in buff_role_id:
-                            msg += guild.get_role(r).mention + ' '
+                            msg += getEmoteStr(r[1]) + ' ' + guild.get_role(r[0]).mention + ' '
                     if gw_buffs[0][2]:
+                        msg += getEmoteStr('foace') + ' '
                         for r in fo_role_id:
                             msg += guild.get_role(r).mention + ' '
                     if gw_buffs[0][4]:
@@ -1983,7 +1988,7 @@ class GW(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(no_pm=True, aliases=['Gw', 'gW', 'gw'])
+    @commands.command(no_pm=True)
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def GW(self, ctx):
         """Post the GW schedule"""
@@ -1993,22 +1998,22 @@ class GW(commands.Cog):
         if gw:
             try:
                 current_time = datetime.utcnow() + timedelta(seconds=32400)
-                msg = ":crossed_swords: **Guild War** :black_small_square: Time: **{0:%m/%d %H:%M}**\n".format(current_time)
+                msg = getEmoteStr('gw') + " **Guild War** :black_small_square: Time: **{0:%m/%d %H:%M}**\n".format(current_time)
                 d = gw_dates["Preliminaries"] - timedelta(days=random.randint(1, 4))
-                if current_time < d and random.randint(1, 8) == 1: msg += ':no_mobile_phones: Ban Wave: **{0:%m/%d %H:%M}**\n'.format(d)
+                if current_time < d and random.randint(1, 8) == 1: msg += getEmoteStr('kmr') + ' Ban Wave: **{0:%m/%d %H:%M}**\n'.format(d)
                 d = gw_dates["Interlude"] - current_time
-                if current_time < gw_dates["Interlude"] and d >= timedelta(seconds=25200): msg += ':traffic_light: Preliminaries: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Preliminaries"])
+                if current_time < gw_dates["Interlude"] and d >= timedelta(seconds=25200): msg += getEmoteStr('gold') + ' Preliminaries: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Preliminaries"])
                 d = gw_dates["Day 1"] - current_time
-                if current_time < gw_dates["Day 1"] and d >= timedelta(seconds=25200): msg += ':fuelpump: Interlude: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Interlude"])
+                if current_time < gw_dates["Day 1"] and d >= timedelta(seconds=25200): msg += getEmoteStr('wood') + ' Interlude: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Interlude"])
                 d = gw_dates["Day 2"] - current_time
-                if current_time < gw_dates["Day 2"] and d >= timedelta(seconds=25200): msg += ':one: Day 1: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Day 1"])
+                if current_time < gw_dates["Day 2"] and d >= timedelta(seconds=25200): msg += getEmoteStr('1') + ' Day 1: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Day 1"])
                 d = gw_dates["Day 3"] - current_time
-                if current_time < gw_dates["Day 3"] and d >= timedelta(seconds=25200): msg += ':two: Day 2: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Day 2"])
+                if current_time < gw_dates["Day 3"] and d >= timedelta(seconds=25200): msg += getEmoteStr('2') + ' Day 2: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Day 2"])
                 d = gw_dates["Day 4"] - current_time
-                if current_time < gw_dates["Day 4"] and d >= timedelta(seconds=25200): msg += ':three: Day 3: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Day 3"])
+                if current_time < gw_dates["Day 4"] and d >= timedelta(seconds=25200): msg += getEmoteStr('3') + ' Day 3: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Day 3"])
                 d = gw_dates["Day 5"] - current_time
-                if current_time < gw_dates["Day 5"] and d >= timedelta(seconds=25200): msg += ':four: Day 4: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Day 4"])
-                if current_time < gw_dates["End"]: msg += ':checkered_flag: Final Rally: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Day 5"])
+                if current_time < gw_dates["Day 5"] and d >= timedelta(seconds=25200): msg += getEmoteStr('4') + ' Day 4: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Day 4"])
+                if current_time < gw_dates["End"]: msg += getEmoteStr('red') + ' Final Rally: **{0:%m/%d %H:%M}**\n'.format(gw_dates["Day 5"])
                 else:
                     await ctx.send('No GW set, at the present time')
                     gw = False
@@ -2064,22 +2069,22 @@ class GW(commands.Cog):
                     msg = "Guild War ends in"
                 elif current_time > gw_dates["Day 4"]:
                     d = gw_dates["Day 5"] - current_time
-                    if d < timedelta(seconds=25200): fmsg = "Day 4 ended :sleeping:"
+                    if d < timedelta(seconds=25200): fmsg = "Day 4 ended"
                     else: fmsg = "Day 4 is on going"
                     msg = "Final Rally starts in"
                 elif current_time > gw_dates["Day 3"]:
                     d = gw_dates["Day 4"] - current_time
-                    if d < timedelta(seconds=25200): fmsg = "Day 3 ended :sleeping:"
+                    if d < timedelta(seconds=25200): fmsg = "Day 3 ended"
                     else: fmsg = "Day 3 is on going"
                     msg = "Day 4 starts in"
                 elif current_time > gw_dates["Day 2"]:
                     d = gw_dates["Day 3"] - current_time
-                    if d < timedelta(seconds=25200): fmsg = "Day 2 ended :sleeping:"
+                    if d < timedelta(seconds=25200): fmsg = "Day 2 ended"
                     else: fmsg = "Day 2 is on going"
                     msg = "Day 3 starts in"
                 elif current_time > gw_dates["Day 1"]:
                     d = gw_dates["Day 2"] - current_time
-                    if d < timedelta(seconds=25200): fmsg = "Day 1 ended :sleeping:"
+                    if d < timedelta(seconds=25200): fmsg = "Day 1 ended"
                     else: fmsg = "Day 1 is on going"
                     msg = "Day 2 starts in"
                 elif current_time > gw_dates["Interlude"]:
@@ -2088,15 +2093,15 @@ class GW(commands.Cog):
                     d = gw_dates["Day 1"] - current_time
                 elif current_time > gw_dates["Preliminaries"]:
                     d = gw_dates["Interlude"] - current_time
-                    if d < timedelta(seconds=25200): fmsg = "Preliminaries ended :sleeping:"
+                    if d < timedelta(seconds=25200): fmsg = "Preliminaries ended"
                     else: fmsg = "Preliminaries are on going"
                     msg = "Interlude starts in"
                 else:
                     await debug_channel.send("Error in $fugdidgwstart")
                     fmsg = "Sorry, I'm bad at timezones too"
 
-                if fmsg: fmsg = ":warning: " + fmsg
-                if d and msg: fmsg += "\n:alarm_clock: " + msg + " **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**"
+                if fmsg: fmsg = getEmoteStr('mark_a') + " " + fmsg
+                if d and msg: fmsg += "\n" + getEmoteStr('time') + " " + msg + " **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**"
                 await ctx.send(fmsg)
                 try:
                     cmds = self.bot.get_cog('GW').get_commands()
@@ -2113,7 +2118,7 @@ class GW(commands.Cog):
             await ctx.send('Error, I have no idea what the fuck happened')
             await debug_channel.send('Exception: ' + str(e))
 
-    @commands.command(no_pm=True, aliases=['buff', 'gwbuff', 'Gwbuff', 'gWbuff'])
+    @commands.command(no_pm=True, aliases=['buff'])
     @commands.cooldown(10, 10, commands.BucketType.guild)
     async def GWbuff(self, ctx):
         """Check when is the next GW buff, (You) Only"""
@@ -2125,13 +2130,13 @@ class GW(commands.Cog):
                         current_time = datetime.utcnow() + timedelta(seconds=32400)
                         if current_time >= gw_dates["Preliminaries"]:
                             d = gw_buffs[i][0] - current_time
-                            msg = ":question: Next buffs in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m** ("
+                            msg = getEmoteStr('question') + " Next buffs in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m** ("
                             if gw_buffs[i][1]:
-                                msg += "Attack, Defense"
+                                msg += "Attack " + getEmoteStr('atkace') + ", Defense " + getEmoteStr('deface')
                                 if gw_buffs[i][2]:
                                     msg += ", FO"
                             elif gw_buffs[i][2]:
-                                msg += "FO"
+                                msg += "FO " + getEmoteStr('foace')
                             msg += ")"
                             await ctx.send(msg)
                         return
@@ -2139,7 +2144,7 @@ class GW(commands.Cog):
             await debug_channel.send('Exception: ' + str(e))
             await ctx.send('Something is wrong with me')
 
-    @commands.command(no_pm=True, aliases=['Search', 'searchName', 'searchname', 'searchcrew'])
+    @commands.command(no_pm=True, aliases=['searchcrew'])
     @commands.cooldown(1, 3, commands.BucketType.guild)
     async def search(self, ctx, *terms : str):
         """Search a crew preliminary score (by name)"""
@@ -2174,7 +2179,7 @@ class GW(commands.Cog):
                 await ctx.send("I can't search :pensive:\nIs <http://gbf.gw.lt/gw-guild-searcher> down?")
                 await debug_channel.send("search() : " + str(e))
 
-    @commands.command(no_pm=True, aliases=['searchId', 'searchid', 'searchiD'])
+    @commands.command(no_pm=True)
     @commands.cooldown(1, 3, commands.BucketType.guild)
     async def searchID(self, ctx, id : int):
         """Search a crew preliminary score (by ID)"""
@@ -2246,7 +2251,7 @@ class MizaBOT(commands.Cog):
             await ctx.send('Server prefix reset')
             savePending = True
 
-    @commands.command(no_pm=True, aliases=['bug', 'report', 'bugreport', 'bug_report'])
+    @commands.command(no_pm=True, aliases=['bug', 'report', 'bug_report'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def bugReport(self, ctx, *terms : str):
         """Send a bug report (or your love confessions) to the author"""
@@ -2280,7 +2285,7 @@ class MizaBOT(commands.Cog):
             await ctx.send("Sorry, an error happened :pensive:\nMeanwhile, you can check the github: <https://github.com/MizaGBF/MizaBOT>")
             await debug_channel.send("source() : " + str(e))
 
-    @commands.command(no_pm=True, aliases=['delst', 'delSt', 'delsT'])
+    @commands.command(no_pm=True)
     async def delST(self, ctx):
         """Delete the ST setting of this server
         Requires the "Manage Messages" permission"""
@@ -2295,7 +2300,7 @@ class MizaBOT(commands.Cog):
         else:
             await ctx.send('No ST set, I can\'t delete')
 
-    @commands.command(no_pm=True, aliases=['setst', 'setSt', 'setsT'])
+    @commands.command(no_pm=True)
     async def setST(self, ctx, st1 : int, st2 : int):
         """Set the two ST of this server
         Requires the "Manage Messages" permission"""
@@ -2309,7 +2314,7 @@ class MizaBOT(commands.Cog):
         await ctx.send('Done')
         savePending = True
 
-    @commands.command(no_pm=True, aliases=['banroll', 'banspark', 'banSpark'])
+    @commands.command(no_pm=True, aliases=['banspark'])
     async def banRoll(self, ctx, user: discord.Member):
         """Ban an user from the roll ranking
         To avoid retards with fake numbers
@@ -2570,32 +2575,34 @@ class Owner(commands.Cog):
             msg += '\n'
         await debug_channel.send(msg)
 
-    @commands.command(no_pm=True, aliases=['setmaintenance'])
+    @commands.command(no_pm=True)
     @commands.is_owner()
     async def setMaintenance(self, ctx, day : int, month : int, hour : int, duration : int):
         """Set a maintenance date (Owner only)"""
         global maintenance
         global maintenance_d
+        global savePending
         try:
             maintenance = datetime.now().replace(month=month, day=day, hour=hour, minute=0, second=0, microsecond=0)
             maintenance_d = duration
+            savePending = True
             await ctx.send('Maintenance set')
-            await autosave()
         except:
             await ctx.send('Failed to set maintenance')
 
-    @commands.command(no_pm=True, aliases=['delmaintenance'])
+    @commands.command(no_pm=True)
     @commands.is_owner()
     async def delMaintenance(self, ctx):
         """Delete the maintenance date (Owner only)"""
         global maintenance
         global maintenance_d
+        global savePending
         maintenance = None
         maintenance_d = 0
+        savePending = True
         await ctx.send('Maintenance deleted')
-        await autosave()
 
-    @commands.command(no_pm=True, aliases=['addstream', 'as'])
+    @commands.command(no_pm=True, aliases=['as'])
     @commands.is_owner()
     async def addStream(self, ctx, *txt : str):
         """Append a line to the stream command text (Owner only)"""
@@ -2607,7 +2614,7 @@ class Owner(commands.Cog):
             await ctx.send('Appending: `' + s + '`')
         savePending = True
 
-    @commands.command(no_pm=True, aliases=['setstreamtime', 'sst'])
+    @commands.command(no_pm=True, aliases=['sst'])
     @commands.is_owner()
     async def setStreamTime(self, ctx, day : int, month : int, hour : int):
         """Set the stream time (Owner only)
@@ -2620,7 +2627,7 @@ class Owner(commands.Cog):
         except:
             await ctx.send('Failed to set Stream time')
 
-    @commands.command(no_pm=True, aliases=['clearstream', 'cs'])
+    @commands.command(no_pm=True, aliases=['cs'])
     @commands.is_owner()
     async def clearStream(self, ctx):
         """Clear the stream command text (Owner only)
@@ -2633,7 +2640,7 @@ class Owner(commands.Cog):
         await ctx.send('Done')
         savePending = True
 
-    @commands.command(no_pm=True, aliases=['delstreamline', 'dsl'])
+    @commands.command(no_pm=True, aliases=['dsl'])
     @commands.is_owner()
     async def delStreamLine(self, ctx, line : int = 0, many : int = 1):
         """Delete a line from stream command text (Owner only)
@@ -2653,7 +2660,7 @@ class Owner(commands.Cog):
         else:
             await ctx.send("The line number isn't valid")
 
-    @commands.command(no_pm=True, aliases=['setschedule'])
+    @commands.command(no_pm=True)
     @commands.is_owner()
     async def setSchedule(self, ctx, *txt : str):
         """Set the GBF schedule for the month (Owner only)
@@ -2690,7 +2697,7 @@ class Owner(commands.Cog):
         else:
             await ctx.send(str(user) + ' is already banned')
 
-    @commands.command(no_pm=True, aliases=['unbanroll', 'unbanspark', 'unbanSpark'])
+    @commands.command(no_pm=True, aliases=['unbanspark'])
     @commands.is_owner()
     async def unbanRoll(self, ctx, id : int):
         """Unban an user from all the roll ranking (Owner only)
@@ -2738,12 +2745,13 @@ class Owner(commands.Cog):
 # /gbfg/ Lucilius system command
 luciStr = ['wish them good luck :wave:', 'bet on the MVP element :top:', 'another fail for the council :pensive:']
 elemStr = {"fire":0, "water":1, "gay":1, "wawi":1, "earth":2, "dirt":2, "wind":3, "roach":3, "light":4, "dark":5}
+elemEmote = {"fire":"fire", "water":"water", "gay":"water", "wawi":"water", "earth":"earth", "dirt":"earth", "wind":"wind", "roach":"wind", "light":"light", "dark":"dark"}
 class Lucilius(commands.Cog):
     """/gbfg/ Lucilius commands."""
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(no_pm=True, aliases=['lucilist', 'LuciList'])
+    @commands.command(no_pm=True, aliases=['lucilist'])
     @commands.cooldown(1, 3, commands.BucketType.guild)
     async def llist(self, ctx, id : int = 0):
         """List the Lucilius parties
@@ -2760,7 +2768,7 @@ class Lucilius(commands.Cog):
                 u = ctx.guild.get_member(luciParty[i][2])
                 if u is None: u = "<unknown user>"
                 else: u = u.display_name
-                msg += luci_em[i+1] + " Leader **" + u + "**, " + str(len(luciParty[i])-2) + " / 6, **" + luciParty[i][1] + "**"
+                msg += getEmoteStr(str(i+1)) + " Leader **" + u + "**, " + str(len(luciParty[i])-2) + " / 6, **" + luciParty[i][1] + "**"
                 d = c - luciParty[i][0]
                 if luciParty[i][1] == "Preparing": t = timedelta(seconds=600)
                 elif luciParty[i][1] == "Playing": t = timedelta(seconds=3600)
@@ -2781,7 +2789,7 @@ class Lucilius(commands.Cog):
             if luciParty[id] is None:
                 await ctx.send("This party doesn't exist")
             else:
-                msg = luci_em[id+1] + " "
+                msg = getEmoteStr(str(id+1)) + " "
                 for i in range(2, len(luciParty[id])):
                     try:
                         if i == 2: msg += "**" + ctx.author.guild.get_member(luciParty[id][i]).display_name + "**"
@@ -2804,7 +2812,7 @@ class Lucilius(commands.Cog):
                     msg += ", " + str(dt.seconds // 60) + " minute(s) left"
                 await ctx.send(msg)
 
-    @commands.command(no_pm=True, aliases=['lucimake', 'LuciMake'])
+    @commands.command(no_pm=True, aliases=['lucimake'])
     @commands.cooldown(2, 20, commands.BucketType.user)
     async def lmake(self, ctx):
         """Make a new party
@@ -2821,20 +2829,20 @@ class Lucilius(commands.Cog):
             for j in range(2, len(luciParty[i])):
                 if luciParty[i][j] == ctx.author.id:
                     if j == 2:
-                        await ctx.send(ctx.author.display_name + ", you are already leader of party " + luci_em[i+1] + ", use `%ldisband` to disband your current party")
+                        await ctx.send(ctx.author.display_name + ", you are already leader of party " + getEmoteStr(str(i+1)) + ", use `%ldisband` to disband your current party")
                     else:
-                        await ctx.send(ctx.author.display_name + ", you are already in party " + luci_em[i+1] + ", use `%lleave " + str(i+1) + "` to leave your current party")
+                        await ctx.send(ctx.author.display_name + ", you are already in party " + getEmoteStr(str(i+1)) + ", use `%lleave " + str(i+1) + "` to leave your current party")
                     return
         for i in range(0, len(luciParty)):
             if luciParty[i] is None:
                 luciParty[i] = [datetime.utcnow().replace(microsecond=0), "Preparing", ctx.author.id]
                 savePending = True
-                await ctx.send(":white_check_mark: Party slot " + luci_em[i+1] + " given to " + ctx.author.display_name + "\nYou have 10 minutes for people to join using `%ljoin` and you to start using `%lstart`")
+                await ctx.send(":white_check_mark: Party slot " + getEmoteStr(str(i+1)) + " given to " + ctx.author.display_name + "\nYou have 10 minutes for people to join using `%ljoin` and you to start using `%lstart`")
                 await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " made a party in slot " + str(i+1))
                 return
         await ctx.send("All slots are in use, please wait")
 
-    @commands.command(no_pm=True, aliases=['lucidisband', 'LuciDisband'])
+    @commands.command(no_pm=True, aliases=['lucidisband'])
     async def ldisband(self, ctx, id : int = 0):
         """Disband a party
         you have to be leader of the party
@@ -2850,7 +2858,7 @@ class Lucilius(commands.Cog):
                 await ctx.send("Invalid party number")
                 return
             if luciParty[id] is None:
-                await ctx.send("Party " + luci_em[id+1] + " doesn't exist")
+                await ctx.send("Party " + getEmoteStr(str(id+1)) + " doesn't exist")
                 return
         else:
             id = -1
@@ -2873,14 +2881,14 @@ class Lucilius(commands.Cog):
             luciWarning[id] = 0
             savePending = True
             if mod:
-                await ctx.send(":x: Party " + luci_em[id+1] + " is now free (moderator action: `" + ctx.author.display_name + "`)")
+                await ctx.send(":x: Party " + getEmoteStr(str(id+1)) + " is now free (moderator action: `" + ctx.author.display_name + "`)")
                 await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: Moderator " + ctx.author.display_name + " disbanded the party in slot " + str(id+1))
             else:
-                await lucimain_channel.send(":x: Party " + luci_em[id+1] + " is now free")
+                await lucimain_channel.send(":x: Party " + getEmoteStr(str(id+1)) + " is now free")
                 await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " disbanded the party in slot " + str(id+1))
             return
 
-    @commands.command(no_pm=True, aliases=['luciextend', 'LuciExtend'])
+    @commands.command(no_pm=True, aliases=['luciextend'])
     async def lextend(self, ctx):
         """Extend a party timer
         you have to be leader of the party"""
@@ -2901,11 +2909,11 @@ class Lucilius(commands.Cog):
         else:
             luciParty[id][1] = "Playing (Extended)"
             savePending = True
-            await ctx.send(":clock10: **Two** more hours have been added to Party " + luci_em[id+1])
+            await ctx.send(":clock10: **Two** more hours have been added to Party " + getEmoteStr(str(id+1)))
             await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " extended the party in slot " + str(id+1))
             return
 
-    @commands.command(no_pm=True, aliases=['lucistart', 'LuciStart'])
+    @commands.command(no_pm=True, aliases=['lucistart'])
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def lstart(self, ctx):
         """Start fighting with your party"""
@@ -2922,7 +2930,7 @@ class Lucilius(commands.Cog):
                         luciParty[i][0] = datetime.utcnow().replace(microsecond=0)
                         savePending = True
                         # start message
-                        await lucimain_channel.send("Party " + luci_em[i+1] + " started, " + random.choice(luciStr))
+                        await lucimain_channel.send("Party " + getEmoteStr(str(i+1)) + " started, " + random.choice(luciStr))
                         # ping the party
                         for j in range(2, len(luciParty[i])):
                             try:
@@ -2958,7 +2966,7 @@ class Lucilius(commands.Cog):
                 return
         await ctx.send("You aren't leader of a party")
 
-    @commands.command(no_pm=True, aliases=['lucikick', 'LuciKick'])
+    @commands.command(no_pm=True, aliases=['lucikick'])
     async def lkick(self, ctx, user: discord.Member):
         """Kick a member from your party"""
         global savePending
@@ -2995,14 +3003,14 @@ class Lucilius(commands.Cog):
                                     pass
                             if len(topic) > 1000: topic = topic[:1000] + "..."
                             await lc.edit(topic=topic)
-                        await ctx.send(":no_entry: " + user.display_name + " has been removed from party slot " + luci_em[i+1])
+                        await ctx.send(":no_entry: " + user.display_name + " has been removed from party slot " + getEmoteStr(str(i+1)))
                         await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " kicked " + user.display_name + " from the party in slot " + str(i+1) + extra)
                         return
-                await ctx.send(user.display_name + " not found in party slot " + luci_em[i+1])
+                await ctx.send(user.display_name + " not found in party slot " + getEmoteStr(str(i+1)))
                 return
         await ctx.send("You aren't leader of a party")
 
-    @commands.command(no_pm=True, aliases=['lucijoin', 'LuciJoin'])
+    @commands.command(no_pm=True, aliases=['lucijoin'])
     @commands.cooldown(3, 20, commands.BucketType.user)
     async def ljoin(self, ctx, id : int = -999999999998):
         """Join a party"""
@@ -3035,9 +3043,9 @@ class Lucilius(commands.Cog):
             for j in range(2, len(luciParty[i])):
                 if luciParty[i][j] == ctx.author.id:
                     if j == 2:
-                        await ctx.send(ctx.author.display_name + ", you are already leader of party " + luci_em[i+1] + ", use `%ldisband` to disband your current party")
+                        await ctx.send(ctx.author.display_name + ", you are already leader of party " + getEmoteStr(str(i+1)) + ", use `%ldisband` to disband your current party")
                     else:
-                        await ctx.send(ctx.author.display_name + ", you are already in party " + luci_em[i+1] + ", use `%lleave " + str(i+1) + "` to leave your current party")
+                        await ctx.send(ctx.author.display_name + ", you are already in party " + getEmoteStr(str(i+1)) + ", use `%lleave " + str(i+1) + "` to leave your current party")
                     return
         if luciParty[id] is None:
             await ctx.send("This party doesn't exist")
@@ -3060,11 +3068,11 @@ class Lucilius(commands.Cog):
                         msg += ", "
                 msg += "\nUse `%llist " + str(id+1) + "` to see your party or `%lstart` to start playing"
             await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " joined the party in slot " + str(id+1) + " (" + str(len(luciParty[id])-2) + "/6)")
-            await ctx.send(ctx.author.display_name + " added to party " + luci_em[id+1])
+            await ctx.send(ctx.author.display_name + " added to party " + getEmoteStr(str(id+1)))
             if len(msg) > 0:
                 await ctx.send(msg)
 
-    @commands.command(no_pm=True, aliases=['luciadd', 'LuciAdd'])
+    @commands.command(no_pm=True, aliases=['luciadd'])
     @commands.cooldown(3, 20, commands.BucketType.user)
     async def ladd(self, ctx, user: discord.Member):
         """Get someone in your party while playing
@@ -3115,11 +3123,11 @@ class Lucilius(commands.Cog):
             if len(topic) > 1000: topic = topic[:1000] + "..."
             await lc.edit(topic=topic)
             # msg
-            await lc.send(user.mention + " added to party " + luci_em[id+1])
+            await lc.send(user.mention + " added to party " + getEmoteStr(str(id+1)))
             await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + user.display_name + " has been added to the party in slot " + str(id+1) + " (" + str(len(luciParty[id])-2) + "/6) by " + ctx.author.display_name)
             await ctx.message.add_reaction('✅') # white check mark
 
-    @commands.command(no_pm=True, aliases=['lucileave', 'LuciLeave'])
+    @commands.command(no_pm=True, aliases=['lucileave'])
     @commands.cooldown(1, 20, commands.BucketType.user)
     async def lleave(self, ctx):
         """Leave a party"""
@@ -3133,7 +3141,7 @@ class Lucilius(commands.Cog):
             for j in range(2, len(luciParty[i])):
                 if luciParty[i][j] == ctx.author.id:
                     if j == 2:
-                        await ctx.send(ctx.author.display_name + ", you are leader of party " + luci_em[i+1] + ", use `%ldisband` to disband your current party")
+                        await ctx.send(ctx.author.display_name + ", you are leader of party " + getEmoteStr(str(i+1)) + ", use `%ldisband` to disband your current party")
                         return
                     else:
                         id = [i, j]
@@ -3169,16 +3177,16 @@ class Lucilius(commands.Cog):
                 await lc.edit(topic=topic)
             # msg
             await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " left from the party in slot " + str(i+1) + extra)
-            await ctx.send(ctx.author.display_name + " left from party " + luci_em[i+1])
+            await ctx.send(ctx.author.display_name + " left from party " + getEmoteStr(str(i+1)))
 
-    @commands.command(no_pm=True, aliases=['lucihelp', 'LuciHelp', 'Lhelp', 'LHelp', 'LHELP'])
+    @commands.command(no_pm=True, aliases=['lucihelp'])
     @commands.cooldown(2, 60, commands.BucketType.user)
     async def lhelp(self, ctx):
         """Post the command list"""
         if not isLuciliusMainChannel(ctx.channel) and not isLuciliusPartyChannel(ctx.channel): return
         await ctx.send(":regional_indicator_p: Party:\n```\nlmake              Make a new party\nljoin <party #>    Join a party\nlleave             Leave the party\nllist              List the Lucilius parties\nllist <party #>    List the party members\n```\n:regional_indicator_l: Party Leader:\n```\nlstart             Start fighting with your party\nldisband           Disband your party\nlextend            Add two hours to a playing party timer (once)\nladd <ping>        Add a member to your party while playing\nlkick <ping>       Kick a member from your party\n```\n:regional_indicator_m: Moderation:\n```\nlban <ping><type>  Ban an user (type: join, make or all)\nlunban <ping>      Unban an user\nldisband <party #> Force disband a party\n```\nUse `lhelp` to show this text or `help <command name>` for details.")
 
-    @commands.command(no_pm=True, aliases=['luciban', 'LuciBan'])
+    @commands.command(no_pm=True, aliases=['luciban'])
     async def lban(self, ctx, user: discord.Member, type : str = ""):
         """Ban an user (Mod only)
         you must specify 'all', 'make' or 'join' for the ban type"""
@@ -3211,7 +3219,7 @@ class Lucilius(commands.Cog):
         else:
             await ctx.send('Please give me the type of ban `lban <user> <type:all|make|join>`')
 
-    @commands.command(no_pm=True, aliases=['luciunban', 'LuciUnban'])
+    @commands.command(no_pm=True, aliases=['luciunban'])
     async def lunban(self, ctx, user: discord.Member):
         """Unban an user (Mod only)"""
         global savePending
@@ -3231,37 +3239,37 @@ class Lucilius(commands.Cog):
             await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " unbanned " + user.display_name + " (id:" + str(user.id) + ")")
             await ctx.send(user.display_name + ' has been unbanned')
 
-    @commands.command(no_pm=True, aliases=['IAM', 'Iam'])
+    @commands.command(no_pm=True)
     async def iam(self, ctx, *elems: str):
         """Add yourself to an element role"""
         if not isLuciliusMainChannel(ctx.channel): return
-        f = 0
+        f = {}
         for e in elems:
             if e.lower() in elemStr:
-                f = 1
                 role = ctx.message.author.guild.get_role(luciElemRole[elemStr[e]])
                 try:
                     await ctx.author.add_roles(role)
+                    f[elemEmote[e]] = None
                 except:
                     pass
-        if f > 0:
-            await ctx.message.add_reaction('✅') # white check mark
+        for fe in f:
+            await react(ctx, fe)
 
-    @commands.command(no_pm=True, aliases=['IAMNOT', 'Iamnot', 'IAMN', 'Iamn', 'iamn'])
+    @commands.command(no_pm=True, aliases=['iamn'])
     async def iamnot(self, ctx, *elems: str):
         """Remove yourself from an element role"""
         if not isLuciliusMainChannel(ctx.channel): return
-        f = 0
+        f = {}
         for e in elems:
             if e.lower() in elemStr:
-                f = 1
                 role = ctx.message.author.guild.get_role(luciElemRole[elemStr[e]])
                 try:
                     await ctx.author.remove_roles(role)
+                    f[elemEmote[e]] = None
                 except:
                     pass
-        if f > 0:
-            await ctx.message.add_reaction('✅') # white check mark
+        for fe in f:
+            await react(ctx, fe)
 
     @commands.command(no_pm=True, aliases=['summon'])
     @commands.cooldown(10, 60, commands.BucketType.guild)
@@ -3279,7 +3287,7 @@ class Lucilius(commands.Cog):
                 if len(msg) == 0:
                     await ctx.send("Tell me what element to call")
                 else:
-                    await ctx.send("Party " + luci_em[p+1] + " is calling for " + msg + " players")
+                    await ctx.send("Party " + getEmoteStr(str(p+1)) + " is calling for " + msg + " players")
                 return
         await ctx.send("You must be leader of a party")
 
@@ -3373,7 +3381,7 @@ bot.add_cog(Owner(bot))
 bot.add_cog(Lucilius(bot))
 bot.add_cog(WIP(bot))
 if gbfdm:
-    gbfc = baguette.Baguette(bot, gbfd, savePendingCallback, pb_token)
+    gbfc = baguette.Baguette(bot, gbfd, savePendingCallback, getEmoteStr, pb_token)
     bot.add_cog(gbfc)
 
 #test
