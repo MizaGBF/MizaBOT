@@ -25,7 +25,7 @@ bot_token = None
 # google drive folder ID where is stored the save data
 bot_drive = None
 # bot description
-description = '''MizaBOT version 4.6
+description = '''MizaBOT version 4.7
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.'''
 # various ids and discord stuff (check the save/config.json examples for details)
@@ -74,7 +74,7 @@ spark_ban = []
 stream_txt = []
 stream_time = None
 # gbf schedule text
-gbfschedule = ""
+gbfschedule = []
 # server prefixes
 prefixes = {}
 # bot strings
@@ -468,7 +468,7 @@ def evaluate(expression, vars={}):
 
 # #####################################################################################
 # get a 4chan thread
-def get4chan(board, search): # be sure to not abuse it, you are supposed to not call the api more than once per second
+def get4chan(board, search): # be sure to not abuse it, you are not supposed to call the api more than once per second
     try:
         search = search.lower()
         url = 'http://a.4cdn.org/' + board + '/catalog.json' # board catalog url
@@ -831,78 +831,79 @@ async def autosave(discordDump = False):
 class MizabotHelp(commands.DefaultHelpCommand):
     def __init__(self, **options):
         super().__init__(**options)
-        self.sort_commands = False
-        self.dm_help = True
+        self.dm_help = True # force dm only
 
     async def send_bot_help(self, mapping): # main help command
-        ctx = self.context
+        ctx = self.context # get $help context
         bot = ctx.bot
+        me = ctx.author.guild.me
 
         await ctx.message.add_reaction('✅') # white check mark
 
         if bot.description:
-            self.paginator.add_line(bot.description, empty=True)
-            self.paginator.close_page()
+            embed = discord.Embed(title=me.name + " Help", description=bot.description, color=random.randint(0, 16777216))
+            embed.set_thumbnail(url=me.avatar_url)
+            await ctx.author.send(embed=embed)
 
         no_category = "No Category:"
         def get_category(command, *, no_category=no_category):
             cog = command.cog
             return cog.qualified_name + ':' if cog is not None else no_category
 
-        filtered = await self.filter_commands(bot.commands, sort=True, key=get_category)
-        max_size = self.get_max_size(filtered)
+        filtered = await self.filter_commands(bot.commands, sort=True, key=get_category) # sort all category and commands
         to_iterate = itertools.groupby(filtered, key=get_category)
 
-        for category, commands in to_iterate:
+        for category, commands in to_iterate: # iterate on them
             if self.helpAuthorize(ctx, category[:-1]):
                 commands = sorted(commands, key=lambda c: c.name) if self.sort_commands else list(commands)
-                self.add_indented_commands(commands, heading=category, max_size=max_size)
-                self.paginator.close_page()
-
-        note = self.get_ending_note()
-        if note:
-            self.paginator.add_line()
-            self.paginator.add_line(note)
-
-        await self.send_pages()
+                embed = discord.Embed(title=getEmoteStr('mark') + " **" + category[:-1] + "** Category", color=random.randint(0, 16777216)) # random color
+                for c in commands:
+                    embed.add_field(name=c.name + " ▫ " + self.get_command_signature(c), value=c.short_doc, inline=False)
+                if len(embed) > 5800:
+                    await ctx.author.send(embed=embed)
+                    embed = discord.Embed(title=getEmoteStr('mark') + " **" + category[:-1] + "** Category", color=embed.colour) # random color
+                if len(embed.fields) > 0:
+                    await ctx.author.send(embed=embed)
 
     async def send_command_help(self, command):
+        ctx = self.context
         await self.context.message.add_reaction('✅') # white check mark
-        self.add_command_formatting(command)
-        self.paginator.close_page()
-        await self.send_pages()
+        embed = discord.Embed(title=getEmoteStr('mark') + " **" + command.name + "** Command", description=command.help, color=random.randint(0, 16777216)) # random color
+        embed.add_field(name="Usage", value=self.get_command_signature(command), inline=False)
+        await ctx.author.send(embed=embed)
 
     async def send_group_help(self, group):
+        ctx = self.context
         await self.context.message.add_reaction('✅') # white check mark
         self.add_command_formatting(group)
 
         filtered = await self.filter_commands(group.commands, sort=self.sort_commands)
-        self.add_indented_commands(filtered, heading=self.commands_heading)
 
-        if filtered:
-            note = self.get_ending_note()
-            if note:
-                self.paginator.add_line()
-                self.paginator.add_line(note)
+        embed = discord.Embed(title=getEmoteStr('mark') + " **" + group.name + "** Group", color=random.randint(0, 16777216)) # random color
 
-        await self.send_pages()
+        for c in filtered:
+            embed.add_field(name=c.name + " ▫ " + self.get_command_signature(c), value=c.short_doc, inline=False)
+        if len(embed) > 5800:
+            await ctx.author.send(embed=embed)
+            embed = discord.Embed(title=getEmoteStr('mark') + " **" + group.name + "** Group", color=embed.colour) # random color
+        if len(embed.fields) > 0:
+            await ctx.author.send(embed=embed)
 
     async def send_cog_help(self, cog): # category help
+        ctx = self.context
         if not self.helpAuthorize(self.context, cog.qualified_name):
             return
         await self.context.message.add_reaction('✅') # white check mark
-        if cog.description:
-            self.paginator.add_line(cog.description, empty=True)
 
         filtered = await self.filter_commands(cog.get_commands(), sort=self.sort_commands)
-        self.add_indented_commands(filtered, heading=self.commands_heading)
-
-        note = self.get_ending_note()
-        if note:
-            self.paginator.add_line()
-            self.paginator.add_line(note)
-
-        await self.send_pages()
+        embed = discord.Embed(title=getEmoteStr('mark') + " **" + cog.qualified_name + "** Category", description=cog.description, color=random.randint(0, 16777216)) # random color
+        for c in filtered:
+            embed.add_field(name=c.name + " ▫ " + self.get_command_signature(c), value=c.short_doc, inline=False)
+        if len(embed) > 5800:
+            await ctx.author.send(embed=embed)
+            embed = discord.Embed(title=getEmoteStr('mark') + " **" + cog.qualified_name + "** Category", color=embed.colour) # random color
+        if len(embed.fields) > 0:
+            await ctx.author.send(embed=embed)
 
     def helpAuthorize(self, ctx, category): # some categories are hidden depending on who or where you are using $help
         if category == "Lucilius" and ctx.author.guild.id != luciServer: return False
@@ -1172,6 +1173,23 @@ class General(commands.Cog):
             await ctx.send(str(i) + " member(s) with a role containing `" + name + "`")
         else:
             await ctx.send(str(i) + " member(s) with the role `" + name + "`")
+
+    @commands.command(no_pm=True, aliases=['hgg2d'])
+    @commands.cooldown(1, 3, commands.BucketType.default)
+    async def hgg(self, ctx):
+        """Post the latest /hgg2d/ threads"""
+        if not ctx.channel.is_nsfw():
+            await ctx.send(':underage: use this command in a NSFW channel')
+            return
+        threads = get4chan('vg', '/hgg2d/')
+        if len(threads) > 0:
+            msg = '**Latest thread(s):**\n'
+            for t in threads:
+                msg += ':underage: <https://boards.4channel.org/vg/thread/'+str(t)+'>\n'
+            msg += "Good fap, fellow 4channeler :relieved:"
+            await ctx.send(msg)
+        else:
+            await ctx.send('I couldn\'t find a single /hgg2d/ thread :pensive:')
 
 class GBF_Game(commands.Cog):
     """GBF related commands."""
@@ -1549,23 +1567,6 @@ class GBF_Game(commands.Cog):
             m = m // 60
         await ctx.send(ctx.message.author.mention + '\'s quota for today:\n**{:,}** honors\n**{:,}** meats\nHave fun :relieved:'.format(h, m).replace(',', ' '))
 
-    @commands.command(no_pm=True, aliases=['hgg2d'])
-    @commands.cooldown(1, 3, commands.BucketType.default)
-    async def hgg(self, ctx):
-        """Post the latest /hgg2d/ threads"""
-        if not ctx.channel.is_nsfw():
-            await ctx.send(':underage: use this command in a NSFW channel')
-            return
-        threads = get4chan('vg', '/hgg2d/')
-        if len(threads) > 0:
-            msg = '**Latest thread(s):**\n'
-            for t in threads:
-                msg += ':underage: <https://boards.4channel.org/vg/thread/'+str(t)+'>\n'
-            msg += "Good fap, fellow 4channeler :relieved:"
-            await ctx.send(msg)
-        else:
-            await ctx.send('I couldn\'t find a single /hgg2d/ thread :pensive:')
-
 # the GBF cog
 class GBF_Utility(commands.Cog):
     """GBF related commands."""
@@ -1819,11 +1820,13 @@ class GBF_Utility(commands.Cog):
         await ctx.send("Wiki page :point_right: <https://gbf.wiki/Ultimate_Bahamut_(Raid)#impossible>")
 
     @commands.command(no_pm=True, aliases=["christmas", "anniversary", "xmas", "anniv", "event"])
-    @commands.cooldown(20, 30, commands.BucketType.guild)
-    async def stream(self, ctx):
+    @commands.cooldown(3, 30, commands.BucketType.guild)
+    async def stream(self, ctx, op : str = ""):
         """Post the stream text"""
         if len(stream_txt) == 0:
             await ctx.send("No stream available")
+        elif op == "raw":
+            await ctx.send(str(stream_txt))
         else:
             msg = ""
             for s in stream_txt:
@@ -1840,13 +1843,23 @@ class GBF_Utility(commands.Cog):
                 await ctx.send(msg)
 
     @commands.command(no_pm=True)
-    @commands.cooldown(20, 30, commands.BucketType.guild)
+    @commands.cooldown(3, 30, commands.BucketType.guild)
     async def schedule(self, ctx):
         """Post the GBF schedule"""
         if len(gbfschedule) == 0:
             await ctx.send("No schedule available")
         else:
-            await ctx.send(":calendar: **GBF Schedule:**\n```" + gbfschedule + "```")
+            embed = discord.Embed(title="🗓 Event Schedule", url="https://twitter.com/granblue_en", color=random.randint(0, 16777216)) # random color
+            l = len(gbfschedule)
+            l = l - (l%2) # need an even amount, skipping the last one if odd
+            i = 0
+            while i < l:
+                if l > 12: # enable or not emotes (I have 6 numbered emotes, so 6 field max aka 12 elements in my array)
+                    embed.add_field(name=gbfschedule[i], value=gbfschedule[i+1], inline=True) # (odd elements are title, even ones are values)
+                else:
+                    embed.add_field(name=getEmoteStr(str((i//2)+1)) + " " + gbfschedule[i], value=gbfschedule[i+1], inline=True) # using emotes here
+                i += 2
+            await ctx.send(embed=embed)
 
 
 # the background task used to check if we call the GW buffs in (you)
@@ -2647,15 +2660,11 @@ class Owner(commands.Cog):
     @commands.is_owner()
     async def setSchedule(self, ctx, *txt : str):
         """Set the GBF schedule for the month (Owner only)
-        Use ; to input a newline character"""
+        Use ; to separate elements"""
         global gbfschedule
         global savePending
-        strs = " ".join(txt).split(';')
-        msg = ""
-        for s in strs:
-            msg += s + "\n"
-        gbfschedule = msg[:-1]
-        await ctx.send('Done')
+        gbfschedule = " ".join(txt).split(';')
+        await ctx.message.add_reaction('✅') # white check mark
         savePending = True
 
     @commands.command(no_pm=True)
