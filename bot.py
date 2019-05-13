@@ -1,6 +1,5 @@
 ﻿import discord
 from discord.ext import commands
-import logging
 import random
 from datetime import datetime, timedelta, timezone
 import asyncio
@@ -15,23 +14,21 @@ from pydrive.drive import GoogleDrive
 import time
 from operator import itemgetter
 import itertools
+# ^ some modules might be unused, I'll clean up in the future
 
 # it's a mess so please read these comments to not get lost:
 
 # starting with our global variables (most are initialized by loadConfig() or load() )
+# TO DO : make a class maybe. I tried but it's a pain to edit everything
 # discord key
 bot_token = None
 # google drive folder ID where is stored the save data
 bot_drive = None
-# pb account
-pb_token = None
-# log level setting
-logging.basicConfig(level=logging.INFO)
 # bot description
-description = '''MizaBOT version 4.5
+description = '''MizaBOT version 4.6
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.'''
-# various ids and discord stuff
+# various ids and discord stuff (check the save/config.json examples for details)
 owner_id = None
 debug_channel = None
 lucilog_channel = None
@@ -55,7 +52,7 @@ banned_owner = []
 pending_server = {}
 # (you) gw buff related id (of corresponding roles)
 buff_role_id = []
-fo_role_id = []
+fo_role_id = [] # [role, corresponding custom emote key]
 gl_role_id = []
 # for the bot message status
 mygames = []
@@ -86,7 +83,7 @@ bot_msgs = {}
 bot_m = None
 # graceful exit flag
 exit_flag = False # if true, it means we just restarted after a heroku reboot
-# gbfg lucilius
+# gbfg lucilius variables
 luciMember = {}
 luciParty = [None, None, None, None, None, None]
 luciBlacklist = {}
@@ -98,6 +95,8 @@ luciServer = None
 luciElemRole = [0, 0, 0, 0, 0, 0]
 luciWarning = [0, 0, 0, 0, 0, 0]
 
+# ignore this
+gbfdd = None
 try:
     import baguette
     gbfdm = True
@@ -109,7 +108,7 @@ gbfc = None
 # we load some of the stuff above here
 def loadConfig():
     global bot_token
-    global pb_token
+    global gbfdd
     global debug_chid
     global owner_id
     global you_id
@@ -135,12 +134,13 @@ def loadConfig():
     global gbfg_id
     global bot_emotes
     try:
+        # we store everything in string, same for save.json, hence the int() calls
         with open('config.json') as f:
             data = json.load(f)
             bot_token = data['discord_token']
             bot_drive = data['drive_folder']
             if 'baguette' in data:
-                pb_token = data['baguette']
+                gbfdd = data['baguette']
             debug_chid = int(data['debug'])
             debug_id = int(data['debug_server'])
             owner_id = int(data['you']['owner'])
@@ -197,60 +197,54 @@ def loadConfig():
 
 # we do it right now and exit if an error happens
 if not loadConfig():
-    exit(1)
+    exit(1) # return code != 0 so heroku understands it's an unusual exit
 
 # #####################################################################################
 # various functions to check if an user has a certain role/permission, etc...
-def isYouAndU2(roles):
+def isYouAndU2(roles): # check for (you) and (you)too roles
     for r in roles:
-        if r.name == '(You)tards' or r.name == 'U2':
+        if r.id == 281138561150091265 or r.id == 320225109447278592: # hard coded, might change the role ids later
             return True
     return False
 
-def isYouMod(roles):
-    for r in roles:
-        if r.name == 'FO' or r.name == 'GL':
-            return True
-    return False
-
-def isYouServer(server):
+def isYouServer(server): # check for (you) server id
     if server and server.id == you_id:
         return True
     return False
 
-def isGBFGServer(server):
+def isGBFGServer(server): # check for /gbfg/ server id
     if server and server.id == gbfg_id:
         return True
     return False
 
-def isDebugServer(server):
+def isDebugServer(server): # check for the bot debug server id
     if server and server.id == debug_id:
         return True
     return False
 
-def isWawiServer(server):
+def isWawiServer(server): # check for wawi server id
     if server and server.id == 327162356327251969:
         return True
     return False
 
-def isAuthorized(guild, channel):
-    if guild.id in select_channel:
-        if channel.id in select_channel[guild.id]:
+def isAuthorized(guild, channel): # check if the command is authorized
+    if guild.id in select_channel: # if the server uses this mode
+        if channel.id in select_channel[guild.id]: # some commands are limited to the channel listed in select_channel (defined in config.json)
             return True
         return False
     return True
 
-def isMod(author):
+def isMod(author): # consider someone with the manage message permision is a mod
     if author.guild_permissions.manage_messages:
         return True
     return False
 
-def isLuciliusMainChannel(channel):
+def isLuciliusMainChannel(channel): # check for the lucilius main channel
     if channel.id == luciMain:
         return True
     return False
 
-def isLuciliusPartyChannel(channel):
+def isLuciliusPartyChannel(channel): # check for a lucilius party channel
     if channel.id in luciChannel:
         return True
     return False
@@ -474,17 +468,17 @@ def evaluate(expression, vars={}):
 
 # #####################################################################################
 # get a 4chan thread
-def get4chan(board, search):
+def get4chan(board, search): # be sure to not abuse it, you are supposed to not call the api more than once per second
     try:
         search = search.lower()
-        url = 'http://a.4cdn.org/' + board + '/catalog.json'
-        data = json.load(urlopen(url))
+        url = 'http://a.4cdn.org/' + board + '/catalog.json' # board catalog url
+        data = json.load(urlopen(url)) # we get the json
         threads = []
         for p in data:
             for t in p["threads"]:
                 try:
                     if t["sub"].lower().find(search) != -1 or t["com"].lower().find(search) != -1:
-                        threads.append(t["no"])
+                        threads.append(t["no"]) # store the thread ids matching our search word
                 except:
                     pass
         threads.sort(reverse=True)
@@ -510,7 +504,7 @@ async def printServers():
         msg += '[' + str(s) + '] '
     await debug_channel.send(msg)
 
-async def sendDebugStr():
+async def sendDebugStr(): # in theory: used to send debug strings we couldn't send
     global debug_channel
     global debug_str
     if debug_str:
@@ -520,7 +514,7 @@ async def sendDebugStr():
 # get the general channel of a server
 def getGeneral(server):
     for c in server.text_channels:
-        if c.name == 'general':
+        if c.name.lower() == 'general':
             return c
     return None
 
@@ -533,31 +527,35 @@ def getRoll(ssr):
 
 legfestWord = {"double", "x2", "legfest", "flashfest"}
 def isLegfest(word):
-    if word.lower() in legfestWord: return 2
+    if word.lower() in legfestWord: return 2 # 2 because the rates are doubled
     return 1
 
 # other important stuff
-def savePendingCallback():
+def savePendingCallback(): # for external modules if any
     global savePending
     savePending = True
 
-def getEmote(key):
+def getEmote(key): # retrieve a custom emote
     if key in bot_emotes:
-        return bot_emotes[key]
+        try:
+            return bot.get_emoji(bot_emotes[key]) # ids are defined in config.json
+        except:
+            return None
     return None
 
-def getEmoteStr(key):
+def getEmoteStr(key): # same stuff but we get the string equivalent
     e = getEmote(key)
     if e is None: return ""
     return str(e)
 
-async def react(ctx, key):
+async def react(ctx, key): # react using a custom emote
     try:
         await ctx.message.add_reaction(getEmote(key))
     except Exception as e:
         await ctx.send(str(e))
 
-async def maintenanceCheck(ctx, sendMsg=True):
+# GBF maintenance stuff
+async def maintenanceCheck(ctx): # check the gbf maintenance status in memory and display a message
     global savePending
     global maintenance
     current_time = datetime.utcnow() + timedelta(seconds=32400)
@@ -579,10 +577,31 @@ async def maintenanceCheck(ctx, sendMsg=True):
                 msg = getEmoteStr('cog') + " Maintenance ends in **" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**"
     else:
         msg = "No Maintenance planned"
-    if sendMsg:
-        await ctx.send(msg)
+    await ctx.send(msg)
+
+def maintenanceUpdate(): # same thing pretty much but return False or True instead
+    global savePending
+    global maintenance
+    current_time = datetime.utcnow() + timedelta(seconds=32400)
+    if maintenance:
+        if current_time < maintenance:
+            d = maintenance - current_time
+            return False
+        else:
+            d = current_time - maintenance
+            if maintenance_d <= 0:
+                return True
+            elif (d.seconds // 3600) >= maintenance_d:
+                maintenance = None
+                savePending = True
+                return False
+            else:
+                return False
+    else:
+        return False
 
 # google drive login
+# I recommend to generate credentials.json separately, as heroku has no storage
 def loginDrive():
     global debug_str
     try:
@@ -610,6 +629,7 @@ def loadDrive():
         if s['title'] == "save.json": s.GetContentFile(s['title'])
     return True
 
+# same stuff as loadConfig()
 def load():
     global banned_server
     global banned_owner
@@ -629,7 +649,6 @@ def load():
     global bot_m
     global stream_txt
     global stream_time
-    global exit_flag
     global gbfschedule
     global luciParty
     global luciBlacklist
@@ -638,7 +657,6 @@ def load():
     global gbfd 
     with open('save.json') as f:
         data = json.load(f)
-        if 'exit' in data: exit_flag = data["exit"]
         if 'bot' in data: bot_m = datetime.strptime(data["bot"], '%Y-%m-%d %H:%M:%S')
         if gbfdm and 'baguette' in data:
             gbfd  = data['baguette']
@@ -746,7 +764,6 @@ def save(sortBackup=True):
     global debug_str
     try:
         data = {}
-        data["exit"] = exit_flag
         if bot_m:
             data['bot'] = bot_m
         data['banned_server'] = banned_server
@@ -787,7 +804,7 @@ def save(sortBackup=True):
         return False
     return True
 
-autosaving = False
+autosaving = False # very dirty way to check so we don't run two autosave
 async def autosave(discordDump = False):
     global savePending
     global autosaving
@@ -887,7 +904,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
 
         await self.send_pages()
 
-    def helpAuthorize(self, ctx, category):
+    def helpAuthorize(self, ctx, category): # some categories are hidden depending on who or where you are using $help
         if category == "Lucilius" and ctx.author.guild.id != luciServer: return False
         if category == "Owner" and ctx.author.id != owner_id: return False
         if category == "Baguette" and ctx.author.id != owner_id: return False
@@ -908,8 +925,8 @@ def prefix(client, message):
 # ########################################################################################
 # done declaring some of the stuff
 # we start the discord bot
-loadDrive()
-first_load = load() # we also load our stuff before starting the bot, to have everything ready at the start
+loadDrive() # download the save file
+first_load = load() # load the save file
 bot = commands.Bot(command_prefix=prefix, case_insensitive=True, description=description, help_command=MizabotHelp())
 isRunning = True
 savePending = False
@@ -946,17 +963,22 @@ async def lucitask():
         try:
             c = datetime.utcnow()
             for i in range(0, len(luciParty)):
-                if luciParty[i] is not None:
-                    if luciParty[i][1] == "Playing" and luciWarning[i] < 1 and (c - luciParty[i][0]) > timedelta(seconds=3000):
+                if luciParty[i] is not None: # check if the party is in use
+                    # warn the users of the time left
+                    if luciParty[i][1] == "Playing" and luciWarning[i] < 1 and (c - luciParty[i][0]) > timedelta(seconds=3000): # check if close to time limit AND not extended AND no warning has been issued
                         luciWarning[i] = 1
                         savePending = True
                         lc = bot.get_channel(luciChannel[i])
-                        await lc.send("Less than 10 minutes left, use `%lextend` if you need more time")
+                        try:
+                            await lc.send(getEmoteStr('clock') + " " + bot.get_user(luciParty[i][2]).mention + " Less than 10 minutes left, use `%lextend` if you need more time") # we notify
+                        except:
+                            await lc.send(getEmoteStr('clock') + " Less than 10 minutes left, use `%lextend` if you need more time") # we notify
+                    # check the time left
                     if luciParty[i][1] == "Preparing": gameover = ((c - luciParty[i][0]) > timedelta(seconds=600))
                     elif luciParty[i][1] == "Playing": gameover = ((c - luciParty[i][0]) > timedelta(seconds=3600))
                     elif luciParty[i][1] == "Playing (Extended)": gameover = ((c - luciParty[i][0]) > timedelta(seconds=10800))
                     else: gameover = False
-                    if gameover:
+                    if gameover: # if true, it's over, disband the party
                         if luciParty[i][1] != "Preparing":
                             role = guild.get_role(luciRole[i])
                             for j in range(2, len(luciParty[i])):
@@ -1012,7 +1034,7 @@ async def lucitask():
             await debug_channel.send("lucitask() B: " + str(e))
         await asyncio.sleep(80)
 
-# THE FIRST THING EVER RUNNING IS HERE
+# THE FIRST THING EVER RUNNING BY THE BOT IS HERE
 @bot.event
 async def on_ready():
     await bot.change_presence(status=discord.Status.online, activity=discord.activity.Game(name='Booting up, please wait'))
@@ -1021,32 +1043,25 @@ async def on_ready():
     global lucimain_channel
     global first_load
     global gw_task
-    global exit_flag
     global bot_emotes
-    debug_channel = bot.get_channel(debug_chid) # we set our debug channel here (where we'll dump various stuff, save files, etc..)
+    #set our channels
+    debug_channel = bot.get_channel(debug_chid)
     if gbfdm:
         gbfc.setDebugChannel(debug_channel)
     lucilog_channel = bot.get_channel(luciLog)
     lucimain_channel = bot.get_channel(luciMain)
-    for e in bot_emotes:
-        try:
-            bot_emotes[e] = bot.get_emoji(bot_emotes[e])
-        except:
-            bot_emotes.pop(e)
-    msg = ""
-    if exit_flag:
-        msg += 'Heroku forced a reboot\n'
-        exit_flag = False
-    msg += ':electric_plug: Starting up, Loading my data\n'
+    # start up message and check if we loaded the save properly
+    msg = ':electric_plug: Starting up, Loading my data\n'
     await sendDebugStr()
     if first_load:
         msg += 'Data loaded\n'
     else:
-        msg += bot.get_user(owner_id).mention + ' Failed\n'
+        msg += bot.get_user(owner_id).mention + ' Failed\n' # ping me if the save load failed
     if gw:
         gw_task = bot.loop.create_task(checkGWBuff())
     msg += 'Ready'
     await debug_channel.send(msg)
+    # start the background tasks
     bot.loop.create_task(backtask())
     bot.loop.create_task(lucitask())
 
@@ -1061,7 +1076,7 @@ async def on_guild_join(guild):
         except Exception as e:
             await debug_channel.send("on_guild_join(): " + str(e))
         await guild.leave()
-    else:
+    else: # notify me and add to the pending servers
         await debug_channel.send(":new: I joined a new server")
         general = getGeneral(guild)
         if general and general.permissions_for(guild.me).send_messages:
@@ -1082,8 +1097,7 @@ async def global_check(ctx):
 async def on_command_error(ctx, error):
     msg = str(error)
     if msg.find('You are on cooldown.') == 0:
-        await ctx.message.add_reaction('🆒') # :cool:
-        await ctx.message.add_reaction('⬇') # :arrow_down:
+        await react(ctx, 'cooldown')
     elif msg.find('Command "') == 0 or msg == 'Command raised an exception: Forbidden: FORBIDDEN (status code: 403): Missing Permissions':
         return
     else:
@@ -1119,7 +1133,7 @@ class General(commands.Cog):
         if not isAuthorized(ctx.message.author.guild, ctx.channel):
             return
         try:
-            await ctx.send(random.choice(choices))
+            await ctx.send(random.choice(choices)) # might change how strings with space work
         except:
             await ctx.send('Give me a list of something to choose from :pensive:\nUse quotes `"` if a choice contains spaces')
 
@@ -1132,7 +1146,7 @@ class General(commands.Cog):
         try:
             m = " ".join(terms).split(",")
             d = {}
-            for i in range(1, len(m)):
+            for i in range(1, len(m)): # process the variables if any
                 x = m[i].replace(" ", "").split("=")
                 if len(x) == 2: d[x[0]] = float(x[1])
                 else: raise Exception('')
@@ -1159,7 +1173,6 @@ class General(commands.Cog):
         else:
             await ctx.send(str(i) + " member(s) with the role `" + name + "`")
 
-# the GBF cog
 class GBF_Game(commands.Cog):
     """GBF related commands."""
     def __init__(self, bot):
@@ -1536,7 +1549,7 @@ class GBF_Game(commands.Cog):
             m = m // 60
         await ctx.send(ctx.message.author.mention + '\'s quota for today:\n**{:,}** honors\n**{:,}** meats\nHave fun :relieved:'.format(h, m).replace(',', ' '))
 
-    @commands.command(no_pm=True)
+    @commands.command(no_pm=True, aliases=['hgg2d'])
     @commands.cooldown(1, 3, commands.BucketType.default)
     async def hgg(self, ctx):
         """Post the latest /hgg2d/ threads"""
@@ -1724,24 +1737,11 @@ class GBF_Utility(commands.Cog):
         if not gbfdm:
             return
         ignore_update = False
-        current_time = datetime.utcnow() + timedelta(seconds=32400)
         # maintenance check
-        if maintenance:
-            await maintenanceCheck(ctx, False)
-            if maintenance:
-                ignore_update = True
-        t = gbfc.getGachatime(ignore_update)
-        if t is not None:
-            if t[0] != t[1]:
-                d = t[0] - current_time
-                f = t[1] - current_time
-                await ctx.send(getEmoteStr('SSR') + " Current gacha ends in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m** (Spark period ends in **" + str(f.days) + "d" + str(f.seconds // 3600) + "h" + str((f.seconds // 60) % 60) + "m**)")
-            else:
-                d = t[0] - current_time
-                await ctx.send(getEmoteStr('SSR') + " Current gacha ends in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**")
-        else:
-            if not ignore_update:
-                await debug_channel.send("gacha() error")
+        if maintenanceUpdate():
+            await maintenanceCheck(ctx)
+            return
+        await gbfc.getGachatime(ctx)
 
     @commands.command(no_pm=True, aliases=['rateup'])
     @commands.cooldown(1, 60, commands.BucketType.guild)
@@ -1751,28 +1751,11 @@ class GBF_Utility(commands.Cog):
         if not gbfdm:
             return
         ignore_update = False
-        current_time = datetime.utcnow() + timedelta(seconds=32400)
         # maintenance check
-        if maintenance:
-            await maintenanceCheck(ctx, False)
-            if maintenance:
-                ignore_update = True
-        b = gbfc.getGachabanner(ignore_update)
-        if b is not None:
-            if jp == 'jp': await ctx.send(b.replace('/assets_en/', '/assets/'))
-            else: await ctx.send(b)
-        else:
-            if not ignore_update:
-                await debug_channel.send("banner() error")
-            await ctx.send("Unavailable right now :bow:")
-
-    @commands.command(no_pm=True, aliases=['poker'])
-    async def pokerbot(self, ctx):
-        """Post the cracked pokerbot mega folder"""
-        if ctx.message.author.name.lower().find("xil") != -1:
-            await ctx.send('No bot for Xil')
-        else:
-            await ctx.send(bot_msgs["pokerbot()"])
+        if maintenanceUpdate():
+            await maintenanceCheck(ctx)
+            return
+        await gbfc.getGachabanner(ctx, jp)
 
     @commands.command(no_pm=True, hidden=True, aliases=['drive'])
     @commands.is_owner()
@@ -1873,6 +1856,7 @@ async def checkGWBuff():
     global gw_buffs
     global gw_skip
     global gwbuff_id
+    global gw_task
     gwbuff_id += 1
     tid = gwbuff_id
     try:
@@ -1926,9 +1910,8 @@ async def checkGWBuff():
         await debug_channel.send('CheckGWBuff() #' + str(tid) + ' ended')
     except asyncio.CancelledError:
         await debug_channel.send('CheckGWBuff() #' + str(tid) + ' cancelled')
-        raise
     except Exception as e:
-        await debug_channel.send('CheckGWBuff() #' + str(tid) + ' : ' + str(e))
+        await debug_channel.send('**CheckGWBuff() #' + str(tid) + ' : ' + str(e) + '**')
 
 # build the buff timing list
 def buildBuffTimes():
@@ -2160,7 +2143,7 @@ class GW(commands.Cog):
             msg = ""
             i = 0
             for c in data["result"]:
-                msg += ":crossed_swords: **" + c["data"][0]["name"] + "** :black_small_square: GW**" + str(c["data"][0]["gw_num"]) + "** score: **" + "{:,}".format(c["data"][0]["points"])
+                msg += getEmoteStr('gw') + " **" + c["data"][0]["name"] + "** :black_small_square: GW**" + str(c["data"][0]["gw_num"]) + "** score: **" + "{:,}".format(c["data"][0]["points"])
                 if c["data"][0]["is_seed"]: msg += " (seeded)"
                 msg += "**\n<http://game.granbluefantasy.jp/#guild/detail/" + str(c["id"]) + ">\n"
                 i += 1
@@ -2192,7 +2175,7 @@ class GW(commands.Cog):
             msg = ""
             i = 0
             for c in data["data"]:
-                msg += ":crossed_swords: **" + c["name"] + "** :black_small_square: GW**" + str(c["gw_num"]) + "** score: **" + "{:,}".format(c["points"])
+                msg += getEmoteStr('gw') + " **" + c["name"] + "** :black_small_square: GW**" + str(c["gw_num"]) + "** score: **" + "{:,}".format(c["points"])
                 if c["is_seed"]: msg += " (seeded)**\n"
                 else: msg += "**\n"
                 i += 1
@@ -2335,7 +2318,7 @@ class MizaBOT(commands.Cog):
     async def setGW(self, ctx, day : int, month : int, year : int):
         """Set the GW date
         (You) server only"""
-        if not isDebugServer(ctx.message.author.guild) and (not isYouServer(ctx.message.author.guild) or not isYouMod(ctx.message.author.roles)):
+        if not isDebugServer(ctx.message.author.guild) and not isYouServer(ctx.message.author.guild) and not isMod(ctx.message.author):
             await ctx.send('Only available to (You) FOs')
             return
         global gw
@@ -2373,7 +2356,7 @@ class MizaBOT(commands.Cog):
         """Disable the GW mode
         (it doesn't delete the GW date)
         (You) server only"""
-        if not isDebugServer(ctx.message.author.guild) and (not isYouServer(ctx.message.author.guild) or not isYouMod(ctx.message.author.roles)):
+        if not isDebugServer(ctx.message.author.guild) and not isYouServer(ctx.message.author.guild) and not isMod(ctx.message.author):
             await ctx.send('Only available to (You) FOs')
             return
         global gw
@@ -2388,7 +2371,7 @@ class MizaBOT(commands.Cog):
     async def enableGW(self, ctx):
         """Enable the GW mode
         (You) server only"""
-        if not isDebugServer(ctx.message.author.guild) and (not isYouServer(ctx.message.author.guild) or not isYouMod(ctx.message.author.roles)):
+        if not isDebugServer(ctx.message.author.guild) and not isYouServer(ctx.message.author.guild) and not isMod(ctx.message.author):
             await ctx.send('Only available to (You) FOs')
             return
         global gw
@@ -2408,7 +2391,7 @@ class MizaBOT(commands.Cog):
     async def skipGWBuff(self, ctx):
         """The bot will skip the next GW buff call
         (You) server only"""
-        if not isDebugServer(ctx.message.author.guild) and (not isYouServer(ctx.message.author.guild) or not isYouMod(ctx.message.author.roles)):
+        if not isDebugServer(ctx.message.author.guild) and not isYouServer(ctx.message.author.guild) and not isMod(ctx.message.author):
             await ctx.send('Only available to (You) FOs')
             return
         global gw_skip
@@ -2423,7 +2406,7 @@ class MizaBOT(commands.Cog):
     async def cancelSkipGWBuff(self, ctx):
         """Cancel the GW buff call skipping
         (You) server only"""
-        if not isDebugServer(ctx.message.author.guild) and (not isYouServer(ctx.message.author.guild) or not isYouMod(ctx.message.author.roles)):
+        if not isDebugServer(ctx.message.author.guild) and not isYouServer(ctx.message.author.guild) and not isMod(ctx.message.author):
             await ctx.send('Only available to (You) FOs')
             return
         global gw_skip
@@ -2716,6 +2699,24 @@ class Owner(commands.Cog):
 
     @commands.command(no_pm=True)
     @commands.is_owner()
+    async def cleanRoll(self, ctx):
+        """Remove users with 0 rolls (Owner only)"""
+        global spark_list
+        global savePending
+        count = 0
+        for k in list(spark_list.keys()):
+            sum = spark_list[k][0] + spark_list[k][1] + spark_list[k][2]
+            if sum == 0:
+                spark_list.pop(k)
+                count += 1
+        if count > 0:
+            savePending = True
+            await ctx.send('Removed ' + str(count) + ' user(s)')
+        else:
+            await ctx.send('Removed 0 users')
+
+    @commands.command(no_pm=True)
+    @commands.is_owner()
     async def resetGacha(self, ctx):
         """Reset the gacha settings"""
         if not gbfdm:
@@ -2909,7 +2910,7 @@ class Lucilius(commands.Cog):
         else:
             luciParty[id][1] = "Playing (Extended)"
             savePending = True
-            await ctx.send(":clock10: **Two** more hours have been added to Party " + getEmoteStr(str(id+1)))
+            await ctx.send(getEmoteStr('time') + " **Two** more hours have been added to Party " + getEmoteStr(str(id+1)))
             await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " extended the party in slot " + str(id+1))
             return
 
@@ -3381,7 +3382,7 @@ bot.add_cog(Owner(bot))
 bot.add_cog(Lucilius(bot))
 bot.add_cog(WIP(bot))
 if gbfdm:
-    gbfc = baguette.Baguette(bot, gbfd, savePendingCallback, getEmoteStr, pb_token)
+    gbfc = baguette.Baguette(bot, gbfd, savePendingCallback, getEmoteStr, gbfdd)
     bot.add_cog(gbfc)
 
 #test
