@@ -25,7 +25,7 @@ bot_token = None
 # google drive folder ID where is stored the save data
 bot_drive = None
 # bot description
-description = '''MizaBOT version 4.7
+description = '''MizaBOT version 4.8
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.'''
 # various ids and discord stuff (check the save/config.json examples for details)
@@ -94,6 +94,8 @@ luciMain = None
 luciServer = None
 luciElemRole = [0, 0, 0, 0, 0, 0]
 luciWarning = [0, 0, 0, 0, 0, 0]
+# used by $remind
+reminders = {}
 
 # ignore this
 gbfdd = None
@@ -277,6 +279,33 @@ def fixCase(term): # term is a string
         else: # everything else,
             fixed += term[i] # we save
     return fixed # return the result
+
+# function to build a timedelta from a string (for $remind)
+def makeTimedelta(d): # return None if error
+    flags = {'d':False,'h':False,'m':False,'s':False}
+    tmp = 0 # buffer
+    sum = 0 # delta in seconds
+    for i in range(0, len(d)):
+        if d[i].isdigit():
+            tmp = (tmp * 10) + int(d[i])
+        elif d[i].lower() in flags:
+            c = d[i].lower()
+            if flags[c]:
+                return None
+            flags[c] = True
+            if c == 'd':
+                sum += tmp * 86400
+            elif c == 'h':
+                sum += tmp * 3600
+            elif c == 'm':
+                sum += tmp * 60
+            elif c == 's':
+                sum += tmp
+            tmp = 0
+        else:
+            return None
+    if tmp != 0: return None
+    return timedelta(days=sum//86400, seconds=sum%86400)
 
 # #####################################################################################
 # math parser used by $calc
@@ -545,7 +574,7 @@ def getEmote(key): # retrieve a custom emote
 
 def getEmoteStr(key): # same stuff but we get the string equivalent
     e = getEmote(key)
-    if e is None: return ""
+    if e is None: return ":" + key + ":"
     return str(e)
 
 async def react(ctx, key): # react using a custom emote
@@ -655,6 +684,7 @@ def load():
     global luciMember
     global luciWarning
     global gbfd 
+    global reminders
     with open('save.json') as f:
         data = json.load(f)
         if 'bot' in data: bot_m = datetime.strptime(data["bot"], '%Y-%m-%d %H:%M:%S')
@@ -722,6 +752,12 @@ def load():
             luciWarning = []
             for w in data['luciliuswarning']:
                 luciWarning.append(int(w))
+        if 'reminders' in data:
+            reminders = {}
+            for u in data['reminders']:
+                reminders[int(u)] = []
+                for d in data['reminders'][u]:
+                    reminders[int(u)].append([datetime.strptime(d[0], '%Y-%m-%d %H:%M:%S'), d[1]])
         gw = False
         if gw_task:
             gw_task.cancel()
@@ -782,18 +818,19 @@ def save(sortBackup=True):
         else:
             data['stream_time'] = False
         data['schedule'] = gbfschedule
-        data['st'] = st_list.copy()
-        data['spark'] = spark_list.copy()
-        data['spark_ban'] = spark_ban.copy()
-        data['lucilius'] = luciParty.copy()
-        data['luciliusban'] = luciBlacklist.copy()
-        data['luciliusmember'] = luciMember.copy()
-        data['luciliuswarning'] = luciWarning.copy()
+        data['st'] = st_list
+        data['spark'] = spark_list
+        data['spark_ban'] = spark_ban
+        data['lucilius'] = luciParty
+        data['luciliusban'] = luciBlacklist
+        data['luciliusmember'] = luciMember
+        data['luciliuswarning'] = luciWarning
         data['gw'] = {}
         data['gw']['state'] = gw
-        data['gw']['dates'] = gw_dates.copy()
-        data['gw']['buffs'] = gw_buffs.copy()
+        data['gw']['dates'] = gw_dates
+        data['gw']['buffs'] = gw_buffs
         data['gw']['skip'] = gw_skip
+        data['reminders'] = reminders
         with open('save.json', 'w') as outfile:
             json.dump(data, outfile, default=str)
         if not saveDrive(json.dumps(data, default=str), sortBackup):
@@ -864,6 +901,9 @@ class MizabotHelp(commands.DefaultHelpCommand):
                     embed = discord.Embed(title=getEmoteStr('mark') + " **" + category[:-1] + "** Category", color=embed.colour) # random color
                 if len(embed.fields) > 0:
                     await ctx.author.send(embed=embed)
+
+        embed = discord.Embed(title=getEmoteStr('question') + " Need more help?", description="Use help <command name>\nOr help <category name>", color=random.randint(0, 16777216))
+        await ctx.author.send(embed=embed)
 
     async def send_command_help(self, command):
         ctx = self.context
@@ -949,18 +989,19 @@ async def backtask():
         if savePending and not exit_flag:
             await autosave()
 
-# background task managing the gbfg lucilius party system
-async def lucitask():
+# background task managing the gbfg lucilius party system and reminder system
+async def minutetask():
     global savePending
     global luciParty
     global luciMember
     global luciWarning
-    await debug_channel.send("lucitask() is starting up")
+    global reminders
+    await debug_channel.send("minutetask() is starting up")
     guild = bot.get_guild(luciServer)
     await asyncio.sleep(5)
     while True:
         if exit_flag: return
-        # party expire
+        # lucilius party expire
         try:
             c = datetime.utcnow()
             for i in range(0, len(luciParty)):
@@ -991,11 +1032,11 @@ async def lucitask():
                         luciWarning[i] = 0
                         savePending = True
                         await lucimain_channel.send(":x: **Party** " + getEmoteStr(str(i+1)) + " has been automatically disbanded (Time Limit exceeded)")
-                        await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: Party #" + str(i+1) + " has been automatically disbanded (Time Limit exceeded)")
+                        await sendLuciLog("Party " + getEmoteStr(str(i+1)) + " has been automatically disbanded (Time Limit exceeded)")
         except Exception as e:
-            await debug_channel.send("lucitask() A: " + str(e))
+            await debug_channel.send("minutetask() A: " + str(e))
         await asyncio.sleep(0.001)
-        # member check
+        # lucilius member check
         try:
             fulllist = lucimain_channel.members # members in the channel
             memberlist = {}
@@ -1004,24 +1045,18 @@ async def lucitask():
             msg = ""
             for m in fulllist: # reading the current real member list
                 if m.id not in luciMember: # if not in our database
-                    msg += "**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + m.display_name + " joined the channel (discord id: " + str(m) + " / id: " + str(m.id) + ")\n" # update the log
                     to_add[m.id] = 0 # plan to add
-                    if len(msg) > 1500: 
-                        await lucilog_channel.send(msg)
-                        msg = ""
+                    await sendLuciLog("Joined the channel", m)
                 else: # take not we encountered tthis member
                     memberlist[m.id] = m
             for i in luciMember: # reading our database
                 if i not in memberlist: # if not in the members we encountered, he/she left
                     u = guild.get_member(i) # get the user
                     if u is not None: # update the lod
-                        msg += "**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + u.display_name + " left the channel (discord id: " + str(u) + " / id: " + str(u.id) + ")\n"
+                        await sendLuciLog("Left the channel", u)
                     else:
-                        msg += "**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: <deleted-user> left the channel (id: " + str(i) + ")\n"
+                        await sendLuciLog("Unknown user left the channel")
                     to_del[i] = 0
-                    if len(msg) > 1500: 
-                        await lucilog_channel.send(msg)
-                        msg = ""
             for i in to_add:
                 luciMember[i] = 0
             for i in to_del:
@@ -1029,11 +1064,29 @@ async def lucitask():
             if len(to_add) > 0 or len(to_del) > 0:
                 savePending = True
                 await debug_channel.send("Lucilius: Member List changed")
-            if len(msg) > 0:
-                await lucilog_channel.send(msg)
         except Exception as e:
-            await debug_channel.send("lucitask() B: " + str(e))
-        await asyncio.sleep(80)
+            await debug_channel.send("minutetask() B: " + str(e))
+        await asyncio.sleep(0.001)
+        # reminders
+        try:
+            c = datetime.utcnow() + timedelta(seconds=32430) # + 30sec
+            for r in list(reminders.keys()):
+                di = 0
+                u = bot.get_user(r)
+                if u is None: continue
+                while di < len(reminders[r]):
+                    if c > reminders[r][di][0]:
+                        await u.send(reminders[r][di][1])
+                        reminders[r].pop(di)
+                        savePending = True
+                    else:
+                        di += 1
+                if len(reminders[r]) == 0:
+                    reminders.pop(r)
+                    savePending = True
+        except Exception as e:
+            await debug_channel.send("minutetask() C: " + str(e))
+        await asyncio.sleep(60)
 
 # THE FIRST THING EVER RUNNING BY THE BOT IS HERE
 @bot.event
@@ -1064,7 +1117,7 @@ async def on_ready():
     await debug_channel.send(msg)
     # start the background tasks
     bot.loop.create_task(backtask())
-    bot.loop.create_task(lucitask())
+    bot.loop.create_task(minutetask())
 
 # happen when the bot joins a guild
 @bot.event
@@ -1102,7 +1155,12 @@ async def on_command_error(ctx, error):
     elif msg.find('Command "') == 0 or msg == 'Command raised an exception: Forbidden: FORBIDDEN (status code: 403): Missing Permissions':
         return
     else:
-        await debug_channel.send('Error: `' + msg + "`\nCommand: `" + ctx.message.content + "`\nAuthor: `" + ctx.message.author.name + "`\nServer: `" + ctx.message.author.guild.name + "`")
+        embed = discord.Embed(title="⚠ Error caused by " + str(ctx.message.author), color=random.randint(0, 16777216)) # random color
+        embed.add_field(name="Command", value='`' + ctx.message.content + '`', inline=False)
+        embed.add_field(name="Server", value=ctx.message.author.guild.name, inline=False)
+        embed.add_field(name="Message", value=msg, inline=False)
+        embed.set_thumbnail(url=ctx.author.avatar_url)
+        await debug_channel.send(embed=embed)
 
 class General(commands.Cog):
     """General commands."""
@@ -1191,6 +1249,84 @@ class General(commands.Cog):
         else:
             await ctx.send('I couldn\'t find a single /hgg2d/ thread :pensive:')
 
+    @commands.command(no_pm=True)
+    @commands.cooldown(1, 3, commands.BucketType.user)
+    async def remind(self, ctx, duration : str, *terms : str):
+        """Tell the bot to remind you of something (±30 seconds precision)
+        <duration> format: XdXhXmXs for day, hour, minute, second, each are optionals"""
+        global reminders
+        global savePending
+        msg = " ".join(terms)
+        d = makeTimedelta(duration)
+        if ctx.author.id not in reminders:
+            reminders[ctx.author.id] = []
+        if len(reminders[ctx.author.id]) >= 5:
+            await ctx.send("Sorry, I'm limited to 5 reminders per user :bow:")
+            return
+        if d is None:
+            await ctx.send("Invalid duration string `" + duration + "`")
+            return
+        if msg == "":
+            await ctx.send("Tell me what I'm supposed to remind you :thinking:")
+            return
+        if len(msg) > 200:
+            await ctx.send("Reminders are limited to 200 characters")
+            return
+        try:
+            reminders[ctx.author.id].append([datetime.utcnow().replace(microsecond=0) + timedelta(seconds=32400) + d, msg]) # keep JST
+            savePending = True
+            try:
+                cmds = self.bot.get_cog('General').get_commands()
+                if cmds:
+                    for c in cmds:
+                        if c.name == 'remindlist':
+                            await ctx.invoke(c)
+                            break
+            except Exception as e:
+                await ctx.send("**Reminder at {0:%Y/%m/%d %H:%M} JST**\n`".format(reminders[ctx.author.id][-1][0]) + msg + "`")
+        except:
+            await ctx.send("An error happened")
+
+    @commands.command(no_pm=True, aliases=['rl'])
+    @commands.cooldown(1, 3, commands.BucketType.user)
+    async def remindlist(self, ctx):
+        """Post your current list of reminders"""
+        if ctx.author.id not in reminders or len(reminders[ctx.author.id]) == 0:
+            await ctx.send("You don't have any reminders")
+        else:
+            embed = discord.Embed(title=ctx.author.display_name + "'s Reminder List", color=random.randint(0, 16777216)) # random color
+            embed.set_thumbnail(url=ctx.author.avatar_url)
+            for i in range(0, len(reminders[ctx.author.id])):
+                embed.add_field(name="#" + str(i) + " ▪ " + "{0:%Y/%m/%d %H:%M} JST".format(reminders[ctx.author.id][i][0]), value=reminders[ctx.author.id][i][1], inline=False)
+            await ctx.send(embed=embed)
+
+    @commands.command(no_pm=True, aliases=['rd'])
+    @commands.cooldown(1, 3, commands.BucketType.user)
+    async def reminddel(self, ctx, id : int):
+        """Delete one of your reminders"""
+        global reminders
+        global savePending
+        if ctx.author.id not in reminders or len(reminders[ctx.author.id]) == 0:
+            await ctx.send("You don't have any reminders")
+        else:
+            if id < 0 or id >= len(reminders[ctx.author.id]):
+                await ctx.send("Invalid id `" + str(id) + "`")
+            else:
+                reminders[ctx.author.id].pop(id)
+                if len(reminders[ctx.author.id]) == 0:
+                    reminders.pop(ctx.author.id)
+                savePending = True
+                await ctx.message.add_reaction('✅') # white check mark
+                try:
+                    cmds = self.bot.get_cog('General').get_commands()
+                    if cmds:
+                        for c in cmds:
+                            if c.name == 'remindlist':
+                                await ctx.invoke(c)
+                                break
+                except Exception as e:
+                    pass
+
 class GBF_Game(commands.Cog):
     """GBF related commands."""
     def __init__(self, bot):
@@ -1208,7 +1344,7 @@ class GBF_Game(commands.Cog):
         else: msg = ""
         r = getRoll(300*l)
 
-        if r == 0: msg += "Luckshitter! {} rolled a " + getEmoteStr('SSR')
+        if r == 0: msg += "Luckshitter! {} got a " + getEmoteStr('SSR')
         elif r == 1: msg += "{} got a " + getEmoteStr('SR')
         else: msg += "{} got a " + getEmoteStr('R') + ", too bad!"
         await ctx.send(msg.format(ctx.message.author.mention))
@@ -1261,8 +1397,8 @@ class GBF_Game(commands.Cog):
                 i += 1
         msg += "{} rolled:\n"
         msg += getEmoteStr('SSR') + ": " + str(result[0]) + "\n"
-        msg += getEmoteStr('SR') + ":  " + str(result[1]) + "\n"
-        msg += getEmoteStr('R') + ":   " + str(result[2]) + "\n"
+        msg += getEmoteStr('SR') + ": " + str(result[1]) + "\n"
+        msg += getEmoteStr('R') + ": " + str(result[2]) + "\n"
         msg += "\nSSR rate: **" + str(100*result[0]/300) + "%**"
 
         await ctx.send(msg.format(ctx.message.author.mention))
@@ -1335,8 +1471,8 @@ class GBF_Game(commands.Cog):
                 break
         msg += "{} mukku stopped at **" + str(count*10) + "** rolls\n"
         msg += getEmoteStr('SSR') + ": " + str(result[0]) + "\n"
-        msg += getEmoteStr('SR') + ":  " + str(result[1]) + "\n"
-        msg += getEmoteStr('R') + ":   " + str(result[2]) + "\n"
+        msg += getEmoteStr('SR') + ": " + str(result[1]) + "\n"
+        msg += getEmoteStr('R') + ": " + str(result[2]) + "\n"
         msg += "\nSSR rate: **" + str(100*result[0]/(count*10)) + "%**"
 
         await ctx.send(msg.format(ctx.message.author.mention))
@@ -1353,12 +1489,6 @@ class GBF_Game(commands.Cog):
         elif d < 6500: await ctx.send('{} got **30** rolls! :clap:'.format(ctx.message.author.mention))
         elif d < 19000: await ctx.send('{} got **20** rolls :open_mouth:'.format(ctx.message.author.mention))
         else: await ctx.send('{} got **10** rolls :pensive:'.format(ctx.message.author.mention))
-
-    @commands.command(no_pm=True, aliases=['bet', 'yakuza', 'sen'])
-    @commands.cooldown(30, 60, commands.BucketType.guild)
-    async def rig(self, ctx):
-        """Post the yakuza rig"""
-        await ctx.send('It\'s always SEN')
 
     @commands.command(no_pm=True, aliases=['setcrystal', 'setspark'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
@@ -1454,33 +1584,24 @@ class GBF_Game(commands.Cog):
                 return
             ar = -1
             i = 0
-            msg = getEmoteStr('crown') + " **Spark ranking** of **" + guild.name + "**\n"
+            embed = discord.Embed(title=getEmoteStr('crown') + " Spark ranking of " + guild.name, color=random.randint(0, 16777216)) # random color
+            embed.set_thumbnail(url=guild.icon_url)
+            emotes = [getEmoteStr('SSR'), getEmoteStr('SR'), getEmoteStr('R'), "▪", "▪", "▪", "▪", "▪", "▪", "▪"]
             for key, value in sorted(ranking.items(), key = itemgetter(1), reverse = True):
                 if i < 10:
                     fr = math.floor(value)
-                    msg += "**#" + str(i+1) + " :black_small_square: " + str(guild.get_member(key).display_name) + "** has **" + str(fr) + "** roll"
+                    msg = str(fr) + " roll"
                     if fr != 1: msg += "s"
-                    if fr >= 900: msg += " :sweat: \n"
-                    elif fr >= 600: msg += " :pensive:\n"
-                    elif fr >= 350: msg += " :thinking:\n"
-                    elif fr >= 300: msg += " :laughing:\n"
-                    elif fr >= 240: msg += " :thumbsup:\n"
-                    elif fr >= 200: msg += " :ok_hand:\n"
-                    elif fr >= 150: msg += " :relieved:\n"
-                    elif fr >= 100: msg += " :clap:\n"
-                    elif fr >= 50: msg += " :wheelchair:\n"
-                    elif fr >= 20: msg += " :rage:\n"
-                    else: msg += " :nauseated_face:\n"
+                    embed.add_field(name="#" + str(i+1) + " " + emotes[i] + " " + guild.get_member(key).display_name, value=msg, inline=True)
                 if key == ctx.message.author.id:
                     ar = i
+                    if i >= 10: break
                 i += 1
                 if i >= 100:
                     break
             if ar >= 10:
-                msg += "\nYou are ranked **#" + str(ar+1) + "**"
-            elif ar == -1:
-                msg += "\nYou aren't ranked, you have been banned or your ranking is too low\n(You must be at least top 100)"
-            await ctx.send(msg)
+                embed.add_field(name="Your rank", value="#" + str(ar+1), inline=False)
+            await ctx.send(embed=embed)
         except Exception as e:
             await ctx.send("Sorry, something went wrong :bow:")
             await debug_channel.send("rollRanking() : " + str(e))
@@ -1561,11 +1682,15 @@ class GBF_Game(commands.Cog):
         m = int(m + mr + 300)
         if ctx.author.id == 157623260526280704 or chance == 1:
             h = h * 35
-            m = m * 50
+            m = m * 51
         elif ctx.author.id == wawi_id or chance == 2:
             h = h // 140
             m = m // 60
-        await ctx.send(ctx.message.author.mention + '\'s quota for today:\n**{:,}** honors\n**{:,}** meats\nHave fun :relieved:'.format(h, m).replace(',', ' '))
+        embed = discord.Embed(title=getEmoteStr('gw') + " " + ctx.author.display_name + "'s daily quota", color=random.randint(0, 16777216)) # random color
+        embed.add_field(name="Honor", value='{:,}'.format(h), inline=True)
+        embed.add_field(name="Meat", value='{:,}'.format(m), inline=True)
+        embed.set_thumbnail(url=ctx.author.avatar_url)
+        await ctx.send(embed=embed)
 
 # the GBF cog
 class GBF_Utility(commands.Cog):
@@ -2153,16 +2278,18 @@ class GW(commands.Cog):
             req =  request.Request("http://gbf.gw.lt/gw-guild-searcher/search", data=str(json.dumps({"search" : crew})).encode('utf-8'))
             resp = request.urlopen(req, timeout=8)
             data = json.loads(resp.read())
-            msg = ""
+            embed = discord.Embed(title=getEmoteStr('gw') + " Guild Searcher", url="http://gbf.gw.lt/gw-guild-searcher/search", color=random.randint(0, 16777216)) # random color
             i = 0
             for c in data["result"]:
-                msg += getEmoteStr('gw') + " **" + c["data"][0]["name"] + "** :black_small_square: GW**" + str(c["data"][0]["gw_num"]) + "** score: **" + "{:,}".format(c["data"][0]["points"])
+                msg = "GW**" + str(c["data"][0]["gw_num"]) + "** score: **" + "{:,}".format(c["data"][0]["points"])
                 if c["data"][0]["is_seed"]: msg += " (seeded)"
-                msg += "**\n<http://game.granbluefantasy.jp/#guild/detail/" + str(c["id"]) + ">\n"
+                msg += "**\nhttp://game.granbluefantasy.jp/#guild/detail/" + str(c["id"])
+                embed.add_field(name=c["data"][0]["name"], value=msg, inline=False)
                 i += 1
                 if i >= 5: break
-            if len(data["result"]) > 5: msg += "\n**5 / " + str(len(data["result"])) + " results shown, please go here for more: <http://gbf.gw.lt/gw-guild-searcher/>**"
-            if msg: await ctx.send(msg)
+            if len(data["result"]) > 5: 
+                embed.add_field(name="5 / " + str(len(data["result"])) + " results shown", value="please go here for more: http://gbf.gw.lt/gw-guild-searcher/", inline=False)
+            if i > 0: await ctx.send(embed=embed)
             else: await ctx.send("Crew not found :pensive:")
         except timeout:
             await ctx.send("I can't search :pensive:\nIs <http://gbf.gw.lt/gw-guild-searcher> down?")
@@ -2185,17 +2312,20 @@ class GW(commands.Cog):
             req =  request.Request("http://gbf.gw.lt/gw-guild-searcher/info/" + str(id))
             resp = request.urlopen(req, timeout=8)
             data = json.loads(resp.read())
-            msg = ""
+            embed = discord.Embed(title=getEmoteStr('gw') + " Guild Searcher", url="http://gbf.gw.lt/gw-guild-searcher/search", color=random.randint(0, 16777216)) # random color
             i = 0
+            if len(data["data"]) > 0:
+                embed.add_field(name=data["data"][0]["name"], value="http://game.granbluefantasy.jp/#guild/detail/" + str(data["id"]), inline=False)
             for c in data["data"]:
-                msg += getEmoteStr('gw') + " **" + c["name"] + "** :black_small_square: GW**" + str(c["gw_num"]) + "** score: **" + "{:,}".format(c["points"])
-                if c["is_seed"]: msg += " (seeded)**\n"
-                else: msg += "**\n"
+                msg = "score: **" + "{:,}".format(c["points"])
+                if c["is_seed"]: msg += " (seeded)**"
+                else: msg += "**"
+                embed.add_field(name="GW" + str(c["gw_num"]), value=msg, inline=True)
                 i += 1
-                if i >= 5: break
-            if msg: msg += "<http://game.granbluefantasy.jp/#guild/detail/" + str(data["id"]) + ">\n"
-            if len(data["data"]) > 5: msg += "\n**5 / " + str(len(data["data"])) + " past GW results shown, please go here for more: <http://gbf.gw.lt/gw-guild-searcher/>**"
-            if msg: await ctx.send(msg)
+                if i >= 6: break
+            if len(data["data"]) > 6: 
+                embed.add_field(name="6 / " + str(len(data["data"])) + " past GWs shown", value="please go here for more: http://gbf.gw.lt/gw-guild-searcher/", inline=False)
+            if i > 0: await ctx.send(embed=embed)
             else: await ctx.send("Crew not found :pensive:")
         except timeout:
             await ctx.send("I can't search :pensive:\nIs <http://gbf.gw.lt/gw-guild-searcher> down?")
@@ -2224,8 +2354,7 @@ class MizaBOT(commands.Cog):
     @commands.command(no_pm=True)
     @commands.cooldown(1, 3, commands.BucketType.guild)
     async def setPrefix(self, ctx, prefix_string : str):
-        """Set the prefix used on your server (default: '$')
-        Requires the "Manage Messages" permission"""
+        """Set the prefix used on your server (Mod Only)"""
         global prefixes
         global savePending
         if not isMod(ctx.message.author): return
@@ -2237,8 +2366,7 @@ class MizaBOT(commands.Cog):
     @commands.command(no_pm=True)
     @commands.cooldown(1, 1, commands.BucketType.guild)
     async def resetPrefix(self, ctx):
-        """Reset the prefix used on your server to '$'
-        Requires the "Manage Messages" permission"""
+        """Reset the prefix used on your server to '$' (Mod Only)"""
         global prefixes
         global savePending
         if not isMod(ctx.message.author): return
@@ -2283,8 +2411,7 @@ class MizaBOT(commands.Cog):
 
     @commands.command(no_pm=True)
     async def delST(self, ctx):
-        """Delete the ST setting of this server
-        Requires the "Manage Messages" permission"""
+        """Delete the ST setting of this server (Mod Only)"""
         global savePending
         if not isMod(ctx.message.author): return
         global st_list
@@ -2298,8 +2425,7 @@ class MizaBOT(commands.Cog):
 
     @commands.command(no_pm=True)
     async def setST(self, ctx, st1 : int, st2 : int):
-        """Set the two ST of this server
-        Requires the "Manage Messages" permission"""
+        """Set the two ST of this server (Mod Only)"""
         if not isMod(ctx.message.author): return
         global st_list
         global savePending
@@ -2312,10 +2438,9 @@ class MizaBOT(commands.Cog):
 
     @commands.command(no_pm=True, aliases=['banspark'])
     async def banRoll(self, ctx, user: discord.Member):
-        """Ban an user from the roll ranking
+        """Ban an user from the roll ranking (Mod Only)
         To avoid retards with fake numbers
-        The ban is across all servers
-        Requires the "Manage Messages" permission"""
+        The ban is across all servers"""
         global savePending
         global spark_ban
         if not isMod(ctx.message.author): return
@@ -2756,6 +2881,15 @@ class Owner(commands.Cog):
 luciStr = ['wish them good luck :wave:', 'bet on the MVP element :top:', 'another fail for the council :pensive:']
 elemStr = {"fire":0, "water":1, "gay":1, "wawi":1, "earth":2, "dirt":2, "wind":3, "roach":3, "light":4, "dark":5}
 elemEmote = {"fire":"fire", "water":"water", "gay":"water", "wawi":"water", "earth":"earth", "dirt":"earth", "wind":"wind", "roach":"wind", "light":"light", "dark":"dark"}
+
+async def sendLuciLog(msg, user = None):
+    embed = discord.Embed(title=msg, color=random.randint(0, 16777216)) # random color
+    if user is not None:
+        embed.set_footer(text=str(user) + " ▪ User ID: " + str(user.id))
+        embed.set_thumbnail(url=user.avatar_url)
+    embed.add_field(name="Date", value=datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S"), inline=False)
+    await lucilog_channel.send(embed=embed)
+
 class Lucilius(commands.Cog):
     """/gbfg/ Lucilius commands."""
     def __init__(self, bot):
@@ -2764,7 +2898,7 @@ class Lucilius(commands.Cog):
     @commands.command(no_pm=True, aliases=['lucilist'])
     @commands.cooldown(1, 3, commands.BucketType.guild)
     async def llist(self, ctx, id : int = 0):
-        """List the Lucilius parties
+        """List the Lucilius parties (Lucilius Only)
         You can specify the number to get details"""
         if not isLuciliusMainChannel(ctx.channel) and not isLuciliusPartyChannel(ctx.channel): return
         if id == 0:
@@ -2825,7 +2959,7 @@ class Lucilius(commands.Cog):
     @commands.command(no_pm=True, aliases=['lucimake'])
     @commands.cooldown(2, 20, commands.BucketType.user)
     async def lmake(self, ctx):
-        """Make a new party
+        """Make a new party (Lucilius Only)
         you have 10 minutes to start before the automatic disband"""
         global savePending
         global luciParty
@@ -2848,13 +2982,13 @@ class Lucilius(commands.Cog):
                 luciParty[i] = [datetime.utcnow().replace(microsecond=0), "Preparing", ctx.author.id]
                 savePending = True
                 await ctx.send(":white_check_mark: Party slot " + getEmoteStr(str(i+1)) + " given to " + ctx.author.display_name + "\nYou have 10 minutes for people to join using `%ljoin` and you to start using `%lstart`")
-                await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " made a party in slot " + str(i+1))
+                await sendLuciLog("New party in slot " + getEmoteStr(str(i+1)), ctx.author)
                 return
         await ctx.send("All slots are in use, please wait")
 
     @commands.command(no_pm=True, aliases=['lucidisband'])
     async def ldisband(self, ctx, id : int = 0):
-        """Disband a party
+        """Disband a party (Lucilius Only)
         you have to be leader of the party
         or, if you are a moderator, you can specify a party number to disband it"""
         global savePending
@@ -2892,15 +3026,15 @@ class Lucilius(commands.Cog):
             savePending = True
             if mod:
                 await ctx.send(":x: Party " + getEmoteStr(str(id+1)) + " is now free (moderator action: `" + ctx.author.display_name + "`)")
-                await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: Moderator " + ctx.author.display_name + " disbanded the party in slot " + str(id+1))
+                await sendLuciLog("Party " + getEmoteStr(str(id+1)) + " disbanded by moderator", ctx.author)
             else:
                 await lucimain_channel.send(":x: Party " + getEmoteStr(str(id+1)) + " is now free")
-                await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " disbanded the party in slot " + str(id+1))
+                await sendLuciLog("Party " + getEmoteStr(str(id+1)) + " disbanded by leader", ctx.author)
             return
 
     @commands.command(no_pm=True, aliases=['luciextend'])
     async def lextend(self, ctx):
-        """Extend a party timer
+        """Extend a party timer (Lucilius Only)
         you have to be leader of the party"""
         global savePending
         global luciParty
@@ -2920,13 +3054,13 @@ class Lucilius(commands.Cog):
             luciParty[id][1] = "Playing (Extended)"
             savePending = True
             await ctx.send(getEmoteStr('time') + " **Two** more hours have been added to Party " + getEmoteStr(str(id+1)))
-            await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " extended the party in slot " + str(id+1))
+            await sendLuciLog("Party " + getEmoteStr(str(id+1)) + " time extended by leader", ctx.author)
             return
 
     @commands.command(no_pm=True, aliases=['lucistart'])
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def lstart(self, ctx):
-        """Start fighting with your party"""
+        """Start fighting with your party (Lucilius Only)"""
         global savePending
         global luciParty
         if not isLuciliusMainChannel(ctx.channel): return
@@ -2957,7 +3091,7 @@ class Lucilius(commands.Cog):
                             except:
                                 pass
                         await lc.send(msg)
-                        await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " started a fight with the party in slot " + str(i+1))
+                        await sendLuciLog("Party " + getEmoteStr(str(i+1)) + " started playing", ctx.author)
                         # change the channel topic with member names
                         msg = ""
                         for j in range(2, len(luciParty[i])):
@@ -2971,14 +3105,13 @@ class Lucilius(commands.Cog):
                         await lc.edit(topic=msg)
                     except Exception as e:
                         await debug_channel.send("LuciStart(): " + str(e))
-                        await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: LuciStart(): " + str(e))
                         await ctx.send("An error happened")
                 return
         await ctx.send("You aren't leader of a party")
 
     @commands.command(no_pm=True, aliases=['lucikick'])
     async def lkick(self, ctx, user: discord.Member):
-        """Kick a member from your party"""
+        """Kick a member from your party (Lucilius Only)"""
         global savePending
         global luciParty
         if not isLuciliusMainChannel(ctx.channel) and not isLuciliusPartyChannel(ctx.channel): return
@@ -3014,7 +3147,7 @@ class Lucilius(commands.Cog):
                             if len(topic) > 1000: topic = topic[:1000] + "..."
                             await lc.edit(topic=topic)
                         await ctx.send(":no_entry: " + user.display_name + " has been removed from party slot " + getEmoteStr(str(i+1)))
-                        await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " kicked " + user.display_name + " from the party in slot " + str(i+1) + extra)
+                        await sendLuciLog("Kicked from Party " + getEmoteStr(str(i+1)) + " by leader " + str(ctx.author), user)
                         return
                 await ctx.send(user.display_name + " not found in party slot " + getEmoteStr(str(i+1)))
                 return
@@ -3023,7 +3156,7 @@ class Lucilius(commands.Cog):
     @commands.command(no_pm=True, aliases=['lucijoin'])
     @commands.cooldown(3, 20, commands.BucketType.user)
     async def ljoin(self, ctx, id : int = -999999999998):
-        """Join a party"""
+        """Join a party (Lucilius Only)"""
         global savePending
         global luciParty
         if not isLuciliusMainChannel(ctx.channel): return
@@ -3077,7 +3210,7 @@ class Lucilius(commands.Cog):
                     if i < len(luciParty[id]) - 1:
                         msg += ", "
                 msg += "\nUse `%llist " + str(id+1) + "` to see your party or `%lstart` to start playing"
-            await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " joined the party in slot " + str(id+1) + " (" + str(len(luciParty[id])-2) + "/6)")
+            await sendLuciLog("Joined Party " + getEmoteStr(str(id+1)), ctx.author)
             await ctx.send(ctx.author.display_name + " added to party " + getEmoteStr(str(id+1)))
             if len(msg) > 0:
                 await ctx.send(msg)
@@ -3085,7 +3218,7 @@ class Lucilius(commands.Cog):
     @commands.command(no_pm=True, aliases=['luciadd'])
     @commands.cooldown(3, 20, commands.BucketType.user)
     async def ladd(self, ctx, user: discord.Member):
-        """Get someone in your party while playing
+        """Get someone in your party while playing (Lucilius Only)
         you have to be leader of the party"""
         global savePending
         global luciParty
@@ -3134,13 +3267,13 @@ class Lucilius(commands.Cog):
             await lc.edit(topic=topic)
             # msg
             await lc.send(user.mention + " added to party " + getEmoteStr(str(id+1)))
-            await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + user.display_name + " has been added to the party in slot " + str(id+1) + " (" + str(len(luciParty[id])-2) + "/6) by " + ctx.author.display_name)
+            await sendLuciLog("Added to Party " + getEmoteStr(str(id+1)) + " (" + str(len(luciParty[id])-2) + "/6) byleader " + str(ctx.author), user)
             await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, aliases=['lucileave'])
     @commands.cooldown(1, 20, commands.BucketType.user)
     async def lleave(self, ctx):
-        """Leave a party"""
+        """Leave a party (Lucilius Only)"""
         global savePending
         global luciParty
         if not isLuciliusMainChannel(ctx.channel) and not isLuciliusPartyChannel(ctx.channel): return
@@ -3186,19 +3319,25 @@ class Lucilius(commands.Cog):
                 if len(topic) > 1000: topic = topic[:1000] + "..."
                 await lc.edit(topic=topic)
             # msg
-            await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " left from the party in slot " + str(i+1) + extra)
+            await sendLuciLog("Left from Party " + getEmoteStr(str(i+1)), ctx.author)
             await ctx.send(ctx.author.display_name + " left from party " + getEmoteStr(str(i+1)))
 
     @commands.command(no_pm=True, aliases=['lucihelp'])
     @commands.cooldown(2, 60, commands.BucketType.user)
     async def lhelp(self, ctx):
-        """Post the command list"""
+        """Post the Lucilius command list (Lucilius Only)"""
         if not isLuciliusMainChannel(ctx.channel) and not isLuciliusPartyChannel(ctx.channel): return
-        await ctx.send(":regional_indicator_p: Party:\n```\nlmake              Make a new party\nljoin <party #>    Join a party\nlleave             Leave the party\nllist              List the Lucilius parties\nllist <party #>    List the party members\n```\n:regional_indicator_l: Party Leader:\n```\nlstart             Start fighting with your party\nldisband           Disband your party\nlextend            Add two hours to a playing party timer (once)\nladd <ping>        Add a member to your party while playing\nlkick <ping>       Kick a member from your party\n```\n:regional_indicator_m: Moderation:\n```\nlban <ping><type>  Ban an user (type: join, make or all)\nlunban <ping>      Unban an user\nldisband <party #> Force disband a party\n```\nUse `lhelp` to show this text or `help <command name>` for details.")
+        embed = discord.Embed(title=getEmoteStr('gw') + " /gbfg/ Lucilius System Help", color=random.randint(0, 16777216)) # random color
+        embed.add_field(name=getEmoteStr(random.choice(["fire", "water", "earth", "wind", "light", "dark"])) + " Role", value="`iam <elements>` ▪ Add to yourself the element role(s)\n`iamnot <elements>` ▪ Remove from yourself the element role(s)", inline=False)
+        embed.add_field(name=getEmoteStr('gold') + " Party", value="`lmake` ▪ Make a new party\n`ljoin <party #>` ▪ Join a party\n`lleave` ▪ Leave the party\n`llist` ▪ List the Lucilius parties\n`llist <party #>` ▪ List the party members", inline=False)
+        embed.add_field(name=getEmoteStr('red') + " Leader", value="\n`lstart` ▪ Start fighting with your party\n`ldisband` ▪ Disband your party\n`lextend` ▪ Add two hours to a playing party timer (once)\n`ladd <ping>` ▪ Add a member to your party while playing\n`lkick <ping>` ▪ Kick a member from your party\n`lcall <elements>` ▪ Ping the element(s) in the main channel", inline=False)
+        embed.add_field(name=getEmoteStr('crown') + " Moderation", value="`lban <ping><type>` ▪ Ban an user (type: join, make or all)\n`lunban <ping>` ▪ Unban an user\n`ldisband <party #>` ▪ Force disband a party", inline=False)
+        await ctx.send(embed=embed)
+        
 
     @commands.command(no_pm=True, aliases=['luciban'])
     async def lban(self, ctx, user: discord.Member, type : str = ""):
-        """Ban an user (Mod only)
+        """Ban an user from Lucilius (Mod only)
         you must specify 'all', 'make' or 'join' for the ban type"""
         global savePending
         global luciBlacklist
@@ -3214,24 +3353,24 @@ class Lucilius(commands.Cog):
         if type == 'all':
             luciBlacklist[user.id] = 0
             savePending = True
-            await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " banned " + user.display_name + " (id:" + str(user.id) + ") from making and joining parties")
+            await sendLuciLog("Banned from making and joining parties by " + str(ctx.author), user)
             await ctx.send(user.display_name + ' has been banned from making and joining parties')
         elif type.lower() == 'make':
             luciBlacklist[user.id] = 1
             savePending = True
-            await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " banned " + user.display_name + " (id:" + str(user.id) + ") from making parties")
+            await sendLuciLog("Banned from making parties by " + str(ctx.author), user)
             await ctx.send(user.display_name + ' has been banned from making parties')
         elif type.lower() == 'join':
             luciBlacklist[user.id] = 2
             savePending = True
-            await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " banned " + user.display_name + " (id:" + str(user.id) + ") from joining parties")
+            await sendLuciLog("Banned from joining parties by " + str(ctx.author), user)
             await ctx.send(user.display_name + ' has been banned from joining parties')
         else:
             await ctx.send('Please give me the type of ban `lban <user> <type:all|make|join>`')
 
     @commands.command(no_pm=True, aliases=['luciunban'])
     async def lunban(self, ctx, user: discord.Member):
-        """Unban an user (Mod only)"""
+        """Unban an user from Lucilius (Mod only)"""
         global savePending
         global luciBlacklist
         if not isLuciliusMainChannel(ctx.channel) and not isLuciliusPartyChannel(ctx.channel): return
@@ -3246,20 +3385,20 @@ class Lucilius(commands.Cog):
             await ctx.send(user.display_name + " isn't banned")
         else:
             savePending = True
-            await lucilog_channel.send("**" + datetime.utcnow().strftime("%Y/%m/%d at %H-%M-%S") + "**: " + ctx.author.display_name + " unbanned " + user.display_name + " (id:" + str(user.id) + ")")
+            await sendLuciLog("Unbanned by " + str(ctx.author), user)
             await ctx.send(user.display_name + ' has been unbanned')
 
     @commands.command(no_pm=True)
     async def iam(self, ctx, *elems: str):
-        """Add yourself to an element role"""
+        """Add to yourself an element role (Lucilius Only)"""
         if not isLuciliusMainChannel(ctx.channel): return
         f = {}
         for e in elems:
             if e.lower() in elemStr:
-                role = ctx.message.author.guild.get_role(luciElemRole[elemStr[e]])
+                role = ctx.message.author.guild.get_role(luciElemRole[elemStr[e.lower()]])
                 try:
                     await ctx.author.add_roles(role)
-                    f[elemEmote[e]] = None
+                    f[elemEmote[e.lower()]] = None
                 except:
                     pass
         for fe in f:
@@ -3267,15 +3406,15 @@ class Lucilius(commands.Cog):
 
     @commands.command(no_pm=True, aliases=['iamn'])
     async def iamnot(self, ctx, *elems: str):
-        """Remove yourself from an element role"""
+        """Remove from yourself an element role (Lucilius Only)"""
         if not isLuciliusMainChannel(ctx.channel): return
         f = {}
         for e in elems:
             if e.lower() in elemStr:
-                role = ctx.message.author.guild.get_role(luciElemRole[elemStr[e]])
+                role = ctx.message.author.guild.get_role(luciElemRole[elemStr[e.lower()]])
                 try:
                     await ctx.author.remove_roles(role)
-                    f[elemEmote[e]] = None
+                    f[elemEmote[e.lower()]] = None
                 except:
                     pass
         for fe in f:
@@ -3284,7 +3423,7 @@ class Lucilius(commands.Cog):
     @commands.command(no_pm=True, aliases=['summon'])
     @commands.cooldown(10, 60, commands.BucketType.guild)
     async def call(self, ctx, *elems : str):
-        """Call user in the element list(s)"""
+        """Mention user(s) with the element(s) (Lucilius Leader Only)"""
         if not isLuciliusMainChannel(ctx.channel): return
         for p in range(0, len(luciParty)):
             if luciParty[p] is not None and luciParty[p][2] == ctx.author.id:
@@ -3293,11 +3432,11 @@ class Lucilius(commands.Cog):
                     if e.lower() in elemStr:
                         role = ctx.message.author.guild.get_role(luciElemRole[elemStr[e.lower()]])
                         if len(msg) > 0: msg += ", "
-                        msg += role.mention
+                        msg += role.mention + ' ' + getEmoteStr(elemEmote[e.lower()])
                 if len(msg) == 0:
                     await ctx.send("Tell me what element to call")
                 else:
-                    await ctx.send("Party " + getEmoteStr(str(p+1)) + " is calling for " + msg + " players")
+                    await lucimain_channel.send("Party " + getEmoteStr(str(p+1)) + " is in need of " + msg + " players")
                 return
         await ctx.send("You must be leader of a party")
 
