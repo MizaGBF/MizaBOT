@@ -25,7 +25,7 @@ bot_token = None
 # google drive folder ID where is stored the save data
 bot_drive = None
 # bot description
-description = '''MizaBOT version 4.8
+description = '''MizaBOT version 4.9
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.'''
 # various ids and discord stuff (check the save/config.json examples for details)
@@ -560,7 +560,8 @@ def isLegfest(word):
     return 1
 
 # other important stuff
-def savePendingCallback(): # for external modules if any
+# for external modules if any
+def savePendingCallback():
     global savePending
     savePending = True
 
@@ -976,27 +977,32 @@ savePending = False
 async def backtask():
     global bot_m
     global savePending
+    await debug_channel.send("**backtask() started**")
     while True:
-        await bot.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=random.choice(mygames)))
-        await asyncio.sleep(2400)
-        # check if it's time for some maintenance for me (every 2 weeks or so)
-        c = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        if bot_m and c > bot_m and (c.day == 1 or c.day == 17):
-            await debug_channel.send(bot.get_user(owner_id).mention + " It's maintenance time!")
-            bot_m = c
-            savePending = True
-        # autosave
-        if savePending and not exit_flag:
-            await autosave()
+        try:
+            await bot.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=random.choice(mygames)))
+            await asyncio.sleep(2400)
+            # check if it's time for some maintenance for me (every 2 weeks or so)
+            c = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            if bot_m and c > bot_m and (c.day == 1 or c.day == 17):
+                await debug_channel.send(bot.get_user(owner_id).mention + " It's maintenance time!")
+                bot_m = c
+                savePending = True
+            # autosave
+            if savePending and not exit_flag:
+                await autosave()
+        except:
+            pass
 
 # background task managing the gbfg lucilius party system and reminder system
+# the loop runs once per minute
 async def minutetask():
     global savePending
     global luciParty
     global luciMember
     global luciWarning
     global reminders
-    await debug_channel.send("minutetask() is starting up")
+    await debug_channel.send("**minutetask() started**")
     guild = bot.get_guild(luciServer)
     await asyncio.sleep(5)
     while True:
@@ -1069,14 +1075,14 @@ async def minutetask():
         await asyncio.sleep(0.001)
         # reminders
         try:
-            c = datetime.utcnow() + timedelta(seconds=32430) # + 30sec
+            c = datetime.utcnow() + timedelta(seconds=32430) # + 30sec, better have early than late reminders
             for r in list(reminders.keys()):
                 di = 0
                 u = bot.get_user(r)
                 if u is None: continue
                 while di < len(reminders[r]):
                     if c > reminders[r][di][0]:
-                        await u.send(reminders[r][di][1])
+                        await u.send(embed=discord.Embed(title="Reminder", description=reminders[r][di][1], color=random.randint(0, 16777216))) # random color)
                         reminders[r].pop(di)
                         savePending = True
                     else:
@@ -1086,7 +1092,7 @@ async def minutetask():
                     savePending = True
         except Exception as e:
             await debug_channel.send("minutetask() C: " + str(e))
-        await asyncio.sleep(60)
+        await asyncio.sleep(59)
 
 # THE FIRST THING EVER RUNNING BY THE BOT IS HERE
 @bot.event
@@ -1105,7 +1111,7 @@ async def on_ready():
     lucilog_channel = bot.get_channel(luciLog)
     lucimain_channel = bot.get_channel(luciMain)
     # start up message and check if we loaded the save properly
-    msg = ':electric_plug: Starting up, Loading my data\n'
+    msg = '**:electric_plug: Starting up, Loading my data\n'
     await sendDebugStr()
     if first_load:
         msg += 'Data loaded\n'
@@ -1113,7 +1119,7 @@ async def on_ready():
         msg += bot.get_user(owner_id).mention + ' Failed\n' # ping me if the save load failed
     if gw:
         gw_task = bot.loop.create_task(checkGWBuff())
-    msg += 'Ready'
+    msg += 'Ready**'
     await debug_channel.send(msg)
     # start the background tasks
     bot.loop.create_task(backtask())
@@ -1282,7 +1288,7 @@ class General(commands.Cog):
                         if c.name == 'remindlist':
                             await ctx.invoke(c)
                             break
-            except Exception as e:
+            except:
                 await ctx.send("**Reminder at {0:%Y/%m/%d %H:%M} JST**\n`".format(reminders[ctx.author.id][-1][0]) + msg + "`")
         except:
             await ctx.send("An error happened")
@@ -1324,7 +1330,7 @@ class General(commands.Cog):
                             if c.name == 'remindlist':
                                 await ctx.invoke(c)
                                 break
-                except Exception as e:
+                except:
                     pass
 
 class GBF_Game(commands.Cog):
@@ -1790,9 +1796,6 @@ class GBF_Utility(commands.Cog):
     async def _time(self, ctx):
         """Post remaining time to next reset and strike times (if set)
         Also maintenance and gw times if set"""
-        global maintenance
-        global gw
-        global savePending
         current_time = datetime.utcnow() + timedelta(seconds=32400)
 
         msg = getEmoteStr('clock') + " **Current Time: " + str(current_time.hour).zfill(2) + ":" + str(current_time.minute).zfill(2) + "**\n"
@@ -1995,16 +1998,18 @@ async def checkGWBuff():
     global gw_skip
     global gwbuff_id
     global gw_task
+    global savePending
     gwbuff_id += 1
     tid = gwbuff_id
+    sid = '#' + str(tid)
     try:
         guild = bot.get_guild(you_id)
         channel = bot.get_channel(you_announcement)
-        await debug_channel.send('CheckGWBuff() #' + str(tid) + ' started')
+        await debug_channel.send('**checkGWBuff() ' + sid + ' started**')
         msg = ""
         while gw and (len(gw_buffs) > 0 or len(msg) != 0) :
             if tid != gwbuff_id:
-                raise Exception('task cancelled')
+                raise Exception('terminating, gwbuff_id changed to ' + str(gwbuff_id))
             current_time = datetime.utcnow() + timedelta(seconds=32400)
             if len(gw_buffs) > 0 and current_time >= gw_buffs[0][0]:
                 msg = ""
@@ -2031,7 +2036,7 @@ async def checkGWBuff():
                     if not gw_buffs[0][3]:
                         gw_skip = False
                 gw_buffs.pop(0)
-                await autosave()
+                savePending = True
             else:
                 if len(msg) > 0:
                     await channel.send(msg)
@@ -2039,17 +2044,15 @@ async def checkGWBuff():
                 if len(gw_buffs) > 0:
                     d = gw_buffs[0][0] - current_time
                     if d.seconds > 1:
-                        await debug_channel.send('Checking buffs in ' + str(d.seconds-1) + ' second(s)')
-                        await debug_channel.send('Next buffs setting: ' + str(gw_buffs[0][1]) + ' ' + str(gw_buffs[0][2]) + ' ' + str(gw_buffs[0][3]) + ' ' + str(gw_buffs[0][4]))
-                        await debug_channel.send("Buffs in " + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m" + str(d.seconds % 60) + "s")
+                        await debug_channel.send(sid + ' Checking buffs in ' + str(d.seconds-1) + ' second(s)\n' + sid + ' Next buffs setting: ' + str(gw_buffs[0][1]) + ' ' + str(gw_buffs[0][2]) + ' ' + str(gw_buffs[0][3]) + ' ' + str(gw_buffs[0][4]) + '\n' + sid + ' Buffs in ' + str(d.days) + 'd' + str(d.seconds // 3600) + 'h' + str((d.seconds // 60) % 60) + 'm' + str(d.seconds % 60) + 's')
                         await asyncio.sleep(d.seconds-1)
         if len(msg) > 0:
             await channel.send(msg)
-        await debug_channel.send('CheckGWBuff() #' + str(tid) + ' ended')
+        await debug_channel.send('**checkGWBuff() ' + sid + ' ended**')
     except asyncio.CancelledError:
-        await debug_channel.send('CheckGWBuff() #' + str(tid) + ' cancelled')
+        await debug_channel.send('**checkGWBuff() ' + sid + ' cancelled**')
     except Exception as e:
-        await debug_channel.send('**CheckGWBuff() #' + str(tid) + ' : ' + str(e) + '**')
+        await debug_channel.send('**checkGWBuff() ' + sid + ' : ' + str(e) + '**')
 
 # build the buff timing list
 def buildBuffTimes():
@@ -3423,7 +3426,7 @@ class Lucilius(commands.Cog):
     @commands.command(no_pm=True, aliases=['summon'])
     @commands.cooldown(10, 60, commands.BucketType.guild)
     async def call(self, ctx, *elems : str):
-        """Mention user(s) with the element(s) (Lucilius Leader Only)"""
+        """Mention user with the specified element(s) (Lucilius Leader Only)"""
         if not isLuciliusMainChannel(ctx.channel): return
         for p in range(0, len(luciParty)):
             if luciParty[p] is not None and luciParty[p][2] == ctx.author.id:
@@ -3530,7 +3533,7 @@ bot.add_cog(Owner(bot))
 bot.add_cog(Lucilius(bot))
 bot.add_cog(WIP(bot))
 if gbfdm:
-    gbfc = baguette.Baguette(bot, gbfd, savePendingCallback, getEmoteStr, gbfdd)
+    gbfc = baguette.Baguette(bot, gbfd, savePendingCallback, maintenanceUpdate, getEmoteStr, gbfdd)
     bot.add_cog(gbfc)
 
 #test
