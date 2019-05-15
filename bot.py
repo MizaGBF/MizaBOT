@@ -589,7 +589,7 @@ async def maintenanceCheck(ctx): # check the gbf maintenance status in memory an
     global savePending
     global maintenance
     current_time = datetime.utcnow() + timedelta(seconds=32400)
-    if maintenance:
+    if maintenance is not None:
         if current_time < maintenance:
             d = maintenance - current_time
             msg = getEmoteStr('cog') + " Maintenance in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**, for **" + str(maintenance_d) + " hour(s)**"
@@ -613,7 +613,7 @@ def maintenanceUpdate(): # same thing pretty much but return False or True inste
     global savePending
     global maintenance
     current_time = datetime.utcnow() + timedelta(seconds=32400)
-    if maintenance:
+    if maintenance is not None:
         if current_time < maintenance:
             d = maintenance - current_time
             return False
@@ -626,7 +626,7 @@ def maintenanceUpdate(): # same thing pretty much but return False or True inste
                 savePending = True
                 return False
             else:
-                return False
+                return True
     else:
         return False
 
@@ -969,7 +969,7 @@ def prefix(client, message):
 # we start the discord bot
 loadDrive() # download the save file
 first_load = load() # load the save file
-bot = commands.Bot(command_prefix=prefix, case_insensitive=True, description=description, help_command=MizabotHelp())
+bot = commands.Bot(command_prefix=prefix, case_insensitive=True, description=description, help_command=MizabotHelp(), owner_id=owner_id, activity=discord.activity.Game(name='Booting up, please wait'))
 isRunning = True
 savePending = False
 
@@ -1097,7 +1097,6 @@ async def minutetask():
 # THE FIRST THING EVER RUNNING BY THE BOT IS HERE
 @bot.event
 async def on_ready():
-    await bot.change_presence(status=discord.Status.online, activity=discord.activity.Game(name='Booting up, please wait'))
     global debug_channel
     global lucilog_channel
     global lucimain_channel
