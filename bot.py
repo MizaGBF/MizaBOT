@@ -94,6 +94,8 @@ luciMain = None
 luciServer = None
 luciElemRole = [0, 0, 0, 0, 0, 0]
 luciWarning = [0, 0, 0, 0, 0, 0]
+elemStr = {}
+elemEmote = {}
 # used by $remind
 reminders = {}
 
@@ -133,6 +135,8 @@ def loadConfig():
     global luciMain
     global luciServer
     global luciElemRole
+    global elemStr
+    global elemEmote
     global gbfg_id
     global bot_emotes
     try:
@@ -192,6 +196,10 @@ def loadConfig():
                 luciElemRole = []
                 for c in data["lucilius"]["elem"]:
                     luciElemRole.append(int(c))
+                elemStr = {}
+                for c in data["lucilius"]["str"]:
+                    elemStr[c] = int(data["lucilius"]["str"][c])
+                elemEmote = data["lucilius"]["emote"]
             return True
     except Exception as e:
         print('Exception: ' + str(e))
@@ -282,7 +290,7 @@ def fixCase(term): # term is a string
 
 # function to build a timedelta from a string (for $remind)
 def makeTimedelta(d): # return None if error
-    flags = {'d':False,'h':False,'m':False,'s':False}
+    flags = {'d':False,'h':False,'m':False}
     tmp = 0 # buffer
     sum = 0 # delta in seconds
     for i in range(0, len(d)):
@@ -292,6 +300,8 @@ def makeTimedelta(d): # return None if error
             c = d[i].lower()
             if flags[c]:
                 return None
+            if tmp == 0:
+                return None
             flags[c] = True
             if c == 'd':
                 sum += tmp * 86400
@@ -299,8 +309,6 @@ def makeTimedelta(d): # return None if error
                 sum += tmp * 3600
             elif c == 'm':
                 sum += tmp * 60
-            elif c == 's':
-                sum += tmp
             tmp = 0
         else:
             return None
@@ -915,7 +923,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
 
     async def send_group_help(self, group):
         ctx = self.context
-        await self.context.message.add_reaction('✅') # white check mark
+        await ctx.message.add_reaction('✅') # white check mark
         self.add_command_formatting(group)
 
         filtered = await self.filter_commands(group.commands, sort=self.sort_commands)
@@ -932,9 +940,9 @@ class MizabotHelp(commands.DefaultHelpCommand):
 
     async def send_cog_help(self, cog): # category help
         ctx = self.context
-        if not self.helpAuthorize(self.context, cog.qualified_name):
+        if not self.helpAuthorize(ctx, cog.qualified_name):
             return
-        await self.context.message.add_reaction('✅') # white check mark
+        await ctx.message.add_reaction('✅') # white check mark
 
         filtered = await self.filter_commands(cog.get_commands(), sort=self.sort_commands)
         embed = discord.Embed(title=getEmoteStr('mark') + " **" + cog.qualified_name + "** Category", description=cog.description, color=random.randint(0, 16777216)) # random color
@@ -950,6 +958,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
         if category == "Lucilius" and ctx.author.guild.id != luciServer: return False
         if category == "Owner" and ctx.author.id != owner_id: return False
         if category == "Baguette" and ctx.author.id != owner_id: return False
+        if category == "WIP" and ctx.author.id != owner_id: return False
         if category == "No Category": return False
         return True
 
@@ -1095,6 +1104,7 @@ async def minutetask():
         await asyncio.sleep(59)
 
 # THE FIRST THING EVER RUNNING BY THE BOT IS HERE
+runningtasks = [None, None] # to cancel our tasks if a bot restart happens
 @bot.event
 async def on_ready():
     global debug_channel
@@ -1120,9 +1130,11 @@ async def on_ready():
         gw_task = bot.loop.create_task(checkGWBuff())
     msg += 'Ready**'
     await debug_channel.send(msg)
-    # start the background tasks
-    bot.loop.create_task(backtask())
-    bot.loop.create_task(minutetask())
+    # tasks
+    for t in runningtasks:
+        if t is not None: t.cancel()
+    runningtasks[0] = bot.loop.create_task(backtask())
+    runningtasks[1] = bot.loop.create_task(minutetask())
 
 # happen when the bot joins a guild
 @bot.event
@@ -1269,7 +1281,7 @@ class General(commands.Cog):
             await ctx.send("Sorry, I'm limited to 5 reminders per user :bow:")
             return
         if d is None:
-            await ctx.send("Invalid duration string `" + duration + "`")
+            await ctx.send("Invalid duration string `" + duration + "`, format is `NdNhNm`")
             return
         if msg == "":
             await ctx.send("Tell me what I'm supposed to remind you :thinking:")
@@ -1864,11 +1876,6 @@ class GBF_Utility(commands.Cog):
         """Post when the current gacha end"""
         if not gbfdm:
             return
-        ignore_update = False
-        # maintenance check
-        if maintenanceUpdate():
-            await maintenanceCheck(ctx)
-            return
         await gbfc.getGachatime(ctx)
 
     @commands.command(no_pm=True, aliases=['rateup'])
@@ -1877,11 +1884,6 @@ class GBF_Utility(commands.Cog):
         """Post when the current gacha end
         add 'jp' for the japanese image"""
         if not gbfdm:
-            return
-        ignore_update = False
-        # maintenance check
-        if maintenanceUpdate():
-            await maintenanceCheck(ctx)
             return
         await gbfc.getGachabanner(ctx, jp)
 
@@ -2347,13 +2349,6 @@ class MizaBOT(commands.Cog):
         self.bot = bot
 
     @commands.command(no_pm=True)
-    @commands.cooldown(1, 1, commands.BucketType.guild)
-    async def invite(self, ctx):
-        """Invite MizaBOT in another server"""
-        await debug_channel.send("**" + str(ctx.message.author) + "** requested an invite")
-        await ctx.send(bot_msgs["invite()"])
-
-    @commands.command(no_pm=True)
     @commands.cooldown(1, 3, commands.BucketType.guild)
     async def setPrefix(self, ctx, prefix_string : str):
         """Set the prefix used on your server (Mod Only)"""
@@ -2806,7 +2801,7 @@ class Owner(commands.Cog):
     @commands.command(no_pm=True, hidden=True)
     @commands.is_owner()
     async def banRollID(self, ctx, user: int):
-        """ID based Ban for $rollranking"""
+        """ID based Ban for $rollranking (Owner only)"""
         global savePending
         global spark_ban
         if user not in spark_ban:
@@ -2863,7 +2858,7 @@ class Owner(commands.Cog):
     @commands.command(no_pm=True)
     @commands.is_owner()
     async def logout(self, ctx):
-        """Make the bot quit"""
+        """Make the bot quit (Owner only)"""
         global isRunning
         isRunning = False
         await autosave()
@@ -2872,19 +2867,34 @@ class Owner(commands.Cog):
     @commands.command(no_pm=True)
     @commands.is_owner()
     async def config(self, ctx):
-        """Post the current config file in the debug channel"""
+        """Post the current config file in the debug channel (Owner only)"""
         try:
             with open('config.json', 'r') as infile:
                 await debug_channel.send('config file', file=discord.File(infile))
         except Exception as e:
             pass
 
-# /gbfg/ Lucilius system command
-luciStr = ['wish them good luck :wave:', 'bet on the MVP element :top:', 'another fail for the council :pensive:']
-elemStr = {"fire":0, "water":1, "gay":1, "wawi":1, "earth":2, "dirt":2, "wind":3, "roach":3, "light":4, "dark":5}
-elemEmote = {"fire":"fire", "water":"water", "gay":"water", "wawi":"water", "earth":"earth", "dirt":"earth", "wind":"wind", "roach":"wind", "light":"light", "dark":"dark"}
+    @commands.command(no_pm=True)
+    @commands.is_owner()
+    async def newgwtask(self, ctx):
+        """Start a new checkGWBuff() task (Owner only)"""
+        global gw_task
+        if gw:
+            gw_task = bot.loop.create_task(checkGWBuff())
+            await ctx.message.add_reaction('✅') # white check mark
+        else:
+            await ctx.message.add_reaction('❎') # negative check mark
 
-async def sendLuciLog(msg, user = None):
+    @commands.command(no_pm=True)
+    @commands.is_owner()
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def invite(self, ctx):
+        """Post the invite link (Owner only)"""
+        await debug_channel.send("**" + str(ctx.message.author) + "** requested an invite")
+        await ctx.send(bot_msgs["invite()"])
+
+# /gbfg/ Lucilius system command
+async def sendLuciLog(msg, user = None): # make a nice embed for the log channel
     embed = discord.Embed(title=msg, color=random.randint(0, 16777216)) # random color
     if user is not None:
         embed.set_footer(text=str(user) + " ▪ User ID: " + str(user.id))
@@ -3076,7 +3086,7 @@ class Lucilius(commands.Cog):
                         luciParty[i][0] = datetime.utcnow().replace(microsecond=0)
                         savePending = True
                         # start message
-                        await lucimain_channel.send("Party " + getEmoteStr(str(i+1)) + " started, " + random.choice(luciStr))
+                        await lucimain_channel.send("Party " + getEmoteStr(str(i+1)) + " started, " + random.choice(['wish them good luck :wave:', 'bet on the MVP element :top:', 'another fail for the council :pensive:']))
                         # ping the party
                         for j in range(2, len(luciParty[i])):
                             try:
