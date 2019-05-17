@@ -14,6 +14,8 @@ from pydrive.drive import GoogleDrive
 import time
 from operator import itemgetter
 import itertools
+import os
+import resource
 # ^ some modules might be unused, I'll clean up in the future
 
 # it's a mess so please read these comments to not get lost:
@@ -25,7 +27,7 @@ bot_token = None
 # google drive folder ID where is stored the save data
 bot_drive = None
 # bot description
-description = '''MizaBOT version 4.9
+description = '''MizaBOT version 4.10
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.'''
 # various ids and discord stuff (check the save/config.json examples for details)
@@ -1520,7 +1522,8 @@ class GBF_Game(commands.Cog):
                 raise Exception('Negative numbers')
             if crystal > 500000 or single > 1000 or ten > 100:
                 raise Exception('Big numbers')
-            spark_list[ctx.message.author.id] = [crystal, single, ten]
+            if crystal + single + ten == 0: del spark_list[ctx.message.author.id]
+            else: spark_list[ctx.message.author.id] = [crystal, single, ten]
             await ctx.send(getEmoteStr('crystal') + " **" + str(crystal) + "** crystal(s), **" + str(single) + "** single roll ticket(s) and **" +str(ten) + "** ten roll ticket(s)")
             try:
                 cmds = self.bot.get_cog('GBF_Game').get_commands()
@@ -1551,26 +1554,27 @@ class GBF_Game(commands.Cog):
                     raise Exception('Negative numbers')
                 r = (s[0] / 300) + s[1] + s[2] * 10
                 fr = math.floor(r)
-                current_time = datetime.utcnow() + timedelta(days=((300 - (r % 300)) / 2.4), seconds=32400)
-                msg = getEmoteStr('crystal') + " You have **" + str(fr) + " roll"
-                if fr != 1: msg += "s"
-                msg += "**\n"
-                if r >= 900: msg += "I have no words :sweat: \n"
-                elif r >= 600: msg += "Stop hoarding :pensive:\n"
-                elif r >= 350: msg += "What are you waiting for? :thinking:\n"
-                elif r >= 300: msg += "Dickpick or e-sport pick? :smirk:\n"
-                elif r >= 280: msg += "Almost! :blush: \n"
-                elif r >= 240: msg += "One more month :thumbsup: \n"
-                elif r >= 200: msg += "You are getting close :ok_hand: \n"
-                elif r >= 150: msg += "Half-way done :relieved:\n"
-                elif r >= 100: msg += "Stay strong :wink:\n"
-                elif r >= 50: msg += "You better save these rolls :spy: \n"
-                elif r >= 20: msg += "Start saving **NOW** :rage:\n"
-                else: msg += "Pathetic :nauseated_face: \n"
-                msg += "Next spark rough estimation: **" + str(current_time.year) + "/" + str(current_time.month) + "/" + str(current_time.day) + "**"
-                await ctx.send(msg)
             else:
-                await ctx.send('Use the setRoll command first')
+                r = 0
+                fr = 0.0
+            spark_time = datetime.utcnow() + timedelta(days=((300 - (r % 300)) / 2.4), seconds=32400)
+            msg = getEmoteStr('crystal') + " You have **" + str(fr) + " roll"
+            if fr != 1: msg += "s"
+            msg += "**\n"
+            if r >= 900: msg += "I have no words :sweat: \n"
+            elif r >= 600: msg += "Stop hoarding :pensive:\n"
+            elif r >= 350: msg += "What are you waiting for? :thinking:\n"
+            elif r >= 300: msg += "Dickpick or e-sport pick? :smirk:\n"
+            elif r >= 280: msg += "Almost! :blush: \n"
+            elif r >= 240: msg += "One more month :thumbsup: \n"
+            elif r >= 200: msg += "You are getting close :ok_hand: \n"
+            elif r >= 150: msg += "Half-way done :relieved:\n"
+            elif r >= 100: msg += "Stay strong :wink:\n"
+            elif r >= 50: msg += "You better save these rolls :spy: \n"
+            elif r >= 20: msg += "Start saving **NOW** :rage:\n"
+            else: msg += "Pathetic :nauseated_face: \n"
+            msg += "Next spark rough estimation: **" + str(spark_time.year) + "/" + str(spark_time.month) + "/" + str(spark_time.day) + "**"
+            await ctx.send(msg)
         except Exception as e:
             await ctx.send('I can\'t calculate your rolls, sorry :bow:\nUse setRoll to fix it')
             await debug_channel.send('seeRoll(): ' + str(e))
@@ -1881,7 +1885,7 @@ class GBF_Utility(commands.Cog):
     @commands.command(no_pm=True, aliases=['rateup'])
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def banner(self, ctx, jp : str = ""):
-        """Post when the current gacha end
+        """Post the current gacha rate up
         add 'jp' for the japanese image"""
         if not gbfdm:
             return
@@ -2356,21 +2360,12 @@ class MizaBOT(commands.Cog):
         global savePending
         if not isMod(ctx.message.author): return
         if len(prefix_string) == 0: return
-        prefixes[ctx.message.author.guild.id] = prefix_string
+        if prefix_string == '$':
+            del prefixes[ctx.message.author.guild.id]
+        else:
+            prefixes[ctx.message.author.guild.id] = prefix_string
         await ctx.send('Server prefix set to ' + prefix_string)
         savePending = True
-
-    @commands.command(no_pm=True)
-    @commands.cooldown(1, 1, commands.BucketType.guild)
-    async def resetPrefix(self, ctx):
-        """Reset the prefix used on your server to '$' (Mod Only)"""
-        global prefixes
-        global savePending
-        if not isMod(ctx.message.author): return
-        if ctx.message.author.guild.id in prefixes:
-            del prefixes[ctx.message.author.guild.id]
-            await ctx.send('Server prefix reset')
-            savePending = True
 
     @commands.command(no_pm=True, aliases=['bug', 'report', 'bug_report'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -2378,10 +2373,10 @@ class MizaBOT(commands.Cog):
         """Send a bug report (or your love confessions) to the author"""
         if len(terms) == 0:
             return
-        msg = '**Bug report from ' + str(ctx.message.author) + '** (id: ' + str(ctx.message.author.id) + '):\n'
-        msg += " ".join(terms)
-        
-        await debug_channel.send(msg)
+        embed = discord.Embed(title="Bug Report", description=" ".join(terms), color=random.randint(0, 16777216)) # random color
+        embed.set_footer(text=str(ctx.author) + " ▪ User ID: " + str(ctx.author.id))
+        embed.set_thumbnail(url=ctx.author.avatar_url)
+        await debug_channel.send(embed=embed)
         await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True)
@@ -2451,8 +2446,7 @@ class MizaBOT(commands.Cog):
 
     @commands.command(no_pm=True)
     async def setGW(self, ctx, day : int, month : int, year : int):
-        """Set the GW date
-        (You) server only"""
+        """Set the GW date ((You) Mod only)"""
         if not isDebugServer(ctx.message.author.guild) and not isYouServer(ctx.message.author.guild) and not isMod(ctx.message.author):
             await ctx.send('Only available to (You) FOs')
             return
@@ -2488,9 +2482,8 @@ class MizaBOT(commands.Cog):
 
     @commands.command(no_pm=True)
     async def disableGW(self, ctx):
-        """Disable the GW mode
-        (it doesn't delete the GW date)
-        (You) server only"""
+        """Disable the GW mode ((You) Mod only)
+        (it doesn't delete the GW date)"""
         if not isDebugServer(ctx.message.author.guild) and not isYouServer(ctx.message.author.guild) and not isMod(ctx.message.author):
             await ctx.send('Only available to (You) FOs')
             return
@@ -2504,8 +2497,7 @@ class MizaBOT(commands.Cog):
 
     @commands.command(no_pm=True)
     async def enableGW(self, ctx):
-        """Enable the GW mode
-        (You) server only"""
+        """Enable the GW mode ((You) Mod only)"""
         if not isDebugServer(ctx.message.author.guild) and not isYouServer(ctx.message.author.guild) and not isMod(ctx.message.author):
             await ctx.send('Only available to (You) FOs')
             return
@@ -2524,8 +2516,7 @@ class MizaBOT(commands.Cog):
 
     @commands.command(no_pm=True, aliases=['skipGW'])
     async def skipGWBuff(self, ctx):
-        """The bot will skip the next GW buff call
-        (You) server only"""
+        """The bot will skip the next GW buff call ((You) Mod only)"""
         if not isDebugServer(ctx.message.author.guild) and not isYouServer(ctx.message.author.guild) and not isMod(ctx.message.author):
             await ctx.send('Only available to (You) FOs')
             return
@@ -2539,8 +2530,7 @@ class MizaBOT(commands.Cog):
 
     @commands.command(no_pm=True)
     async def cancelSkipGWBuff(self, ctx):
-        """Cancel the GW buff call skipping
-        (You) server only"""
+        """Cancel the GW buff call skipping ((You) Mod only)"""
         if not isDebugServer(ctx.message.author.guild) and not isYouServer(ctx.message.author.guild) and not isMod(ctx.message.author):
             await ctx.send('Only available to (You) FOs')
             return
@@ -2584,8 +2574,11 @@ class Owner(commands.Cog):
         global banned_server
         try:
             if id not in banned_server: banned_server.append(id)
-            toleave = bot.get_guild(id)
-            await toleave.leave()
+            try:
+                toleave = bot.get_guild(id)
+                await toleave.leave()
+            except:
+                pass
         except Exception as e:
             await ctx.send(f'**`ERROR:`** {type(e).__name__} - {e}')
         else:
@@ -3532,6 +3525,17 @@ class WIP(commands.Cog):
             await ctx.send(U.name)
         else:
             await ctx.send('Not found')
+
+    @commands.command(no_pm=True, hidden=True)
+    @commands.is_owner()
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def ram(self, ctx):
+        """Post used RAM (Owner only)"""
+        res = resource.getrusage(resource.RUSAGE_SELF)
+        me = ctx.author.guild.me
+        embed = discord.Embed(title=me.name, description=str(res.ru_maxrss) + " KB", color=random.randint(0, 16777216))
+        embed.set_thumbnail(url=me.avatar_url)
+        await ctx.send(embed=embed)
 
 bot.add_cog(General(bot))
 bot.add_cog(GBF_Game(bot))
