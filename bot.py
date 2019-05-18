@@ -27,7 +27,7 @@ bot_token = None
 # google drive folder ID where is stored the save data
 bot_drive = None
 # bot description
-description = '''MizaBOT version 4.10
+description = '''MizaBOT version 4.11
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.'''
 # various ids and discord stuff (check the save/config.json examples for details)
@@ -86,7 +86,6 @@ bot_m = None
 # graceful exit flag
 exit_flag = False # if true, it means we just restarted after a heroku reboot
 # gbfg lucilius variables
-luciMember = {}
 luciParty = [None, None, None, None, None, None]
 luciBlacklist = {}
 luciChannel = []
@@ -692,7 +691,6 @@ def load():
     global gbfschedule
     global luciParty
     global luciBlacklist
-    global luciMember
     global luciWarning
     global gbfd 
     global reminders
@@ -755,10 +753,6 @@ def load():
             luciBlacklist = {}
             for p in data['luciliusban']:
                 luciBlacklist[int(p)] = int(data['luciliusban'][p])
-        if 'luciliusmember' in data:
-            luciMember = {}
-            for p in data['luciliusmember']:
-                luciMember[int(p)] = 0
         if 'luciliuswarning' in data:
             luciWarning = []
             for w in data['luciliuswarning']:
@@ -834,7 +828,6 @@ def save(sortBackup=True):
         data['spark_ban'] = spark_ban
         data['lucilius'] = luciParty
         data['luciliusban'] = luciBlacklist
-        data['luciliusmember'] = luciMember
         data['luciliuswarning'] = luciWarning
         data['gw'] = {}
         data['gw']['state'] = gw
@@ -1010,7 +1003,6 @@ async def backtask():
 async def minutetask():
     global savePending
     global luciParty
-    global luciMember
     global luciWarning
     global reminders
     await debug_channel.send("**minutetask() started**")
@@ -1052,37 +1044,6 @@ async def minutetask():
                         await sendLuciLog("Party " + getEmoteStr(str(i+1)) + " has been automatically disbanded (Time Limit exceeded)")
         except Exception as e:
             await debug_channel.send("minutetask() A: " + str(e))
-        await asyncio.sleep(0.001)
-        # lucilius member check
-        try:
-            fulllist = lucimain_channel.members # members in the channel
-            memberlist = {}
-            to_add = {}
-            to_del = {}
-            msg = ""
-            for m in fulllist: # reading the current real member list
-                if m.id not in luciMember: # if not in our database
-                    to_add[m.id] = 0 # plan to add
-                    await sendLuciLog("Joined the channel", m)
-                else: # take not we encountered tthis member
-                    memberlist[m.id] = m
-            for i in luciMember: # reading our database
-                if i not in memberlist: # if not in the members we encountered, he/she left
-                    u = guild.get_member(i) # get the user
-                    if u is not None: # update the lod
-                        await sendLuciLog("Left the channel", u)
-                    else:
-                        await sendLuciLog("Unknown user left the channel")
-                    to_del[i] = 0
-            for i in to_add:
-                luciMember[i] = 0
-            for i in to_del:
-                luciMember.pop(i)
-            if len(to_add) > 0 or len(to_del) > 0:
-                savePending = True
-                await debug_channel.send("Lucilius: Member List changed")
-        except Exception as e:
-            await debug_channel.send("minutetask() B: " + str(e))
         await asyncio.sleep(0.001)
         # reminders
         try:
@@ -1157,6 +1118,26 @@ async def on_guild_join(guild):
         pending_server[guild.id] = guild.name
         await debug_channel.send("Pending guild request **" + guild.name + "** : " + str(guild.id) + ' owned by ' + guild.owner.name + ' (' + str(guild.owner.id) + ')')
         savePending = True
+
+@bot.event
+async def on_member_update(before, after):
+    # lucilius channel check
+    role = bot.get_guild(luciServer).get_role(562238525559406607)
+    bf = (role in before.roles)
+    af = (role in after.roles)
+    if af != bf:
+        if bf == True:
+            await sendLuciLog("Left the channel", after)
+        else:
+            await sendLuciLog("Joined the channel", before)
+
+@bot.event
+async def on_member_remove(member):
+    # lucilius channel check
+    role = bot.get_guild(luciServer).get_role(562238525559406607)
+    if role in member.roles:
+        await sendLuciLog("Left the server", member)
+
 
 @bot.check # authorize or not a command
 async def global_check(ctx):
