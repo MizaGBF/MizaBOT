@@ -92,6 +92,8 @@ luciChannel = []
 luciRole = None
 luciLog = None
 luciMain = None
+luciMainRole_id = None
+luciMainRole = None
 luciServer = None
 luciElemRole = [0, 0, 0, 0, 0, 0]
 luciWarning = [0, 0, 0, 0, 0, 0]
@@ -134,6 +136,7 @@ def loadConfig():
     global luciRole
     global luciLog
     global luciMain
+    global luciMainRole_id
     global luciServer
     global luciElemRole
     global elemStr
@@ -187,6 +190,7 @@ def loadConfig():
             if "lucilius" in data:
                 luciServer = int(data["lucilius"]["server"])
                 luciMain = int(data["lucilius"]["main"])
+                luciMainRole_id = int(data["lucilius"]["mainrole"])
                 luciLog = int(data["lucilius"]["log"])
                 luciChannel = []
                 for c in data["lucilius"]["channel"]:
@@ -1073,6 +1077,7 @@ async def on_ready():
     global debug_channel
     global lucilog_channel
     global lucimain_channel
+    global luciMainRole
     global first_load
     global gw_task
     global bot_emotes
@@ -1082,6 +1087,7 @@ async def on_ready():
         gbfc.setDebugChannel(debug_channel)
     lucilog_channel = bot.get_channel(luciLog)
     lucimain_channel = bot.get_channel(luciMain)
+    luciMainRole = bot.get_guild(luciServer).get_role(luciMainRole_id)
     # start up message and check if we loaded the save properly
     msg = '**:electric_plug: Starting up, Loading my data\n'
     await sendDebugStr()
@@ -1122,9 +1128,8 @@ async def on_guild_join(guild):
 @bot.event
 async def on_member_update(before, after):
     # lucilius channel check
-    role = bot.get_guild(luciServer).get_role(562238525559406607)
-    bf = (role in before.roles)
-    af = (role in after.roles)
+    bf = (luciMainRole in before.roles)
+    af = (luciMainRole in after.roles)
     if af != bf:
         if bf == True:
             await sendLuciLog("Left the channel", after)
@@ -1134,8 +1139,7 @@ async def on_member_update(before, after):
 @bot.event
 async def on_member_remove(member):
     # lucilius channel check
-    role = bot.get_guild(luciServer).get_role(562238525559406607)
-    if role in member.roles:
+    if luciMainRole in member.roles:
         await sendLuciLog("Left the server", member)
 
 
