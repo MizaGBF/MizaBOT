@@ -1,317 +1,50 @@
-{
-    "exit": false,
-    "bot": "2019-05-01 00:00:00",
-    "banned_server": [],
-    "banned_owner": [],
-    "pending_server": {},
-    "prefixes": {},
-    "maintenance": [
-        false
-    ],
-    "stream": [],
-    "stream_time": false,
-    "schedule": "",
-    "st": {},
-    "spark": {},
-    "spark_ban": [],
-    "lucilius": [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
-    ],
-    "luciliusban": {},
-    "luciliusmember": {},
-    "luciliuswarning": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ],
-    "gw": {
-        "state": true,
-        "dates": {
-            "Preliminaries": "2019-05-19 19:00:00",
-            "Interlude": "2019-05-21 07:00:00",
-            "Day 1": "2019-05-22 07:00:00",
-            "Day 2": "2019-05-23 07:00:00",
-            "Day 3": "2019-05-24 07:00:00",
-            "Day 4": "2019-05-25 07:00:00",
-            "Day 5": "2019-05-26 07:00:00",
-            "End": "2019-05-27 01:00:00"
-        },
-        "buffs": [
-            [
-                "2019-05-19 20:55:00",
-                true,
-                true,
-                true,
-                true
-            ],
-            [
-                "2019-05-19 21:00:00",
-                true,
-                true,
-                false,
-                true
-            ],
-            [
-                "2019-05-20 06:55:00",
-                true,
-                false,
-                true,
-                false
-            ],
-            [
-                "2019-05-20 07:00:00",
-                true,
-                false,
-                false,
-                false
-            ],
-            [
-                "2019-05-20 07:55:00",
-                false,
-                true,
-                true,
-                false
-            ],
-            [
-                "2019-05-20 08:00:00",
-                false,
-                true,
-                false,
-                false
-            ],
-            [
-                "2019-05-20 21:55:00",
-                true,
-                true,
-                true,
-                false
-            ],
-            [
-                "2019-05-20 22:00:00",
-                true,
-                true,
-                false,
-                false
-            ],
-            [
-                "2019-05-21 06:55:00",
-                true,
-                false,
-                true,
-                false
-            ],
-            [
-                "2019-05-21 07:00:00",
-                true,
-                false,
-                false,
-                false
-            ],
-            [
-                "2019-05-21 07:55:00",
-                false,
-                true,
-                true,
-                false
-            ],
-            [
-                "2019-05-21 08:00:00",
-                false,
-                true,
-                false,
-                false
-            ],
-            [
-                "2019-05-21 21:55:00",
-                true,
-                true,
-                true,
-                false
-            ],
-            [
-                "2019-05-21 22:00:00",
-                true,
-                true,
-                false,
-                false
-            ],
-            [
-                "2019-05-22 06:55:00",
-                true,
-                false,
-                true,
-                false
-            ],
-            [
-                "2019-05-22 07:00:00",
-                true,
-                false,
-                false,
-                false
-            ],
-            [
-                "2019-05-22 07:55:00",
-                false,
-                true,
-                true,
-                false
-            ],
-            [
-                "2019-05-22 08:00:00",
-                false,
-                true,
-                false,
-                false
-            ],
-            [
-                "2019-05-22 21:55:00",
-                true,
-                true,
-                true,
-                false
-            ],
-            [
-                "2019-05-22 22:00:00",
-                true,
-                true,
-                false,
-                false
-            ],
-            [
-                "2019-05-23 06:55:00",
-                true,
-                false,
-                true,
-                false
-            ],
-            [
-                "2019-05-23 07:00:00",
-                true,
-                false,
-                false,
-                false
-            ],
-            [
-                "2019-05-23 07:55:00",
-                false,
-                true,
-                true,
-                false
-            ],
-            [
-                "2019-05-23 08:00:00",
-                false,
-                true,
-                false,
-                false
-            ],
-            [
-                "2019-05-23 21:55:00",
-                true,
-                true,
-                true,
-                false
-            ],
-            [
-                "2019-05-23 22:00:00",
-                true,
-                true,
-                false,
-                false
-            ],
-            [
-                "2019-05-24 06:55:00",
-                true,
-                false,
-                true,
-                false
-            ],
-            [
-                "2019-05-24 07:00:00",
-                true,
-                false,
-                false,
-                false
-            ],
-            [
-                "2019-05-24 07:55:00",
-                false,
-                true,
-                true,
-                false
-            ],
-            [
-                "2019-05-24 08:00:00",
-                false,
-                true,
-                false,
-                false
-            ],
-            [
-                "2019-05-24 21:55:00",
-                true,
-                true,
-                true,
-                false
-            ],
-            [
-                "2019-05-24 22:00:00",
-                true,
-                true,
-                false,
-                false
-            ],
-            [
-                "2019-05-25 06:55:00",
-                true,
-                false,
-                true,
-                false
-            ],
-            [
-                "2019-05-25 07:00:00",
-                true,
-                false,
-                false,
-                false
-            ],
-            [
-                "2019-05-25 07:55:00",
-                false,
-                true,
-                true,
-                false
-            ],
-            [
-                "2019-05-25 08:00:00",
-                false,
-                true,
-                false,
-                false
-            ],
-            [
-                "2019-05-25 21:55:00",
-                true,
-                true,
-                true,
-                false
-            ],
-            [
-                "2019-05-25 22:00:00",
-                true,
-                true,
-                false,
-                false
-            ]
-        ],
-        "skip": false
-    }
+{  
+   "newserver":{  
+      "servers":[  
+      ],
+      "owners":[  
+      ],
+      "pending":{  
+      }
+   },
+   "prefixes":{  
+   },
+   "baguette_save":{  
+      }
+   },
+   "bot_maintenance":"2019-05-17T00:00:00",
+   "maintenance":{  
+      "state":false,
+      "time":null,
+      "duration":0
+   },
+   "stream":{  
+      "time":null,
+      "content":[  
+      ]
+   },
+   "schedule":[  
+      "5/27 - 6/4",
+      "New Story event",
+      "6/4 - ???",
+      "Proving Grounds (Earth favored)"
+   ],
+   "st":{  
+   },
+   "spark":[  
+      {  
+      },
+      [  
+      ]
+   ],
+   "gw":{  
+      "state":false,
+      "dates":{  
+      },
+      "buffs":[  
+      ],
+      "skip":false
+   },
+   "reminders":{  
+   }
 }
