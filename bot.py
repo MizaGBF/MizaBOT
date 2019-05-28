@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import itertools
+import psutil
 
 # ########################################################################################
 # custom help command used by the bot
@@ -139,6 +140,11 @@ class MizabotDrive():
 class Mizabot(commands.Bot):
     def __init__(self):
         self.running = True
+        self.starttime = datetime.utcnow()
+        self.process = psutil.Process() # script process
+        self.process.cpu_percent()
+        self.errn = 0 # count the number of errors
+        self.cogn = 0 # will store how many cogs are expected to be in memory (check at the bottom of this file)
         self.exit_flag = False
         self.savePending = False
         self.special = False
@@ -171,7 +177,7 @@ class Mizabot(commands.Bot):
         self.loadConfig()
         self.drive.load()
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.0
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.1
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -180,7 +186,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             try:
                 self.loop.run_until_complete(self.start(self.tokens['discord']))
             except Exception as e:
-                self.running = False
+                self.errn += 1
                 print("Main Loop Exception: " + str(e))
         if self.save():
             print('Autosave Success')
@@ -282,6 +288,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 else: self.reminders = {}
                 return True
         except Exception as e:
+            self.errn += 1
             print('load(): ' + str(e))
             return False
 
@@ -305,6 +312,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 raise Exception("Couldn't save to google drive")
             return True
         except Exception as e:
+            self.errn += 1
             print('save(): ' + str(e))
             return False
 
@@ -429,6 +437,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             c = self.get_channel(self.ids[id_key])
             if c is not None: self.channels[name] = c
         except:
+            self.errn += 1
             print("Invalid key: " + id_key)
 
     def setChannelID(self, name, id : int): # same but using an id instead of an id defined in config.json
@@ -436,6 +445,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             c = self.get_channel(id)
             if c is not None: self.channels[name] = c
         except:
+            self.errn += 1
             print("Invalid ID: " + str(id))
 
     async def callCommand(self, ctx, command, cog, *args, **kwargs): #call a command in a cog
@@ -450,19 +460,23 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
         try:
             await self.channels[channel_name].send(msg, embed=embed, file=file)
         except Exception as e:
-            try:
-                await self.sendError('send', str(e))
-            except:
-                print(channel_name + " error: " + str(e))
+            self.errn += 1
+            print(channel_name + " error: " + str(e))
 
     async def sendError(self, func_name : str, msg : str, id = None): # send an error to the debug channel
         if id is None: id = ""
         else: id = " " + str(id)
+        self.errn += 1
         await self.send('debug', embed=self.buildEmbed(title="Error in " + func_name + "()" + id, description=msg, footer="{0:%Y/%m/%d %H:%M} JST".format(self.getJST())))
 
     def getJST(self, nomicro=False): # get the time in jst
         if nomicro: return datetime.utcnow().replace(microsecond=0) + timedelta(seconds=32400)
         return datetime.utcnow() + timedelta(seconds=32400)
+
+    def uptime(self, string=True): # get the uptime
+        delta = datetime.utcnow() - self.starttime
+        if string: return str(delta.days) + "d" + str(delta.seconds // 3600) + "h" + str((delta.seconds // 60) % 60) + "m" + str(delta.seconds % 60) + "s"
+        else: return delta
 
 # #####################################################################################
 # GracefulExit
@@ -489,7 +503,7 @@ async def on_ready(): # when the bot starts
     bot.setChannel('debug', 'debug_channel') # set our debug channel
     bot.startTasks() # start the tasks
     # send a pretty message
-    await bot.send('debug', embed=bot.buildEmbed(title=bot.user.display_name + " is Ready", fields=[{"name":"Server Count", "value":str(len(bot.guilds))}, {"name":"Server Pending", "value":str(len(bot.newserver['pending']))}, {"name":"Task Running", "value":str(len(bot.tasks))}, {"name":"Cog Loaded", "value":str(len(bot.cogs))}], thumbnail=bot.user.avatar_url, inline=True, footer="{0:%Y/%m/%d %H:%M} JST".format(bot.getJST())))
+    await bot.send('debug', embed=bot.buildEmbed(title=bot.user.display_name + " is Ready", description="**Server Count**: " + str(len(bot.guilds)) + "\n**Servers Pending**: " + str(len(bot.newserver['pending'])) + "\n**Tasks Count**: " + str(len(asyncio.all_tasks())) + "\n**Cogs Loaded**: " + str(len(bot.cogs)) + "/" + str(bot.cogn), thumbnail=bot.user.avatar_url, inline=True, footer="{0:%Y/%m/%d %H:%M} JST".format(bot.getJST())))
 
 @bot.event
 async def on_guild_join(guild): # when the bot joins a new guild
@@ -527,7 +541,22 @@ async def on_command_error(ctx, error):
     elif msg.find('Command "') == 0 or msg == 'Command raised an exception: Forbidden: FORBIDDEN (status code: 403): Missing Permissions':
         return
     else:
+        bot.errn += 1
         await bot.send('debug', embed=bot.buildEmbed(title="⚠ Error caused by " + str(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`' + ctx.message.content + '`'}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer="{0:%Y/%m/%d %H:%M} JST".format(bot.getJST())))
+
+@bot.event
+async def on_member_update(before, after):
+    try:
+        await bot.get_cog('Lucilius').memberUpdate(before, after)
+    except Exception as e:
+        pass
+
+@bot.event
+async def on_member_remove(member):
+    try:
+        await bot.get_cog('Lucilius').memberRemove(member)
+    except Exception as e:
+        pass
 
 # load cogs
 try:
@@ -535,48 +564,64 @@ try:
     bot.add_cog(General(bot))
 except Exception as e:
     print("import General: " + str(e))
+    bot.errn += 1
+bot.cogn += 1 # count the cogs
 
 try:
     from cogs.gbf_game import GBF_Game
     bot.add_cog(GBF_Game(bot))
 except Exception as e:
     print("import GBF_Game: " + str(e))
+    bot.errn += 1
+bot.cogn += 1
 
 try:
     from cogs.gbf_utility import GBF_Utility
     bot.add_cog(GBF_Utility(bot))
 except Exception as e:
     print("import GBF_Utility: " + str(e))
+    bot.errn += 1
+bot.cogn += 1
 
 try:
     from cogs.gw import GW
     bot.add_cog(GW(bot))
 except Exception as e:
     print("import GW: " + str(e))
+    bot.errn += 1
+bot.cogn += 1
 
 try:
     from cogs.management import Management
     bot.add_cog(Management(bot))
 except Exception as e:
     print("import Management: " + str(e))
+    bot.errn += 1
+bot.cogn += 1
 
 try:
     from cogs.owner import Owner
     bot.add_cog(Owner(bot))
 except Exception as e:
     print("import Owner: " + str(e))
+    bot.errn += 1
+bot.cogn += 1
 
 try:
     from cogs.lucilius import Lucilius
     bot.add_cog(Lucilius(bot))
 except Exception as e:
     print("import Lucilius: " + str(e))
+    bot.errn += 1
+bot.cogn += 1
 
 try:
     from baguette import Baguette
     bot.add_cog(Baguette(bot))
 except Exception as e:
     print("import Baguette: " + str(e))
+    bot.errn += 1
+bot.cogn += 1
 
 # create the graceful exit
 grace = GracefulExit(bot)

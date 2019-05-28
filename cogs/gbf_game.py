@@ -140,7 +140,7 @@ class GBF_Game(commands.Cog):
         You can add "super" for a 9% rate and 5 ssr mukku"""
         if super.lower() == "super":
             ssr = 1500
-            footer = "**Super Mukku!!** 15% SSR Rate and at least 5 SSRs\n"
+            footer = "Super Mukku ▪ 15% SSR Rate and at least 5 SSRs\n"
             limit = 5
         else:
             ssr = 900
@@ -277,21 +277,23 @@ class GBF_Game(commands.Cog):
                 return
             ar = -1
             i = 0
-            emotes = [self.bot.getEmoteStr('SSR'), self.bot.getEmoteStr('SR'), self.bot.getEmoteStr('R'), "▪", "▪", "▪", "▪", "▪", "▪", "▪"]
+            emotes = {0:self.bot.getEmoteStr('SSR'), 1:self.bot.getEmoteStr('SR'), 2:self.bot.getEmoteStr('R')}
             msg = ""
+            top = 15
             for key, value in sorted(ranking.items(), key = itemgetter(1), reverse = True):
-                if i < 10:
+                if i < top:
                     fr = math.floor(value)
-                    msg += "**#" + str(i+1) + " " + emotes[i] + " " + guild.get_member(int(key)).display_name + "** with " + str(fr) + " roll"
+                    msg += "**#" + str(i+1).ljust(2) + emotes.pop(i, "▪") + " " + guild.get_member(int(key)).display_name + "** with " + str(fr) + " roll"
                     if fr != 1: msg += "s"
                     msg += "\n"
-                if key == ctx.message.author.id:
+                if key == str(ctx.message.author.id):
                     ar = i
-                    if i >= 10: break
+                    if i >= top: break
                 i += 1
                 if i >= 100:
                     break
-            if ar >= 10: footer = "You are ranked #" + str(ar+1)
+            if ar >= top: footer = "You are ranked #" + str(ar+1)
+            elif ar == -1: footer = "You aren't ranked ▪ You need at least one roll to be ranked"
             else: footer = ""
             await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('crown') + " Spark ranking of " + guild.name, color=self.color, description=msg, footer=footer, thumbnail=guild.icon_url))
         except Exception as e:
@@ -334,7 +336,7 @@ class GBF_Game(commands.Cog):
             ch = guild.text_channels
             chlist = [] # build a list of channels where is the author
             for c in ch:
-                if c.permissions_for(guild.me).send_messages and author in c.members and c.id not in luciChannel and c.id != lucilog_channel.id:
+                if c.permissions_for(guild.me).send_messages and author in c.members and c.id not in self.bot.lucilius['channels'] and c.id != self.bot.lucilius['main']:
                     chlist.append(c)
 
             msg = author.mention # get the ping for the author
@@ -379,5 +381,5 @@ class GBF_Game(commands.Cog):
         elif ctx.author.id == self.bot.ids['wawi'] or chance == 2:
             h = h // 140
             m = m // 60
-        msg = "**Honor:** " + '{:,}'.format(h) + "**Meat:**" + '{:,}'.format(m)
+        msg = "**Honor:** {:,}\n**Meat:** {:,}".format(h, m)
         await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " " + ctx.author.display_name + "'s daily quota", description=msg, thumbnail=ctx.author.avatar_url ,color=self.color))

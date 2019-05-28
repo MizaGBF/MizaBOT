@@ -134,7 +134,7 @@ class GBF_Utility(commands.Cog):
         """Post a link to /gbfg/ leechlist collection"""
         await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ Leechlist", description=self.bot.strings["leechlist()"], thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/582191446182985734/unknown.png", color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, name='time', aliases=['st', 'reset', 'status'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, name='time', aliases=['st', 'reset'])
     @commands.cooldown(2, 2, commands.BucketType.guild)
     async def _time(self, ctx):
         """Post remaining time to next reset and strike times (if set)
@@ -190,7 +190,7 @@ class GBF_Utility(commands.Cog):
         except Exception as e:
             await self.bot.sendError("getnextbuff", str(e))
 
-        await ctx.send(embed=self.bot.buildEmbed(title=title, url="http://game.granbluefantasy.jp/#gacha", description=description, color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title=title, url="http://game.granbluefantasy.jp/", description=description, color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['maint'])
     @commands.cooldown(2, 2, commands.BucketType.guild)
@@ -228,7 +228,7 @@ class GBF_Utility(commands.Cog):
                 else:
                     description = buf
                     image = ""
-                await ctx.send(embed=self.bot.buildEmbed(title="Granblue Fantasy", description=description, thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", image=image, color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="Granblue Fantasy", url="http://game.granbluefantasy.jp/#gacha", description=description, thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", image=image, color=self.color))
         except Exception as e:
             await self.bot.sendError("getgachabanner", str(e))
 

@@ -381,7 +381,7 @@ class General(commands.Cog):
     async def hgg(self, ctx):
         """Post the latest /hgg2d/ threads"""
         if not ctx.channel.is_nsfw():
-            await ctx.send(embed=self.bot.embed(title=':underage: NSFW channels only'))
+            await ctx.send(embed=self.bot.buildEmbed(title=':underage: NSFW channels only'))
             return
         threads = await self.get4chan('vg', '/hgg2d/')
         if len(threads) > 0:

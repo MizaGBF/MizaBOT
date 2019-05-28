@@ -282,7 +282,7 @@ class Owner(commands.Cog):
         await self.bot.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=terms))
         await ctx.message.add_reaction('✅') # white check mark
 
-    @commands.command(no_pm=True, hidden=True)
+    @commands.command(no_pm=True)
     @isOwner()
     async def banRollID(self, ctx, id: int):
         """ID based Ban for $rollranking (Owner only)"""

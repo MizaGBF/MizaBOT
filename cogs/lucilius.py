@@ -8,6 +8,18 @@ class Lucilius(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.color = 0xff00d0
+        self.roles = []
+
+    def startTasks(self):
+        self.bot.runTask('lucilius', self.setuptask)
+
+    async def setuptask(self):
+        self.bot.setChannelID('lucilog', self.bot.lucilius['log'])
+        self.roles = []
+        guild = self.bot.get_guild(self.bot.ids['gbfg'])
+        self.roles.append(guild.get_role(self.bot.lucilius["mainrole"]))
+        for r in self.bot.lucilius["role"]:
+            self.roles.append(guild.get_role(r))
 
     def isLuciliusChannel(): # for decorators
         async def predicate(ctx):
@@ -15,6 +27,26 @@ class Lucilius(commands.Cog):
             bot = ctx.bot
             return (id == bot.lucilius['main'] or id in bot.lucilius['channels'])
         return commands.check(predicate)
+
+    async def memberUpdate(self, before, after):
+        for i in range(0, len(self.roles)):
+            bf = (self.roles[i] in before.roles)
+            af = (self.roles[i] in after.roles)
+            if af != bf:
+                if i == 0:
+                    if bf == True:
+                        await self.bot.send('lucilog', embed=self.bot.buildEmbed(title="Left the channel", description="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), footer=str(after) + " ▪ User ID: " + str(after.id), thumbnail=after.avatar_url))
+                    else:
+                        await self.bot.send('lucilog', embed=self.bot.buildEmbed(title="Joined the channel", description="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), footer=str(after) + " ▪ User ID: " + str(after.id), thumbnail=after.avatar_url))
+                else:
+                    if bf == True:
+                        await self.bot.send('lucilog', embed=self.bot.buildEmbed(title="Left the party " + self.bot.getEmoteStr(str(i)), description="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), footer=str(after) + " ▪ User ID: " + str(after.id), thumbnail=after.avatar_url))
+                    else:
+                        await self.bot.send('lucilog', embed=self.bot.buildEmbed(title="Joined the party " + self.bot.getEmoteStr(str(i)), description="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), footer=str(after) + " ▪ User ID: " + str(after.id), thumbnail=after.avatar_url))
+
+    async def memberRemove(self, member):
+        if self.roles[0] in member.roles:
+            await self.bot.send('lucilog', embed=self.bot.buildEmbed(title="Left the server", description="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), footer=str(member) + " ▪ User ID: " + str(member.id), thumbnail=member.avatar_url, color=self.color))
 
     @commands.command(no_pm=True)
     @isLuciliusChannel()

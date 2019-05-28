@@ -3,7 +3,8 @@
 #### Requirements  
 * Python 3.7.  
 * [discord.py](https://github.com/Rapptz/discord.py) (formerly the rewrite branch).  
-* [PyDrive](https://pythonhosted.org/PyDrive/).  
+* [PyDrive](https://pythonhosted.org/PyDrive/) to access the google drive where the save file is stored.  
+* [psutil](https://psutil.readthedocs.io/en/latest/) is only used to get CPU and memory usage.  
 * `pip install -r requirements.txt` to install all the modules.  
 ### Usage  
 * The bot designed to be used on [Heroku](https://www.heroku.com).  

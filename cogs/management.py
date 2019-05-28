@@ -2,6 +2,7 @@
 from discord.ext import commands
 import asyncio
 from datetime import datetime, timedelta
+import psutil
 
 # Bot related commands
 class Management(commands.Cog):
@@ -224,3 +225,16 @@ class Management(commands.Cog):
             await ctx.message.add_reaction('✅') # white check mark
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="No buff skip is currently set", color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['mizabot'])
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def status(self, ctx):
+        """Post the bot status"""
+        msg = "**Uptime**: " + str(self.bot.uptime()) + "\n"
+        msg += "**CPU**: " + str(self.bot.process.cpu_percent()) + "%\n"
+        msg += "**Memory**: " + str(self.bot.process.memory_info().rss >> 20) + "MB\n"
+        msg += "**Save Pending**: " + str(self.bot.savePending) + "\n"
+        msg += "**Errors since boot**: " + str(self.bot.errn) + "\n"
+        msg += "**Tasks Count**: " + str(len(asyncio.all_tasks())) + "\n"
+        msg += "**Cogs Loaded**: " + str(len(self.bot.cogs)) + "/" + str(self.bot.cogn)
+        await ctx.send(embed=self.bot.buildEmbed(title=ctx.guild.me.display_name + "'s status", description=msg, thumbnail=ctx.guild.me.avatar_url, color=self.color))
