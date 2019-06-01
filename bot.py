@@ -177,7 +177,7 @@ class Mizabot(commands.Bot):
         self.loadConfig()
         self.drive.load()
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.1
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.2
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -342,7 +342,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 # check if it's time for the bot maintenance for me (every 2 weeks or so)
                 c = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
                 if self.bot_maintenance and c > self.bot_maintenance and (c.day == 1 or c.day == 17):
-                    await self.send('debug', self.get_user(self.owner_id).mention + " ▪ Time for maintenance!")
+                    await self.send('debug', self.get_user(self.ids['owner']).mention + " ▪ Time for maintenance!")
                     self.bot_maintenance = c
                     self.savePending = True
                 await asyncio.sleep(2400)
@@ -393,7 +393,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
 
     def getEmoteStr(self, key): # same but we get the string equivalent
         e = self.getEmote(key)
-        if e is None: return ":" + key + ":"
+        if e is None: return ""
         return str(e)
 
     async def react(self, ctx, key): # react using a custom emote defined in config.json
@@ -519,6 +519,35 @@ async def on_guild_join(guild): # when the bot joins a new guild
         bot.savePending = True
         await bot.send('debug', embed=bot.buildEmbed(title="Pending guild request", description=guild.name + " ▪ " + id, thumbnail=guild.icon_url, footer="Owner: " + guild.owner.name + " ▪ " + str(guild.owner.id)))
 
+async def autopit():
+    try:
+        g = bot.get_guild(339155308767215618)
+        m = g.get_member(150060992233996288)
+        await m.add_roles(g.get_role(489824740446437387))
+        await asyncio.sleep(600)
+        await m.remove_roles(g.get_role(489824740446437387))
+    except asyncio.CancelledError:
+        await self.bot.sendError('autopit', 'cancelled')
+        return
+    except Exception as e:
+        await self.bot.sendError('autopit', str(e))
+
+@bot.event
+async def on_message(message):
+    try:
+        if message.author.id == 150060992233996288:
+            content = message.content.lower().replace('?', '').replace('*', '').replace('.', '').replace('_', '').replace('~', '').replace('-', '')
+            if (content.find('dab') != -1 or content.find('in chat') != -1) and random.randint(1, 100) <= 40:
+                await message.add_reaction('☣')
+                bot.runTask('autopit', autopit)
+                return
+        elif message.author.id == bot.ids['wawi'] and len(message.attachments) > 0 and random.randint(1, 100) <= 30:
+            await message.add_reaction('🐌')
+    except:
+        pass
+
+    await bot.process_commands(message)
+
 @bot.check # authorize or not a command on a global scale
 async def global_check(ctx):
     id = str(ctx.guild.id)
@@ -544,6 +573,7 @@ async def on_command_error(ctx, error):
         bot.errn += 1
         await bot.send('debug', embed=bot.buildEmbed(title="⚠ Error caused by " + str(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`' + ctx.message.content + '`'}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer="{0:%Y/%m/%d %H:%M} JST".format(bot.getJST())))
 
+# the two events are used by the lucilius cog
 @bot.event
 async def on_member_update(before, after):
     try:

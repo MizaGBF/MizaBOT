@@ -173,7 +173,8 @@ class GBF_Utility(commands.Cog):
             await self.bot.sendError("maintenanceUpdate", str(e))
 
         try:
-            buf = self.bot.get_cog('Baguette').getGachatime()
+            cog = self.bot.get_cog('Baguette')
+            buf = await cog.getGachatime()
             if len(buf) > 0: description += "\n" + buf
         except Exception as e:
             await self.bot.sendError("getgachatime", str(e))
@@ -207,7 +208,8 @@ class GBF_Utility(commands.Cog):
     async def gacha(self, ctx):
         """Post when the current gacha end"""
         try:
-            description = self.bot.get_cog('Baguette').getGachatime()
+            cog = self.bot.get_cog('Baguette')
+            description = await cog.getGachatime()
             if len(description) > 0:
                 await ctx.send(embed=self.bot.buildEmbed(title="Granblue Fantasy", url="http://game.granbluefantasy.jp/#gacha", description=description, thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
         except Exception as e:
@@ -219,7 +221,8 @@ class GBF_Utility(commands.Cog):
         """Post the current gacha rate up
         add 'jp' for the japanese image"""
         try:
-            buf = self.bot.get_cog('Baguette').getGachabanner(jp)
+            cog = self.bot.get_cog('Baguette')
+            buf = await cog.getGachabanner(jp)
             if len(buf) > 0:
                 image_index = buf.find("\nhttp")
                 if image_index != -1:
@@ -356,3 +359,71 @@ class GBF_Utility(commands.Cog):
         if box > 44:
             t = (t - 88000) * 3 + 88000
         await ctx.send(embed=self.bot.buildEmbed(title="Token Calculator", description="You need **{:,}** token(s) for **".format(t) + str(box) + "** box(s)", color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gbfvs', 'versus'])
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def gbfv(self, ctx):
+        """Post the time to the next Versus beta"""
+        c = self.bot.getJST()
+        betas = [
+            [c.replace(year=2019, month=5, day=31, hour=18, minute=0, second=0, microsecond=0), c.replace(year=2019, month=5, day=31, hour=23, minute=0, second=0, microsecond=0)],
+            [c.replace(year=2019, month=6, day=1, hour=10, minute=0, second=0, microsecond=0), c.replace(year=2019, month=6, day=1, hour=15, minute=0, second=0, microsecond=0)],
+            [c.replace(year=2019, month=6, day=1, hour=23, minute=0, second=0, microsecond=0), c.replace(year=2019, month=6, day=2, hour=4, minute=0, second=0, microsecond=0)]
+        ]
+        msg = ""
+        for i in range(0, len(betas)):
+            if c < betas[i][0]:
+                delta = betas[i][0] - c
+                msg += "Test period " + self.bot.getEmoteStr(str(i+1)) + " starts in **" + str(delta.days) + "d" + str(delta.seconds // 3600) + "h" + str((delta.seconds // 60) % 60) + "m**\n"
+            elif c < betas[i][1]:
+                delta = betas[i][1] - c
+                msg += "Test period " + self.bot.getEmoteStr(str(i+1)) + " is **on going** and ends in **" + str(delta.days) + "d" + str(delta.seconds // 3600) + "h" + str((delta.seconds // 60) % 60) + "m**\n"
+            else:
+                msg += "Test period " + self.bot.getEmoteStr(str(i+1)) + " is over\n"
+        await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('clock') + " GBF Versus ▪ Beta Calendar", description=msg, url="https://versus.granbluefantasy.jp/en/closedbeta/", thumbnail="https://versus.granbluefantasy.jp/en/assets/images/footer_cyg.png", color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['friday'])
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def premium(self, ctx):
+        """Post the time to the next Premium Friday"""
+        c = self.bot.getJST()
+        d = c
+        last = None
+        searching = True
+        thumbnail = "https://cdn.discordapp.com/attachments/354370895575515138/584025273079562240/unknown.png"
+        while searching:
+            if d.weekday() == 4:
+                last = d
+            d = d + timedelta(seconds=86400)
+            if last is not None and d.month != last.month:
+                if c == last:
+                    beg = last.replace(hour=15, minute=00, second=00)
+                    end = c.replace(hour=23, minute=59, second=59) + timedelta(seconds=1)
+                    if c >= beg and c < end:
+                        end = end - c
+                        await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('clock') + " Premium Friday", description="Premium Friday ends in **" + str(end.seconds // 3600) + "h" + str((end.seconds // 60) % 60) + "m**", url="http://game.granbluefantasy.jp", thumbnail=thumbnail, color=self.color))
+                        return
+                    elif c >= end:
+                        pass
+                    elif c < beg:
+                        last = beg
+                        searching = False
+                else:
+                    searching = False
+        last = last.replace(hour=15, minute=00, second=00) - c
+        await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('clock') + " Premium Friday", description="Premium Friday starts in **" + str(last.days) + "d" + str(last.seconds // 3600) + "h" + str((last.seconds // 60) % 60) + "m**",  url="http://game.granbluefantasy.jp", thumbnail=thumbnail, color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['koregura'])
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def korekara(self, ctx):
+        """Post the time to the next monthly dev post"""
+        c = self.bot.getJST()
+        if c.day == 1:
+            if c.hour >= 12:
+                target = datetime(year=c.year, month=c.month+1, day=1, hour=12, minute=0, second=0, microsecond=0)
+            else:
+                target = datetime(year=c.year, month=c.month, day=1, hour=12, minute=0, second=0, microsecond=0)
+        else:
+            target = datetime(year=c.year, month=c.month+1, day=1, hour=12, minute=0, second=0, microsecond=0)
+        delta = target - c
+        await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('clock') + " Kore Kara", description="Release approximately in **" + str(delta.days) + "d" + str(delta.seconds // 3600) + "h" + str((delta.seconds // 60) % 60) + "m**",  url="https://granbluefantasy.jp/news/index.php", thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))

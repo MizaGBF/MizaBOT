@@ -3,6 +3,7 @@ from discord.ext import commands
 import asyncio
 from datetime import datetime, timedelta
 
+# manage the lucilius channel of /gbfg/. it has been simplified considering the inactivity
 class Lucilius(commands.Cog):
     """/gbfg/ Lucilius commands."""
     def __init__(self, bot):
@@ -13,7 +14,7 @@ class Lucilius(commands.Cog):
     def startTasks(self):
         self.bot.runTask('lucilius', self.setuptask)
 
-    async def setuptask(self):
+    async def setuptask(self): # setup the roles used by the bot.events
         self.bot.setChannelID('lucilog', self.bot.lucilius['log'])
         self.roles = []
         guild = self.bot.get_guild(self.bot.ids['gbfg'])
@@ -28,11 +29,11 @@ class Lucilius(commands.Cog):
             return (id == bot.lucilius['main'] or id in bot.lucilius['channels'])
         return commands.check(predicate)
 
-    async def memberUpdate(self, before, after):
+    async def memberUpdate(self, before, after): #called by on_member_update, track the lucilius roles change on the server members
         for i in range(0, len(self.roles)):
             bf = (self.roles[i] in before.roles)
             af = (self.roles[i] in after.roles)
-            if af != bf:
+            if af != bf: # very simple, just check for a difference in roles
                 if i == 0:
                     if bf == True:
                         await self.bot.send('lucilog', embed=self.bot.buildEmbed(title="Left the channel", description="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), footer=str(after) + " ▪ User ID: " + str(after.id), thumbnail=after.avatar_url))
@@ -44,7 +45,7 @@ class Lucilius(commands.Cog):
                     else:
                         await self.bot.send('lucilog', embed=self.bot.buildEmbed(title="Joined the party " + self.bot.getEmoteStr(str(i)), description="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), footer=str(after) + " ▪ User ID: " + str(after.id), thumbnail=after.avatar_url))
 
-    async def memberRemove(self, member):
+    async def memberRemove(self, member): # similar thing but when someone leave
         if self.roles[0] in member.roles:
             await self.bot.send('lucilog', embed=self.bot.buildEmbed(title="Left the server", description="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), footer=str(member) + " ▪ User ID: " + str(member.id), thumbnail=member.avatar_url, color=self.color))
 

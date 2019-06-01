@@ -228,7 +228,7 @@ class GBF_Game(commands.Cog):
                 fr = 0.0
             left = (300 - (r % 300))
             spark_time_range = [
-                self.bot.getJST() + timedelta(days=(left / 2.8)), 
+                self.bot.getJST() + timedelta(days=(left / 2.65)), 
                 self.bot.getJST() + timedelta(days=(left / 2.2))
             ]
             msg1 = self.bot.getEmoteStr('crystal') + " " + ctx.author.display_name + " has " + str(fr) + " roll"
@@ -331,6 +331,7 @@ class GBF_Game(commands.Cog):
     async def selfping(self, ctx):
         """Bully trap"""
         try:
+            if ctx.author.id == self.bot.ids['owner']: return
             guild = ctx.message.author.guild
             author = ctx.message.author
             ch = guild.text_channels

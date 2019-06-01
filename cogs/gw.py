@@ -16,7 +16,7 @@ class GW(commands.Cog):
     def startTasks(self):
         self.bot.runTask('check_buff', self.checkGWBuff)
 
-    async def checkGWBuff(self):
+    async def checkGWBuff(self): # automatically calls the GW buff used by the (you) crew
         self.getGWState()
         if self.bot.gw['state'] == False: return
         await asyncio.sleep(3)
@@ -70,7 +70,7 @@ class GW(commands.Cog):
             await self.bot.sendError('checkgwbuff', str(e))
         await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwbuff() ended", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST())))
 
-    def buildDayList(self):
+    def buildDayList(self): # used by the gw schedule command
         self.day_list = [
             [self.bot.getEmoteStr('kmr') + " Ban Wave", "BW", ""],
             [self.bot.getEmoteStr('gold') + " Preliminaries", "Preliminaries", "Interlude"],
@@ -107,7 +107,7 @@ class GW(commands.Cog):
             return True
         return False
 
-    def getGWState(self):
+    def getGWState(self): # return the current state of the guild war in string format (which day is on going, etc...)
         if self.bot.gw['state'] == True:
             current_time = self.bot.getJST()
             if current_time < self.bot.gw['dates']["Preliminaries"]:
@@ -144,7 +144,7 @@ class GW(commands.Cog):
         else:
             return ""
 
-    def getNextBuff(self, ctx):
+    def getNextBuff(self, ctx): # for the (you) crew, get the next set of buffs to be called
         if self.bot.gw['state'] == True:
             current_time = self.bot.getJST()
             if current_time < self.bot.gw['dates']["Preliminaries"]:
