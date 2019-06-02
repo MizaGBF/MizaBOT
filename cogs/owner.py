@@ -349,6 +349,40 @@ class Owner(commands.Cog):
 
     @commands.command(no_pm=True)
     @isOwner()
+    async def cleanSave(self, ctx):
+        """Do some clean up (Owner only)"""
+        guild_ids = []
+        for s in self.bot.guilds:
+            guild_ids.append(str(s.id))
+        for k in list(self.bot.permitted.keys()):
+            if k not in guild_ids:
+                self.bot.permitted.pop(k)
+                self.bot.savePending = True
+        for k in list(self.bot.news.keys()):
+            if k not in guild_ids or len(self.bot.news[k]) == 0:
+                self.bot.news.pop(k)
+                self.bot.savePending = True
+        await ctx.message.add_reaction('✅') # white check mark
+
+    @commands.command(no_pm=True)
+    @isOwner()
+    async def broadcast(self, ctx, *, terms):
+        """Broadcast a emssage (Owner only)"""
+        if len(terms) == 0:
+            return
+        embed=discord.Embed(title=ctx.guild.me.display_name + " Broadcast", description=terms, thumbnail=ctx.guild.me.avatar_url, color=self.color)
+        for g in self.bot.news:
+            for id in self.bot.news[g]:
+                try:
+                    channel = self.bot.get_channel(id)
+                    await channel.send(embed=embed)
+                except Exception as e:
+                    self.bot.sendError('broadcast', str(e))
+        await ctx.message.add_reaction('✅') # white check mark
+
+
+    @commands.command(no_pm=True)
+    @isOwner()
     async def newgwtask(self, ctx):
         """Start a new checkGWBuff() task (Owner only)"""
         self.bot.runTask('check_buff', self.bot.get_cog('GW').checkGWBuff)

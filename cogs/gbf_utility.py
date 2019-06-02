@@ -11,6 +11,32 @@ class GBF_Utility(commands.Cog):
         self.bot = bot
         self.color = 0x46fc46
 
+    def startTasks(self):
+        self.bot.runTask('maintenance', self.maintenancetask)
+
+    async def maintenancetask(self): # gbf maintenance detection
+        await asyncio.sleep(3)
+        await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="maintenancetask() started", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST())))
+        while True:
+            try:
+                if self.bot.maintenance['state'] == False:
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get("http://game.granbluefantasy.jp") as r:
+                            if r.status != 200 and str(await r.read()).find('The app is now undergoing maintenance.') != -1:
+                                await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="(TEST) maintenance detected", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST())))
+                                c = self.bot.getJST()
+                                self.bot.maintenance['time'] = c
+                                self.bot.maintenance['duration'] = 0
+                                self.bot.maintenance['state'] = True
+                                await self.bot.send('debug', str(await r.read())[:1900])
+                            return
+            except asyncio.CancelledError:
+                await self.bot.sendError('maintenancetask', 'cancelled')
+                return
+            except Exception as e:
+                await self.bot.sendError('maintenancetask', str(e))
+            await asyncio.sleep(random.randint(30, 45))
+
     def maintenanceUpdate(self): # check the gbf maintenance status, empty string returned = no maintenance
         current_time = self.bot.getJST()
         msg = ""
@@ -201,6 +227,8 @@ class GBF_Utility(commands.Cog):
             description = self.maintenanceUpdate()
             if len(description) > 0:
                 await ctx.send(embed=self.bot.buildEmbed(title="Granblue Fantasy", url="http://game.granbluefantasy.jp", description=description, thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
+            else:
+                await ctx.send(embed=self.bot.buildEmbed(title="Granblue Fantasy", description="No maintenance in my memory", color=self.color))
         except Exception as e:
             await self.bot.sendError("maintenanceUpdate", str(e))
 
@@ -364,11 +392,12 @@ class GBF_Utility(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def gbfv(self, ctx):
         """Post the time to the next Versus beta"""
+        return
         c = self.bot.getJST()
         betas = [
             [c.replace(year=2019, month=5, day=31, hour=18, minute=0, second=0, microsecond=0), c.replace(year=2019, month=5, day=31, hour=23, minute=0, second=0, microsecond=0)],
             [c.replace(year=2019, month=6, day=1, hour=10, minute=0, second=0, microsecond=0), c.replace(year=2019, month=6, day=1, hour=15, minute=0, second=0, microsecond=0)],
-            [c.replace(year=2019, month=6, day=1, hour=23, minute=0, second=0, microsecond=0), c.replace(year=2019, month=6, day=2, hour=4, minute=0, second=0, microsecond=0)]
+            [c.replace(year=2019, month=6, day=2, hour=1, minute=0, second=0, microsecond=0), c.replace(year=2019, month=6, day=2, hour=6, minute=0, second=0, microsecond=0)]
         ]
         msg = ""
         for i in range(0, len(betas)):
@@ -413,7 +442,7 @@ class GBF_Utility(commands.Cog):
         last = last.replace(hour=15, minute=00, second=00) - c
         await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('clock') + " Premium Friday", description="Premium Friday starts in **" + str(last.days) + "d" + str(last.seconds // 3600) + "h" + str((last.seconds // 60) % 60) + "m**",  url="http://game.granbluefantasy.jp", thumbnail=thumbnail, color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['koregura'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['koregura', 'koregra'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def korekara(self, ctx):
         """Post the time to the next monthly dev post"""

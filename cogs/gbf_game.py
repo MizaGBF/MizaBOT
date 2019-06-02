@@ -17,6 +17,11 @@ class GBF_Game(commands.Cog):
             return ctx.bot.isAuthorized(ctx)
         return commands.check(predicate)
 
+    def isGBFGgeneralAndMod(): # for decorators
+        async def predicate(ctx):
+            return (ctx.channel.id == ctx.bot.ids['gbfg_general'] and ctx.author.guild_permissions.manage_messages)
+        return commands.check(predicate)
+
     # used by the gacha games
     def getRoll(self, ssr):
         d = random.randint(1, 10000)
@@ -229,7 +234,7 @@ class GBF_Game(commands.Cog):
             left = (300 - (r % 300))
             spark_time_range = [
                 self.bot.getJST() + timedelta(days=(left / 2.65)), 
-                self.bot.getJST() + timedelta(days=(left / 2.2))
+                self.bot.getJST() + timedelta(days=(left / 2.25))
             ]
             msg1 = self.bot.getEmoteStr('crystal') + " " + ctx.author.display_name + " has " + str(fr) + " roll"
             if fr != 1: msg1 += "s"
@@ -384,3 +389,14 @@ class GBF_Game(commands.Cog):
             m = m // 60
         msg = "**Honor:** {:,}\n**Meat:** {:,}".format(h, m)
         await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " " + ctx.author.display_name + "'s daily quota", description=msg, thumbnail=ctx.author.avatar_url ,color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isGBFGgeneralAndMod()
+    @commands.cooldown(1, 180, commands.BucketType.user)
+    async def pitroulette(self, ctx):
+        """Game for /gbfg/ (Mod only)"""
+        if not self.bot.pitroulette:
+            self.bot.pitroulette = True
+            await ctx.send(embed=self.bot.buildEmbed(title="Pit Roulette enabled", description=random.choice(["Who will get it?", "Are you brave enough?", "Do you dare?"]) ,color=self.color))
+        else:
+            await ctx.send(embed=self.bot.buildEmbed(title="Pit Roulette already on" ,color=self.color))

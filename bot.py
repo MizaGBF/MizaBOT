@@ -169,15 +169,18 @@ class Mizabot(commands.Bot):
         self.baguette_save = {}
         self.ids = {}
         self.permitted = {}
+        self.news = {}
         self.games = {}
         self.strings = {}
         self.specialstrings = {}
         self.emotes = {}
+        self.pitroulette = False # game
+        self.pitroulettevictim = None # game
         # load
         self.loadConfig()
         self.drive.load()
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.2
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.3
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -246,7 +249,6 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 self.tokens = data['tokens']
                 self.baguette = data['baguette']
                 self.ids = data['ids']
-                self.permitted = data['permitted']
                 self.games = data['games']
                 self.strings = data['strings']
                 self.specialstrings = data['specialstrings']
@@ -286,6 +288,10 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 else: self.gw = {}
                 if 'reminders' in data: self.reminders = data['reminders']
                 else: self.reminders = {}
+                if 'permitted' in data: self.permitted = data['permitted']
+                else: self.permitted = {}
+                if 'news' in data: self.news = data['news']
+                else: self.news = {}
                 return True
         except Exception as e:
             self.errn += 1
@@ -307,6 +313,8 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 data['spark'] = self.spark
                 data['gw'] = self.gw
                 data['reminders'] = self.reminders
+                data['news'] = self.news
+                data['permitted'] = self.permitted
                 json.dump(data, outfile, default=self.json_serial) # locally first
             if not self.drive.save(json.dumps(data, default=self.json_serial), sortBackup): # sending to the google drive
                 raise Exception("Couldn't save to google drive")
@@ -374,11 +382,11 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
         return False
 
     def isMod(self, ctx): # check if the member has the manage_message permission
-        if ctx.author.guild_permissions.manage_messages:
+        if ctx.author.guild_permissions.manage_messages or ctx.author.id == self.ids['owner']:
             return True
         return False
 
-    def isOwner(self, ctx): # check if the member has the manage_message permission
+    def isOwner(self, ctx):
         if ctx.message.author.id == self.ids['owner']:
             return True
         return False
@@ -519,29 +527,49 @@ async def on_guild_join(guild): # when the bot joins a new guild
         bot.savePending = True
         await bot.send('debug', embed=bot.buildEmbed(title="Pending guild request", description=guild.name + " ▪ " + id, thumbnail=guild.icon_url, footer="Owner: " + guild.owner.name + " ▪ " + str(guild.owner.id)))
 
+# called by on_message
 async def autopit():
     try:
-        g = bot.get_guild(339155308767215618)
-        m = g.get_member(150060992233996288)
-        await m.add_roles(g.get_role(489824740446437387))
+        g = bot.get_guild(bot.ids['gbfg'])
+        m = g.get_member(bot.ids['risque'])
+        await m.add_roles(g.get_role(bot.ids['pit']))
         await asyncio.sleep(600)
-        await m.remove_roles(g.get_role(489824740446437387))
+        await m.remove_roles(g.get_role(bot.ids['pit']))
     except asyncio.CancelledError:
-        await self.bot.sendError('autopit', 'cancelled')
+        await bot.sendError('autopit', 'cancelled')
         return
     except Exception as e:
-        await self.bot.sendError('autopit', str(e))
+        await bot.sendError('autopit', str(e))
+
+async def pitroulette():
+    try:
+        message = bot.pitroulettevictim
+        bot.pitroulette = False
+        g = bot.get_guild(bot.ids['gbfg'])
+        await message.author.add_roles(g.get_role(bot.ids['pit']))
+        await message.channel.send(embed=bot.buildEmbed(title=message.author.display_name + " has fallen into the pit", thumbnail=message.author.avatar_url))
+        await asyncio.sleep(60)
+        await message.author.remove_roles(g.get_role(bot.ids['pit']))
+    except asyncio.CancelledError:
+        await bot.sendError('pitroulette', 'cancelled')
+        return
+    except Exception as e:
+        await bot.sendError('pitroulette', str(e))
 
 @bot.event
 async def on_message(message):
     try:
-        if message.author.id == 150060992233996288:
+        if bot.pitroulette and message.channel.id == bot.ids['gbfg_general'] and message.author.id != bot.ids['owner'] and not message.author.bot and random.randint(1, 100) <= 3:
+            bot.pitroulettevictim = message
+            bot.runTask('pitroulette', pitroulette)
+            return
+        elif message.author.id == bot.ids['risque'] and message.guild.id == bot.ids['gbfg']:
             content = message.content.lower().replace('?', '').replace('*', '').replace('.', '').replace('_', '').replace('~', '').replace('-', '')
             if (content.find('dab') != -1 or content.find('in chat') != -1) and random.randint(1, 100) <= 40:
                 await message.add_reaction('☣')
                 bot.runTask('autopit', autopit)
                 return
-        elif message.author.id == bot.ids['wawi'] and len(message.attachments) > 0 and random.randint(1, 100) <= 30:
+        elif message.channel.id == bot.ids['gbfg_general'] and message.author.id != bot.ids['owner'] and not message.author.bot and (len(message.attachments) > 0 or message.content.find('http://') != -1 or message.content.find('https://') != -1) and random.randint(1, 100) <= 10:
             await message.add_reaction('🐌')
     except:
         pass
