@@ -7,7 +7,7 @@
 * [psutil](https://psutil.readthedocs.io/en/latest/) is only used to get CPU and memory usage.  
 * `pip install -r requirements.txt` to install all the modules.  
 ### Usage  
-* The bot designed to be used on [Heroku](https://www.heroku.com).  
+* The bot is designed to be used on [Heroku](https://www.heroku.com).  
 * Do a git push to your [Heroku](https://www.heroku.com) app but don't expect it to work right away.  
 * You need to setup a few files (config.json, save.json, credentials.json and more...)  
 ### Examples  
