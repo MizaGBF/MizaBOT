@@ -290,7 +290,7 @@ class General(commands.Cog):
                 c = d[i].lower()
                 if flags[c]:
                     return None
-                if tmp == 0:
+                if tmp < 0:
                     return None
                 flags[c] = True
                 if c == 'd':
@@ -410,14 +410,16 @@ class General(commands.Cog):
     async def remind(self, ctx, duration : str, *, msg : str):
         """Tell the bot to remind you of something (±30 seconds precision)
         <duration> format: XdXhXmXs for day, hour, minute, second, each are optionals"""
-        d = self.makeTimedelta(duration)
-        id = ctx.author.id
+        id = str(ctx.author.id)
         if id not in self.bot.reminders:
             self.bot.reminders[id] = []
         if len(self.bot.reminders[id]) >= 5:
             await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="Sorry, I'm limited to 5 reminders per user 🙇", color=self.color))
             return
-        if d is None:
+        try:
+            d = self.makeTimedelta(duration)
+            if d is None: raise Exception()
+        except:
             await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="Invalid duration string `" + duration + "`, format is `NdNhNm`", color=self.color))
             return
         if msg == "":
@@ -440,7 +442,7 @@ class General(commands.Cog):
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def remindlist(self, ctx):
         """Post your current list of reminders"""
-        id = ctx.author.id
+        id = str(ctx.author.id)
         if id not in self.bot.reminders or len(self.bot.reminders[id]) == 0:
             await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="You don't have any reminders", color=self.color))
         else:
@@ -454,7 +456,7 @@ class General(commands.Cog):
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def reminddel(self, ctx, rid : int):
         """Delete one of your reminders"""
-        id = ctx.author.id
+        id = str(ctx.author.id)
         if id not in self.bot.reminders or len(self.bot.reminders[id]) == 0:
             await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="You don't have any reminders", color=self.color))
         else:
@@ -466,4 +468,5 @@ class General(commands.Cog):
                     self.bot.reminders.pop(id)
                 self.bot.savePending = True
                 await ctx.message.add_reaction('✅') # white check mark
-                await self.bot.callCommand(ctx, 'remindlist', 'General')
+                if id in self.bot.reminders:
+                    await self.bot.callCommand(ctx, 'remindlist', 'General')

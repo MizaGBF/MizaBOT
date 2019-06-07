@@ -395,3 +395,12 @@ class Owner(commands.Cog):
         """Post the invite link (Owner only)"""
         await self.bot.send('debug', embed=self.bot.buildEmbed(title="Invite Request", description=str(ctx.author) + " ▪ " + str(ctx.author.id), thumbnail=ctx.author.avatar_url, footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), color=self.color))
         await ctx.author.send(embed=self.bot.buildEmbed(title=ctx.guild.me.name, description=self.bot.strings["invite()"] + "\nYou'll have to wait for my owner approval.\nMisuses will result in a ban.", thumbnail=ctx.guild.me.avatar_url, footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), color=self.color))
+
+    @commands.command(no_pm=True)
+    @isOwner()
+    async def snail(self, ctx, member : discord.Member = None):
+        """React with the snail emote to an user (Owner only)"""
+        channel = ctx.channel
+        async for message in channel.history(limit=500):
+            if member is None or message.author.id == member.id:
+                await message.add_reaction('🐌')

@@ -9,12 +9,13 @@ from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import itertools
 import psutil
+import time
 
 # ########################################################################################
 # custom help command used by the bot
 class MizabotHelp(commands.DefaultHelpCommand):
-    def __init__(self, **options):
-        super().__init__(**options)
+    def __init__(self):
+        super().__init__()
         self.dm_help = True # force dm only (although our own functions only send in dm, so it should be unneeded)
 
     async def send_bot_help(self, mapping): # main help command (called when you do $help). this function reuse the code from the commands.DefaultHelpCommand class
@@ -140,47 +141,50 @@ class MizabotDrive():
 class Mizabot(commands.Bot):
     def __init__(self):
         self.running = True
-        self.starttime = datetime.utcnow()
+        self.starttime = datetime.utcnow() # used to check the uptime
         self.process = psutil.Process() # script process
-        self.process.cpu_percent()
+        self.process.cpu_percent() # called once to initialize
         self.errn = 0 # count the number of errors
         self.cogn = 0 # will store how many cogs are expected to be in memory (check at the bottom of this file)
-        self.exit_flag = False
-        self.savePending = False
-        self.special = False
-        self.tasks = {}
-        self.autosaving = False
-        self.drive = MizabotDrive(self)
-        self.channels = {}
-        self.newserver = {'servers':[], 'owners':[], 'pending':{}}
-        self.gw = {'state':False}
-        self.maintenance = {"state" : False, "time" : None, "duration" : "0"}
-        self.striketimes = {}
-        self.spark = [{}, []]
-        self.stream = {'time':None, 'content':[]}
-        self.schedule = []
-        self.prefixes = {}
-        self.st = {}
-        self.bot_maintenance = None
-        self.reminders = {}
-        self.lucilius = {}
-        self.tokens = {}
-        self.baguette = {}
-        self.baguette_save = {}
-        self.ids = {}
-        self.permitted = {}
-        self.news = {}
-        self.games = {}
-        self.strings = {}
-        self.specialstrings = {}
-        self.emotes = {}
-        self.pitroulette = False # game
-        self.pitroulettevictim = None # game
+        self.exit_flag = False # set to true when sigterm is received
+        self.savePending = False # set to true when a change is made to a variable
+        self.tasks = {} # store my tasks
+        self.autosaving = False # set to true during a save
+        self.drive = MizabotDrive(self) # google drive instance
+        self.channels = {} # store my channels
+        self.newserver = {'servers':[], 'owners':[], 'pending':{}} # banned servers, banned owners, pending servers
+        self.gw = {'state':False} # guild war data
+        self.maintenance = {"state" : False, "time" : None, "duration" : "0"} # gbf maintenance data
+        self.spark = [{}, []] # user spark data, banned users
+        self.stream = {'time':None, 'content':[]} # stream command content
+        self.schedule = [] # gbf schedule
+        self.prefixes = {} # guild prefixes
+        self.st = {} # guild strike times
+        self.bot_maintenance = None # bot maintenance day
+        self.reminders = {} # user reminders
+        self.lucilius = {} # /gbfg/ lucilius data
+        self.tokens = {} # bot tokens
+        self.baguette = {} # secret, config
+        self.baguette_save = {} # secret, save
+        self.ids = {} # discord ids used by the bot
+        self.permitted = {} # guild permitted channels
+        self.news = {} # guild news channels
+        self.games = {} # bot status messages
+        self.strings = {} # bot strings
+        self.specialstrings = {} # bot special strings
+        self.emotes = {} # bot custom emotes
+        # /gbfg/ game
+        self.pitroulette = False
+        self.pitroulettevictim = None
+        self.pitroulettecount = 0
         # load
         self.loadConfig()
-        self.drive.load()
+        for i in range(0, 100): # try multiple times in case google drive is unresponsive
+            if self.drive.load(): break
+            elif i == 99: exit(3)
+            time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.3
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.4
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -188,7 +192,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
         while self.running:
             try:
                 self.loop.run_until_complete(self.start(self.tokens['discord']))
-            except Exception as e:
+            except Exception as e: # handle exceptions here to avoid the bot dying
                 self.errn += 1
                 print("Main Loop Exception: " + str(e))
         if self.save():
@@ -203,7 +207,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 return self.prefixes[id] # retrieve the prefix used by the server
         except:
             pass
-        return '$' # default prefix is $
+        return '$' # else, return default prefix is $
 
     def json_deserial_array(self, array): # deserialize a list from a json
         a = []
@@ -262,7 +266,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
         try:
             with open('save.json') as f:
                 data = json.load(f, object_pairs_hook=self.json_deserial_dict) # deserializer here
-                # more check to avoid issues when reloading the file during runtime
+                # more check to avoid issues when reloading the file during runtime, if new data was added
                 if 'newserver' in data: self.newserver = data['newserver']
                 else: self.newserver = {'servers':[], 'owners':[], 'pending':{}}
                 if 'prefixes' in data: self.prefixes = data['prefixes']
@@ -316,8 +320,8 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 data['news'] = self.news
                 data['permitted'] = self.permitted
                 json.dump(data, outfile, default=self.json_serial) # locally first
-            if not self.drive.save(json.dumps(data, default=self.json_serial), sortBackup): # sending to the google drive
-                raise Exception("Couldn't save to google drive")
+                if not self.drive.save(json.dumps(data, default=self.json_serial), sortBackup): # sending to the google drive
+                    raise Exception("Couldn't save to google drive")
             return True
         except Exception as e:
             self.errn += 1
@@ -528,6 +532,7 @@ async def on_guild_join(guild): # when the bot joins a new guild
         await bot.send('debug', embed=bot.buildEmbed(title="Pending guild request", description=guild.name + " ▪ " + id, thumbnail=guild.icon_url, footer="Owner: " + guild.owner.name + " ▪ " + str(guild.owner.id)))
 
 # called by on_message
+# games/jokes for /gbfg/
 async def autopit():
     try:
         g = bot.get_guild(bot.ids['gbfg'])
@@ -536,7 +541,6 @@ async def autopit():
         await asyncio.sleep(600)
         await m.remove_roles(g.get_role(bot.ids['pit']))
     except asyncio.CancelledError:
-        await bot.sendError('autopit', 'cancelled')
         return
     except Exception as e:
         await bot.sendError('autopit', str(e))
@@ -544,37 +548,61 @@ async def autopit():
 async def pitroulette():
     try:
         message = bot.pitroulettevictim
-        bot.pitroulette = False
+        description = "After " + str(bot.pitroulettecount) + " message(s)"
+        title = random.choice([message.author.display_name + " has fallen into the pit...", message.author.display_name + " tripped and fell...", message.author.display_name + " jumped into the pit willingly...", message.author.display_name + " got pushed in the back..."])
+        footer = random.choice(["Will " + message.author.display_name + " manage to climb up?", "Stay down here where you belong", "Straight into the hellish pit", message.author.display_name + " has met with a terrible fate"])
+        bot.pitroulette = False # disable
         g = bot.get_guild(bot.ids['gbfg'])
         await message.author.add_roles(g.get_role(bot.ids['pit']))
-        await message.channel.send(embed=bot.buildEmbed(title=message.author.display_name + " has fallen into the pit", thumbnail=message.author.avatar_url))
+        await message.channel.send(embed=bot.buildEmbed(title=title, description=description, thumbnail=message.author.avatar_url, footer=footer))
         await asyncio.sleep(60)
         await message.author.remove_roles(g.get_role(bot.ids['pit']))
     except asyncio.CancelledError:
-        await bot.sendError('pitroulette', 'cancelled')
+        try:
+            await message.author.remove_roles(g.get_role(bot.ids['pit']))
+        except:
+            pass
         return
     except Exception as e:
         await bot.sendError('pitroulette', str(e))
 
 @bot.event
-async def on_message(message):
+async def on_message(message): # to do something with a message
     try:
-        if bot.pitroulette and message.channel.id == bot.ids['gbfg_general'] and message.author.id != bot.ids['owner'] and not message.author.bot and random.randint(1, 100) <= 3:
-            bot.pitroulettevictim = message
-            bot.runTask('pitroulette', pitroulette)
-            return
-        elif message.author.id == bot.ids['risque'] and message.guild.id == bot.ids['gbfg']:
+        # games/jokes for /gbfg/
+        if bot.pitroulette and message.channel.id == bot.ids['gbfg_general'] and message.author.id != bot.ids['owner'] and not message.author.bot:
+            bot.pitroulettecount += 1
+            if random.randint(1, 100) <= 6:
+                bot.pitroulettevictim = message
+                bot.runTask('pitroulette', pitroulette)
+                return
+        if message.author.id == bot.ids['risque'] and message.guild.id == bot.ids['gbfg']:
             content = message.content.lower().replace('?', '').replace('*', '').replace('.', '').replace('_', '').replace('~', '').replace('-', '')
             if (content.find('dab') != -1 or content.find('in chat') != -1) and random.randint(1, 100) <= 40:
-                await message.add_reaction('☣')
                 bot.runTask('autopit', autopit)
+                try:
+                    await message.add_reaction('☣')
+                except:
+                    pass
                 return
-        elif message.channel.id == bot.ids['gbfg_general'] and message.author.id != bot.ids['owner'] and not message.author.bot and (len(message.attachments) > 0 or message.content.find('http://') != -1 or message.content.find('https://') != -1) and random.randint(1, 100) <= 10:
+        elif message.channel.id == bot.ids['gbfg_general'] and message.author.id != bot.ids['owner'] and not message.author.bot and (len(message.attachments) > 0 or message.content.find('http://') != -1 or message.content.find('https://') != -1) and random.randint(1, 100) <= 2:
             await message.add_reaction('🐌')
     except:
         pass
-
+    # don't forget this
     await bot.process_commands(message)
+
+@bot.event
+async def on_message_edit(before, after): # same as up here, but for message edits
+    try:
+        if after.author.id == bot.ids['risque'] and after.guild.id == bot.ids['gbfg']:
+            content = after.content.lower().replace('?', '').replace('*', '').replace('.', '').replace('_', '').replace('~', '').replace('-', '')
+            if (content.find('dab') != -1 or content.find('in chat') != -1) and random.randint(1, 100) <= 40:
+                await after.add_reaction('☣')
+                bot.runTask('autopit', autopit)
+                return
+    except:
+        pass
 
 @bot.check # authorize or not a command on a global scale
 async def global_check(ctx):

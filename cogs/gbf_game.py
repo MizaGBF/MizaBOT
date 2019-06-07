@@ -397,6 +397,7 @@ class GBF_Game(commands.Cog):
         """Game for /gbfg/ (Mod only)"""
         if not self.bot.pitroulette:
             self.bot.pitroulette = True
-            await ctx.send(embed=self.bot.buildEmbed(title="Pit Roulette enabled", description=random.choice(["Who will get it?", "Are you brave enough?", "Do you dare?"]) ,color=self.color))
+            self.bot.pitroulettecount = 0
+            await ctx.send(embed=self.bot.buildEmbed(title="Pit Roulette enabled", description=random.choice(["Who will fall in?", "Are you brave enough?", "Do you dare?"]) , thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/584813271643586560/Activate_it.png", color=self.color))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="Pit Roulette already on" ,color=self.color))

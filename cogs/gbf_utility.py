@@ -360,7 +360,7 @@ class GBF_Utility(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(3, 30, commands.BucketType.guild)
-    async def schedule(self, ctx):
+    async def schedule(self, ctx, raw : str = ""):
         """Post the GBF schedule"""
         if len(self.bot.schedule) == 0:
             await ctx.send(embed=self.bot.buildEmbed(title="No schedule available", color=self.color))
@@ -371,11 +371,16 @@ class GBF_Utility(commands.Cog):
             i = 0
             msg = ""
             while i < l:
-                if l > 12: # enable or not emotes (I have 6 numbered emotes, so 6 field max aka 12 elements in my array)
+                if raw == 'raw':
+                    if i != 0: msg += ";"
+                    else: msg += "`"
+                    msg += self.bot.schedule[i] + ";" + self.bot.schedule[i+1]
+                elif l > 12: # enable or not emotes (I have 6 numbered emotes, so 6 field max aka 12 elements in my array)
                     msg += self.bot.schedule[i] + " ▪ " + self.bot.schedule[i+1] + "\n"
                 else:
                     msg += self.bot.getEmoteStr(str((i//2)+1)) + " " + self.bot.schedule[i] + " ▪ " + self.bot.schedule[i+1] + "\n"
                 i += 2
+            if raw == 'raw': msg += "`"
             await ctx.send(embed=self.bot.buildEmbed(title="🗓 Event Schedule", url="https://twitter.com/granblue_en", color=self.color, description=msg))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tokens', 'box'])
