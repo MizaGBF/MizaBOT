@@ -461,3 +461,52 @@ class GBF_Utility(commands.Cog):
             target = datetime(year=c.year, month=c.month+1, day=1, hour=12, minute=0, second=0, microsecond=0)
         delta = target - c
         await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('clock') + " Kore Kara", description="Release approximately in **" + str(delta.days) + "d" + str(delta.seconds // 3600) + "h" + str((delta.seconds // 60) % 60) + "m**",  url="https://granbluefantasy.jp/news/index.php", thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['sl', 'skillup'])
+    @commands.cooldown(2, 10, commands.BucketType.user)
+    async def skillLevel(self, ctx, type : str, level : int):
+        """Calculate what you need for skill up
+        type: sr, ssr, magna, omega, bahamut, baha, ultima, serap, seraphic, opus
+        level: your weapon current level"""
+        type = type.lower()
+        try:
+            if level < 1: raise Exception("Current level can't be negative")
+            if type == "sr":
+                if level >= 15: raise Exception("Can't skill up a " + self.bot.getEmoteStr('SR') + " weapon **SL" + str(level) + "**")
+                if level >= 5:
+                    msg = "**" + str(level) + "** " + self.bot.getEmoteStr('SR') + " to reach **SL" + str(level+1) + "**"
+                else:
+                    msg = "**" + str(level) + "** " + self.bot.getEmoteStr('SR') + " or **" + str(level*4) + "** " + self.bot.getEmoteStr('R') + " to reach SL" + str(level+1) + "**"
+            elif type in ["ssr", "magna", "omega"]:
+                if level >= 20: raise Exception("Can't skill up a " + self.bot.getEmoteStr('SSR') + " weapon **SL" + str(level) + "**")
+                if level >= 15: 
+                    msg = "**" + str(level) + "** " + self.bot.getEmoteStr('SSR') + " to reach **SL" + str(level+1) + "**"
+                elif level > 10: 
+                    msg = "**2** " + self.bot.getEmoteStr('SSR') + " and **" + str((level-10)*2) + "** " + self.bot.getEmoteStr('SR') + " to reach **SL" + str(level+1) + "**"
+                elif level == 10: 
+                    msg = "**2** " + self.bot.getEmoteStr('SSR') + " to reach **SL" + str(level+1) + "**"
+                elif level > 5: 
+                    msg = "**1** " + self.bot.getEmoteStr('SSR') + " and **" + str((level-5)*2) + "** " + self.bot.getEmoteStr('SR') + " to reach **SL" + str(level+1) + "**"
+                elif level == 5: 
+                    msg = "**1** " + self.bot.getEmoteStr('SSR') + " to reach **SL" + str(level+1) + "**"
+                else:
+                    msg = "**" + str(2*level) + "** " + self.bot.getEmoteStr('SR') + " to reach **SL" + str(level+1) + "**"
+            elif type in ["bahamut", "baha", "ultima", "seraph", "seraphic", "opus"]:
+                if level >= 20: raise Exception("Can't skill up a " + self.bot.getEmoteStr('SSR') + " weapon **SL" + str(level) + "**")
+                if level == 19: 
+                    msg = "**32** " + self.bot.getEmoteStr('SSR') + " or **8** " + self.bot.getEmoteStr('SSR') + " SL4 to reach **SL" + str(level+1) + "**"
+                elif level == 18: 
+                    msg = "**30** " + self.bot.getEmoteStr('SSR') + " or **6** " + self.bot.getEmoteStr('SSR') + " SL4 and **2** " + self.bot.getEmoteStr('SSR') + " SL3 to reach **SL" + str(level+1) + "**"
+                elif level == 17: 
+                    msg = "**29** " + self.bot.getEmoteStr('SSR') + " or **5** " + self.bot.getEmoteStr('SSR') + " SL4 and **3** " + self.bot.getEmoteStr('SSR') + " SL3 to reach **SL" + str(level+1) + "**"
+                elif level == 16: 
+                    msg = "**27** " + self.bot.getEmoteStr('SSR') + " or **6** " + self.bot.getEmoteStr('SSR') + " SL4 and **1** " + self.bot.getEmoteStr('SSR') + " SL3 to reach **SL" + str(level+1) + "**"
+                elif level == 15: 
+                    msg = "**25** " + self.bot.getEmoteStr('SSR') + " or **4** " + self.bot.getEmoteStr('SSR') + " SL4 and **3** " + self.bot.getEmoteStr('SSR') + " SL3 to reach **SL" + str(level+1) + "**"
+                else:
+                    msg = "**" + str(level) + "** " + self.bot.getEmoteStr('SSR') + " to reach **SL" + str(level+1) + "**"
+            else:
+                raise Exception("Unknown type `" + type + "`")
+            await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg,  url="https://gbf.wiki/Raising_Weapon_Skills", color=self.color))
+        except Exception as e:
+            await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=str(e),  url="https://gbf.wiki/Raising_Weapon_Skills", color=self.color))

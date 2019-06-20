@@ -233,8 +233,8 @@ class GBF_Game(commands.Cog):
                 fr = 0.0
             left = (300 - (r % 300))
             spark_time_range = [
-                self.bot.getJST() + timedelta(days=(left / 2.65)), 
-                self.bot.getJST() + timedelta(days=(left / 2.25))
+                self.bot.getJST() + timedelta(days=(left / 2.8)), 
+                self.bot.getJST() + timedelta(days=(left / 2))
             ]
             msg1 = self.bot.getEmoteStr('crystal') + " " + ctx.author.display_name + " has " + str(fr) + " roll"
             if fr != 1: msg1 += "s"

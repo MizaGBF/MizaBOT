@@ -184,7 +184,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.4
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.5
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -408,11 +408,17 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
         if e is None: return ""
         return str(e)
 
-    async def react(self, ctx, key): # react using a custom emote defined in config.json
+    async def react(self, ctx, key): # add a reaction using a custom emote defined in config.json
         try:
             await ctx.message.add_reaction(self.getEmote(key))
         except Exception as e:
             await self.sendError('react', str(e))
+
+    async def unreact(self, ctx, key): # remove a reaction using a custom emote defined in config.json
+        try:
+            await ctx.message.remove_reaction(self.getEmote(key), ctx.guild.me)
+        except Exception as e:
+            await self.sendError('unreact', str(e))
 
     def buildEmbed(self, **options): # make a full embed
         embed = discord.Embed(title=options.get('title'), description=options.pop('description', ""), url=options.pop('url', ""), color=options.pop('color', random.randint(0, 16777216)))
@@ -585,8 +591,8 @@ async def on_message(message): # to do something with a message
                 except:
                     pass
                 return
-        elif message.channel.id == bot.ids['gbfg_general'] and message.author.id != bot.ids['owner'] and not message.author.bot and (len(message.attachments) > 0 or message.content.find('http://') != -1 or message.content.find('https://') != -1) and random.randint(1, 100) <= 2:
-            await message.add_reaction('🐌')
+        """elif message.channel.id == bot.ids['gbfg_general'] and message.author.id != bot.ids['owner'] and not message.author.bot and (len(message.attachments) > 0 or message.content.find('http://') != -1 or message.content.find('https://') != -1) and random.randint(1, 100) <= 2:
+            await message.add_reaction('🐌')"""
     except:
         pass
     # don't forget this

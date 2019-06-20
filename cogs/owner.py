@@ -404,3 +404,13 @@ class Owner(commands.Cog):
         async for message in channel.history(limit=500):
             if member is None or message.author.id == member.id:
                 await message.add_reaction('🐌')
+
+    @commands.command(no_pm=True)
+    @isOwner()
+    async def nitro(self, ctx):
+        """Get the nitro boost status of the guild (Owner only)"""
+        guild = ctx.guild
+        msg = "Premium Tier: " + str(guild.premium_tier) + "\n"
+        msg += "Boosted members: " + str(guild.premium_subscription_count) + "\n"
+        msg += "Icon animated: " + str(guild.is_icon_animated()) + "\n"
+        await ctx.send(embed=self.bot.buildEmbed(title=guild.name + " status", description=msg, thumbnail=guild.icon_url, footer=str(guild.id), color=self.color))

@@ -365,11 +365,9 @@ class General(commands.Cog):
         else:
             exact = False
         name = ' '.join(name)
-        n = name.lower()
         for member in g.members:
             for r in member.roles:
-                rn = r.name.lower()
-                if rn == name or (exact == False and rn.find(n) != -1):
+                if r.name == name or (exact == False and r.name.lower().find(name.lower()) != -1):
                     i += 1
         if exact != "exact":
             await ctx.send(embed=self.bot.buildEmbed(title="Roles containing: " + name, description=str(i) + " user(s)", thumbnail=g.icon_url, footer="on server " + g.name, color=self.color))
