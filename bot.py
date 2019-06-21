@@ -488,8 +488,8 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
         await self.send('debug', embed=self.buildEmbed(title="Error in " + func_name + "()" + id, description=msg, footer="{0:%Y/%m/%d %H:%M} JST".format(self.getJST())))
 
     def getJST(self, nomicro=False): # get the time in jst
-        if nomicro: return datetime.utcnow().replace(microsecond=0) + timedelta(seconds=32400)
-        return datetime.utcnow() + timedelta(seconds=32400)
+        if nomicro: return datetime.utcnow().replace(microsecond=0) + timedelta(seconds=32400) - timedelta(seconds=30)
+        return datetime.utcnow() + timedelta(seconds=32400) - timedelta(seconds=30)
 
     def uptime(self, string=True): # get the uptime
         delta = datetime.utcnow() - self.starttime
@@ -506,6 +506,7 @@ class GracefulExit: # when heroku force the bot to shutdown
   def exit_gracefully(self,signum, frame):
     self.bot.exit_flag = True
     if self.bot.savePending:
+        self.bot.saving = False
         if self.bot.save(False):
             print('Autosave Success')
         else:

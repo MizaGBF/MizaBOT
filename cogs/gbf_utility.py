@@ -43,7 +43,7 @@ class GBF_Utility(commands.Cog):
         if self.bot.maintenance['state'] == True:
             if current_time < self.bot.maintenance['time']:
                 d = self.bot.maintenance['time'] - current_time
-                msg = self.bot.getEmoteStr('cog') + " Maintenance in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**, for **" + str(maintenance_d) + " hour(s)**"
+                msg = self.bot.getEmoteStr('cog') + " Maintenance in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**, for **" + str(self.bot.maintenance['duration']) + " hour(s)**"
             else:
                 d = current_time - self.bot.maintenance['time']
                 if self.bot.maintenance['duration'] <= 0:
@@ -365,7 +365,6 @@ class GBF_Utility(commands.Cog):
         if len(self.bot.schedule) == 0:
             await ctx.send(embed=self.bot.buildEmbed(title="No schedule available", color=self.color))
         else:
-            embed = discord.Embed(title="🗓 Event Schedule", url="https://twitter.com/granblue_en", color=random.randint(0, 16777216)) # random color
             l = len(self.bot.schedule)
             l = l - (l%2) # need an even amount, skipping the last one if odd
             i = 0
@@ -381,7 +380,7 @@ class GBF_Utility(commands.Cog):
                     msg += self.bot.getEmoteStr(str((i//2)+1)) + " " + self.bot.schedule[i] + " ▪ " + self.bot.schedule[i+1] + "\n"
                 i += 2
             if raw == 'raw': msg += "`"
-            await ctx.send(embed=self.bot.buildEmbed(title="🗓 Event Schedule", url="https://twitter.com/granblue_en", color=self.color, description=msg))
+            await ctx.send(embed=self.bot.buildEmbed(title="🗓 Event Schedule " + self.bot.getEmoteStr('clock') + " {0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), url="https://twitter.com/granblue_en", color=self.color, description=msg))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tokens', 'box'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -463,7 +462,7 @@ class GBF_Utility(commands.Cog):
         await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('clock') + " Kore Kara", description="Release approximately in **" + str(delta.days) + "d" + str(delta.seconds // 3600) + "h" + str((delta.seconds // 60) % 60) + "m**",  url="https://granbluefantasy.jp/news/index.php", thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['sl', 'skillup'])
-    @commands.cooldown(2, 10, commands.BucketType.user)
+    @commands.cooldown(2, 5, commands.BucketType.user)
     async def skillLevel(self, ctx, type : str, level : int):
         """Calculate what you need for skill up
         type: sr, ssr, magna, omega, bahamut, baha, ultima, serap, seraphic, opus
