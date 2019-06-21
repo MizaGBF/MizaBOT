@@ -337,5 +337,6 @@ class Management(commands.Cog):
         msg += "**Save Pending**: " + str(self.bot.savePending) + "\n"
         msg += "**Errors since boot**: " + str(self.bot.errn) + "\n"
         msg += "**Tasks Count**: " + str(len(asyncio.all_tasks())) + "\n"
+        msg += "**Servers Count**: " + str(len(self.bot.guilds)) + "\n"
         msg += "**Cogs Loaded**: " + str(len(self.bot.cogs)) + "/" + str(self.bot.cogn)
         await ctx.send(embed=self.bot.buildEmbed(title=ctx.guild.me.display_name + "'s status", description=msg, thumbnail=ctx.guild.me.avatar_url, color=self.color))

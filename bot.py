@@ -592,8 +592,6 @@ async def on_message(message): # to do something with a message
                 except:
                     pass
                 return
-        """elif message.channel.id == bot.ids['gbfg_general'] and message.author.id != bot.ids['owner'] and not message.author.bot and (len(message.attachments) > 0 or message.content.find('http://') != -1 or message.content.find('https://') != -1) and random.randint(1, 100) <= 2:
-            await message.add_reaction('🐌')"""
     except:
         pass
     # don't forget this
