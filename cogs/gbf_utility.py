@@ -263,7 +263,7 @@ class GBF_Utility(commands.Cog):
         except Exception as e:
             await self.bot.sendError("getgachabanner", str(e))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True, aliases=['drive'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['drive'])
     @commands.is_owner()
     async def gdrive(self, ctx):
         """Post the (You) google drive
@@ -274,6 +274,16 @@ class GBF_Utility(commands.Cog):
             except:
                 image = ""
             await ctx.send(embed=self.bot.buildEmbed(title="(You) Public Google Drive", description=self.bot.strings["gdrive()"], thumbnail=image, color=self.color))
+        else:
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I'm not permitted to post this link here", color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.is_owner()
+    async def lucilius(self, ctx):
+        """Post the (You) lucilius spreadsheet
+        (You) server only"""
+        if ctx.message.author.guild.id == self.bot.ids['you_server']:
+            await ctx.send(embed=self.bot.buildEmbed(title="(You) Lucilius Sheet", description=self.bot.strings["lucilius()"], thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/592019627677188116/BattleRaid_Lucilius_ImpossibleHard.png", color=self.color))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I'm not permitted to post this link here", color=self.color))
 
@@ -327,7 +337,7 @@ class GBF_Utility(commands.Cog):
         """Post a simple Ultimate Baha HL image guide"""
         await ctx.send(embed=self.bot.buildEmbed(title="Ultimate Bahamut HL", description=self.bot.strings["ubahahl() 1"], image=self.bot.strings["ubahahl() 2"], color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["christmas", "anniversary", "xmas", "anniv", "event"])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["christmas", "anniversary", "xmas", "anniv", "summer"])
     @commands.cooldown(3, 30, commands.BucketType.guild)
     async def stream(self, ctx, op : str = ""):
         """Post the stream text"""
@@ -358,7 +368,7 @@ class GBF_Utility(commands.Cog):
 
             await ctx.send(embed=self.bot.buildEmbed(title=title, description=msg, color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["event"])
     @commands.cooldown(3, 30, commands.BucketType.guild)
     async def schedule(self, ctx, raw : str = ""):
         """Post the GBF schedule"""
