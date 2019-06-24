@@ -146,7 +146,7 @@ class Mizabot(commands.Bot):
         self.process = psutil.Process() # script process
         self.process.cpu_percent() # called once to initialize
         self.errn = 0 # count the number of errors
-        self.cogn = 0 # will store how many cogs are expected to be in memory (check at the bottom of this file)
+        self.cogn = 0 # will store how many cogs are expected to be in memory
         self.exit_flag = False # set to true when sigterm is received
         self.savePending = False # set to true when a change is made to a variable
         self.tasks = {} # store my tasks
@@ -185,7 +185,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.7
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.8
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 

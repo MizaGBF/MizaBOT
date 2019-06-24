@@ -14,29 +14,44 @@ class GBF_Utility(commands.Cog):
     def startTasks(self):
         self.bot.runTask('maintenance', self.maintenancetask)
 
-    async def maintenancetask(self): # gbf maintenance detection
+    async def maintenancetask(self): # gbf emergency maintenance detection
         await asyncio.sleep(3)
         await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="maintenancetask() started", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST())))
         while True:
             try:
-                if self.bot.maintenance['state'] == False:
-                    async with aiohttp.ClientSession() as session:
-                        async with session.get("http://game.granbluefantasy.jp") as r:
-                            if r.status != 200 and str(await r.read()).find('The app is now undergoing maintenance.') != -1:
-                                await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="(TEST) maintenance detected", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST())))
-                                c = self.bot.getJST()
-                                """self.bot.maintenance['time'] = c
-                                self.bot.maintenance['duration'] = 0
-                                self.bot.maintenance['state'] = True
-                                self.bot.savePending = True"""
-                                await self.bot.send('debug', str(await r.read())[:1900])
-                            return
+                if self.checkMaintenance():
+                    if self.bot.maintenance['duration'] == 0: # check if infinite maintenance
+                        req = await self.requestGBF()
+                        if req[0].status == 200 and req[1].find("The app is now undergoing") == -1:
+                            await self.bot.send('debug', embed=self.bot.buildEmbed(title="Emergency maintenance detected", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), color=self.color))
+                            c = self.bot.getJST()
+                            self.bot.maintenance = {"state" : False, "time" : None, "duration" : 0}
+                            self.bot.savePending = True
+                        await asyncio.sleep(500)
+                else:
+                    req = await self.requestGBF()
+                    if req[0].status == 200 and req[1].find("The app is now undergoing") != -1 and req[1].find("Starts: ") == -1:
+                        await self.bot.send('debug', embed=self.bot.buildEmbed(title="Emergency maintenance detected", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), color=self.color))
+                        c = self.bot.getJST()
+                        self.bot.maintenance['time'] = c
+                        self.bot.maintenance['duration'] = 0
+                        self.bot.maintenance['state'] = True
+                        self.bot.savePending = True
+                        await asyncio.sleep(100)
             except asyncio.CancelledError:
                 await self.bot.sendError('maintenancetask', 'cancelled')
                 return
             except Exception as e:
                 await self.bot.sendError('maintenancetask', str(e))
             await asyncio.sleep(random.randint(30, 45))
+
+    async def requestGBF():
+        async with aiohttp.ClientSession() as session:
+            async with session.get("http://game.granbluefantasy.jp") as r:
+                s = await r.read()
+                s = s.decode('utf-8')
+                return [r, s]
+        raise Exception("Failed to request: http://game.granbluefantasy.jp")
 
     def maintenanceUpdate(self): # check the gbf maintenance status, empty string returned = no maintenance
         current_time = self.bot.getJST()
@@ -57,6 +72,10 @@ class GBF_Utility(commands.Cog):
                     d = e - current_time
                     msg = self.bot.getEmoteStr('cog') + " Maintenance ends in **" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**"
         return msg
+
+    def checkMaintenance(self):
+        msg = self.maintenanceUpdate()
+        return (msg.find("ends in") != -1 or msg.find("Emergency maintenance on going") != -1)
 
     # function to fix the case (for $wiki)
     def fixCase(self, term): # term is a string
