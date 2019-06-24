@@ -25,9 +25,10 @@ class GBF_Utility(commands.Cog):
                             if r.status != 200 and str(await r.read()).find('The app is now undergoing maintenance.') != -1:
                                 await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="(TEST) maintenance detected", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST())))
                                 c = self.bot.getJST()
-                                self.bot.maintenance['time'] = c
+                                """self.bot.maintenance['time'] = c
                                 self.bot.maintenance['duration'] = 0
                                 self.bot.maintenance['state'] = True
+                                self.bot.savePending = True"""
                                 await self.bot.send('debug', str(await r.read())[:1900])
                             return
             except asyncio.CancelledError:

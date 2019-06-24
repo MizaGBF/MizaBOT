@@ -22,6 +22,11 @@ class Lucilius(commands.Cog):
         for r in self.bot.lucilius["role"]:
             self.roles.append(guild.get_role(r))
 
+    def isOwner(): # for decorators
+        async def predicate(ctx):
+            return ctx.bot.isOwner(ctx)
+        return commands.check(predicate)
+
     def isLuciliusChannel(): # for decorators
         async def predicate(ctx):
             id = ctx.channel.id
@@ -122,3 +127,29 @@ class Lucilius(commands.Cog):
                 await ctx.message.add_reaction('✅') # white check mark
             except:
                 pass
+
+    @commands.command(no_pm=True)
+    @isOwner()
+    async def purgeLucilius(self, ctx):
+        """Remove inactive users from the /gbfg/ lucilius-hard channel (Owner only)"""
+        luci_c = self.bot.get_channel(bot.lucilius['main'])
+        gbfg_g = self.bot.get_guild(self.bot.ids['gbfg'])
+        whitelist = {}
+        await self.bot.react(ctx, 'time')
+        async for message in luci_c.history(limit=2000): 
+            if message.author.id in whitelist:
+                continue
+            else:
+                whitelist[str(message.author)] = 0
+        i = 0
+        for member in gbfg_g.members:
+            for r in member.roles:
+                if r.name == self.roles[i].name:
+                    if str(member) in whitelist:
+                        pass
+                    else:
+                        await member.remove_roles(r)
+                        i += 1
+                    break
+        await self.bot.unreact(ctx, 'time')
+        await self.bot.send('lucilog', embed=self.bot.buildEmbed(title="*lucilius-hard* purge results", description=str(i) + " inactive user(s)", color=self.color))

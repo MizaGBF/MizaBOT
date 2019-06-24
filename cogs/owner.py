@@ -414,3 +414,63 @@ class Owner(commands.Cog):
         msg += "Boosted members: " + str(guild.premium_subscription_count) + "\n"
         msg += "Icon animated: " + str(guild.is_icon_animated()) + "\n"
         await ctx.send(embed=self.bot.buildEmbed(title=guild.name + " status", description=msg, thumbnail=guild.icon_url, footer=str(guild.id), color=self.color))
+
+    @commands.command(no_pm=True)
+    @isOwner()
+    async def purgeUbhl(self, ctx):
+        """Remove inactive users from the /gbfg/ ubaha-hl channel (Owner only)"""
+        ubhl_c = self.bot.get_channel(self.bot.ids['gbfg_ubhl'])
+        gbfg_g = self.bot.get_guild(self.bot.ids['gbfg'])
+        whitelist = {}
+        await self.bot.react(ctx, 'time')
+        async for message in ubhl_c.history(limit=10000): 
+            if message.author.id in whitelist:
+                continue
+            else:
+                whitelist[str(message.author)] = 0
+        i = 0
+        for member in gbfg_g.members:
+            for r in member.roles:
+                if r.name == 'UBaha HL':
+                    if str(member) in whitelist:
+                        pass
+                    else:
+                        await member.remove_roles(r)
+                        i += 1
+                    break
+        await self.bot.unreact(ctx, 'time')
+        await ctx.send(embed=self.bot.buildEmbed(title="*ubaha-hl* purge results", description=str(i) + " inactive user(s)", color=self.color))
+
+    @commands.command(no_pm=True)
+    @isOwner()
+    async def gbfg_inactive(self, ctx):
+        """Remove inactive users from the /gbfg/ server (Owner only)"""
+        g = self.bot.get_guild(self.bot.ids['gbfg'])
+        t = datetime.utcnow() - timedelta(days=30)
+        whitelist = {}
+        await self.bot.react(ctx, 'time')
+        for c in g.channels:
+            try:
+                async for message in c.history(limit=50000): 
+                    if message.created_at < t:
+                        break
+                    whitelist[message.author.id] = 0
+            except:
+                pass
+        await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ purge starting", description="Kicking " + str(len(g.members) - len(whitelist)) + " inactive user(s)", color=self.color))
+        i = 0
+        for member in g.members:
+            try:
+                if member.id not in whitelist:
+                    await member.kick()
+                    i += 1
+            except:
+                pass
+        await self.bot.unreact(ctx, 'time')
+        await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ purge results", description=str(i) + " inactive user(s) successfully kicked", color=self.color))
+
+    @commands.command(no_pm=True)
+    @isOwner()
+    async def punish(self, ctx):
+        """Punish the bot"""
+        await ctx.send("Please, Master, make it hurt.")

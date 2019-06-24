@@ -10,6 +10,7 @@ from pydrive.drive import GoogleDrive
 import itertools
 import psutil
 import time
+import cogs # our cogs folder
 
 # ########################################################################################
 # custom help command used by the bot
@@ -184,9 +185,18 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.5
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.7
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
+
+    def loadCog(self, *cog_classes):
+        for c in cog_classes:
+            try:
+                self.add_cog(cogs.cog_get(c, self))
+            except Exception as e:
+                print("import " + c + ": " + str(e))
+                self.errn += 1
+            self.cogn += 1
 
     def mainLoop(self): # main loop
         while self.running:
@@ -540,18 +550,6 @@ async def on_guild_join(guild): # when the bot joins a new guild
 
 # called by on_message
 # games/jokes for /gbfg/
-async def autopit():
-    try:
-        g = bot.get_guild(bot.ids['gbfg'])
-        m = g.get_member(bot.ids['risque'])
-        await m.add_roles(g.get_role(bot.ids['pit']))
-        await asyncio.sleep(600)
-        await m.remove_roles(g.get_role(bot.ids['pit']))
-    except asyncio.CancelledError:
-        return
-    except Exception as e:
-        await bot.sendError('autopit', str(e))
-
 async def pitroulette():
     try:
         message = bot.pitroulettevictim
@@ -582,15 +580,6 @@ async def on_message(message): # to do something with a message
             if random.randint(1, 100) <= 6:
                 bot.pitroulettevictim = message
                 bot.runTask('pitroulette', pitroulette)
-                return
-        if message.author.id == bot.ids['risque'] and message.guild.id == bot.ids['gbfg']:
-            content = message.content.lower().replace('?', '').replace('*', '').replace('.', '').replace('_', '').replace('~', '').replace('-', '')
-            if (content.find('dab') != -1 or content.find('in chat') != -1) and random.randint(1, 100) <= 40:
-                bot.runTask('autopit', autopit)
-                try:
-                    await message.add_reaction('☣')
-                except:
-                    pass
                 return
     except:
         pass
@@ -649,73 +638,11 @@ async def on_member_remove(member):
     except Exception as e:
         pass
 
-# load cogs
-try:
-    from cogs.general import General
-    bot.add_cog(General(bot))
-except Exception as e:
-    print("import General: " + str(e))
-    bot.errn += 1
-bot.cogn += 1 # count the cogs
-
-try:
-    from cogs.gbf_game import GBF_Game
-    bot.add_cog(GBF_Game(bot))
-except Exception as e:
-    print("import GBF_Game: " + str(e))
-    bot.errn += 1
-bot.cogn += 1
-
-try:
-    from cogs.gbf_utility import GBF_Utility
-    bot.add_cog(GBF_Utility(bot))
-except Exception as e:
-    print("import GBF_Utility: " + str(e))
-    bot.errn += 1
-bot.cogn += 1
-
-try:
-    from cogs.gw import GW
-    bot.add_cog(GW(bot))
-except Exception as e:
-    print("import GW: " + str(e))
-    bot.errn += 1
-bot.cogn += 1
-
-try:
-    from cogs.management import Management
-    bot.add_cog(Management(bot))
-except Exception as e:
-    print("import Management: " + str(e))
-    bot.errn += 1
-bot.cogn += 1
-
-try:
-    from cogs.owner import Owner
-    bot.add_cog(Owner(bot))
-except Exception as e:
-    print("import Owner: " + str(e))
-    bot.errn += 1
-bot.cogn += 1
-
-try:
-    from cogs.lucilius import Lucilius
-    bot.add_cog(Lucilius(bot))
-except Exception as e:
-    print("import Lucilius: " + str(e))
-    bot.errn += 1
-bot.cogn += 1
-
-try:
-    from baguette import Baguette
-    bot.add_cog(Baguette(bot))
-except Exception as e:
-    print("import Baguette: " + str(e))
-    bot.errn += 1
-bot.cogn += 1
-
 # create the graceful exit
 grace = GracefulExit(bot)
+
+# load cogs from the cogs folder
+bot.loadCog("general", "gbf_game.GBF_Game", "gbf_utility.GBF_Utility", "gw.GW", "management", "owner", "lucilius", "baguette")
 
 # start the loop
 bot.mainLoop()
