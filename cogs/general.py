@@ -468,3 +468,19 @@ class General(commands.Cog):
                 await ctx.message.add_reaction('✅') # white check mark
                 if id in self.bot.reminders:
                     await self.bot.callCommand(ctx, 'remindlist', 'General')
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def symphogear(self, ctx):
+        """Countdown to Symphogear AXZ"""
+        c = self.bot.getJST()
+        d = datetime.utcnow().replace(year=2019, month=7, day=7, hour=1, minute=0, second=0, microsecond=0)
+        thumbnail = "http://www.symphogear-xv.com/img/XVlogo.png"
+        i = 1
+        while i < 14:
+            if c < d:
+                left = d - c
+                await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('clock') + " Symphogear XV", description="Episode " + str(i) + " airs in **" + str(left.days) + "d" + str(left.seconds // 3600) + "h" + str((left.seconds // 60) % 60) + "m**",  url="http://www.symphogear-xv.com/", thumbnail=thumbnail, color=self.color))
+                return
+            i += 1
+            d = d + timedelta(days=1)

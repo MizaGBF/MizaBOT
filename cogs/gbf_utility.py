@@ -45,7 +45,7 @@ class GBF_Utility(commands.Cog):
                 await self.bot.sendError('maintenancetask', str(e))
             await asyncio.sleep(random.randint(30, 45))
 
-    async def requestGBF():
+    async def requestGBF(self):
         async with aiohttp.ClientSession() as session:
             async with session.get("http://game.granbluefantasy.jp") as r:
                 s = await r.read()
@@ -461,10 +461,10 @@ class GBF_Utility(commands.Cog):
             if last is not None and d.month != last.month:
                 if c == last:
                     beg = last.replace(hour=15, minute=00, second=00)
-                    end = c.replace(hour=23, minute=59, second=59) + timedelta(seconds=1)
+                    end = c.replace(hour=23, minute=59, second=59) + timedelta(days=2, seconds=1)
                     if c >= beg and c < end:
                         end = end - c
-                        await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('clock') + " Premium Friday", description="Premium Friday ends in **" + str(end.seconds // 3600) + "h" + str((end.seconds // 60) % 60) + "m**", url="http://game.granbluefantasy.jp", thumbnail=thumbnail, color=self.color))
+                        await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('clock') + " Premium Friday", description="Premium Friday ends in **" + str(end.days) + "d" + str(end.seconds // 3600) + "h" + str((end.seconds // 60) % 60) + "m**", url="http://game.granbluefantasy.jp", thumbnail=thumbnail, color=self.color))
                         return
                     elif c >= end:
                         pass

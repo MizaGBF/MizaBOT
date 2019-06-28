@@ -185,7 +185,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.8
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.9
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -478,11 +478,11 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
 
     async def callCommand(self, ctx, command, cog, *args, **kwargs): #call a command in a cog
         cmds = self.get_cog(cog).get_commands()
-        if cmds:
-            for c in cmds:
-                if c.name == command:
-                    await ctx.invoke(c, *args, **kwargs)
-                    break
+        for c in cmds:
+            if c.name == command:
+                await ctx.invoke(c, *args, **kwargs)
+                return
+        raise Exception("Command `" + command + "` not found")
 
     async def send(self, channel_name : str, msg : str = "", embed : discord.Embed = None, file : discord.File = None): # send something to a channel
         try:
