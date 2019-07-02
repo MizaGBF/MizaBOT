@@ -185,7 +185,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.9
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.10
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -203,6 +203,8 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             try:
                 self.loop.run_until_complete(self.start(self.tokens['discord']))
             except Exception as e: # handle exceptions here to avoid the bot dying
+                if self.savePending:
+                    self.save(False)
                 self.errn += 1
                 print("Main Loop Exception: " + str(e))
         if self.save():
@@ -492,6 +494,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             print(channel_name + " error: " + str(e))
 
     async def sendError(self, func_name : str, msg : str, id = None): # send an error to the debug channel
+        if self.errn >= 50: return # disable error messages if too many messages got sent
         if id is None: id = ""
         else: id = " " + str(id)
         self.errn += 1
@@ -516,13 +519,15 @@ class GracefulExit: # when heroku force the bot to shutdown
   def exit_gracefully(self,signum, frame):
     self.bot.exit_flag = True
     if self.bot.savePending:
-        self.bot.saving = False
+        self.bot.autosaving = False
         if self.bot.save(False):
             print('Autosave Success')
         else:
             print('Autosave Failed')
     exit(0) # not graceful at all
 
+# #####################################################################################
+# Start
 # make the bot instance
 bot = Mizabot()
 
