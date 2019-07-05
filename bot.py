@@ -72,7 +72,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
             embed.add_field(name=c.name + " ▫ " + self.get_command_signature(c), value=c.short_doc, inline=False)
             if len(embed) > 5800 or len(embed.fields) > 24: # embeds have a 6000 and 25 fields characters limit, I send and make a new embed if needed
                 await ctx.author.send(embed=embed)
-                embed = discord.Embed(title=bot.getEmoteStr('mark') + " **" + category[:-1] + "** Category", color=embed.colour)
+                embed = discord.Embed(title=bot.getEmoteStr('mark') + " **" + cog.qualified_name + "** Category", description=cog.description, color=embed.colour)
         if len(embed.fields) > 0:
             await ctx.author.send(embed=embed)
 
