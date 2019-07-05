@@ -469,6 +469,17 @@ class Owner(commands.Cog):
         await self.bot.unreact(ctx, 'time')
         await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ purge results", description=str(i) + " inactive user(s) successfully kicked", color=self.color))
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isOwner()
+    async def getfile(self, ctx, *, filename: str):
+        """Retrieve a bot file (Owner only)"""
+        try:
+            with open(filename, 'r') as infile:
+                await self.bot.send('debug', file=discord.File(infile))
+            await ctx.message.add_reaction('✅') # white check mark
+        except Exception as e:
+            await self.bot.sendError('getfile', str(e))
+
     @commands.command(no_pm=True)
     @isOwner()
     async def punish(self, ctx):

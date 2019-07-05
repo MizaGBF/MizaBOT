@@ -216,7 +216,6 @@ class GBF_Game(commands.Cog):
             await self.bot.sendError('setRoll', str(e), 'A')
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['seecrystal', 'seespark'])
-    @isAuthorized()
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def seeRoll(self, ctx):
         """Post your roll count"""

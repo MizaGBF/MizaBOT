@@ -327,6 +327,11 @@ class GBF_Utility(commands.Cog):
         """Post a link to my autistic blue eternal outfit grinding Sheet"""
         await ctx.send(embed=self.bot.buildEmbed(title="5* Eternal Skin Farming Sheet", description=self.bot.strings["stayblue()"], color=self.color))
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['soldier'])
+    async def bullet(self, ctx):
+        """Post a link to my bullet grind Sheet"""
+        await ctx.send(embed=self.bot.buildEmbed(title="Bullet Grind Sheet", description=self.bot.strings["bullet()"], color=self.color))
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gbfgcrew', 'gbfgpastebin'])
     async def pastebin(self, ctx):
         """Post a link to the /gbfg/ crew pastebin"""
