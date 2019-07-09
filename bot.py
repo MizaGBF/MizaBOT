@@ -188,7 +188,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.11
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.12
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -538,6 +538,7 @@ bot = Mizabot()
 @bot.event
 async def on_ready(): # when the bot starts
     bot.setChannel('debug', 'debug_channel') # set our debug channel
+    bot.setChannel('pinned', 'you_pinned') # set (you) pinned channel
     bot.startTasks() # start the tasks
     # send a pretty message
     await bot.send('debug', embed=bot.buildEmbed(title=bot.user.display_name + " is Ready", description="**Server Count**: " + str(len(bot.guilds)) + "\n**Servers Pending**: " + str(len(bot.newserver['pending'])) + "\n**Tasks Count**: " + str(len(asyncio.all_tasks())) + "\n**Cogs Loaded**: " + str(len(bot.cogs)) + "/" + str(bot.cogn), thumbnail=bot.user.avatar_url, inline=True, footer="{0:%Y/%m/%d %H:%M} JST".format(bot.getJST())))
@@ -630,6 +631,57 @@ async def on_command_error(ctx, error):
     else:
         bot.errn += 1
         await bot.send('debug', embed=bot.buildEmbed(title="⚠ Error caused by " + str(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`' + ctx.message.content + '`'}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer="{0:%Y/%m/%d %H:%M} JST".format(bot.getJST())))
+
+# (You) pin board system
+@bot.event
+async def on_raw_reaction_add(payload):
+    try:
+        if payload.channel_id != bot.ids['you_general']:
+            return
+        message = await bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+        reactions = message.reactions
+    except Exception as e:
+        await bot.sendError('raw_react', str(e))
+        return
+    for reaction in reactions:
+        users = await reaction.users().flatten()
+        me = message.guild.me
+        if reaction.emoji == '📌':
+            guild = message.guild
+            content = message.content
+            isMod = False
+            for u in users:
+                if u.id == me.id:
+                    return
+                m = guild.get_member(u.id)
+                if m.guild_permissions.manage_messages:
+                    isMod = True
+            if not isMod:
+                return
+
+            await message.add_reaction('📌')
+
+            dict = {}
+            dict['color'] = 0xf20252
+            dict['title'] = str(message.author)
+            if len(content) != 0: dict['description'] = content + "\n\n"
+            else: dict['description'] = ""
+            dict['description'] += ":earth_asia: [**Link**](https://discordapp.com/channels/"+str(message.guild.id)+"/"+str(message.channel.id)+"/"+str(message.id) + ")\n"
+            dict['thumbnail'] = {'url':str(message.author.avatar_url)}
+            dict['footer'] = {'text':'{0:%Y-%m-%d %H:%M:%S} UTC'.format(message.created_at)}
+            dict['fields'] = []
+
+            # for attachments
+            if message.attachments:
+                for file in message.attachments:
+                    if file.is_spoiler():
+                        dict['fields'].append({'inline': True, 'name':'Attachment', 'value':f'[{file.filename}]({file.url})'})
+                    elif file.url.lower().endswith(('.png', '.jpeg', '.jpg', '.gif', '.webp')) and 'image' not in dict:
+                        dict['image'] = {'url':file.url}
+                    else:
+                        dict['fields'].append({'inline': True, 'name':'Attachment', 'value':f'[{file.filename}]({file.url})'})
+            embed = discord.Embed.from_dict(dict)
+            await bot.send('pinned', embed=embed)
 
 # the two events are used by the lucilius cog
 @bot.event

@@ -483,4 +483,4 @@ class General(commands.Cog):
                 await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('clock') + " Symphogear XV", description="▪ Episode " + str(i) + " airs in **" + str(left.days) + "d" + str(left.seconds // 3600) + "h" + str((left.seconds // 60) % 60) + "m**\n▪ [Twitter](https://twitter.com/SYMPHOGEAR)",  url="http://www.symphogear-xv.com/", thumbnail=thumbnail, color=self.color))
                 return
             i += 1
-            d = d + timedelta(days=1)
+            d = d + timedelta(days=7)
