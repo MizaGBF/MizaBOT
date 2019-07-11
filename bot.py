@@ -689,9 +689,8 @@ async def on_member_remove(member):
     if member.guild.id == bot.ids['gbfg']:
         try:
             r = member.guild.get_role(bot.ids['gbfg_lucirole'])
-            if r == member.roles:
+            if r in member.roles:
                 await bot.send('lucilog', embed=bot.buildEmbed(title="Left the server", description="{0:%Y/%m/%d %H:%M} JST".format(bot.getJST()), footer=str(member) + " ▪ User ID: " + str(member.id), thumbnail=member.avatar_url, color=color))
-                return
         except Exception as e:
             await bot.sendError('on_member_remove', str(e))
 
