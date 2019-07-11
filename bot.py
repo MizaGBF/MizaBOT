@@ -166,7 +166,6 @@ class Mizabot(commands.Bot):
         self.st = {} # guild strike times
         self.bot_maintenance = None # bot maintenance day
         self.reminders = {} # user reminders
-        self.lucilius = {} # /gbfg/ lucilius data
         self.tokens = {} # bot tokens
         self.baguette = {} # secret, config
         self.baguette_save = {} # secret, save
@@ -188,7 +187,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.12
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.13
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -272,7 +271,6 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 self.strings = data['strings']
                 self.specialstrings = data['specialstrings']
                 self.emotes = data['emotes']
-                self.lucilius = data['lucilius']
         except Exception as e:
             print('loadConfig(): ' + str(e))
             exit(1) # instant quit if error
@@ -539,6 +537,7 @@ bot = Mizabot()
 async def on_ready(): # when the bot starts
     bot.setChannel('debug', 'debug_channel') # set our debug channel
     bot.setChannel('pinned', 'you_pinned') # set (you) pinned channel
+    bot.setChannel('lucilog', 'gbfg_lucilog')
     bot.startTasks() # start the tasks
     # send a pretty message
     await bot.send('debug', embed=bot.buildEmbed(title=bot.user.display_name + " is Ready", description="**Server Count**: " + str(len(bot.guilds)) + "\n**Servers Pending**: " + str(len(bot.newserver['pending'])) + "\n**Tasks Count**: " + str(len(asyncio.all_tasks())) + "\n**Cogs Loaded**: " + str(len(bot.cogs)) + "/" + str(bot.cogn), thumbnail=bot.user.avatar_url, inline=True, footer="{0:%Y/%m/%d %H:%M} JST".format(bot.getJST())))
@@ -594,18 +593,6 @@ async def on_message(message): # to do something with a message
         pass
     # don't forget this
     await bot.process_commands(message)
-
-@bot.event
-async def on_message_edit(before, after): # same as up here, but for message edits
-    try:
-        if after.author.id == bot.ids['risque'] and after.guild.id == bot.ids['gbfg']:
-            content = after.content.lower().replace('?', '').replace('*', '').replace('.', '').replace('_', '').replace('~', '').replace('-', '')
-            if (content.find('dab') != -1 or content.find('in chat') != -1) and random.randint(1, 100) <= 40:
-                await after.add_reaction('☣')
-                bot.runTask('autopit', autopit)
-                return
-    except:
-        pass
 
 @bot.check # authorize or not a command on a global scale
 async def global_check(ctx):
@@ -682,27 +669,37 @@ async def on_raw_reaction_add(payload):
                         dict['fields'].append({'inline': True, 'name':'Attachment', 'value':f'[{file.filename}]({file.url})'})
             embed = discord.Embed.from_dict(dict)
             await bot.send('pinned', embed=embed)
+            return
 
-# the two events are used by the lucilius cog
+# the two events are used by the lucilius channel of /gbfg/
 @bot.event
 async def on_member_update(before, after):
-    try:
-        await bot.get_cog('Lucilius').memberUpdate(before, after)
-    except Exception as e:
-        pass
+    if before.guild.id == bot.ids['gbfg']:
+        r = before.guild.get_role(bot.ids['gbfg_lucirole'])
+        bf = (r in before.roles)
+        af = (r in after.roles)
+        if af != bf: # very simple, just check for a difference in roles
+            if bf == True:
+                await bot.send('lucilog', embed=bot.buildEmbed(title="Left the channel", description="{0:%Y/%m/%d %H:%M} JST".format(bot.getJST()), footer=str(after) + " ▪ User ID: " + str(after.id), thumbnail=after.avatar_url))
+            else:
+                await bot.send('lucilog', embed=bot.buildEmbed(title="Joined the channel", description="{0:%Y/%m/%d %H:%M} JST".format(bot.getJST()), footer=str(after) + " ▪ User ID: " + str(after.id), thumbnail=after.avatar_url))
 
 @bot.event
 async def on_member_remove(member):
-    try:
-        await bot.get_cog('Lucilius').memberRemove(member)
-    except Exception as e:
-        pass
+    if member.guild.id == bot.ids['gbfg']:
+        try:
+            r = member.guild.get_role(bot.ids['gbfg_lucirole'])
+            if r == member.roles:
+                await bot.send('lucilog', embed=bot.buildEmbed(title="Left the server", description="{0:%Y/%m/%d %H:%M} JST".format(bot.getJST()), footer=str(member) + " ▪ User ID: " + str(member.id), thumbnail=member.avatar_url, color=color))
+                return
+        except Exception as e:
+            await bot.sendError('on_member_remove', str(e))
 
 # create the graceful exit
 grace = GracefulExit(bot)
 
 # load cogs from the cogs folder
-bot.loadCog("general", "gbf_game.GBF_Game", "gbf_utility.GBF_Utility", "gw.GW", "management", "owner", "lucilius", "baguette")
+bot.loadCog("general", "gbf_game.GBF_Game", "gbf_utility.GBF_Utility", "gw.GW", "management", "owner", "baguette")
 
 # start the loop
 bot.mainLoop()

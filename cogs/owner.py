@@ -5,6 +5,7 @@ import aiohttp
 from datetime import datetime, timedelta
 import random
 import json
+import re
 
 # Owner only command
 class Owner(commands.Cog):
@@ -443,6 +444,32 @@ class Owner(commands.Cog):
 
     @commands.command(no_pm=True)
     @isOwner()
+    async def purgeLucilius(self, ctx):
+        """Remove inactive users from the /gbfg/ lucilius-hard channel (Owner only)"""
+        luci_c = self.bot.get_channel(bot.lucilius['main'])
+        gbfg_g = self.bot.get_guild(self.bot.ids['gbfg'])
+        whitelist = {}
+        await self.bot.react(ctx, 'time')
+        async for message in luci_c.history(limit=10000): 
+            if message.author.id in whitelist:
+                continue
+            else:
+                whitelist[str(message.author)] = 0
+        i = 0
+        for member in gbfg_g.members:
+            for r in member.roles:
+                if r.name == 'Lucilius HL':
+                    if str(member) in whitelist:
+                        pass
+                    else:
+                        await member.remove_roles(r)
+                        i += 1
+                    break
+        await self.bot.unreact(ctx, 'time')
+        await ctx.send(embed=self.bot.buildEmbed(title="*ubaha-hl* purge results", description=str(i) + " inactive user(s)", color=self.color))
+
+    @commands.command(no_pm=True)
+    @isOwner()
     async def gbfg_inactive(self, ctx):
         """Remove inactive users from the /gbfg/ server (Owner only)"""
         g = self.bot.get_guild(self.bot.ids['gbfg'])
@@ -485,3 +512,23 @@ class Owner(commands.Cog):
     async def punish(self, ctx):
         """Punish the bot"""
         await ctx.send("Please, Master, make it hurt.")
+
+
+    @commands.command(no_pm=True)
+    @isOwner()
+    async def snackcount(self, ctx):
+        """Count Snacks mono emote posts"""
+        await self.bot.react(ctx, 'time')
+        sc = 0
+        mc = 0
+        regex = re.compile("^<:\w*:\d+>$|^:\w*:$")
+        c = ctx.channel
+        try:
+            async for message in c.history(limit=50000): 
+                if message.author.id == self.bot.ids['snacks']:
+                    sc += 1
+                    if regex.search(message.content):
+                        mc += 1
+        except:
+            pass
+        await ctx.send(embed=self.bot.buildEmbed(title="Results", description=str(sc) + " message(s) from Snacks in the last 50000 messages of this channel.\n" + str(mc) + " are mono-emotes (" + str(mc/sc*100) + "%).", color=self.color))
