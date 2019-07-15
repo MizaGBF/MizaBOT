@@ -279,7 +279,7 @@ class GBF_Utility(commands.Cog):
                 else:
                     description = buf
                     image = ""
-                await ctx.send(embed=self.bot.buildEmbed(title="Granblue Fantasy", url="http://game.granbluefantasy.jp/#gacha", description=description, thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", image=image, color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="Granblue Fantasy ▪ Rate ups", url="http://game.granbluefantasy.jp/#gacha", description=description, thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", image=image, color=self.color))
         except Exception as e:
             await self.bot.sendError("getgachabanner", str(e))
 

@@ -28,7 +28,7 @@ class GW(commands.Cog):
             buff_role = [[guild.get_role(self.bot.ids['atkace']), 'atkace'], [guild.get_role(self.bot.ids['deface']), 'deface']]
             msg = ""
             while self.bot.gw['state'] and (len(self.bot.gw['buffs']) > 0 or len(msg) != 0):
-                current_time = self.bot.getJST()
+                current_time = self.bot.getJST() + timedelta(seconds=32)
                 if len(self.bot.gw['buffs']) > 0 and current_time >= self.bot.gw['buffs'][0][0]:
                     msg = ""
                     if (current_time - self.bot.gw['buffs'][0][0]) < timedelta(seconds=200):

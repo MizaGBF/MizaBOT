@@ -429,10 +429,7 @@ class General(commands.Cog):
         try:
             self.bot.reminders[id].append([datetime.utcnow().replace(microsecond=0) + timedelta(seconds=32400) + d, msg]) # keep JST
             self.bot.savePending = True
-            try:
-                await self.bot.callCommand(ctx, 'remindlist', 'General')
-            except:
-                await ctx.send(embed=self.bot.buildEmbed(title="Reminder at {0:%Y/%m/%d %H:%M} JST".format(self.bot.reminders[id][-1][0]), description=msg, color=self.color))
+            await ctx.message.add_reaction('✅') # white check mark
         except:
             await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", footer="I have no clues about what went wrong", color=self.color))
 
@@ -466,8 +463,6 @@ class General(commands.Cog):
                     self.bot.reminders.pop(id)
                 self.bot.savePending = True
                 await ctx.message.add_reaction('✅') # white check mark
-                if id in self.bot.reminders:
-                    await self.bot.callCommand(ctx, 'remindlist', 'General')
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 10, commands.BucketType.guild)

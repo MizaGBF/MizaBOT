@@ -359,10 +359,10 @@ class GBF_Game(commands.Cog):
     async def quota(self, ctx):
         """Give you your GW quota for the day"""
         chance = random.randint(1, 50)
-        hr = random.randint(0, 600000000)
-        mr = random.randint(0, 7000)
-        hc = [[200000000, 0.01], [120000000, 0.1], [60000000, 0.4], [30000000, 0.6]]
-        mc = [[3500, 0.01], [2000, 0.1], [9000, 0.3], [500, 0.6]]
+        hr = random.randint(0, 400000000)
+        mr = random.randint(0, 5000)
+        hc = [[250000000, 0.01], [150000000, 0.1], [80000000, 0.4], [45000000, 0.6]]
+        mc = [[3500, 0.01], [2000, 0.1], [1400, 0.3], [800, 0.6]]
         h = 0
         m = 0
         for xh in hc:
