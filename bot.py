@@ -178,8 +178,10 @@ class Mizabot(commands.Bot):
         self.emotes = {} # bot custom emotes
         # /gbfg/ game
         self.pitroulette = False
-        self.pitroulettevictim = None
+        self.pitroulettevictim = []
+        self.pitroulettelist = []
         self.pitroulettecount = 0
+        self.pitroulettemax = 0
         # load
         self.loadConfig()
         for i in range(0, 100): # try multiple times in case google drive is unresponsive
@@ -560,14 +562,23 @@ async def on_guild_join(guild): # when the bot joins a new guild
 # games/jokes for /gbfg/
 async def pitroulette():
     try:
-        message = bot.pitroulettevictim
-        description = "After " + str(bot.pitroulettecount) + " message(s)"
+        message = bot.pitroulettevictim.pop()
+        bot.pitroulettelist.append([message.author.display_name, bot.pitroulettecount])
+        description = "After **" + str(bot.pitroulettecount) + "** message(s)"
         title = random.choice([message.author.display_name + " has fallen into the pit...", message.author.display_name + " tripped and fell...", message.author.display_name + " jumped into the pit willingly...", message.author.display_name + " got pushed in the back..."])
         footer = random.choice(["Will " + message.author.display_name + " manage to climb up?", "Stay down here where you belong", "Straight into the hellish pit", message.author.display_name + " has met with a terrible fate"])
-        bot.pitroulette = False # disable
+        if bot.pitroulettemax > 0:
+            description += "\nI'm expecting **" + str(bot.pitroulettemax) + "** more victim(s)"
+        else:
+            bot.pitroulette = False # disable
+        await message.channel.send(embed=bot.buildEmbed(title=title, description=description, thumbnail=message.author.avatar_url, footer=footer))
+        if bot.pitroulettemax == 0 and len(bot.pitroulettelist) > 1:
+            description = ""
+            for a in bot.pitroulettelist:
+                description += a[0] + " ▪ after " + str(a[1]) + " message(s)\n"
+            await message.channel.send(embed=bot.buildEmbed(title="Pit Roulette results", description=description, thumbnail=message.author.avatar_url))
         g = bot.get_guild(bot.ids['gbfg'])
         await message.author.add_roles(g.get_role(bot.ids['pit']))
-        await message.channel.send(embed=bot.buildEmbed(title=title, description=description, thumbnail=message.author.avatar_url, footer=footer))
         await asyncio.sleep(60)
         await message.author.remove_roles(g.get_role(bot.ids['pit']))
     except asyncio.CancelledError:
@@ -583,11 +594,13 @@ async def pitroulette():
 async def on_message(message): # to do something with a message
     try:
         # games/jokes for /gbfg/
-        if bot.pitroulette and message.channel.id == bot.ids['gbfg_general'] and message.author.id != bot.ids['owner'] and not message.author.bot:
+        if bot.pitroulette and bot.pitroulettemax > 0 and message.channel.id == bot.ids['gbfg_general'] and message.author.id != bot.ids['owner'] and not message.author.bot:
             bot.pitroulettecount += 1
-            if random.randint(1, 100) <= 6:
-                bot.pitroulettevictim = message
+            proba = 3 * (bot.pitroulettemax + 1)
+            if random.randint(1, 100) <= proba:
+                bot.pitroulettevictim.append(message)
                 bot.runTask('pitroulette', pitroulette)
+                bot.pitroulettemax -= 1
                 return
     except:
         pass

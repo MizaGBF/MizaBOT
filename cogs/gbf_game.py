@@ -392,11 +392,17 @@ class GBF_Game(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isGBFGgeneralAndMod()
     @commands.cooldown(1, 180, commands.BucketType.user)
-    async def pitroulette(self, ctx):
+    async def pitroulette(self, ctx, max : int = 1):
         """Game for /gbfg/ (Mod only)"""
         if not self.bot.pitroulette:
+            if max < 1 or max > 5:
+                await ctx.send(embed=self.bot.buildEmbed(title="Value must be in the 1-5 range" ,color=self.color))
+                return
             self.bot.pitroulette = True
             self.bot.pitroulettecount = 0
-            await ctx.send(embed=self.bot.buildEmbed(title="Pit Roulette enabled", description=random.choice(["Who will fall in?", "Are you brave enough?", "Do you dare?"]) , thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/584813271643586560/Activate_it.png", color=self.color))
+            self.bot.pitroulettemax = max
+            self.bot.pitroulettevictim = []
+            self.bot.pitroulettelist = []
+            await ctx.send(embed=self.bot.buildEmbed(title="Pit Roulette enabled", description=random.choice(["Who will fall in?", "Are you brave enough?", "Do you dare?"]) , thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/584813271643586560/Activate_it.png", footer="expecting " + str(max) + " victim(s)", color=self.color))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="Pit Roulette already on" ,color=self.color))

@@ -137,15 +137,15 @@ class GW(commands.Cog):
             elif current_time > self.bot.gw['dates']["Preliminaries"]:
                 d = self.bot.gw['dates']['Interlude'] - current_time
                 if d < timedelta(seconds=104400): msg = self.bot.getEmoteStr('mark_a') + " Preliminaries ended"
-                else: msg = self.bot.getEmoteStr('mark_a') + " Preliminaries is on going (Time left: **" + self.getTimedeltaStr(self.bot.gw['dates']["Preliminaries"] + timedelta(seconds=104400) - current_time, True) + "**)"
-                return msg + "\n" + self.bot.getEmoteStr('time') + " Interlude starts in **" + self.getTimedeltaStr(d, True) + "**"
+                else: msg = self.bot.getEmoteStr('mark_a') + " Preliminaries are on going (Time left: **" + self.getTimedeltaStr(self.bot.gw['dates']["Preliminaries"] + timedelta(seconds=104400) - current_time, True) + "**)"
+                return msg + "\n" + self.bot.getEmoteStr('time') + " Interlude starts in **" + self.getTimedeltaStr(d, True) + "**\n"
             else:
                 return ""
         else:
             return ""
 
     def getNextBuff(self, ctx): # for the (you) crew, get the next set of buffs to be called
-        if self.bot.gw['state'] == True:
+        if self.bot.gw['state'] == True and ctx.guild.id == self.bot.ids['you_server']:
             current_time = self.bot.getJST()
             if current_time < self.bot.gw['dates']["Preliminaries"]:
                 return ""
