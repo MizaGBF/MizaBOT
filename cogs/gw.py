@@ -136,9 +136,9 @@ class GW(commands.Cog):
                 return self.bot.getEmoteStr('mark_a') + " Interlude is on going\n" + self.bot.getEmoteStr('time') + " Day 1 starts in **" + self.getTimedeltaStr(d) + "**"
             elif current_time > self.bot.gw['dates']["Preliminaries"]:
                 d = self.bot.gw['dates']['Interlude'] - current_time
-                if d < timedelta(seconds=104400): msg = self.bot.getEmoteStr('mark_a') + " Preliminaries ended"
+                if d < timedelta(seconds=25200): msg = self.bot.getEmoteStr('mark_a') + " Preliminaries ended"
                 else: msg = self.bot.getEmoteStr('mark_a') + " Preliminaries are on going (Time left: **" + self.getTimedeltaStr(self.bot.gw['dates']["Preliminaries"] + timedelta(seconds=104400) - current_time, True) + "**)"
-                return msg + "\n" + self.bot.getEmoteStr('time') + " Interlude starts in **" + self.getTimedeltaStr(d, True) + "**\n"
+                return msg + "\n" + self.bot.getEmoteStr('time') + " Interlude starts in **" + self.getTimedeltaStr(d, True) + "**"
             else:
                 return ""
         else:
@@ -196,7 +196,7 @@ class GW(commands.Cog):
                     await self.bot.sendError("getgwstate", str(e))
 
                 try:
-                    description += self.getNextBuff(ctx)
+                    description += '\n' + self.getNextBuff(ctx)
                 except Exception as e:
                     await self.bot.sendError("getnextbuff", str(e))
 

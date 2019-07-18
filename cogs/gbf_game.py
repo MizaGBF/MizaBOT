@@ -359,8 +359,8 @@ class GBF_Game(commands.Cog):
     async def quota(self, ctx):
         """Give you your GW quota for the day"""
         chance = random.randint(1, 50)
-        hr = random.randint(0, 400000000)
-        mr = random.randint(0, 5000)
+        hr = random.randint(0, 320000000)
+        mr = random.randint(0, 4200)
         hc = [[250000000, 0.01], [150000000, 0.1], [80000000, 0.4], [45000000, 0.6]]
         mc = [[3500, 0.01], [2000, 0.1], [1400, 0.3], [800, 0.6]]
         h = 0
@@ -377,10 +377,13 @@ class GBF_Game(commands.Cog):
                 m += d * xm[1]
         h = int(h + hr + 2000000)
         m = int(m + mr + 100)
-        if chance == 3:
+        if ctx.author.id == self.bot.ids['yawn']:
+            await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " " + ctx.author.display_name + " is bad boy", description="Your account is **restricted.**", thumbnail=ctx.author.avatar_url ,color=self.color))
+            return
+        elif chance == 3:
             await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " " + ctx.author.display_name + "'s daily quota", description="You got a **free leech pass**\nCongratulations", thumbnail=ctx.author.avatar_url ,color=self.color))
             return
-        elif ctx.author.id == self.bot.ids['yawn'] or chance == 1:
+        elif chance == 1:
             h = h * 35
             m = m * 51
         elif ctx.author.id == self.bot.ids['wawi'] or chance == 2:
