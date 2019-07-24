@@ -14,7 +14,62 @@ class GW(commands.Cog):
         self.day_list = []
 
     def startTasks(self):
+        self.bot.runTask('check_ranking', self.checkGWRanking)
         self.bot.runTask('check_buff', self.checkGWBuff)
+
+    async def checkGWRanking(self):
+        await asyncio.sleep(3)
+        await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwranking() started", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST())))
+
+        cog = self.bot.get_cog('Baguette')
+        crews = [2000, 5500, 9000, 14000, 18000, 30000]
+        players = [2000, 50000, 100000, 160000, 250000, 350000]
+
+        while True:
+            self.getGWState()
+            try:
+                if self.bot.gw['state'] == False:
+                    self.bot.gw['ranking'] = ""
+                    self.bot.savePending = True
+                    await asyncio.sleep(3600)
+                elif self.bot.getJST() < self.bot.gw['dates']["Preliminaries"]:
+                    self.bot.gw['ranking'] = ""
+                    self.bot.savePending = True
+                    d = self.bot.gw['dates']["Preliminaries"] - self.bot.getJST()
+                    await asyncio.sleep(d.seconds + 1)
+                elif self.bot.getJST() > self.bot.gw['dates']["Day 5"] - timedelta(seconds=21600):
+                    await asyncio.sleep(3600)
+                else:
+                    m = self.bot.getJST().minute
+                    if m == 9 or m == 29 or m == 49:
+                        try:
+                            msg = "**Crew Ranking**\n"
+                            for c in crews:
+                                r = await cog.requestRanking(c // 10, True)
+                                msg += "**" + str(c) + "** ▪ {:,}\n".format(int(r['list'][-1]['point']))
+                                await asyncio.sleep(0.001)
+
+                            msg += "\n**Player Ranking**\n"
+                            for p in players:
+                                r = await cog.requestRanking(p // 10, False)
+                                msg += "**" + str(p) + "** ▪ {:,}\n".format(int(r['list'][-1]['point']))
+                                await asyncio.sleep(0.001)
+
+                            self.bot.gw['ranking'] = msg
+                            await self.bot.send('debug', embed=self.bot.buildEmbed(title="Ranking updated", color=self.color))
+                            self.bot.savePending = True
+                        except Exception as ex:
+                            await self.bot.sendError('checkgwranking', str(ex))
+                            self.bot.gw['ranking'] = ""
+                            self.bot.savePending = True
+                        await asyncio.sleep(600)
+                    else:
+                        await asyncio.sleep(50)
+            except asyncio.CancelledError:
+                await self.bot.sendError('checkgwranking', 'cancelled')
+            except Exception as e:
+                await self.bot.sendError('checkgwranking', str(e))
+                return
 
     async def checkGWBuff(self): # automatically calls the GW buff used by the (you) crew
         self.getGWState()
@@ -180,7 +235,7 @@ class GW(commands.Cog):
                             if current_time < d and random.randint(1, 8) == 1:
                                 description += it[0] + " **{0:%m/%d %H:%M}**\n".format(d)
                         else:
-                            if self.dayCheck(current_time, self.bot.gw['dates'][it[2]], it[1]=="Day 5"):
+                            if self.dayCheck(current_time, self.bot.gw['dates'][it[2]], it[1]=="Day 5") or (it[1] == "Interlude" and self.dayCheck(current_time, self.bot.gw['dates'][it[2]] + timedelta(seconds=25200), False)):
                                 description += it[0] + ": **{0:%m/%d %H:%M}**\n".format(self.bot.gw['dates'][it[1]])
                 else:
                     await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " **Guild War**", description="Not available", color=self.color))
@@ -294,3 +349,16 @@ class GW(commands.Cog):
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="The seach couldn't be completed", footer=str(e), color=self.color))
             await self.bot.sendError("searchid", str(e))
+
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def ranking(self, ctx):
+        """Retrieve the current GW ranking"""
+        try:
+            if self.bot.gw['state'] == False or self.bot.getJST() < self.bot.gw['dates']["Preliminaries"] or self.bot.gw['ranking'] == "":
+                await ctx.send(embed=self.bot.buildEmbed(title="Ranking unavailable", color=self.color))
+            else:
+                await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " **Guild War** :black_small_square: Totals", url="http://game.granbluefantasy.jp/#event/teamraid" + str(self.bot.gw['id']).zfill(3), description=self.bot.gw['ranking'], color=self.color))
+        except Exception as e:
+            await self.bot.sendError("ranking", str(e))
