@@ -46,13 +46,15 @@ class GW(commands.Cog):
                             msg = "**Crew Ranking**\n"
                             for c in crews:
                                 r = await cog.requestRanking(c // 10, True)
-                                msg += "**" + str(c) + "** ▪ {:,}\n".format(int(r['list'][-1]['point']))
+                                if r is not None:
+                                    msg += "**" + str(c) + "** ▪ {:,}\n".format(int(r['list'][-1]['point']))
                                 await asyncio.sleep(0.001)
 
                             msg += "\n**Player Ranking**\n"
                             for p in players:
                                 r = await cog.requestRanking(p // 10, False)
-                                msg += "**" + str(p) + "** ▪ {:,}\n".format(int(r['list'][-1]['point']))
+                                if r is not None:
+                                    msg += "**" + str(p) + "** ▪ {:,}\n".format(int(r['list'][-1]['point']))
                                 await asyncio.sleep(0.001)
 
                             self.bot.gw['ranking'] = msg
