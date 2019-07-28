@@ -225,7 +225,7 @@ class General(commands.Cog):
 
     async def remindertask(self):
         await asyncio.sleep(3)
-        await self.bot.send('debug', embed=self.bot.buildEmbed(title="remindertask() started", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST())))
+        await self.bot.send('debug', embed=self.bot.buildEmbed(title="remindertask() started", timestamp=datetime.utcnow()))
         while True:
             if self.bot.exit_flag: return
             try:
@@ -479,3 +479,11 @@ class General(commands.Cog):
                 return
             i += 1
             d = d + timedelta(days=7)
+
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(10, 20, commands.BucketType.guild)
+    async def sadpanda(self, ctx):
+        """Time since sadpanda died"""
+        t = self.bot.getJST() - datetime.utcnow().replace(year=2019, month=7, day=26, hour=17, minute=13, second=0, microsecond=0)
+        await ctx.send(embed=self.bot.buildEmbed(title="Time since Sadpanda died", description="**" + str(t.days) + "d" + str(t.seconds // 3600) + "h" + str((t.seconds // 60) % 60) + "m**", thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/604762049532395540/kokomade.png", color=self.color))

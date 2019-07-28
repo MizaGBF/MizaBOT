@@ -16,14 +16,14 @@ class GBF_Utility(commands.Cog):
 
     async def maintenancetask(self): # gbf emergency maintenance detection
         await asyncio.sleep(3)
-        await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="maintenancetask() started", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST())))
+        await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="maintenancetask() started", timestamp=datetime.utcnow()))
         while True:
             try:
                 if self.checkMaintenance():
                     if self.bot.maintenance['duration'] == 0: # check if infinite maintenance
                         req = await self.requestGBF()
                         if req[0].status == 200 and req[1].find("The app is now undergoing") == -1:
-                            await self.bot.send('debug', embed=self.bot.buildEmbed(title="Emergency maintenance detected", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), color=self.color))
+                            await self.bot.send('debug', embed=self.bot.buildEmbed(title="Emergency maintenance detected", timestamp=datetime.utcnow(), color=self.color))
                             c = self.bot.getJST()
                             self.bot.maintenance = {"state" : False, "time" : None, "duration" : 0}
                             self.bot.savePending = True
@@ -31,7 +31,7 @@ class GBF_Utility(commands.Cog):
                 else:
                     req = await self.requestGBF()
                     if req[0].status == 200 and req[1].find("The app is now undergoing") != -1 and req[1].find("Starts: ") == -1:
-                        await self.bot.send('debug', embed=self.bot.buildEmbed(title="Emergency maintenance detected", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), color=self.color))
+                        await self.bot.send('debug', embed=self.bot.buildEmbed(title="Emergency maintenance detected", timestamp=datetime.utcnow(), color=self.color))
                         c = self.bot.getJST()
                         self.bot.maintenance['time'] = c
                         self.bot.maintenance['duration'] = 0
@@ -44,6 +44,11 @@ class GBF_Utility(commands.Cog):
             except Exception as e:
                 await self.bot.sendError('maintenancetask', str(e))
             await asyncio.sleep(random.randint(30, 45))
+
+    def isYou(): # for decorators
+        async def predicate(ctx):
+            return ctx.bot.isYouServer(ctx)
+        return commands.check(predicate)
 
     async def requestGBF(self):
         async with aiohttp.ClientSession() as session:
@@ -284,7 +289,7 @@ class GBF_Utility(commands.Cog):
             await self.bot.sendError("getgachabanner", str(e))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['drive'])
-    @commands.is_owner()
+    @isYou()
     async def gdrive(self, ctx):
         """Post the (You) google drive
         (You) server only"""
@@ -298,7 +303,7 @@ class GBF_Utility(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I'm not permitted to post this link here", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.is_owner()
+    @isYou()
     async def lucilius(self, ctx):
         """Post the (You) lucilius spreadsheet
         (You) server only"""

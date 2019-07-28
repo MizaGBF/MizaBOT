@@ -19,7 +19,7 @@ class GW(commands.Cog):
 
     async def checkGWRanking(self):
         await asyncio.sleep(3)
-        await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwranking() started", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST())))
+        await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwranking() started", timestamp=datetime.utcnow()))
 
         cog = self.bot.get_cog('Baguette')
         crews = [2000, 5500, 9000, 14000, 18000, 30000]
@@ -77,7 +77,7 @@ class GW(commands.Cog):
         self.getGWState()
         if self.bot.gw['state'] == False: return
         await asyncio.sleep(3)
-        await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwbuff() started", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST())))
+        await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwbuff() started", timestamp=datetime.utcnow()))
         try:
             guild = self.bot.get_guild(self.bot.ids['you_server'])
             channel = self.bot.get_channel(self.bot.ids['you_announcement'])
@@ -117,7 +117,7 @@ class GW(commands.Cog):
                     if len(self.bot.gw['buffs']) > 0:
                         d = self.bot.gw['buffs'][0][0] - current_time
                         if d.seconds > 1:
-                            await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwbuff()", description="Checking buffs in **" + self.getTimedeltaStr(d) + "**\nNext buffs setting: [" + str(self.bot.gw['buffs'][0][1]) + ' ' + str(self.bot.gw['buffs'][0][2]) + ' ' + str(self.bot.gw['buffs'][0][3])+ ' ' + str(self.bot.gw['buffs'][0][4]) + "]\nBuffs in **" + self.getTimedeltaStr(d, True) + "**", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST())))
+                            await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwbuff()", description="Checking buffs in **" + self.getTimedeltaStr(d) + "**\nNext buffs setting: [" + str(self.bot.gw['buffs'][0][1]) + ' ' + str(self.bot.gw['buffs'][0][2]) + ' ' + str(self.bot.gw['buffs'][0][3])+ ' ' + str(self.bot.gw['buffs'][0][4]) + "]\nBuffs in **" + self.getTimedeltaStr(d, True) + "**", timestamp=datetime.utcnow()))
                             await asyncio.sleep(d.seconds-1)
             if len(msg) > 0:
                 await channel.send(msg)
@@ -125,7 +125,7 @@ class GW(commands.Cog):
             await self.bot.sendError('checkgwbuff', 'cancelled')
         except Exception as e:
             await self.bot.sendError('checkgwbuff', str(e))
-        await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwbuff() ended", footer="{0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST())))
+        await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwbuff() ended", timestamp=datetime.utcnow()))
 
     def buildDayList(self): # used by the gw schedule command
         self.day_list = [
@@ -226,7 +226,7 @@ class GW(commands.Cog):
         if self.bot.gw['state'] == True:
             try:
                 current_time = self.bot.getJST()
-                title = self.bot.getEmoteStr('gw') + " **Guild War** :black_small_square: Time: **{0:%m/%d %H:%M}**\n".format(current_time)
+                title = self.bot.getEmoteStr('gw') + " **Guild War " + str(self.bot.gw['id']) + "** :black_small_square: Time: **{0:%m/%d %H:%M}**\n".format(current_time)
                 description = ""
                 if len(self.day_list) == 0:
                     self.buildDayList()
@@ -270,7 +270,7 @@ class GW(commands.Cog):
         try:
             d = self.getGWState()
             if d != "":
-                await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " Guild War status", description=d, color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " **Guild War " + str(self.bot.gw['id']) + "** :black_small_square: status", description=d, color=self.color))
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
             await self.bot.sendError("fugdidgwstart", str(e))
@@ -361,6 +361,6 @@ class GW(commands.Cog):
             if self.bot.gw['state'] == False or self.bot.getJST() < self.bot.gw['dates']["Preliminaries"] or self.bot.gw['ranking'] == "":
                 await ctx.send(embed=self.bot.buildEmbed(title="Ranking unavailable", color=self.color))
             else:
-                await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " **Guild War** :black_small_square: Totals", url="http://game.granbluefantasy.jp/#event/teamraid" + str(self.bot.gw['id']).zfill(3), description=self.bot.gw['ranking'], color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " **Guild War " + str(self.bot.gw['id']) + "** :black_small_square: Totals", description=self.bot.gw['ranking'], color=self.color))
         except Exception as e:
             await self.bot.sendError("ranking", str(e))
