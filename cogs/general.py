@@ -403,7 +403,7 @@ class General(commands.Cog):
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ Error", description="I couldn't find a single /gbfg/ thread 😔", color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['reminder'])
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def remind(self, ctx, duration : str, *, msg : str):
         """Tell the bot to remind you of something (±30 seconds precision)
@@ -433,7 +433,7 @@ class General(commands.Cog):
         except:
             await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", footer="I have no clues about what went wrong", color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rl'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rl', 'reminderlist'])
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def remindlist(self, ctx):
         """Post your current list of reminders"""
@@ -447,7 +447,7 @@ class General(commands.Cog):
                 embed.add_field(name="#" + str(i) + " ▪ " + "{0:%Y/%m/%d %H:%M} JST".format(self.bot.reminders[id][i][0]), value=self.bot.reminders[id][i][1], inline=False)
             await ctx.send(embed=embed)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rd'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rd', 'reminderdel'])
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def reminddel(self, ctx, rid : int):
         """Delete one of your reminders"""

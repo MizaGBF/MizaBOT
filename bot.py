@@ -550,6 +550,10 @@ async def on_ready(): # when the bot starts
     await bot.send('debug', embed=bot.buildEmbed(title=bot.user.display_name + " is Ready", description="**Server Count**: " + str(len(bot.guilds)) + "\n**Servers Pending**: " + str(len(bot.newserver['pending'])) + "\n**Tasks Count**: " + str(len(asyncio.all_tasks())) + "\n**Cogs Loaded**: " + str(len(bot.cogs)) + "/" + str(bot.cogn), thumbnail=bot.user.avatar_url, inline=True, timestamp=datetime.utcnow()))
 
 @bot.event
+async def on_resumed():
+    await bot.send('debug', embed=bot.buildEmbed(title=bot.user.display_name + " resumed", thumbnail=bot.user.avatar_url, inline=True, timestamp=datetime.utcnow()))
+
+@bot.event
 async def on_guild_join(guild): # when the bot joins a new guild
     id = str(guild.id)
     if id in bot.newserver['servers'] or str(guild.owner.id) in bot.newserver['owners']: # leave if the server is blacklisted
@@ -717,6 +721,10 @@ async def on_member_update(before, after):
                 if r not in after.roles:
                     await bot.send('youlog', embed=bot.buildEmbed(author={'name':str(after) + " ▪ Role removed", 'icon_url':after.avatar_url}, description=after.mention + " was removed from the `" + str(r) + "` role", footer="User ID: " + str(after.id), color=0x0b234a, timestamp=datetime.utcnow()))
                     break
+        else:
+            g = await bot.get_guild(before.guild.id)
+            if await g.get_member(before.id) is None:
+                await bot.send('youlog', embed=bot.buildEmbed(title="it worked"))
 
 @bot.event
 async def on_member_remove(member):
@@ -727,12 +735,12 @@ async def on_member_remove(member):
                 await bot.send('lucilog', embed=bot.buildEmbed(author={'name':str(member) + " ▪ Left the server", 'icon_url':member.avatar_url}, footer="User ID: " + str(member.id), timestamp=datetime.utcnow()))
         except Exception as e:
             await bot.sendError('on_member_remove', str(e))
-    elif before.guild.id == bot.ids['you_server']:
+    elif member.guild.id == bot.ids['you_server']:
         await bot.send('youlog', embed=bot.buildEmbed(author={'name':str(member) + " ▪ Left the server", 'icon_url':member.avatar_url}, footer="User ID: " + str(member.id), timestamp=datetime.utcnow(), color=0xff0000))
 
 @bot.event
 async def on_member_join(member):
-    if before.guild.id == bot.ids['you_server']:
+    if member.guild.id == bot.ids['you_server']:
         await bot.send('youlog', embed=bot.buildEmbed(author={'name':str(member) + " ▪ Joined the server", 'icon_url':member.avatar_url}, footer="User ID: " + str(member.id), timestamp=datetime.utcnow(), color=0x00ff3c))
 
 @bot.event
