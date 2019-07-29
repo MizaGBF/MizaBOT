@@ -390,7 +390,7 @@ class General(commands.Cog):
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="/hgg2d/ Error", description="I couldn't find a single /hgg2d/ thread 😔", color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['4chan', 'thread'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['thread'])
     @commands.cooldown(1, 3, commands.BucketType.default)
     async def gbfg(self, ctx):
         """Post the latest /gbfg/ threads"""
@@ -402,6 +402,25 @@ class General(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ Error", description="I couldn't find a single /gbfg/ thread 😔", color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, name='4chan')
+    @commands.cooldown(1, 3, commands.BucketType.default)
+    async def _4chan(self, ctx, board : str, *, term : str):
+        """Search 4chan threads"""
+        nsfw = ['b', 'r9k', 'pol', 'bant', 'soc', 's4s', 's', 'hc', 'hm', 'h', 'e', 'u', 'd', 'y', 't', 'hr', 'gif', 'aco', 'r']
+        board = board.lower()
+        if board in nsfw and not ctx.channel.is_nsfw():
+            await ctx.send(embed=self.bot.buildEmbed(title=":underage: The board `" + board + "` is restricted to NSFW channels"))
+            return
+        threads = await self.get4chan(board, term)
+        if len(threads) > 0:
+            msg = ""
+            for t in threads:
+                msg += ':four_leaf_clover: https://boards.4channel.org/' + board + '/thread/'+str(t)+'\n'
+            await ctx.send(embed=self.bot.buildEmbed(title="4chan Search result", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
+        else:
+            await ctx.send(embed=self.bot.buildEmbed(title="4chan Search result", description="No matching threads found", color=self.color))
+
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['reminder'])
     @commands.cooldown(1, 3, commands.BucketType.user)

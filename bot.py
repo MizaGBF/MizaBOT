@@ -189,7 +189,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.15
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.16
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -382,6 +382,54 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             except Exception as e:
                 await self.sendError('statustask', str(e))
 
+    async def youinvite(self): # background task to track the invites of the (You) server
+        await asyncio.sleep(2)
+        await self.send('debug', embed=self.buildEmbed(title="youinvite() started", timestamp=datetime.utcnow()))
+        g = self.get_guild(self.ids['you_server'])
+        res = await g.invites()
+        invites = {}
+        for i in res:
+            invites[i.code] = i
+
+        while True:
+            try:
+                await asyncio.sleep(20)
+                res = await g.invites()
+                currents = {}
+                for i in res:
+                    currents[i.code] = i
+
+                for i in currents:
+                    if i in invites:
+                        if currents[i].uses is not None and currents[i].uses != invites[i].uses:
+                            if currents[i].max_uses is None:
+                                await self.send('youlog', embed=bot.buildEmbed(title="Invite `" + i + "` used", description="**Uses:** " + str(currents[i].uses), timestamp=datetime.utcnow(), color=0xfcba03))
+                            else:
+                                await self.send('youlog', embed=bot.buildEmbed(title="Invite `" + i + "` used", description="**Uses:** " + str(currents[i].uses) + " / " + str(currents[i].max_uses), timestamp=datetime.utcnow(), color=0xfcba03))
+                    else:
+                        msg = ""
+                        if currents[i].max_uses != 0: msg += "**Max uses:** " + str(currents[i].max_uses) + "\n"
+                        if currents[i].inviter is not None:
+                            msg += "**Inviter:** " + str(currents[i].inviter) + "\n"
+                        if currents[i].max_age != 0:
+                            if currents[i].max_age < 3600: msg += "**Duration:** " + str(currents[i].max_age // 60) + " minutes\n"
+                            else: msg += "**Duration:** " + str(currents[i].max_age // 3600) + " hours\n"
+                        msg += "**Channel:** " + currents[i].channel.name + "\n"
+                        msg += "**Url:** " + str(currents[i].url) + "\n"
+                        await self.send('youlog', embed=bot.buildEmbed(title="New Invite ▪ `" + i + "`", description=msg, timestamp=datetime.utcnow(), color=0xfcba03))
+
+                for i in invites:
+                    if i not in currents:
+                        await self.send('youlog', embed=bot.buildEmbed(title="Revoked Invite ▪ `" + i + "`", timestamp=datetime.utcnow(), color=0xfcba03))
+
+                invites = currents
+            except asyncio.CancelledError:
+                await self.sendError('youinvite', 'cancelled')
+                return
+            except Exception as e:
+                await self.sendError('youinvite', str(e))
+                invites = currents
+
     def isAuthorized(self, ctx): # check if the command is authorized
         id = str(ctx.guild.id)
         if id in self.permitted:
@@ -463,6 +511,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
 
     def startTasks(self): # start our tasks
         self.runTask('status', self.statustask)
+        self.runTask('youinvite', self.youinvite)
         for c in self.cogs:
             try:
                 self.get_cog(c).startTasks()
@@ -548,10 +597,6 @@ async def on_ready(): # when the bot starts
     bot.startTasks() # start the tasks
     # send a pretty message
     await bot.send('debug', embed=bot.buildEmbed(title=bot.user.display_name + " is Ready", description="**Server Count**: " + str(len(bot.guilds)) + "\n**Servers Pending**: " + str(len(bot.newserver['pending'])) + "\n**Tasks Count**: " + str(len(asyncio.all_tasks())) + "\n**Cogs Loaded**: " + str(len(bot.cogs)) + "/" + str(bot.cogn), thumbnail=bot.user.avatar_url, inline=True, timestamp=datetime.utcnow()))
-
-@bot.event
-async def on_resumed():
-    await bot.send('debug', embed=bot.buildEmbed(title=bot.user.display_name + " resumed", thumbnail=bot.user.avatar_url, inline=True, timestamp=datetime.utcnow()))
 
 @bot.event
 async def on_guild_join(guild): # when the bot joins a new guild
@@ -778,16 +823,14 @@ async def on_guild_role_update(before, after):
     if before.guild.id == bot.ids['you_server']:
         if before.name != after.name:
             await bot.send('youlog', embed=bot.buildEmbed(title="Role name updated", fields=[{'name':"Before", 'value':before.name}, {'name':"After", 'value':after.name}], footer="Role ID: " + str(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
-        if before.colour != after.colour:
+        elif before.colour != after.colour:
             await bot.send('youlog', embed=bot.buildEmbed(title="Role updated ▪ `" + after.name + "`", description="Color changed", footer="Role ID: " + str(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
-        if before.hoist != after.hoist:
+        elif before.hoist != after.hoist:
             if after.hoist:
                 await bot.send('youlog', embed=bot.buildEmbed(title="Role updated ▪ `" + after.name + "`", description="Role is displayed separately from other members", footer="Role ID: " + str(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
             else:
                 await bot.send('youlog', embed=bot.buildEmbed(title="Role updated ▪ `" + after.name + "`", description="Role is displayed as the other members", footer="Role ID: " + str(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
-        if before.position != after.position:
-            await bot.send('youlog', embed=bot.buildEmbed(title="Role updated ▪ `" + after.name + "`", description="Position changed", footer="Role ID: " + str(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
-        if before.mentionable != after.mentionable:
+        elif before.mentionable != after.mentionable:
             if after.mentionable:
                 await bot.send('youlog', embed=bot.buildEmbed(title="Role updated ▪ `" + after.name + "`", description="Role is mentionable", footer="Role ID: " + str(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
             else:
