@@ -721,10 +721,6 @@ async def on_member_update(before, after):
                 if r not in after.roles:
                     await bot.send('youlog', embed=bot.buildEmbed(author={'name':str(after) + " ▪ Role removed", 'icon_url':after.avatar_url}, description=after.mention + " was removed from the `" + str(r) + "` role", footer="User ID: " + str(after.id), color=0x0b234a, timestamp=datetime.utcnow()))
                     break
-        else:
-            g = await bot.get_guild(before.guild.id)
-            if await g.get_member(before.id) is None:
-                await bot.send('youlog', embed=bot.buildEmbed(title="it worked"))
 
 @bot.event
 async def on_member_remove(member):
