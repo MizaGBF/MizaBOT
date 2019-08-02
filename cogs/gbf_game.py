@@ -229,7 +229,7 @@ class GBF_Game(commands.Cog):
                 fr = math.floor(r)
             else:
                 r = 0
-                fr = 0.0
+                fr = 0
             left = (300 - (r % 300))
             spark_time_range = [
                 self.bot.getJST() + timedelta(days=(left / 2.8)), 

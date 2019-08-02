@@ -505,4 +505,5 @@ class General(commands.Cog):
     async def sadpanda(self, ctx):
         """Time since sadpanda died"""
         t = self.bot.getJST() - datetime.utcnow().replace(year=2019, month=7, day=26, hour=17, minute=13, second=0, microsecond=0)
-        await ctx.send(embed=self.bot.buildEmbed(title="Time since Sadpanda died", description="**" + str(t.days) + "d" + str(t.seconds // 3600) + "h" + str((t.seconds // 60) % 60) + "m**", thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/604762049532395540/kokomade.png", color=self.color))
+        #await ctx.send(embed=self.bot.buildEmbed(title="Time since Sadpanda died", description="**" + str(t.days) + "d" + str(t.seconds // 3600) + "h" + str((t.seconds // 60) % 60) + "m**", thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/604762049532395540/kokomade.png", color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="Time since Sadpanda died", description="**A L I V E**", thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/604762049532395540/kokomade.png", color=self.color))
