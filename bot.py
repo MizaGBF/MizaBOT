@@ -763,36 +763,36 @@ async def on_member_update(before, after):
 @bot.event
 async def on_member_remove(member):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if before.guild.id in guilds:
-        channel = guilds[before.guild.id]
+    if member.guild.id in guilds:
+        channel = guilds[member.guild.id]
         await bot.send(channel, embed=bot.buildEmbed(author={'name':str(member) + " ▪ Left the server", 'icon_url':member.avatar_url}, footer="User ID: " + str(member.id), timestamp=datetime.utcnow(), color=0xff0000))
 
 @bot.event
 async def on_member_join(member):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if before.guild.id in guilds:
-        channel = guilds[before.guild.id]
+    if member.guild.id in guilds:
+        channel = guilds[member.guild.id]
         await bot.send(channel, embed=bot.buildEmbed(author={'name':str(member) + " ▪ Joined the server", 'icon_url':member.avatar_url}, footer="User ID: " + str(member.id), timestamp=datetime.utcnow(), color=0x00ff3c))
 
 @bot.event
 async def on_member_ban(guild, user):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if before.guild.id in guilds:
-        channel = guilds[before.guild.id]
+    if guild.id in guilds:
+        channel = guilds[guild.id]
         await bot.send(channel, embed=bot.buildEmbed(author={'name':str(user) + " ▪ Banned from the server", 'icon_url':user.avatar_url}, footer="User ID: " + str(user.id), timestamp=datetime.utcnow(), color=0xff0000))
 
 @bot.event
 async def on_member_unban(guild, user):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if before.guild.id in guilds:
-        channel = guilds[before.guild.id]
+    if guild.id in guilds:
+        channel = guilds[guild.id]
         await bot.send(channel, embed=bot.buildEmbed(author={'name':str(user) + " ▪ Unbanned from the server", 'icon_url':user.avatar_url}, footer="User ID: " + str(user.id), timestamp=datetime.utcnow(), color=0x00ff3c))
 
 @bot.event
 async def on_guild_emojis_update(guild, before, after):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if before.guild.id in guilds:
-        channel = guilds[before.guild.id]
+    if guild.id in guilds:
+        channel = guilds[guild.id]
         if len(before) < len(after):
             for e in after:
                 if e not in before:
@@ -807,15 +807,15 @@ async def on_guild_emojis_update(guild, before, after):
 @bot.event
 async def on_guild_role_create(role):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if before.guild.id in guilds:
-        channel = guilds[before.guild.id]
+    if role.guild.id in guilds:
+        channel = guilds[role.guild.id]
         await bot.send(channel, embed=bot.buildEmbed(title="Role created ▪ `" + role.name + "`", footer="Role ID: " + str(role.id), timestamp=datetime.utcnow(), color=0x00ff3c))
 
 @bot.event
 async def on_guild_role_delete(role):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if before.guild.id in guilds:
-        channel = guilds[before.guild.id]
+    if role.guild.id in guilds:
+        channel = guilds[role.guild.id]
         await bot.send(channel, embed=bot.buildEmbed(title="Role deleted ▪ `" + role.name + "`", footer="Role ID: " + str(role.id), timestamp=datetime.utcnow(), color=0xff0000))
 
 @bot.event
