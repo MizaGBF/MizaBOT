@@ -330,7 +330,7 @@ class GBF_Game(commands.Cog):
             pass
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True, aliases=['yawn', 'mig', 'mizako', 'miza', 'xenn', 'rubbfish', 'rubb', 'snak', 'snakdol', 'xell', 'kins', 'pics', 'roli', 'fresh', 'scrub', 'scrubp', 'milk', 'chen', 'marie', 'kinssim', 'tori', 'leader', 'simova', 'simo', 'den', 'snacks', 'varuna'])
-    @commands.cooldown(1, 120, commands.BucketType.user)
+    @commands.cooldown(3, 180, commands.BucketType.user)
     @commands.cooldown(1, 50, commands.BucketType.guild)
     async def selfping(self, ctx):
         """Bully trap"""
@@ -341,7 +341,7 @@ class GBF_Game(commands.Cog):
             ch = guild.text_channels
             chlist = [] # build a list of channels where is the author
             for c in ch:
-                if c.permissions_for(guild.me).send_messages and author in c.members and c.id not in self.bot.lucilius['channels'] and c.id != self.bot.lucilius['main']:
+                if c.permissions_for(guild.me).send_messages and author in c.members:
                     chlist.append(c)
 
             msg = author.mention # get the ping for the author

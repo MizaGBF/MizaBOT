@@ -241,8 +241,7 @@ class Owner(commands.Cog):
     @commands.command(no_pm=True, aliases=['cs'])
     @isOwner()
     async def clearStream(self, ctx):
-        """Clear the stream command text (Owner only)
-        You can add multiple lines at once by adding ; between them"""
+        """Clear the stream command text (Owner only)"""
         self.bot.stream['content'] = []
         self.bot.stream['time'] = None
         self.bot.savePending = True
@@ -291,6 +290,7 @@ class Owner(commands.Cog):
         if id not in self.bot.spark[1]:
             self.bot.spark[1].append(id)
             self.bot.savePending = True
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, aliases=['unbanspark'])
     @isOwner()

@@ -251,7 +251,7 @@ class GBF_Utility(commands.Cog):
         try:
             description = self.maintenanceUpdate()
             if len(description) > 0:
-                await ctx.send(embed=self.bot.buildEmbed(title="Granblue Fantasy", url="http://game.granbluefantasy.jp", description=description, thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
             else:
                 await ctx.send(embed=self.bot.buildEmbed(title="Granblue Fantasy", description="No maintenance in my memory", color=self.color))
         except Exception as e:
@@ -264,7 +264,7 @@ class GBF_Utility(commands.Cog):
             cog = self.bot.get_cog('Baguette')
             description = await cog.getGachatime()
             if len(description) > 0:
-                await ctx.send(embed=self.bot.buildEmbed(title="Granblue Fantasy", url="http://game.granbluefantasy.jp/#gacha", description=description, thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
         except Exception as e:
             await self.bot.sendError("getgachatime", str(e))
 
@@ -284,9 +284,29 @@ class GBF_Utility(commands.Cog):
                 else:
                     description = buf
                     image = ""
-                await ctx.send(embed=self.bot.buildEmbed(title="Granblue Fantasy " + self.bot.getEmoteStr('SSR') + " Rate ups", url="http://game.granbluefantasy.jp/#gacha", description=description, thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", image=image, color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, image=image, color=self.color))
         except Exception as e:
             await self.bot.sendError("getgachabanner", str(e))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['ticket'])
+    @commands.cooldown(1, 30, commands.BucketType.guild)
+    async def upcoming(self, ctx, jp : str = ""):
+        """Post the upcoming gacha(s)"""
+        try:
+            cog = self.bot.get_cog('Baguette')
+            tickets = cog.getLatestTicket()
+            l = len(tickets)
+            if l > 1:
+                desc = ""
+                for t in tickets:
+                    desc = t + "\n"
+                await ctx.send(embed=self.bot.buildEmbed(title="New upcoming gacha(s)", description=desc, thumbnail=tickets[-1], color=self.color))
+            elif l == 1:
+                await ctx.send(embed=self.bot.buildEmbed(title="New upcoming gacha", description=tickets[0], thumbnail=tickets[0], color=self.color))
+            else:
+                await ctx.send(embed=self.bot.buildEmbed(title="No new upcoming gacha", color=self.color))
+        except Exception as e:
+            await self.bot.sendError("getlatestticket", str(e))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['drive'])
     @isYou()

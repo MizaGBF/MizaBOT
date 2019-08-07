@@ -189,7 +189,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.17
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.18
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -748,7 +748,7 @@ async def on_member_update(before, after):
     if before.guild.id in guilds:
         channel = guilds[before.guild.id]
         if before.display_name != after.display_name:
-                await bot.send(channel, embed=bot.buildEmbed(author={'name':str(after) + " ▪ Name change", 'icon_url':after.avatar_url}, fields=[{'name':"Before", 'value':before.display_name}, {'name':"After", 'value':after.display_name}], footer="User ID: " + str(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
+                await bot.send(channel, embed=bot.buildEmbed(author={'name':str(after) + " ▪ Name change", 'icon_url':after.avatar_url}, description=after.mention + "\n**Before** ▪ " + before.display_name + "\n**After** ▪ " + after.display_name, footer="User ID: " + str(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
         elif len(before.roles) < len(after.roles):
             for r in after.roles:
                 if r not in before.roles:
