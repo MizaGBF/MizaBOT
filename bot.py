@@ -725,7 +725,6 @@ async def on_raw_reaction_add(payload):
             else: dict['description'] = ""
             dict['description'] += ":earth_asia: [**Link**](https://discordapp.com/channels/"+str(message.guild.id)+"/"+str(message.channel.id)+"/"+str(message.id) + ")\n"
             dict['thumbnail'] = {'url':str(message.author.avatar_url)}
-            dict['timestamp'] = message.created_at
             dict['fields'] = []
 
             # for attachments
@@ -738,6 +737,7 @@ async def on_raw_reaction_add(payload):
                     else:
                         dict['fields'].append({'inline': True, 'name':'Attachment', 'value':f'[{file.filename}]({file.url})'})
             embed = discord.Embed.from_dict(dict)
+            embed.timestamp=message.created_at
             await bot.send('pinned', embed=embed)
             return
 
