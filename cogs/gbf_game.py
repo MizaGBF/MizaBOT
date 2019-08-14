@@ -233,17 +233,17 @@ class GBF_Game(commands.Cog):
             left = (300 - (r % 300))
             spark_time_range = [
                 self.bot.getJST() + timedelta(days=(left / 2.8)), 
-                self.bot.getJST() + timedelta(days=(left / 2))
+                self.bot.getJST() + timedelta(days=(left / 2.2))
             ]
             msg1 = self.bot.getEmoteStr('crystal') + " " + ctx.author.display_name + " has " + str(fr) + " roll"
             if fr != 1: msg1 += "s"
-            if r >= 900: msg2 = "I have no words :sweat: \n"
-            elif r >= 600: msg2 = "Stop hoarding :pensive:\n"
+            if r >= 900: msg2 = "Will you spark soon? :skull: \n"
+            elif r >= 600: msg2 = "**STOP HOARDING** :confounded: \n"
             elif r >= 350: msg2 = "What are you waiting for? :thinking:\n"
             elif r >= 300: msg2 = "Dickpick or e-sport pick? :smirk:\n"
-            elif r >= 280: msg2 = "Almost! :blush: \n"
-            elif r >= 240: msg2 = "One more month :thumbsup: \n"
-            elif r >= 200: msg2 = "You are getting close :ok_hand: \n"
+            elif r >= 250: msg2 = "Almost! :blush: \n"
+            elif r >= 220: msg2 = "One more month :thumbsup: \n"
+            elif r >= 180: msg2 = "You are getting close :ok_hand: \n"
             elif r >= 150: msg2 = "Half-way done :relieved:\n"
             elif r >= 100: msg2 = "Stay strong :wink:\n"
             elif r >= 50: msg2 = "You better save these rolls :spy: \n"

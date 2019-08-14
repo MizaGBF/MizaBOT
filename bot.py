@@ -11,6 +11,9 @@ import itertools
 import psutil
 import time
 import cogs # our cogs folder
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 # ########################################################################################
 # custom help command used by the bot
@@ -184,6 +187,7 @@ class MizabotDrive():
 class Mizabot(commands.Bot):
     def __init__(self):
         self.running = True
+        self.boot_flag = False
         self.starttime = datetime.utcnow() # used to check the uptime
         self.process = psutil.Process() # script process
         self.process.cpu_percent() # called once to initialize
@@ -228,7 +232,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.19
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.20
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -632,14 +636,16 @@ bot = Mizabot()
 
 # bot events
 @bot.event
-async def on_ready(): # when the bot starts
-    bot.setChannel('debug', 'debug_channel') # set our debug channel
-    bot.setChannel('pinned', 'you_pinned') # set (you) pinned channel
-    bot.setChannel('gbfglog', 'gbfg_log') # set /gbfg/ lucilius log channel
-    bot.setChannel('youlog', 'you_log') # set (you) log channel
-    bot.startTasks() # start the tasks
+async def on_ready(): # when the bot starts or reconnects
     # send a pretty message
-    await bot.send('debug', embed=bot.buildEmbed(title=bot.user.display_name + " is Ready", description="**Server Count**: " + str(len(bot.guilds)) + "\n**Servers Pending**: " + str(len(bot.newserver['pending'])) + "\n**Tasks Count**: " + str(len(asyncio.all_tasks())) + "\n**Cogs Loaded**: " + str(len(bot.cogs)) + "/" + str(bot.cogn), thumbnail=bot.user.avatar_url, inline=True, timestamp=datetime.utcnow()))
+    if not bot.boot_flag:
+        bot.setChannel('debug', 'debug_channel') # set our debug channel
+        bot.setChannel('pinned', 'you_pinned') # set (you) pinned channel
+        bot.setChannel('gbfglog', 'gbfg_log') # set /gbfg/ lucilius log channel
+        bot.setChannel('youlog', 'you_log') # set (you) log channel
+        bot.startTasks() # start the tasks
+        await bot.send('debug', embed=bot.buildEmbed(title=bot.user.display_name + " is Ready", description="**Server Count**: " + str(len(bot.guilds)) + "\n**Servers Pending**: " + str(len(bot.newserver['pending'])) + "\n**Tasks Count**: " + str(len(asyncio.all_tasks())) + "\n**Cogs Loaded**: " + str(len(bot.cogs)) + "/" + str(bot.cogn), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
+        bot.boot_flag = True
 
 @bot.event
 async def on_guild_join(guild): # when the bot joins a new guild
