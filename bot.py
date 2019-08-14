@@ -13,7 +13,7 @@ import time
 import cogs # our cogs folder
 import logging
 
-logging.basicConfig(level=logging.INFO)
+#logging.basicConfig(level=logging.INFO)
 
 # ########################################################################################
 # custom help command used by the bot
@@ -408,6 +408,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
         await self.send('debug', embed=self.buildEmbed(title="statustask() started", timestamp=datetime.utcnow()))
         while True:
             try:
+                await asyncio.sleep(2400)
                 await self.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=random.choice(self.games)))
                 # check if it's time for the bot maintenance for me (every 2 weeks or so)
                 c = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -415,7 +416,6 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                     await self.send('debug', self.get_user(self.ids['owner']).mention + " ▪ Time for maintenance!")
                     self.bot_maintenance = c
                     self.savePending = True
-                await asyncio.sleep(2400)
                 # autosave
                 if self.savePending and not self.exit_flag:
                     await self.autosave()
@@ -637,8 +637,9 @@ bot = Mizabot()
 # bot events
 @bot.event
 async def on_ready(): # when the bot starts or reconnects
-    # send a pretty message
+    await self.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=random.choice(self.games)))
     if not bot.boot_flag:
+        # send a pretty message
         bot.setChannel('debug', 'debug_channel') # set our debug channel
         bot.setChannel('pinned', 'you_pinned') # set (you) pinned channel
         bot.setChannel('gbfglog', 'gbfg_log') # set /gbfg/ lucilius log channel

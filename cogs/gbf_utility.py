@@ -296,13 +296,8 @@ class GBF_Utility(commands.Cog):
             cog = self.bot.get_cog('Baguette')
             tickets = cog.getLatestTicket()
             l = len(tickets)
-            if l > 1:
-                desc = ""
-                for t in tickets:
-                    desc = t + "\n"
-                await ctx.send(embed=self.bot.buildEmbed(title="New upcoming gacha(s)", description=desc, thumbnail=tickets[-1], color=self.color))
-            elif l == 1:
-                await ctx.send(embed=self.bot.buildEmbed(title="New upcoming gacha", description=tickets[0], thumbnail=tickets[0], color=self.color))
+            if l > 0:
+                await ctx.send(embed=self.bot.buildEmbed(title="Last Gacha update", description=str(l) + " new ticket(s)", thumbnail=tickets[-1], color=self.color))
             else:
                 await ctx.send(embed=self.bot.buildEmbed(title="No new upcoming gacha", color=self.color))
         except Exception as e:
