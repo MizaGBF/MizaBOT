@@ -251,6 +251,11 @@ class General(commands.Cog):
                 await self.bot.sendError('remindertask', str(e))
             await asyncio.sleep(40)
 
+    def isDisabled(): # for decorators
+        async def predicate(ctx):
+            return False
+        return commands.check(predicate)
+
     def isAuthorized(): # for decorators
         async def predicate(ctx):
             return ctx.bot.isAuthorized(ctx)
@@ -501,6 +506,7 @@ class General(commands.Cog):
 
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isDisabled()
     @commands.cooldown(10, 20, commands.BucketType.guild)
     async def sadpanda(self, ctx):
         """Time since sadpanda died"""

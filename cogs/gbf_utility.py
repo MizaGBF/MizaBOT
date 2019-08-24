@@ -50,6 +50,11 @@ class GBF_Utility(commands.Cog):
             return ctx.bot.isYouServer(ctx)
         return commands.check(predicate)
 
+    def isDisabled(): # for decorators
+        async def predicate(ctx):
+            return False
+        return commands.check(predicate)
+
     async def requestGBF(self):
         async with aiohttp.ClientSession() as session:
             async with session.get("http://game.granbluefantasy.jp") as r:
@@ -297,7 +302,7 @@ class GBF_Utility(commands.Cog):
             tickets = cog.getLatestTicket()
             l = len(tickets)
             if l > 0:
-                await ctx.send(embed=self.bot.buildEmbed(title="Last Gacha update", description=str(l) + " new ticket(s)", thumbnail=tickets[-1], color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="Last Gacha update", description="New: " + str(l), thumbnail=tickets[0], color=self.color))
             else:
                 await ctx.send(embed=self.bot.buildEmbed(title="No new upcoming gacha", color=self.color))
         except Exception as e:
@@ -338,6 +343,7 @@ class GBF_Utility(commands.Cog):
         await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('crystal') + " GBF Roll Tracker", description=self.bot.strings["rolltracker()"], color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['charlist', 'asset'])
+    @isDisabled()
     async def datamining(self, ctx):
         """Post a link to my autistic datamining Sheet"""
         await ctx.send(embed=self.bot.buildEmbed(title="Asset Datamining Sheet", description=self.bot.strings["datamining()"], color=self.color))
@@ -368,6 +374,7 @@ class GBF_Utility(commands.Cog):
         await ctx.send(embed=self.bot.buildEmbed(title="(You) Motocal", description=self.bot.strings["motocal()"], color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isDisabled()
     async def leak(self, ctx):
         """Post a link to the /gbfg/ leak pastebin"""
         await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ Leak Pastebin", description=self.bot.strings["leak()"], color=self.color))
