@@ -232,7 +232,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.21
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.22
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -425,52 +425,57 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             except Exception as e:
                 await self.sendError('statustask', str(e))
 
-    async def youinvite(self): # background task to track the invites of the (You) server
+    async def invitetracker(self): # background task to track the invites of the (You) server
         await asyncio.sleep(2)
-        await self.send('debug', embed=self.buildEmbed(title="youinvite() started", timestamp=datetime.utcnow()))
-        g = self.get_guild(self.ids['you_server'])
-        res = await g.invites()
+        await self.send('debug', embed=self.buildEmbed(title="invitetracker() started", timestamp=datetime.utcnow()))
+        guilds = [self.get_guild(self.ids['you_server']), self.get_guild(self.ids['gbfg'])]
+        log_channels = {self.ids['you_server']:'youlog', self.ids['gbfg']:'gbfglog'}
+        
         invites = {}
-        for i in res:
-            invites[i.code] = i
+        for g in guilds:
+            res = await g.invites()
+            invites[g.id] = {}
+            for i in res:
+                invites[g.id][i.code] = i
 
         while True:
             try:
-                await asyncio.sleep(50)
-                res = await g.invites()
-                currents = {}
-                for i in res:
-                    currents[i.code] = i
+                await asyncio.sleep(60)
+                for g in guilds:
+                    res = await g.invites()
+                    currents = {}
+                    for i in res:
+                        currents[i.code] = i
 
-                for i in currents:
-                    if i in invites:
-                        if currents[i].uses is not None and currents[i].uses != invites[i].uses:
-                            if currents[i].max_uses is None:
-                                await self.send('youlog', embed=bot.buildEmbed(title="Invite `" + i + "` used", description="**Uses:** " + str(currents[i].uses), timestamp=datetime.utcnow(), color=0xfcba03))
-                            else:
-                                await self.send('youlog', embed=bot.buildEmbed(title="Invite `" + i + "` used", description="**Uses:** " + str(currents[i].uses) + " / " + str(currents[i].max_uses), timestamp=datetime.utcnow(), color=0xfcba03))
-                    else:
-                        msg = ""
-                        if currents[i].max_uses != 0: msg += "**Max uses:** " + str(currents[i].max_uses) + "\n"
-                        if currents[i].inviter is not None:
-                            msg += "**Inviter:** " + str(currents[i].inviter) + "\n"
-                        if currents[i].max_age != 0:
-                            if currents[i].max_age < 3600: msg += "**Duration:** " + str(currents[i].max_age // 60) + " minutes\n"
-                            else: msg += "**Duration:** " + str(currents[i].max_age // 3600) + " hours\n"
-                        msg += "**Channel:** " + currents[i].channel.name + "\n"
-                        msg += "**Url:** " + str(currents[i].url) + "\n"
-                        await self.send('youlog', embed=bot.buildEmbed(title="New Invite ▪ `" + i + "`", description=msg, timestamp=datetime.utcnow(), color=0xfcba03))
+                    for i in currents:
+                        if i in invites[g.id]:
+                            if currents[i].uses is not None and currents[i].uses != invites[g.id][i].uses:
+                                if currents[i].max_uses is None:
+                                    await self.send(log_channels[g.id], embed=bot.buildEmbed(title="Invite `" + i + "` used", description="**Uses:** " + str(currents[i].uses), timestamp=datetime.utcnow(), color=0xfcba03))
+                                else:
+                                    await self.send(log_channels[g.id], embed=bot.buildEmbed(title="Invite `" + i + "` used", description="**Uses:** " + str(currents[i].uses) + " / " + str(currents[i].max_uses), timestamp=datetime.utcnow(), color=0xfcba03))
+                        else:
+                            msg = ""
+                            if currents[i].max_uses != 0: msg += "**Max uses:** " + str(currents[i].max_uses) + "\n"
+                            if currents[i].inviter is not None:
+                                msg += "**Inviter:** " + str(currents[i].inviter) + "\n"
+                            if currents[i].max_age != 0:
+                                if currents[i].max_age < 3600: msg += "**Duration:** " + str(currents[i].max_age // 60) + " minutes\n"
+                                else: msg += "**Duration:** " + str(currents[i].max_age // 3600) + " hours\n"
+                            msg += "**Channel:** " + currents[i].channel.name + "\n"
+                            msg += "**Url:** " + str(currents[i].url) + "\n"
+                            await self.send(log_channels[g.id], embed=bot.buildEmbed(title="New Invite ▪ `" + i + "`", description=msg, timestamp=datetime.utcnow(), color=0xfcba03))
 
-                for i in invites:
-                    if i not in currents:
-                        await self.send('youlog', embed=bot.buildEmbed(title="Revoked Invite ▪ `" + i + "`", timestamp=datetime.utcnow(), color=0xfcba03))
+                    for i in invites[g.id]:
+                        if i not in currents:
+                            await self.send(log_channels[g.id], embed=bot.buildEmbed(title="Revoked Invite ▪ `" + i + "`", timestamp=datetime.utcnow(), color=0xfcba03))
 
-                invites = currents
+                    invites[g.id] = currents
             except asyncio.CancelledError:
-                await self.sendError('youinvite', 'cancelled')
+                await self.sendError('invitetracker', 'cancelled')
                 return
             except Exception as e:
-                await self.sendError('youinvite', str(e))
+                await self.sendError('invitetracker', str(e))
                 invites = currents
 
     def isAuthorized(self, ctx): # check if the command is authorized
@@ -558,7 +563,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
 
     def startTasks(self): # start our tasks
         self.runTask('status', self.statustask)
-        self.runTask('youinvite', self.youinvite)
+        self.runTask('invitetracker', self.invitetracker)
         for c in self.cogs:
             try:
                 self.get_cog(c).startTasks()

@@ -315,7 +315,6 @@ class GBF_Game(commands.Cog):
             await self.bot.sendError("rollRanking", str(e))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['diexil', 'nemo', 'killxil'])
-    @isDisabled()
     @commands.cooldown(3, 30, commands.BucketType.guild)
     async def xil(self, ctx):
         """Bully Xil"""
@@ -326,7 +325,6 @@ class GBF_Game(commands.Cog):
             pass
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isDisabled()
     @commands.cooldown(5, 30, commands.BucketType.guild)
     async def wawi(self, ctx):
         """Bully Wawi"""
