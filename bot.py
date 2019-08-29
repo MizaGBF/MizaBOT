@@ -203,6 +203,7 @@ class Mizabot(commands.Bot):
         self.gw = {'state':False} # guild war data
         self.maintenance = {"state" : False, "time" : None, "duration" : "0"} # gbf maintenance data
         self.spark = [{}, []] # user spark data, banned users
+        self.arca = {} #user arcarum data
         self.stream = {'time':None, 'content':[]} # stream command content
         self.schedule = [] # gbf schedule
         self.prefixes = {} # guild prefixes
@@ -232,7 +233,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.22
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.23
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -346,6 +347,8 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 else: self.st = {}
                 if 'spark' in data: self.spark = data['spark']
                 else: self.spark = [{}, []]
+                if 'arcarum' in data: self.arca = data['arcarum']
+                else: self.arca = {}
                 if 'gw' in data: self.gw = data['gw']
                 else: self.gw = {}
                 if 'reminders' in data: self.reminders = data['reminders']
@@ -373,6 +376,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 data['schedule'] = self.schedule
                 data['st'] = self.st
                 data['spark'] = self.spark
+                data['arcarum'] = self.arca
                 data['gw'] = self.gw
                 data['reminders'] = self.reminders
                 data['news'] = self.news
@@ -450,10 +454,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                     for i in currents:
                         if i in invites[g.id]:
                             if currents[i].uses is not None and currents[i].uses != invites[g.id][i].uses:
-                                if currents[i].max_uses is None:
-                                    await self.send(log_channels[g.id], embed=bot.buildEmbed(title="Invite `" + i + "` used", description="**Uses:** " + str(currents[i].uses), timestamp=datetime.utcnow(), color=0xfcba03))
-                                else:
-                                    await self.send(log_channels[g.id], embed=bot.buildEmbed(title="Invite `" + i + "` used", description="**Uses:** " + str(currents[i].uses) + " / " + str(currents[i].max_uses), timestamp=datetime.utcnow(), color=0xfcba03))
+                                await self.send(log_channels[g.id], embed=bot.buildEmbed(title="Invite `" + i + "` used", description="**Uses:** " + str(currents[i].uses), timestamp=datetime.utcnow(), color=0xfcba03))
                         else:
                             msg = ""
                             if currents[i].max_uses != 0: msg += "**Max uses:** " + str(currents[i].max_uses) + "\n"

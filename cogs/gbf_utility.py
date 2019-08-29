@@ -55,6 +55,11 @@ class GBF_Utility(commands.Cog):
             return False
         return commands.check(predicate)
 
+    def isAuthorized(): # for decorators
+        async def predicate(ctx):
+            return ctx.bot.isAuthorized(ctx)
+        return commands.check(predicate)
+
     async def requestGBF(self):
         async with aiohttp.ClientSession() as session:
             async with session.get("http://game.granbluefantasy.jp") as r:
@@ -571,3 +576,173 @@ class GBF_Utility(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg,  url="https://gbf.wiki/Raising_Weapon_Skills", color=self.color))
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=str(e),  url="https://gbf.wiki/Raising_Weapon_Skills", color=self.color))
+
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['arcaset'])
+    @isAuthorized()
+    @commands.cooldown(2, 5, commands.BucketType.user)
+    async def aSet(self, ctx, *what : str):
+        """Set your arcarum progress
+        Input:
+        - what you want to set/update (summon name, sephira, astra...)
+        - followed by the new value (example: ssr3, sr2, oracle4 for a summon)
+        Chain multiples with ; (example: tower sr3;temperance ssr4;sephira 30)"""
+        types = {"justice ":0, "hanged man ":1, "the hanged man ":1, "death ":2, "temperance ":3, "the devil ":4, "devil ":4, "the tower ":5, "tower ":5, "the star ":6, "star ":6, "the moon ":7, "moon ":7, "the sun ":8, "sun ":8, "judgement ":9}
+        sumsteps = {"none":0, "zero":0, "0":0, "":0, "sr0":1, "sr1":2, "sr2":3, "sr3":4, "ssr3":5, "ssr":5, "ssr4":6, "flb":6, "ssr5":7, "ulb":7, "oracle":8, "oracle0":8, "oracle1":9, "oracle2":10, "oracle3":11, "oracle4":12}
+
+        parameters = " ".join(what)
+        parameters = parameters.lower().split(';')
+
+        for what in parameters:
+            if what == "": continue
+            found = False
+            for t in types:
+                if what.startswith(t):
+                    found = True
+                    id = types[t]
+                    what = what[len(t):]
+                    if what == "":
+                        await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Please add the step (example: ssr3, sr2, oracle4)", color=self.color))
+                        return
+                    if what in sumsteps:
+                        if str(ctx.author.id) not in self.bot.arca:
+                            self.bot.arca[str(ctx.author.id)] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                        self.bot.arca[str(ctx.author.id)][id] = sumsteps[what]
+                        self.bot.savePending = True
+                        await ctx.message.add_reaction('✅') # white check mark
+                    else:
+                        await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I can't parse this value: `" + what + "`", color=self.color))
+                    break
+            if found: continue
+            items = {"sephira ":10, "sephira stone ":10, "sephira stones ":10, "fire astra ":11, "water astra ":12, "earth astra ":13, "dirt astra ":13, "wind astra ":14, "light astra ":15, "dark astra ":16, "aquila fragment":17, "aquila":17, "bellator fragment":18, "bellator":18, "celsus fragment":19, "celsus":19}
+            for i in items:
+                if what.startswith(i):
+                    found = True
+                    id = items[i]
+                    what = what[len(i):]
+                    try:
+                        v = int(what)
+                        if v < 0: raise Exception()
+                    except:
+                        await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I can't parse this value: `" + what + "`, not a positive number", color=self.color))
+                        return
+                    if str(ctx.author.id) not in self.bot.arca:
+                        self.bot.arca[str(ctx.author.id)] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                    self.bot.arca[str(ctx.author.id)][id] = v
+                    self.bot.savePending = True
+                    await ctx.message.add_reaction('✅') # white check mark
+                    break
+            if found: continue
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Unknown parameter `" + what + "`\nUse `help aSet` for details.", color=self.color))
+            return
+
+    def arcaStepToString(self, step):
+        if step == 0: return "None"
+        elif step == 1: return self.bot.getEmoteStr('SR') + " ☆☆☆"
+        elif step == 2: return self.bot.getEmoteStr('SR') + " ★☆☆"
+        elif step == 3: return self.bot.getEmoteStr('SR') + " ★★☆"
+        elif step == 4: return self.bot.getEmoteStr('SR') + " ★★★"
+        elif step == 5: return self.bot.getEmoteStr('SSR') + " ★★★☆☆"
+        elif step == 6: return self.bot.getEmoteStr('SSR') + " ★★★★☆"
+        elif step == 7: return self.bot.getEmoteStr('SSR') + " ★★★★★"
+        elif step == 8: return self.bot.getEmoteStr('SSR') + " ★★★★★ " + self.bot.getEmoteStr('question') + " ☆☆☆☆"
+        elif step == 9: return self.bot.getEmoteStr('SSR') + " ★★★★★ " + self.bot.getEmoteStr('question') + " ★☆☆☆"
+        elif step == 10: return self.bot.getEmoteStr('SSR') + " ★★★★★ " + self.bot.getEmoteStr('question') + " ★★☆☆"
+        elif step == 11: return self.bot.getEmoteStr('SSR') + " ★★★★★ " + self.bot.getEmoteStr('question') + " ★★★☆"
+        elif step == 12: return self.bot.getEmoteStr('SSR') + " ★★★★★ " + self.bot.getEmoteStr('question') + " ★★★★"
+        raise Exception("Invalid Arcarum Step Value")
+
+    def arcaStepToItem(self, step, item):
+        table = [
+            [0, 0, 0],
+            [2, 3, 0],
+            [7, 8, 0],
+            [17, 18, 0],
+            [32, 33, 0],
+            [62, 63, 0],
+            [107, 108, 10],
+            [107, 108, 30],
+            [137, 308, 30],
+            [137, 308, 30],
+            [137, 309, 30],
+            [137, 311, 30],
+            [137, 314, 30]
+        ]
+        return table[step][item]
+
+    def arcaDataToItem(self, data, item):
+        v = 0
+        for i in range(0, 10):
+            v += self.arcaStepToItem(data[i], item)
+        return v
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['arcasee'])
+    @isAuthorized()
+    @commands.cooldown(2, 5, commands.BucketType.user)
+    async def aSee(self, ctx, member : discord.Member = None):
+        """See the arcarum progress of a member"""
+        if member is None: member = ctx.author
+        if str(member.id) not in self.bot.arca:
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description=member.display_name + " didn't set its progress yet", color=self.color))
+        else:
+            try:
+                msg1 = "**Justice** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][0]) + "\n"
+                msg1 += "**The Hanged Man** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][1]) + "\n"
+                msg1 += "**Death** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][2]) + "\n"
+                msg1 += "**Temperance** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][3]) + "\n"
+                msg1 += "**The Devil** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][4]) + "\n"
+                msg1 += "**The Tower** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][5]) + "\n"
+                msg1 += "**The Star** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][6]) + "\n"
+                msg1 += "**The Moon** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][7]) + "\n"
+                msg1 += "**The Sun** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][8]) + "\n"
+                msg1 += "**Judgement** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][9]) + "\n"
+
+
+                v = self.bot.arca[str(member.id)][10] + self.arcaDataToItem(self.bot.arca[str(member.id)], 0)
+                mean = v / 1370.0
+                msg2 = "**Sephira Stones** ▪ " + str(v) + " / 1370 ({0:.2f}%)\n".format(min(100.0, 100.0 * v / 1370.0))
+
+                v = self.bot.arca[str(member.id)][11] + self.arcaStepToItem(self.bot.arca[str(member.id)][4], 1) + self.arcaStepToItem(self.bot.arca[str(member.id)][8], 1)
+                mean += v / 628.0
+                msg2 += "**Fire Astras** ▪ " + str(v) + " / 628 ({0:.2f}%)\n".format(min(100.0, 100.0 * v / 628.0))
+
+                v = self.bot.arca[str(member.id)][12] + self.arcaStepToItem(self.bot.arca[str(member.id)][0], 1) + self.arcaStepToItem(self.bot.arca[str(member.id)][7], 1)
+                mean += v / 628.0
+                msg2 += "**Water Astras** ▪ " + str(v) + " / 628 ({0:.2f}%)\n".format(min(100.0, 100.0 * v / 628.0))
+
+                v = self.bot.arca[str(member.id)][13] + self.arcaStepToItem(self.bot.arca[str(member.id)][1], 1) + self.arcaStepToItem(self.bot.arca[str(member.id)][5], 1)
+                mean += v / 628.0
+                msg2 += "**Earth Astras** ▪ " + str(v) + " / 628 ({0:.2f}%)\n".format(min(100.0, 100.0 * v / 628.0))
+
+                v = self.bot.arca[str(member.id)][14] + self.arcaStepToItem(self.bot.arca[str(member.id)][3], 1) + self.arcaStepToItem(self.bot.arca[str(member.id)][9], 1)
+                mean += v / 628.0
+                msg2 += "**Wind Astras** ▪ " + str(v) + " / 628 ({0:.2f}%)\n".format(min(100.0, 100.0 * v / 628.0))
+
+                v = self.bot.arca[str(member.id)][15] + self.arcaStepToItem(self.bot.arca[str(member.id)][6], 1)
+                mean += v / 314.0
+                msg2 += "**Light Astras** ▪ " + str(v) + " / 314 ({0:.2f}%)\n".format(min(100.0, 100.0 * v / 314.0))
+
+                v = self.bot.arca[str(member.id)][16] + self.arcaStepToItem(self.bot.arca[str(member.id)][2], 1)
+                mean += v / 314.0
+                msg2 += "**Dark Astras** ▪ " + str(v) + " / 314 ({0:.2f}%)\n".format(min(100.0, 100.0 * v / 314.0))
+
+                v = self.bot.arca[str(member.id)][17] + self.arcaStepToItem(self.bot.arca[str(member.id)][1], 2) + self.arcaStepToItem(self.bot.arca[str(member.id)][4], 2) + self.arcaStepToItem(self.bot.arca[str(member.id)][8], 2)
+                mean += v / 90.0
+                msg2 += "**Aquila Fragment** ▪ " + str(v) + " / 90 ({0:.2f}%)\n".format(min(100.0, 100.0 * v / 90.0))
+
+                v = self.bot.arca[str(member.id)][18] + self.arcaStepToItem(self.bot.arca[str(member.id)][0], 2) + self.arcaStepToItem(self.bot.arca[str(member.id)][7], 2) + self.arcaStepToItem(self.bot.arca[str(member.id)][8], 2)
+                mean += v / 90.0
+                msg2 += "**Bellator Fragment** ▪ " + str(v) + " / 90 ({0:.2f}%)\n".format(min(100.0, 100.0 * v / 90.0))
+
+                v = self.bot.arca[str(member.id)][19] + self.arcaStepToItem(self.bot.arca[str(member.id)][2], 2) + self.arcaStepToItem(self.bot.arca[str(member.id)][3], 2) + self.arcaStepToItem(self.bot.arca[str(member.id)][5], 2) + self.arcaStepToItem(self.bot.arca[str(member.id)][6], 2)
+                mean += v / 120.0
+                msg2 += "**Celsus Fragment** ▪ " + str(v) + " / 120 ({0:.2f}%)\n".format(min(100.0, 100.0 * v / 120.0))
+
+                mean = 100 * mean / 7.0
+                msg2 = "**Total Progression** ▪ {0:.2f}%\n".format(min(100.0, mean)) + msg2
+
+                await ctx.send(embed=self.bot.buildEmbed(title="**Arcarum Progress of " + member.display_name + "**", fields=[{'name':self.bot.getEmoteStr('summon') + " **Summons**\n", 'value':msg1}, {'name':self.bot.getEmoteStr('gold') + " **Items**\n", 'value':msg2}], inline=True, color=self.color))
+
+            except Exception as e:
+                await self.bot.sendError('arcasee', str(e))
+                return
