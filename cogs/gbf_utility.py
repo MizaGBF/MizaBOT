@@ -687,14 +687,14 @@ class GBF_Utility(commands.Cog):
         else:
             try:
                 msg1 = "**Justice** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][0]) + "\n"
-                msg1 += "**The Hanged Man** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][1]) + "\n"
+                msg1 += "**Hanged Man** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][1]) + "\n"
                 msg1 += "**Death** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][2]) + "\n"
                 msg1 += "**Temperance** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][3]) + "\n"
-                msg1 += "**The Devil** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][4]) + "\n"
-                msg1 += "**The Tower** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][5]) + "\n"
-                msg1 += "**The Star** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][6]) + "\n"
-                msg1 += "**The Moon** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][7]) + "\n"
-                msg1 += "**The Sun** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][8]) + "\n"
+                msg1 += "**Devil** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][4]) + "\n"
+                msg1 += "**Tower** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][5]) + "\n"
+                msg1 += "**Star** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][6]) + "\n"
+                msg1 += "**Moon** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][7]) + "\n"
+                msg1 += "**Sun** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][8]) + "\n"
                 msg1 += "**Judgement** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][9]) + "\n"
 
 
