@@ -738,7 +738,7 @@ class GBF_Utility(commands.Cog):
                 mean += v / 120.0
                 msg2 += "**Celsus Fragment** ▪ " + str(v) + " / 120 ({0:.2f}%)\n".format(min(100.0, 100.0 * v / 120.0))
 
-                mean = 100 * mean / 7.0
+                mean = 100 * mean / 10.0
                 msg2 = "**Total Progression** ▪ {0:.2f}%\n".format(min(100.0, mean)) + msg2
 
                 await ctx.send(embed=self.bot.buildEmbed(title="**Arcarum Progress of " + member.display_name + "**", fields=[{'name':self.bot.getEmoteStr('summon') + " **Summons**\n", 'value':msg1}, {'name':self.bot.getEmoteStr('gold') + " **Items**\n", 'value':msg2}], inline=True, color=self.color))
