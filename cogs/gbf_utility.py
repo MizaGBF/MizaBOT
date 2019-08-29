@@ -645,11 +645,11 @@ class GBF_Utility(commands.Cog):
         elif step == 5: return self.bot.getEmoteStr('SSR') + " ★★★☆☆"
         elif step == 6: return self.bot.getEmoteStr('SSR') + " ★★★★☆"
         elif step == 7: return self.bot.getEmoteStr('SSR') + " ★★★★★"
-        elif step == 8: return self.bot.getEmoteStr('SSR') + " ★★★★★ " + self.bot.getEmoteStr('question') + " ☆☆☆☆"
-        elif step == 9: return self.bot.getEmoteStr('SSR') + " ★★★★★ " + self.bot.getEmoteStr('question') + " ★☆☆☆"
-        elif step == 10: return self.bot.getEmoteStr('SSR') + " ★★★★★ " + self.bot.getEmoteStr('question') + " ★★☆☆"
-        elif step == 11: return self.bot.getEmoteStr('SSR') + " ★★★★★ " + self.bot.getEmoteStr('question') + " ★★★☆"
-        elif step == 12: return self.bot.getEmoteStr('SSR') + " ★★★★★ " + self.bot.getEmoteStr('question') + " ★★★★"
+        elif step == 8: return self.bot.getEmoteStr('question') + " ☆☆☆☆"
+        elif step == 9: return self.bot.getEmoteStr('question') + " ★☆☆☆"
+        elif step == 10: return self.bot.getEmoteStr('question') + " ★★☆☆"
+        elif step == 11: return self.bot.getEmoteStr('question') + " ★★★☆"
+        elif step == 12: return self.bot.getEmoteStr('question') + " ★★★★"
         raise Exception("Invalid Arcarum Step Value")
 
     def arcaStepToItem(self, step, item):
