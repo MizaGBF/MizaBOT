@@ -432,3 +432,38 @@ class GBF_Game(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Pit Roulette enabled", description=random.choice(["Who will fall in?", "Are you brave enough?", "Do you dare?"]) , thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/584813271643586560/Activate_it.png", footer="expecting " + str(max) + " victim(s)", color=self.color))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="Pit Roulette already on" ,color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isAuthorized()
+    @commands.cooldown(2, 7, commands.BucketType.user)
+    async def character(self, ctx):
+        """Generate a random GBF character"""
+        seed = (ctx.author.id + int(datetime.utcnow().timestamp()) // 86400) % 4428
+
+        msg = "**Rarity** ▪ "
+        rare = seed % 3
+        if rare == 0: msg += self.bot.getEmoteStr('SSR')
+        elif rare == 1: msg += self.bot.getEmoteStr('SR')
+        elif rare == 2: msg += self.bot.getEmoteStr('R')
+        
+        msg += "\n**Race** ▪ "
+        r = (seed - 1) % 6
+        if r == 0: msg += 'Human'
+        elif r == 1: msg += 'Erun'
+        elif r == 2: msg += 'Draph'
+        elif r == 3: msg += 'Harvin'
+        elif r == 4: msg += 'Primal'
+        elif r == 5: msg += 'Unknown'
+        
+        msg += "\n**Element** ▪ "
+        r = (seed - 3) % 6
+        if r == 0: msg += self.bot.getEmoteStr('fire')
+        elif r == 1: msg += self.bot.getEmoteStr('water')
+        elif r == 2: msg += self.bot.getEmoteStr('earth')
+        elif r == 3: msg += self.bot.getEmoteStr('wind')
+        elif r == 4: msg += self.bot.getEmoteStr('light')
+        elif r == 5: msg += self.bot.getEmoteStr('dark')
+        
+        msg += "\n**Rating** ▪ {0:.1f}".format(((seed % 41) * 0.1) + 6.0 - rare * 2.0)
+
+        await ctx.send(embed=self.bot.buildEmbed(author={'name':ctx.author.display_name + "'s daily character", 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, color=self.color))

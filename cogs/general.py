@@ -216,6 +216,7 @@ def evaluate(expression, vars={}):
 # #####################################################################################
 # Cogs
 class General(commands.Cog):
+    """General commands."""
     def __init__(self, bot):
         self.bot = bot
         self.color = 0x8fe3e8
@@ -430,7 +431,7 @@ class General(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['reminder'])
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def remind(self, ctx, duration : str, *, msg : str):
-        """Tell the bot to remind you of something (±30 seconds precision)
+        """Remind you of something at the specified time (±30 seconds precision)
         <duration> format: XdXhXmXs for day, hour, minute, second, each are optionals"""
         id = str(ctx.author.id)
         if id not in self.bot.reminders:

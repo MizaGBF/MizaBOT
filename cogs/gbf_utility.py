@@ -591,6 +591,9 @@ class GBF_Utility(commands.Cog):
         sumsteps = {"none":0, "zero":0, "0":0, "":0, "sr0":1, "sr1":2, "sr2":3, "sr3":4, "ssr3":5, "ssr":5, "ssr4":6, "flb":6, "ssr5":7, "ulb":7, "oracle":8, "oracle0":8, "oracle1":9, "oracle2":10, "oracle3":11, "oracle4":12}
 
         parameters = " ".join(what)
+        if parameters == "":
+            await ctx.send(embed=self.bot.buildEmbed(title="Precise what you want to set", description="example string:\n`justice sr0;hanged man sr0;death sr0;temperance sr0;devil sr0;tower sr0;star sr0;moon sr0;sun sr0,judgement sr0;sephira 0;fire astra 0;water astra 0;earth astra 0;wind astra 0;light astra 0;dark astra 0;aquila 0;bellator 0;ceslsus 0`", color=self.color))
+            return
         parameters = parameters.lower().split(';')
 
         for what in parameters:

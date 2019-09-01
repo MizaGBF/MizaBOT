@@ -51,7 +51,8 @@ class MizabotHelp(commands.DefaultHelpCommand):
                 commands = sorted(commands, key=lambda c: c.name) if self.sort_commands else list(commands) # sort
                 embed = discord.Embed(title=bot.getEmoteStr('mark') + " **" + category[:-1] + "** Category", color=random.randint(0, 16777216)) # make an embed, random color
                 for c in commands: # fill the embed fields with the command infos
-                    embed.add_field(name=c.name + " ▫ " + self.get_command_signature(c), value=c.short_doc, inline=False)
+                    if c.short_doc == "": embed.add_field(name=c.name + " ▫ " + self.get_command_signature(c), value="No description", inline=False)
+                    else: embed.add_field(name=c.name + " ▫ " + self.get_command_signature(c), value=c.short_doc, inline=False)
                     if len(embed) > 5800 or len(embed.fields) > 24: # embeds have a 6000 and 25 fields characters limit, I send and make a new embed if needed
                         try:
                             await ctx.author.send(embed=embed) # author.send = dm
@@ -100,7 +101,8 @@ class MizabotHelp(commands.DefaultHelpCommand):
         filtered = await self.filter_commands(cog.get_commands(), sort=self.sort_commands) # sort
         embed = discord.Embed(title=bot.getEmoteStr('mark') + " **" + cog.qualified_name + "** Category", description=cog.description, color=random.randint(0, 16777216)) # random color
         for c in filtered:
-            embed.add_field(name=c.name + " ▫ " + self.get_command_signature(c), value=c.short_doc, inline=False)
+            if c.short_doc == "": embed.add_field(name=c.name + " ▫ " + self.get_command_signature(c), value="No description", inline=False)
+            else: embed.add_field(name=c.name + " ▫ " + self.get_command_signature(c), value=c.short_doc, inline=False)
             if len(embed) > 5800 or len(embed.fields) > 24: # embeds have a 6000 and 25 fields characters limit, I send and make a new embed if needed
                 try:
                     await ctx.author.send(embed=embed) # author.send = dm
@@ -233,7 +235,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.23
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.24
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
