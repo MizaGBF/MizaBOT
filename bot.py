@@ -675,7 +675,7 @@ async def on_guild_join(guild): # when the bot joins a new guild
 async def pitroulette():
     try:
         message = bot.pitroulettevictim.pop()
-        bot.pitroulettelist.append([message.author.display_name, bot.pitroulettecount])
+        bot.pitroulettelist.append([message.author.display_name, bot.pitroulettecount, message.content, "[**Link**](https://discordapp.com/channels/"+str(message.guild.id)+"/"+str(message.channel.id)+"/"+str(message.id) + ")"])
         description = "After **" + str(bot.pitroulettecount) + "** message(s)"
         title = random.choice([message.author.display_name + " has fallen into the pit...", message.author.display_name + " tripped and fell...", message.author.display_name + " jumped into the pit willingly...", message.author.display_name + " got pushed in the back..."])
         footer = random.choice(["Will " + message.author.display_name + " manage to climb up?", "Stay down here where you belong", "Straight into the hellish pit", message.author.display_name + " has met with a terrible fate"])
@@ -685,10 +685,11 @@ async def pitroulette():
             bot.pitroulette = False # disable
         await message.channel.send(embed=bot.buildEmbed(title=title, description=description, thumbnail=message.author.avatar_url, footer=footer))
         if bot.pitroulettemax == 0 and len(bot.pitroulettelist) > 1:
-            description = ""
+            fields = []
             for a in bot.pitroulettelist:
-                description += a[0] + " ▪ after " + str(a[1]) + " message(s)\n"
-            await message.channel.send(embed=bot.buildEmbed(title="Pit Roulette results", description=description, thumbnail=message.author.avatar_url))
+                if len(a[2]) == 0: fields.append({'name': a[0] + " ▪ after " + str(a[1]) + " message(s)", 'value':a[3]})
+                else: fields.append({'name': a[0] + " ▪ after " + str(a[1]) + " message(s)", 'value':a[2] + '\n' + a[3]})
+            await message.channel.send(embed=bot.buildEmbed(title="Pit Roulette results", fields=fields, inline=False, thumbnail=message.author.avatar_url))
         g = bot.get_guild(bot.ids['gbfg'])
         await message.author.add_roles(g.get_role(bot.ids['pit']))
         await asyncio.sleep(60)
