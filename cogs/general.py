@@ -237,7 +237,10 @@ class General(commands.Cog):
                     if u is None: continue
                     while di < len(self.bot.reminders[r]):
                         if c > self.bot.reminders[r][di][0]:
-                            await u.send(embed=self.bot.buildEmbed(title="Reminder", description=self.bot.reminders[r][di][1]))
+                            try:
+                                await u.send(embed=self.bot.buildEmbed(title="Reminder", description=self.bot.reminders[r][di][1]))
+                            except Exception as e:
+                                await self.bot.sendError('remindertask', "User: " + str(u) + "\nReminder: " + self.bot.reminders[r][di][1] + "\nError: " + str(e))
                             self.bot.reminders[r].pop(di)
                             self.bot.savePending = True
                         else:

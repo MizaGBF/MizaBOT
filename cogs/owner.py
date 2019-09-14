@@ -151,15 +151,14 @@ class Owner(commands.Cog):
     @isOwner()
     async def _save(self, ctx):
         """Command to make a snapshot of the bot's settings (Owner only)"""
-        await ctx.message.add_reaction('✅') # white check mark
         await self.bot.autosave(True)
+        await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(name='load', no_pm=True, aliases=['l'])
     @isOwner()
     async def _load(self, ctx, drive : str = ""):
         """Command to reload the bot settings (Owner only)"""
         self.bot.cancelTask('check_buff')
-        await ctx.message.add_reaction('✅') # white check mark
         if drive == 'drive': 
             if not self.bot.drive.load():
                 await self.bot.send('debug', embed=self.bot.buildEmbed(title=ctx.guild.me.name, description="Failed to retrieve save.json on the Google Drive", color=self.color))
@@ -169,6 +168,7 @@ class Owner(commands.Cog):
             await self.bot.send('debug', embed=self.bot.buildEmbed(title=ctx.guild.me.name, description="save.json reloaded", color=self.color))
         else:
             await self.bot.send('debug', embed=self.bot.buildEmbed(title=ctx.guild.me.name, description="save.json loading failed", color=self.color))
+        await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, aliases=['server'])
     @isOwner()

@@ -464,6 +464,6 @@ class GBF_Game(commands.Cog):
         elif r == 4: msg += self.bot.getEmoteStr('light')
         elif r == 5: msg += self.bot.getEmoteStr('dark')
         
-        msg += "\n**Rating** ▪ {0:.1f}".format(((seed % 41) * 0.1) + 6.0 - rare * 2.0)
+        msg += "\n**Rating** ▪ {0:.1f}".format(((seed % 41) * 0.1) + 6.0 - rare * 1.5)
 
         await ctx.send(embed=self.bot.buildEmbed(author={'name':ctx.author.display_name + "'s daily character", 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, color=self.color))

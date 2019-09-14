@@ -235,7 +235,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.24
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.25
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -395,9 +395,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
     async def autosave(self, discordDump = False): # called when savePending is true by statustask()
         if self.autosaving: return
         self.autosaving = True
-        await self.send('debug', embed=self.buildEmbed(title="Autosaving...", timestamp=datetime.utcnow()))
         if self.save():
-            await self.send('debug', embed=self.buildEmbed(title="Autosave Success", timestamp=datetime.utcnow()))
             self.savePending = False
         else:
             await self.send('debug', embed=self.buildEmbed(title="Autosave Failed", timestamp=datetime.utcnow()))
@@ -414,7 +412,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
         await self.send('debug', embed=self.buildEmbed(title="statustask() started", timestamp=datetime.utcnow()))
         while True:
             try:
-                await asyncio.sleep(2400)
+                await asyncio.sleep(1200)
                 await self.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=random.choice(self.games)))
                 # check if it's time for the bot maintenance for me (every 2 weeks or so)
                 c = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -605,7 +603,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             print(channel_name + " error: " + str(e))
 
     async def sendError(self, func_name : str, msg : str, id = None): # send an error to the debug channel
-        if self.errn >= 50: return # disable error messages if too many messages got sent
+        if self.errn >= 30: return # disable error messages if too many messages got sent
         if id is None: id = ""
         else: id = " " + str(id)
         self.errn += 1
@@ -901,7 +899,7 @@ async def on_guild_role_update(before, after):
 grace = GracefulExit(bot)
 
 # load cogs from the cogs folder
-bot.loadCog("general", "gbf_game.GBF_Game", "gbf_utility.GBF_Utility", "gw.GW", "management", "owner", "baguette")
+bot.loadCog("general", "gbf_game.GBF_Game", "gbf_utility.GBF_Utility", "gw.GW", "management", "owner", "baguette", "rpg.RPG")
 
 # start the loop
 bot.mainLoop()

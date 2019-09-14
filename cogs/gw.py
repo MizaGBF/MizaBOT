@@ -226,7 +226,7 @@ class GW(commands.Cog):
         if self.bot.gw['state'] == True:
             try:
                 current_time = self.bot.getJST()
-                title = self.bot.getEmoteStr('gw') + " **Guild War " + str(self.bot.gw['id']) + "** :black_small_square: Time: **{0:%m/%d %H:%M}**\n".format(current_time)
+                title = self.bot.getEmoteStr('gw') + " **Guild War " + str(self.bot.gw['id']) + "** :black_small_square: Time: **{0:%a. %m/%d %H:%M}**\n".format(current_time)
                 description = ""
                 if len(self.day_list) == 0:
                     self.buildDayList()
@@ -235,10 +235,10 @@ class GW(commands.Cog):
                         if it[1] == "BW":
                             d = self.bot.gw['dates']["Preliminaries"] - timedelta(days=random.randint(1, 4))
                             if current_time < d and random.randint(1, 8) == 1:
-                                description += it[0] + " **{0:%m/%d %H:%M}**\n".format(d)
+                                description += it[0] + " **{0:%a. %m/%d %H:%M}**\n".format(d)
                         else:
                             if self.dayCheck(current_time, self.bot.gw['dates'][it[2]], it[1]=="Day 5") or (it[1] == "Interlude" and self.dayCheck(current_time, self.bot.gw['dates'][it[2]] + timedelta(seconds=25200), False)):
-                                description += it[0] + ": **{0:%m/%d %H:%M}**\n".format(self.bot.gw['dates'][it[1]])
+                                description += it[0] + ": **{0:%a. %m/%d %H:%M}**\n".format(self.bot.gw['dates'][it[1]])
                 else:
                     await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " **Guild War**", description="Not available", color=self.color))
                     self.bot.gw['state'] = False

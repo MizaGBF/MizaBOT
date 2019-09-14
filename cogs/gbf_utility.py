@@ -327,16 +327,6 @@ class GBF_Utility(commands.Cog):
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I'm not permitted to post this link here", color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isYou()
-    async def lucilius(self, ctx):
-        """Post the (You) lucilius spreadsheet
-        (You) server only"""
-        if ctx.message.author.guild.id == self.bot.ids['you_server']:
-            await ctx.send(embed=self.bot.buildEmbed(title="(You) Lucilius Sheet", description=self.bot.strings["lucilius()"], thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/592019627677188116/BattleRaid_Lucilius_ImpossibleHard.png", color=self.color))
-        else:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I'm not permitted to post this link here", color=self.color))
-
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['arcarum', 'arca', 'oracle', 'evoker', 'astra'])
     async def arcanum(self, ctx):
         """Post a link to my autistic Arcanum Sheet"""
