@@ -369,51 +369,56 @@ class GBF_Game(commands.Cog):
     @commands.cooldown(1, 180, commands.BucketType.user)
     async def quota(self, ctx):
         """Give you your GW quota for the day"""
-        chance = random.randint(1, 50)
-        hr = random.randint(0, 320000000)
-        mr = random.randint(0, 4200)
-        hc = [[250000000, 0.01], [150000000, 0.1], [80000000, 0.4], [45000000, 0.6]]
-        mc = [[3500, 0.01], [2000, 0.1], [1400, 0.3], [800, 0.6]]
-        h = 0
-        m = 0
-        for xh in hc:
-            if hr >= xh[0]:
-                d = hr - xh[0]
-                hr = xh[0]
-                h += d * xh[1]
-        for xm in mc:
-            if mr >= xm[0]:
-                d = mr - xm[0]
-                mr = xm[0]
-                m += d * xm[1]
-        h = int(h + hr + 2000000)
-        m = int(m + mr + 100)
         if ctx.author.id == self.bot.ids['yawn']:
             await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " " + ctx.author.display_name + " is a bad boy", description="Your account is **restricted.**", thumbnail=ctx.author.avatar_url ,color=self.color))
             return
-        elif chance == 3:
+
+        h = random.randint(300, 2000)
+        m = random.randint(50, 150)
+        c = random.randint(1, 100)
+
+        if ctx.author.id == self.bot.ids['wawi']:
+            c = 7
+
+        if c == 1:
             await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " " + ctx.author.display_name + "'s daily quota", description="You got a **free leech pass**\nCongratulations", thumbnail=ctx.author.avatar_url ,color=self.color))
             return
-        elif chance == 1:
-            h = h * 35
-            m = m * 51
-        elif ctx.author.id == self.bot.ids['wawi'] or chance == 2:
-            h = h // 140
-            m = m // 60
+        elif c == 2:
+            h = h * random.randint(30, 50)
+            m = m * random.randint(30, 50)
+        elif c <= 4:
+            h = h * random.randint(10, 20)
+            m = m * random.randint(10, 20)
+        elif c <= 6:
+            h = h * random.randint(3, 6)
+            m = m * random.randint(3, 6)
+        elif c == 7:
+            h = h // random.randint(30, 50)
+            m = m // random.randint(30, 50)
+        elif c <= 9:
+            h = h // random.randint(10, 20)
+            m = m // random.randint(10, 20)
+        elif c <= 11:
+            h = h // random.randint(3, 6)
+            m = m // random.randint(3, 6)
+        h = h * 100000
+        m = m * 10
+
         if ctx.author.id == self.bot.ids['chen']:
-            if h >= 666666666: h = 666666666
-            elif h >= 66666666: h = 66666666
-            elif h >= 6666666: h = 6666666
-            elif h >= 666666: h = 666666
-            elif h >= 66666: h = 66666
-            elif h >= 6666: h = 6666
-            if m >= 66666: m = 66666
-            elif m >= 6666: m = 6666
-            elif m >= 666: m = 666
-            elif m >= 66: m = 66
-            else: m = 6
-        msg = "**Honor:** {:,}\n**Meat:** {:,}".format(h, m)
-        await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " " + ctx.author.display_name + "'s daily quota", description=msg, thumbnail=ctx.author.avatar_url ,color=self.color))
+            c = random.randint(3, 8)
+            if c == 3: h = 666
+            elif c == 4: h = 6666
+            elif c == 5: h = 66666
+            elif c == 6: h = 666666
+            elif c == 7: h = 6666666
+            elif c == 8: h = 66666666
+            c = random.randint(1, 4)
+            if c == 1: m = 6
+            elif c == 2: m = 66
+            elif c == 3: m = 666
+            elif c == 4: m = 6666
+
+        await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " " + ctx.author.display_name + "'s daily quota", description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.avatar_url ,color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isGBFGgeneralAndMod()

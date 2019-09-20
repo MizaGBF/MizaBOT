@@ -235,7 +235,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.25
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.26
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -444,7 +444,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
 
         while True:
             try:
-                await asyncio.sleep(60)
+                await asyncio.sleep(120)
                 for g in guilds:
                     res = await g.invites()
                     currents = {}

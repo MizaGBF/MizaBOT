@@ -22,6 +22,8 @@ class GW(commands.Cog):
         await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwranking() started", timestamp=datetime.utcnow()))
 
         cog = self.bot.get_cog('Baguette')
+        if cog is None:
+            return
         crews = [2000, 5500, 9000, 14000, 18000, 30000]
         players = [2000, 50000, 100000, 160000, 250000, 350000]
 
@@ -29,46 +31,46 @@ class GW(commands.Cog):
             self.getGWState()
             try:
                 if self.bot.gw['state'] == False:
-                    self.bot.gw['ranking'] = ""
+                    self.bot.gw['ranking'] = None
                     self.bot.savePending = True
                     await asyncio.sleep(3600)
                 elif self.bot.getJST() < self.bot.gw['dates']["Preliminaries"]:
-                    self.bot.gw['ranking'] = ""
+                    self.bot.gw['ranking'] = None
                     self.bot.savePending = True
                     d = self.bot.gw['dates']["Preliminaries"] - self.bot.getJST()
                     await asyncio.sleep(d.seconds + 1)
                 elif self.bot.getJST() > self.bot.gw['dates']["Day 5"] - timedelta(seconds=21600):
                     await asyncio.sleep(3600)
                 else:
-                    m = self.bot.getJST().minute
+                    current_time = self.bot.getJST()
+                    m = current_time.minute
                     if m == 9 or m == 29 or m == 49:
                         try:
-                            msg = "**Crew Ranking**\n"
+                            msgs = ["", "", "Last Update ▪ {0:%a. %m/%d %H:%M} JST".format(current_time)]
                             for c in crews:
                                 r = await cog.requestRanking(c // 10, True)
-                                if r is not None:
-                                    msg += "**" + str(c) + "** ▪ {:,}\n".format(int(r['list'][-1]['point']))
+                                if r is not None and 'list' in r and len(r['list']) > 0:
+                                    msgs[0] += "**{:,}** ▪ {:,}\n".format(c, int(r['list'][-1]['point']))
                                 await asyncio.sleep(0.001)
 
-                            msg += "\n**Player Ranking**\n"
                             for p in players:
                                 r = await cog.requestRanking(p // 10, False)
-                                if r is not None:
-                                    msg += "**" + str(p) + "** ▪ {:,}\n".format(int(r['list'][-1]['point']))
+                                if r is not None and 'list' in r and len(r['list']) > 0:
+                                    msgs[1] += "**{:,}** ▪ {:,}\n".format(p, int(r['list'][-1]['point']))
                                 await asyncio.sleep(0.001)
 
-                            self.bot.gw['ranking'] = msg
-                            await self.bot.send('debug', embed=self.bot.buildEmbed(title="Ranking updated", color=self.color))
+                            self.bot.gw['ranking'] = msgs
                             self.bot.savePending = True
                         except Exception as ex:
                             await self.bot.sendError('checkgwranking', str(ex))
-                            self.bot.gw['ranking'] = ""
+                            self.bot.gw['ranking'] = None
                             self.bot.savePending = True
                         await asyncio.sleep(600)
                     else:
-                        await asyncio.sleep(50)
+                        await asyncio.sleep(30)
             except asyncio.CancelledError:
                 await self.bot.sendError('checkgwranking', 'cancelled')
+                await asyncio.sleep(30)
             except Exception as e:
                 await self.bot.sendError('checkgwranking', str(e))
                 return
@@ -353,14 +355,14 @@ class GW(commands.Cog):
             await self.bot.sendError("searchid", str(e))
 
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rankings', 'cutoff', 'cutoffs'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def ranking(self, ctx):
         """Retrieve the current GW ranking"""
         try:
-            if self.bot.gw['state'] == False or self.bot.getJST() < self.bot.gw['dates']["Preliminaries"] or self.bot.gw['ranking'] == "":
+            if self.bot.gw['state'] == False or self.bot.getJST() < self.bot.gw['dates']["Preliminaries"] or self.bot.gw['ranking'] is None:
                 await ctx.send(embed=self.bot.buildEmbed(title="Ranking unavailable", color=self.color))
             else:
-                await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " **Guild War " + str(self.bot.gw['id']) + "** :black_small_square: Totals", description=self.bot.gw['ranking'], color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " **Guild War " + str(self.bot.gw['id']) + "** :black_small_square: Totals", fields=[{'name':'**Crew Ranking**', 'value':self.bot.gw['ranking'][0]},{'name':'**Player Ranking**', 'value':self.bot.gw['ranking'][1]}], footer=self.bot.gw['ranking'][2], inline=True, color=self.color))
         except Exception as e:
             await self.bot.sendError("ranking", str(e))
