@@ -11,7 +11,6 @@ class GW(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.color = 0xf4426e
-        self.day_list = []
 
     def startTasks(self):
         self.bot.runTask('check_ranking', self.checkGWRanking)
@@ -26,6 +25,8 @@ class GW(commands.Cog):
             return
         crews = [2000, 5500, 9000, 14000, 18000, 30000]
         players = [2000, 50000, 100000, 160000, 250000, 350000]
+
+        days = ["End", "Day 5", "Day 4", "Day 3", "Day 2", "Day 1", "Interlude", "Preliminaries"]
 
         while True:
             self.getGWState()
@@ -44,7 +45,17 @@ class GW(commands.Cog):
                 else:
                     current_time = self.bot.getJST()
                     m = current_time.minute
-                    if m == 9 or m == 29 or m == 49:
+                    h = current_time.hour
+                    skip = False
+                    for d in days:
+                        if current_time < self.bot.gw['dates'][d]:
+                            continue
+                        elif(d == "Preliminaries" and current_time > self.bot.gw['dates']["Interlude"] - timedelta(seconds=24000)) or (d.startswith("Day") and h < 7 and (h != 0 and m != 9)) or d == "Day 5":
+                            skip = True
+                        break
+                    if skip:
+                        await asyncio.sleep(600)
+                    elif m == 9 or m == 29 or m == 49:
                         try:
                             msgs = ["", "", "Last Update ▪ {0:%a. %m/%d %H:%M} JST".format(current_time)]
                             for c in crews:
@@ -130,7 +141,7 @@ class GW(commands.Cog):
         await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwbuff() ended", timestamp=datetime.utcnow()))
 
     def buildDayList(self): # used by the gw schedule command
-        self.day_list = [
+        return [
             [self.bot.getEmoteStr('kmr') + " Ban Wave", "BW", ""],
             [self.bot.getEmoteStr('gold') + " Preliminaries", "Preliminaries", "Interlude"],
             [self.bot.getEmoteStr('wood') + " Interlude", "Interlude", "Day 1"],
@@ -230,10 +241,9 @@ class GW(commands.Cog):
                 current_time = self.bot.getJST()
                 title = self.bot.getEmoteStr('gw') + " **Guild War " + str(self.bot.gw['id']) + "** :black_small_square: Time: **{0:%a. %m/%d %H:%M}**\n".format(current_time)
                 description = ""
-                if len(self.day_list) == 0:
-                    self.buildDayList()
+                day_list = self.buildDayList()
                 if current_time < self.bot.gw['dates']["End"]:
-                    for it in self.day_list:
+                    for it in day_list:
                         if it[1] == "BW":
                             d = self.bot.gw['dates']["Preliminaries"] - timedelta(days=random.randint(1, 4))
                             if current_time < d and random.randint(1, 8) == 1:
@@ -363,6 +373,6 @@ class GW(commands.Cog):
             if self.bot.gw['state'] == False or self.bot.getJST() < self.bot.gw['dates']["Preliminaries"] or self.bot.gw['ranking'] is None:
                 await ctx.send(embed=self.bot.buildEmbed(title="Ranking unavailable", color=self.color))
             else:
-                await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " **Guild War " + str(self.bot.gw['id']) + "** :black_small_square: Totals", fields=[{'name':'**Crew Ranking**', 'value':self.bot.gw['ranking'][0]},{'name':'**Player Ranking**', 'value':self.bot.gw['ranking'][1]}], footer=self.bot.gw['ranking'][2], inline=True, color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " **Guild War " + str(self.bot.gw['id']) + "**", fields=[{'name':'**Crew Ranking**', 'value':self.bot.gw['ranking'][0]},{'name':'**Player Ranking**', 'value':self.bot.gw['ranking'][1]}], footer=self.bot.gw['ranking'][2], inline=True, color=self.color))
         except Exception as e:
             await self.bot.sendError("ranking", str(e))

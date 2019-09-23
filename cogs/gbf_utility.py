@@ -4,6 +4,7 @@ import asyncio
 import aiohttp
 from datetime import datetime, timedelta
 import random
+import math
 
 class GBF_Utility(commands.Cog):
     """GBF related commands."""
@@ -440,14 +441,31 @@ class GBF_Utility(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="🗓 Event Schedule " + self.bot.getEmoteStr('clock') + " {0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), url="https://twitter.com/granblue_en", color=self.color, description=msg))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tokens', 'box'])
-    @commands.cooldown(1, 10, commands.BucketType.guild)
+    @commands.cooldown(2, 10, commands.BucketType.guild)
     async def token(self, ctx, box : int):
         """Calculate how many tokens you need"""
-        if box < 0: box = 0
-        t = box * 2000
-        if box > 44:
-            t = (t - 88000) * 3 + 88000
-        await ctx.send(embed=self.bot.buildEmbed(title="Token Calculator", description="You need **{:,}** token(s) for **".format(t) + str(box) + "** box(s)", color=self.color))
+        try:
+            if box < 0 or box > 999: raise Exception()
+            t = 0
+            b = box
+            if box >= 1: t += 1600
+            if box >= 2: t += 2400
+            if box >= 3: t += 2400
+            if box >= 4: t += 2400
+            if box > 44:
+                t += (box - 44) * 6000
+                box = 44
+            if box > 4:
+                t += (box - 4) * 2000
+            ex = math.ceil(t / 56.0)
+            explus = math.ceil(t / 66.0)
+            n90 = math.ceil(t / 83.0)
+            n95 = math.ceil(t / 111.0)
+            n100 = math.ceil(t / 168.0)
+            wanpan = math.ceil(t / 48.0)
+            await ctx.send(embed=self.bot.buildEmbed(title="Token Calculator", description="**{:,}** token(s) needed for **{:,}** box(s)\n\n**{:,}** EX host and MVP (**{:,}** AP)\n**{:,}** EX+ host and MVP (**{:,}** AP)\n**{:,}** NM90 host and MVP (**{:,}** AP, **{:,}** meats)\n**{:,}** NM95 host and MVP (**{:,}** AP, **{:,}** meats)\n**{:,}** NM100 host and MVP (**{:,}** AP, **{:,}** meats)\n**{:,}** NM100 wanpan (**{:}** BP)".format(t, b, ex, ex*30, explus, explus*30, n90, n90*30, n90*5, n95, n95*40, n95*10, n100, n100*50, n100*20, wanpan, wanpan*3), color=self.color))
+        except:
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid box number", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gbfvs', 'versus'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
