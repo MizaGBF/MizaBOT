@@ -184,6 +184,12 @@ class MizabotDrive():
             self.saving = False
             return False
 
+    def saveFile(self, data, name, folder): # write a json file to a folder
+        drive = self.login()
+        s = drive.CreateFile({'title':name, 'mimeType':'text/JSON', "parents": [{"kind": "drive#file", "id": folder}]})
+        s.SetContentString(data)
+        s.Upload()
+
 # #####################################################################################
 # Bot
 class Mizabot(commands.Bot):
@@ -235,7 +241,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.27
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.28
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -435,12 +441,16 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
         guilds = [self.get_guild(self.ids['you_server']), self.get_guild(self.ids['gbfg'])]
         log_channels = {self.ids['you_server']:'youlog', self.ids['gbfg']:'gbfglog'}
         
-        invites = {}
-        for g in guilds:
-            res = await g.invites()
-            invites[g.id] = {}
-            for i in res:
-                invites[g.id][i.code] = i
+        try:
+            invites = {}
+            for g in guilds:
+                res = await g.invites()
+                invites[g.id] = {}
+                for i in res:
+                    invites[g.id][i.code] = i
+        except:
+            await self.sendError('invitetracker', 'cancelled, failed to retrieve a guild data')
+            return
 
         while True:
             try:
@@ -477,7 +487,8 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 return
             except Exception as e:
                 await self.sendError('invitetracker', str(e))
-                invites = currents
+                try: invites[g.id] = currents
+                except: pass
 
     def isAuthorized(self, ctx): # check if the command is authorized
         id = str(ctx.guild.id)

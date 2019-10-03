@@ -50,27 +50,35 @@ class GW(commands.Cog):
                     for d in days:
                         if current_time < self.bot.gw['dates'][d]:
                             continue
-                        elif(d == "Preliminaries" and current_time > self.bot.gw['dates']["Interlude"] - timedelta(seconds=24000)) or (d.startswith("Day") and h < 7 and (h != 0 and m != 9)) or d == "Day 5":
+                        elif(d == "Preliminaries" and current_time > self.bot.gw['dates']["Interlude"] - timedelta(seconds=24000)) or (d.startswith("Day") and h < 7 and not (h == 0 and m == 9)) or d == "Day 5":
                             skip = True
                         break
                     if skip:
                         await asyncio.sleep(600)
-                    elif m == 9 or m == 29 or m == 49:
+                    elif m == 6 or m == 26 or m == 46:
                         try:
-                            msgs = ["", "", "Last Update ▪ {0:%a. %m/%d %H:%M} JST".format(current_time)]
+                            data = [{}, {}, {}, {}, current_time - timedelta(seconds=60 * (current_time.minute % 20))]
+                            if self.bot.gw['ranking'] is not None:
+                                diff = data[4] - self.bot.gw['ranking'][4]
+                                diff = round(diff.total_seconds() / 60.0)
+                            else: diff = 0
                             for c in crews:
                                 r = await cog.requestRanking(c // 10, True)
                                 if r is not None and 'list' in r and len(r['list']) > 0:
-                                    msgs[0] += "**{:,}** ▪ {:,}\n".format(c, int(r['list'][-1]['point']))
+                                    data[0][str(c)] = int(r['list'][-1]['point'])
+                                    if diff > 0 and self.bot.gw['ranking'] is not None and str(c) in self.bot.gw['ranking'][0]:
+                                        data[2][str(c)] = (data[0][str(c)] - self.bot.gw['ranking'][0][str(c)]) / diff
                                 await asyncio.sleep(0.001)
 
                             for p in players:
                                 r = await cog.requestRanking(p // 10, False)
                                 if r is not None and 'list' in r and len(r['list']) > 0:
-                                    msgs[1] += "**{:,}** ▪ {:,}\n".format(p, int(r['list'][-1]['point']))
+                                    data[1][str(p)] = int(r['list'][-1]['point'])
+                                    if diff > 0 and self.bot.gw['ranking'] is not None and str(p) in self.bot.gw['ranking'][1]:
+                                        data[3][str(p)] = (data[1][str(p)] - self.bot.gw['ranking'][1][str(p)]) / diff
                                 await asyncio.sleep(0.001)
 
-                            self.bot.gw['ranking'] = msgs
+                            self.bot.gw['ranking'] = data
                             self.bot.savePending = True
                         except Exception as ex:
                             await self.bot.sendError('checkgwranking', str(ex))
@@ -93,6 +101,8 @@ class GW(commands.Cog):
         await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwbuff() started", timestamp=datetime.utcnow()))
         try:
             guild = self.bot.get_guild(self.bot.ids['you_server'])
+            if guild is None:
+                await self.bot.sendError('checkgwbuff', 'cancelled, no guild found')
             channel = self.bot.get_channel(self.bot.ids['you_announcement'])
             fo_role = guild.get_role(self.bot.ids['fo'])
             buff_role = [[guild.get_role(self.bot.ids['atkace']), 'atkace'], [guild.get_role(self.bot.ids['deface']), 'deface']]
@@ -130,7 +140,6 @@ class GW(commands.Cog):
                     if len(self.bot.gw['buffs']) > 0:
                         d = self.bot.gw['buffs'][0][0] - current_time
                         if d.seconds > 1:
-                            await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwbuff()", description="Checking buffs in **" + self.getTimedeltaStr(d) + "**\nNext buffs setting: [" + str(self.bot.gw['buffs'][0][1]) + ' ' + str(self.bot.gw['buffs'][0][2]) + ' ' + str(self.bot.gw['buffs'][0][3])+ ' ' + str(self.bot.gw['buffs'][0][4]) + "]\nBuffs in **" + self.getTimedeltaStr(d, True) + "**", timestamp=datetime.utcnow()))
                             await asyncio.sleep(d.seconds-1)
             if len(msg) > 0:
                 await channel.send(msg)
@@ -155,6 +164,11 @@ class GW(commands.Cog):
     def isAuthorized(): # for decorators
         async def predicate(ctx):
             return ctx.bot.isAuthorized(ctx)
+        return commands.check(predicate)
+
+    def isOwner(): # for decorators
+        async def predicate(ctx):
+            return ctx.bot.isOwner(ctx)
         return commands.check(predicate)
 
     def isYouServer(): # for decorators
@@ -373,6 +387,19 @@ class GW(commands.Cog):
             if self.bot.gw['state'] == False or self.bot.getJST() < self.bot.gw['dates']["Preliminaries"] or self.bot.gw['ranking'] is None:
                 await ctx.send(embed=self.bot.buildEmbed(title="Ranking unavailable", color=self.color))
             else:
-                await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " **Guild War " + str(self.bot.gw['id']) + "**", fields=[{'name':'**Crew Ranking**', 'value':self.bot.gw['ranking'][0]},{'name':'**Player Ranking**', 'value':self.bot.gw['ranking'][1]}], footer=self.bot.gw['ranking'][2], inline=True, color=self.color))
+                fields = [{'name':'**Crew Ranking**', 'value':''}, {'name':'**Player Ranking**', 'value':''}]
+                for c in self.bot.gw['ranking'][0]:
+                    fields[0]['value'] += "**{:,}** ▪ {:,}".format(int(c), self.bot.gw['ranking'][0][c])
+                    if c in self.bot.gw['ranking'][2] and self.bot.gw['ranking'][2][c] > 0:
+                        fields[0]['value'] += " ( {:+,.2f} / min )".format(self.bot.gw['ranking'][2][c])
+                    fields[0]['value'] += "\n"
+
+                for c in self.bot.gw['ranking'][1]:
+                    fields[1]['value'] += "**{:,}** ▪ {:,}".format(int(c), self.bot.gw['ranking'][1][c])
+                    if c in self.bot.gw['ranking'][3] and self.bot.gw['ranking'][3][c] > 0:
+                        fields[1]['value'] += " ( {:+,.2f} / min )".format(self.bot.gw['ranking'][3][c])
+                    fields[1]['value'] += "\n"
+
+                await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " **Guild War " + str(self.bot.gw['id']) + "**", fields=fields, footer="Last Update ▪ {0:%a. %m/%d %H:%M} JST".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
         except Exception as e:
             await self.bot.sendError("ranking", str(e))
