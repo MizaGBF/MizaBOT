@@ -27,7 +27,9 @@ class MizabotHelp(commands.DefaultHelpCommand):
         bot = ctx.bot
         me = ctx.author.guild.me # bot own user infos
 
-        if not await bot.react(ctx, 'time'):
+        try:
+            await ctx.message.add_reaction('📬')
+        except:
             await ctx.send(embed=bot.buildEmbed(title="Help Error", description="Unblock me to receive the Help"))
             return
 
@@ -70,7 +72,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
         # final words
         await ctx.author.send(embed=bot.buildEmbed(title=bot.getEmoteStr('question') + " Need more help?", description="Use help <command name>\nOr help <category name>"))
 
-        await bot.unreact(ctx, 'time')
+        await ctx.message.remove_reaction('📬', ctx.guild.me)
         await ctx.message.add_reaction('✅') # white check mark
 
     async def send_command_help(self, command): # same thing, but for a command ($help <command>)
@@ -241,7 +243,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.28
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.29
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -628,6 +630,33 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
         delta = datetime.utcnow() - self.starttime
         if string: return str(delta.days) + "d" + str(delta.seconds // 3600) + "h" + str((delta.seconds // 60) % 60) + "m" + str(delta.seconds % 60) + "s"
         else: return delta
+
+    # function to build a timedelta from a string (for $remind)
+    def makeTimedelta(self, d): # return None if error
+        flags = {'d':False,'h':False,'m':False}
+        tmp = 0 # buffer
+        sum = 0 # delta in seconds
+        for i in range(0, len(d)):
+            if d[i].isdigit():
+                tmp = (tmp * 10) + int(d[i])
+            elif d[i].lower() in flags:
+                c = d[i].lower()
+                if flags[c]:
+                    return None
+                if tmp < 0:
+                    return None
+                flags[c] = True
+                if c == 'd':
+                    sum += tmp * 86400
+                elif c == 'h':
+                    sum += tmp * 3600
+                elif c == 'm':
+                    sum += tmp * 60
+                tmp = 0
+            else:
+                return None
+        if tmp != 0: return None
+        return timedelta(days=sum//86400, seconds=sum%86400)
 
 # #####################################################################################
 # GracefulExit

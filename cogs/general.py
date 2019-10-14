@@ -287,33 +287,6 @@ class General(commands.Cog):
         except:
             return []
 
-    # function to build a timedelta from a string (for $remind)
-    def makeTimedelta(self, d): # return None if error
-        flags = {'d':False,'h':False,'m':False}
-        tmp = 0 # buffer
-        sum = 0 # delta in seconds
-        for i in range(0, len(d)):
-            if d[i].isdigit():
-                tmp = (tmp * 10) + int(d[i])
-            elif d[i].lower() in flags:
-                c = d[i].lower()
-                if flags[c]:
-                    return None
-                if tmp < 0:
-                    return None
-                flags[c] = True
-                if c == 'd':
-                    sum += tmp * 86400
-                elif c == 'h':
-                    sum += tmp * 3600
-                elif c == 'm':
-                    sum += tmp * 60
-                tmp = 0
-            else:
-                return None
-        if tmp != 0: return None
-        return timedelta(days=sum//86400, seconds=sum%86400)
-
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isAuthorized()
     async def roll(self, ctx, dice : str = ""):
@@ -443,7 +416,7 @@ class General(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="Sorry, I'm limited to 5 reminders per user 🙇", color=self.color))
             return
         try:
-            d = self.makeTimedelta(duration)
+            d = self.bot.makeTimedelta(duration)
             if d is None: raise Exception()
         except:
             await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="Invalid duration string `" + duration + "`, format is `NdNhNm`", color=self.color))

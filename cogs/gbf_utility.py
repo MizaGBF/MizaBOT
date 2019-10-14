@@ -371,7 +371,7 @@ class GBF_Utility(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isDisabled()
-    async def leak(self, ctx):
+    async def _leak(self, ctx):
         """Post a link to the /gbfg/ leak pastebin"""
         await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ Leak Pastebin", description=self.bot.strings["leak()"], color=self.color))
 
@@ -693,59 +693,60 @@ class GBF_Utility(commands.Cog):
     async def aSee(self, ctx, member : discord.Member = None):
         """See the arcarum progress of a member"""
         if member is None: member = ctx.author
-        if str(member.id) not in self.bot.arca:
+        id = str(member.id)
+        if id not in self.bot.arca:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description=member.display_name + " didn't set its progress yet", color=self.color))
         else:
             try:
-                msg1 = "**Justice** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][0]) + "\n"
-                msg1 += "**Hanged Man** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][1]) + "\n"
-                msg1 += "**Death** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][2]) + "\n"
-                msg1 += "**Temperance** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][3]) + "\n"
-                msg1 += "**Devil** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][4]) + "\n"
-                msg1 += "**Tower** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][5]) + "\n"
-                msg1 += "**Star** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][6]) + "\n"
-                msg1 += "**Moon** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][7]) + "\n"
-                msg1 += "**Sun** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][8]) + "\n"
-                msg1 += "**Judgement** ▪ " + self.arcaStepToString(self.bot.arca[str(member.id)][9]) + "\n"
+                msg1 = "**Justice** ▪ " + self.arcaStepToString(self.bot.arca[id][0]) + "\n"
+                msg1 += "**Hanged Man** ▪ " + self.arcaStepToString(self.bot.arca[id][1]) + "\n"
+                msg1 += "**Death** ▪ " + self.arcaStepToString(self.bot.arca[id][2]) + "\n"
+                msg1 += "**Temperance** ▪ " + self.arcaStepToString(self.bot.arca[id][3]) + "\n"
+                msg1 += "**Devil** ▪ " + self.arcaStepToString(self.bot.arca[id][4]) + "\n"
+                msg1 += "**Tower** ▪ " + self.arcaStepToString(self.bot.arca[id][5]) + "\n"
+                msg1 += "**Star** ▪ " + self.arcaStepToString(self.bot.arca[id][6]) + "\n"
+                msg1 += "**Moon** ▪ " + self.arcaStepToString(self.bot.arca[id][7]) + "\n"
+                msg1 += "**Sun** ▪ " + self.arcaStepToString(self.bot.arca[id][8]) + "\n"
+                msg1 += "**Judgement** ▪ " + self.arcaStepToString(self.bot.arca[id][9]) + "\n"
 
 
-                v = min(1370, self.bot.arca[str(member.id)][10] + self.arcaDataToItem(self.bot.arca[str(member.id)], 0))
+                v = min(1370, self.bot.arca[id][10] + self.arcaDataToItem(self.bot.arca[id], 0))
                 mean = v / 1370.0
                 msg2 = "**Sephira Stones** ▪ " + str(v) + " / 1370 ({0:.2f}%)\n".format(100.0 * v / 1370.0)
 
-                v = min(628, self.bot.arca[str(member.id)][11] + self.arcaStepToItem(self.bot.arca[str(member.id)][4], 1) + self.arcaStepToItem(self.bot.arca[str(member.id)][8], 1))
+                v = min(628, self.bot.arca[id][11] + self.arcaStepToItem(self.bot.arca[id][4], 1) + self.arcaStepToItem(self.bot.arca[id][8], 1))
                 mean += v / 628.0
                 msg2 += "**Fire Astras** ▪ " + str(v) + " / 628 ({0:.2f}%)\n".format(100.0 * v / 628.0)
 
-                v = min(628, self.bot.arca[str(member.id)][12] + self.arcaStepToItem(self.bot.arca[str(member.id)][0], 1) + self.arcaStepToItem(self.bot.arca[str(member.id)][7], 1))
+                v = min(628, self.bot.arca[id][12] + self.arcaStepToItem(self.bot.arca[id][0], 1) + self.arcaStepToItem(self.bot.arca[id][7], 1))
                 mean += v / 628.0
                 msg2 += "**Water Astras** ▪ " + str(v) + " / 628 ({0:.2f}%)\n".format(100.0 * v / 628.0)
 
-                v = min(628, self.bot.arca[str(member.id)][13] + self.arcaStepToItem(self.bot.arca[str(member.id)][1], 1) + self.arcaStepToItem(self.bot.arca[str(member.id)][5], 1))
+                v = min(628, self.bot.arca[id][13] + self.arcaStepToItem(self.bot.arca[id][1], 1) + self.arcaStepToItem(self.bot.arca[id][5], 1))
                 mean += v / 628.0
                 msg2 += "**Earth Astras** ▪ " + str(v) + " / 628 ({0:.2f}%)\n".format(100.0 * v / 628.0)
 
-                v = min(628, self.bot.arca[str(member.id)][14] + self.arcaStepToItem(self.bot.arca[str(member.id)][3], 1) + self.arcaStepToItem(self.bot.arca[str(member.id)][9], 1))
+                v = min(628, self.bot.arca[id][14] + self.arcaStepToItem(self.bot.arca[id][3], 1) + self.arcaStepToItem(self.bot.arca[id][9], 1))
                 mean += v / 628.0
                 msg2 += "**Wind Astras** ▪ " + str(v) + " / 628 ({0:.2f}%)\n".format(100.0 * v / 628.0)
 
-                v = min(314, self.bot.arca[str(member.id)][15] + self.arcaStepToItem(self.bot.arca[str(member.id)][6], 1))
+                v = min(314, self.bot.arca[id][15] + self.arcaStepToItem(self.bot.arca[id][6], 1))
                 mean += v / 314.0
                 msg2 += "**Light Astras** ▪ " + str(v) + " / 314 ({0:.2f}%)\n".format(100.0 * v / 314.0)
 
-                v = min(314, self.bot.arca[str(member.id)][16] + self.arcaStepToItem(self.bot.arca[str(member.id)][2], 1))
+                v = min(314, self.bot.arca[id][16] + self.arcaStepToItem(self.bot.arca[id][2], 1))
                 mean += v / 314.0
                 msg2 += "**Dark Astras** ▪ " + str(v) + " / 314 ({0:.2f}%)\n".format(100.0 * v / 314.0)
 
-                v = min(90, self.bot.arca[str(member.id)][17] + self.arcaStepToItem(self.bot.arca[str(member.id)][1], 2) + self.arcaStepToItem(self.bot.arca[str(member.id)][4], 2) + self.arcaStepToItem(self.bot.arca[str(member.id)][8], 2))
+                v = min(90, self.bot.arca[id][17] + self.arcaStepToItem(self.bot.arca[id][1], 2) + self.arcaStepToItem(self.bot.arca[id][4], 2) + self.arcaStepToItem(self.bot.arca[id][8], 2))
                 mean += v / 90.0
                 msg2 += "**Aquila Fragment** ▪ " + str(v) + " / 90 ({0:.2f}%)\n".format(100.0 * v / 90.0)
 
-                v = min(90, self.bot.arca[str(member.id)][18] + self.arcaStepToItem(self.bot.arca[str(member.id)][0], 2) + self.arcaStepToItem(self.bot.arca[str(member.id)][7], 2) + self.arcaStepToItem(self.bot.arca[str(member.id)][8], 2))
+                v = min(90, self.bot.arca[id][18] + self.arcaStepToItem(self.bot.arca[id][0], 2) + self.arcaStepToItem(self.bot.arca[id][7], 2) + self.arcaStepToItem(self.bot.arca[id][9], 2))
                 mean += v / 90.0
                 msg2 += "**Bellator Fragment** ▪ " + str(v) + " / 90 ({0:.2f}%)\n".format(100.0 * v / 90.0)
 
-                v = min(120, self.bot.arca[str(member.id)][19] + self.arcaStepToItem(self.bot.arca[str(member.id)][2], 2) + self.arcaStepToItem(self.bot.arca[str(member.id)][3], 2) + self.arcaStepToItem(self.bot.arca[str(member.id)][5], 2) + self.arcaStepToItem(self.bot.arca[str(member.id)][6], 2))
+                v = min(120, self.bot.arca[id][19] + self.arcaStepToItem(self.bot.arca[id][2], 2) + self.arcaStepToItem(self.bot.arca[id][3], 2) + self.arcaStepToItem(self.bot.arca[id][5], 2) + self.arcaStepToItem(self.bot.arca[id][6], 2))
                 mean += v / 120.0
                 msg2 += "**Celsus Fragment** ▪ " + str(v) + " / 120 ({0:.2f}%)\n".format(100.0 * v / 120.0)
 
