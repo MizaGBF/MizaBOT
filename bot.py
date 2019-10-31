@@ -243,7 +243,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.29
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.30
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -328,7 +328,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 self.specialstrings = data['specialstrings']
                 self.emotes = data['emotes']
         except Exception as e:
-            print('loadConfig(): ' + str(e))
+            print('loadConfig(): {}'.format(e))
             exit(1) # instant quit if error
 
     def load(self): # same thing but for save.json
@@ -370,7 +370,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 return True
         except Exception as e:
             self.errn += 1
-            print('load(): ' + str(e))
+            print('load(): {}'.format(e))
             return False
 
     def save(self, sortBackup=True): # saving
@@ -397,7 +397,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             return True
         except Exception as e:
             self.errn += 1
-            print('save(): ' + str(e))
+            print('save(): {}'.format(e))
             return False
 
     async def autosave(self, discordDump = False): # called when savePending is true by statustask()
@@ -466,22 +466,22 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                     for i in currents:
                         if i in invites[g.id]:
                             if currents[i].uses is not None and currents[i].uses != invites[g.id][i].uses:
-                                await self.send(log_channels[g.id], embed=bot.buildEmbed(title="Invite `" + i + "` used", description="**Uses:** " + str(currents[i].uses), timestamp=datetime.utcnow(), color=0xfcba03))
+                                await self.send(log_channels[g.id], embed=bot.buildEmbed(title="Invite `{}` used".format(i), description="**Uses:** {}".format(currents[i].uses), timestamp=datetime.utcnow(), color=0xfcba03))
                         else:
                             msg = ""
-                            if currents[i].max_uses != 0: msg += "**Max uses:** " + str(currents[i].max_uses) + "\n"
+                            if currents[i].max_uses != 0: msg += "**Max uses:** {}\n".format(currents[i].max_uses)
                             if currents[i].inviter is not None:
-                                msg += "**Inviter:** " + str(currents[i].inviter) + "\n"
+                                msg += "**Inviter:** {}\n".format(currents[i].inviter)
                             if currents[i].max_age != 0:
-                                if currents[i].max_age < 3600: msg += "**Duration:** " + str(currents[i].max_age // 60) + " minutes\n"
-                                else: msg += "**Duration:** " + str(currents[i].max_age // 3600) + " hours\n"
-                            msg += "**Channel:** " + currents[i].channel.name + "\n"
-                            msg += "**Url:** " + str(currents[i].url) + "\n"
-                            await self.send(log_channels[g.id], embed=bot.buildEmbed(title="New Invite ▪ `" + i + "`", description=msg, timestamp=datetime.utcnow(), color=0xfcba03))
+                                if currents[i].max_age < 3600: msg += "**Duration:** {} minutes\n".format(currents[i].max_age // 60)
+                                else: msg += "**Duration:** {} hours\n".format(currents[i].max_age // 3600)
+                            msg += "**Channel:** {}\n".format(currents[i].channel.name)
+                            msg += "**Url:** {}\n".format(currents[i].url)
+                            await self.send(log_channels[g.id], embed=bot.buildEmbed(title="New Invite ▪ `{}`".format(i), description=msg, timestamp=datetime.utcnow(), color=0xfcba03))
 
                     for i in invites[g.id]:
                         if i not in currents:
-                            await self.send(log_channels[g.id], embed=bot.buildEmbed(title="Revoked Invite ▪ `" + i + "`", timestamp=datetime.utcnow(), color=0xfcba03))
+                            await self.send(log_channels[g.id], embed=bot.buildEmbed(title="Revoked Invite ▪ `{}`".format(i), timestamp=datetime.utcnow(), color=0xfcba03))
 
                     invites[g.id] = currents
             except asyncio.CancelledError:
@@ -590,7 +590,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             if c is not None: self.channels[name] = c
         except:
             self.errn += 1
-            print("Invalid key: " + id_key)
+            print("Invalid key: {}".format(id_key))
 
     def setChannelID(self, name, id : int): # same but using an id instead of an id defined in config.json
         try:
@@ -598,7 +598,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             if c is not None: self.channels[name] = c
         except:
             self.errn += 1
-            print("Invalid ID: " + str(id))
+            print("Invalid ID: {}".format(id))
 
     async def callCommand(self, ctx, command, cog, *args, **kwargs): #call a command in a cog
         cmds = self.get_cog(cog).get_commands()
@@ -606,21 +606,21 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             if c.name == command:
                 await ctx.invoke(c, *args, **kwargs)
                 return
-        raise Exception("Command `" + command + "` not found")
+        raise Exception("Command `{}` not found".format(command))
 
     async def send(self, channel_name : str, msg : str = "", embed : discord.Embed = None, file : discord.File = None): # send something to a channel
         try:
             await self.channels[channel_name].send(msg, embed=embed, file=file)
         except Exception as e:
             self.errn += 1
-            print(channel_name + " error: " + str(e))
+            print("{} error: {}".format(channel_name, e))
 
     async def sendError(self, func_name : str, msg : str, id = None): # send an error to the debug channel
         if self.errn >= 30: return # disable error messages if too many messages got sent
         if id is None: id = ""
-        else: id = " " + str(id)
+        else: id = " {}".format(id)
         self.errn += 1
-        await self.send('debug', embed=self.buildEmbed(title="Error in " + func_name + "()" + id, description=msg, timestamp=datetime.utcnow()))
+        await self.send('debug', embed=self.buildEmbed(title="Error in {}() {}".format(func_name, id), description=msg, timestamp=datetime.utcnow()))
 
     def getJST(self, nomicro=False): # get the time in jst
         if nomicro: return datetime.utcnow().replace(microsecond=0) + timedelta(seconds=32400) - timedelta(seconds=30)
@@ -628,7 +628,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
 
     def uptime(self, string=True): # get the uptime
         delta = datetime.utcnow() - self.starttime
-        if string: return str(delta.days) + "d" + str(delta.seconds // 3600) + "h" + str((delta.seconds // 60) % 60) + "m" + str(delta.seconds % 60) + "s"
+        if string: return "{}d{}h{}m{}s".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60, delta.seconds % 60)
         else: return delta
 
     # function to build a timedelta from a string (for $remind)
@@ -691,7 +691,7 @@ async def on_ready(): # when the bot starts or reconnects
         bot.setChannel('gbfglog', 'gbfg_log') # set /gbfg/ lucilius log channel
         bot.setChannel('youlog', 'you_log') # set (you) log channel
         bot.startTasks() # start the tasks
-        await bot.send('debug', embed=bot.buildEmbed(title=bot.user.display_name + " is Ready", description="**Server Count**: " + str(len(bot.guilds)) + "\n**Servers Pending**: " + str(len(bot.newserver['pending'])) + "\n**Tasks Count**: " + str(len(asyncio.all_tasks())) + "\n**Cogs Loaded**: " + str(len(bot.cogs)) + "/" + str(bot.cogn), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
+        await bot.send('debug', embed=bot.buildEmbed(title="{} is Ready".format(bot.user.display_name), description="**Server Count**: {}\n**Servers Pending**: {}\n**Tasks Count**: {}\n**Cogs Loaded**: {}/{}".format(len(bot.guilds), len(bot.newserver['pending']), len(asyncio.all_tasks()), len(bot.cogs), bot.cogn), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
         bot.boot_flag = True
 
 @bot.event
@@ -699,34 +699,34 @@ async def on_guild_join(guild): # when the bot joins a new guild
     id = str(guild.id)
     if id in bot.newserver['servers'] or str(guild.owner.id) in bot.newserver['owners']: # leave if the server is blacklisted
         try:
-            await bot.send('debug', embed=bot.buildEmbed(title="Banned guild request", description=guild.name + " ▪ " + str(id), thumbnail=guild.icon_url, footer="Owner: " + guild.owner.name + " ▪ " + str(guild.owner.id)))
+            await bot.send('debug', embed=bot.buildEmbed(title="Banned guild request", description="{} ▪ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▪ {}".format(guild.owner.name, guild.owner.id)))
         except Exception as e:
-            await bot.send('debug', "on_guild_join(): " + str(e))
+            await bot.send('debug', "on_guild_join(): {}".format(e))
         await guild.leave()
     else: # notify me and add to the pending servers
         bot.newserver['pending'][id] = guild.name
         bot.savePending = True
-        await bot.send('debug', embed=bot.buildEmbed(title="Pending guild request", description=guild.name + " ▪ " + id, thumbnail=guild.icon_url, footer="Owner: " + guild.owner.name + " ▪ " + str(guild.owner.id)))
+        await bot.send('debug', embed=bot.buildEmbed(title="Pending guild request", description="{} ▪ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▪ {}".format(guild.owner.name, guild.owner.id)))
 
 # called by on_message
 # games/jokes for /gbfg/
 async def pitroulette():
     try:
         message = bot.pitroulettevictim.pop()
-        bot.pitroulettelist.append([message.author.display_name, bot.pitroulettecount, message.content, "[**Link**](https://discordapp.com/channels/"+str(message.guild.id)+"/"+str(message.channel.id)+"/"+str(message.id) + ")"])
-        description = "After **" + str(bot.pitroulettecount) + "** message(s)"
-        title = random.choice([message.author.display_name + " has fallen into the pit...", message.author.display_name + " tripped and fell...", message.author.display_name + " jumped into the pit willingly...", message.author.display_name + " got pushed in the back..."])
-        footer = random.choice(["Will " + message.author.display_name + " manage to climb up?", "Stay down here where you belong", "Straight into the hellish pit", message.author.display_name + " has met with a terrible fate"])
+        bot.pitroulettelist.append([message.author.display_name, bot.pitroulettecount, message.content, "[**Link**](https://discordapp.com/channels/{}/{}/{})".format(message.guild.id, message.channel.id, message.id)])
+        description = "After **{}** message(s)".format(bot.pitroulettecount)
+        title = random.choice(["{} has fallen into the pit...", "{} tripped and fell...", "{} jumped into the pit willingly...", "{} got pushed in the back..."]).format(message.author.display_name)
+        footer = random.choice(["Will {} manage to climb up?".format(message.author.display_name), "Stay down here where you belong", "Straight into the hellish pit", "{} has met with a terrible fate".format(message.author.display_name)])
         if bot.pitroulettemax > 0:
-            description += "\nI'm expecting **" + str(bot.pitroulettemax) + "** more victim(s)"
+            description += "\nI'm expecting **{}** more victim(s)".format(bot.pitroulettemax)
         else:
             bot.pitroulette = False # disable
         await message.channel.send(embed=bot.buildEmbed(title=title, description=description, thumbnail=message.author.avatar_url, footer=footer))
         if bot.pitroulettemax == 0 and len(bot.pitroulettelist) > 1:
             fields = []
             for a in bot.pitroulettelist:
-                if len(a[2]) == 0: fields.append({'name': a[0] + " ▪ after " + str(a[1]) + " message(s)", 'value':a[3]})
-                else: fields.append({'name': a[0] + " ▪ after " + str(a[1]) + " message(s)", 'value':a[2] + '\n' + a[3]})
+                if len(a[2]) == 0: fields.append({'name': "{} ▪ after {} message(s)".format(a[0], a[1]), 'value':a[3]})
+                else: fields.append({'name': "{} ▪ after {} message(s)".format(a[0], a[1]), 'value':'{}\n{}'.format(a[2], a[3])})
             await message.channel.send(embed=bot.buildEmbed(title="Pit Roulette results", fields=fields, inline=False, thumbnail=message.author.avatar_url))
         g = bot.get_guild(bot.ids['gbfg'])
         await message.author.add_roles(g.get_role(bot.ids['pit']))
@@ -781,10 +781,7 @@ async def on_command_error(ctx, error):
         return
     else:
         bot.errn += 1
-        await bot.send('debug', embed=bot.buildEmbed(title="⚠ Error caused by " + str(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`' + ctx.message.content + '`'}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], timestamp=datetime.utcnow()))
-
-
-# Logging
+        await bot.send('debug', embed=bot.buildEmbed(title="⚠ Error caused by {}".format(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], timestamp=datetime.utcnow()))
 
 # (You) pin board system
 @bot.event
@@ -820,7 +817,7 @@ async def on_raw_reaction_add(payload):
             dict['title'] = str(message.author)
             if len(content) != 0: dict['description'] = content + "\n\n"
             else: dict['description'] = ""
-            dict['description'] += ":earth_asia: [**Link**](https://discordapp.com/channels/"+str(message.guild.id)+"/"+str(message.channel.id)+"/"+str(message.id) + ")\n"
+            dict['description'] += ":earth_asia: [**Link**](https://discordapp.com/channels/{}/{}/{})\n".format(message.guild.id, message.channel.id, message.id)
             dict['thumbnail'] = {'url':str(message.author.avatar_url)}
             dict['fields'] = []
 
@@ -845,16 +842,16 @@ async def on_member_update(before, after):
     if before.guild.id in guilds:
         channel = guilds[before.guild.id]
         if before.display_name != after.display_name:
-                await bot.send(channel, embed=bot.buildEmbed(author={'name':str(after) + " ▪ Name change", 'icon_url':after.avatar_url}, description=after.mention + "\n**Before** ▪ " + before.display_name + "\n**After** ▪ " + after.display_name, footer="User ID: " + str(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
+                await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▪ Name change".format(after.display_name), 'icon_url':after.avatar_url}, description="{}\n**Before** ▪ {}\n**After** ▪ {}".format(after.mention, before.display_name, after.display_name), footer="User ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
         elif len(before.roles) < len(after.roles):
             for r in after.roles:
                 if r not in before.roles:
-                    await bot.send(channel, embed=bot.buildEmbed(author={'name':str(after) + " ▪ Role added", 'icon_url':after.avatar_url}, description=after.mention + " was given the `" + str(r) + "` role", footer="User ID: " + str(after.id), color=0x1b55b3, timestamp=datetime.utcnow()))
+                    await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▪ Role added".format(after.name), 'icon_url':after.avatar_url}, description="{} was given the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x1b55b3, timestamp=datetime.utcnow()))
                     break
         elif len(before.roles) > len(after.roles):
             for r in before.roles:
                 if r not in after.roles:
-                    await bot.send(channel, embed=bot.buildEmbed(author={'name':str(after) + " ▪ Role removed", 'icon_url':after.avatar_url}, description=after.mention + " was removed from the `" + str(r) + "` role", footer="User ID: " + str(after.id), color=0x0b234a, timestamp=datetime.utcnow()))
+                    await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▪ Role removed".format(after.name), 'icon_url':after.avatar_url}, description="{} was removed from the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x0b234a, timestamp=datetime.utcnow()))
                     break
 
 @bot.event
@@ -862,28 +859,28 @@ async def on_member_remove(member):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if member.guild.id in guilds:
         channel = guilds[member.guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(author={'name':str(member) + " ▪ Left the server", 'icon_url':member.avatar_url}, footer="User ID: " + str(member.id), timestamp=datetime.utcnow(), color=0xff0000))
+        await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▪ Left the server".format(member.name), 'icon_url':member.avatar_url}, footer="User ID: {}".format(member.id), timestamp=datetime.utcnow(), color=0xff0000))
 
 @bot.event
 async def on_member_join(member):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if member.guild.id in guilds:
         channel = guilds[member.guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(author={'name':str(member) + " ▪ Joined the server", 'icon_url':member.avatar_url}, footer="User ID: " + str(member.id), timestamp=datetime.utcnow(), color=0x00ff3c))
+        await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▪ Joined the server".format(member.name), 'icon_url':member.avatar_url}, footer="User ID: {}".format(member.id), timestamp=datetime.utcnow(), color=0x00ff3c))
 
 @bot.event
 async def on_member_ban(guild, user):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if guild.id in guilds:
         channel = guilds[guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(author={'name':str(user) + " ▪ Banned from the server", 'icon_url':user.avatar_url}, footer="User ID: " + str(user.id), timestamp=datetime.utcnow(), color=0xff0000))
+        await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▪ Banned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=datetime.utcnow(), color=0xff0000))
 
 @bot.event
 async def on_member_unban(guild, user):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if guild.id in guilds:
         channel = guilds[guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(author={'name':str(user) + " ▪ Unbanned from the server", 'icon_url':user.avatar_url}, footer="User ID: " + str(user.id), timestamp=datetime.utcnow(), color=0x00ff3c))
+        await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▪ Unbanned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=datetime.utcnow(), color=0x00ff3c))
 
 @bot.event
 async def on_guild_emojis_update(guild, before, after):
@@ -893,12 +890,12 @@ async def on_guild_emojis_update(guild, before, after):
         if len(before) < len(after):
             for e in after:
                 if e not in before:
-                    await bot.send(channel, embed=bot.buildEmbed(author={'name':e.name + " ▪ Emoji added", 'icon_url':e.url}, footer="Emoji ID: " + str(e.id), timestamp=datetime.utcnow(), color=0x00ff3c))
+                    await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▪ Emoji added".format(e.name), 'icon_url':e.url}, footer="Emoji ID: {}".format(e.id), timestamp=datetime.utcnow(), color=0x00ff3c))
                     break
         else:
             for e in before:
                 if e not in after:
-                    await bot.send(channel, embed=bot.buildEmbed(author={'name':e.name + " ▪ Emoji removed", 'icon_url':e.url}, footer="Emoji ID: " + str(e.id), timestamp=datetime.utcnow(), color=0xff0000))
+                    await bot.send(channel, embed=bot.buildEmbed(author={'name':" ▪ Emoji removed".format(e.name), 'icon_url':e.url}, footer="Emoji ID: {}".format(e.id), timestamp=datetime.utcnow(), color=0xff0000))
                     break
 
 @bot.event
@@ -906,14 +903,14 @@ async def on_guild_role_create(role):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if role.guild.id in guilds:
         channel = guilds[role.guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(title="Role created ▪ `" + role.name + "`", footer="Role ID: " + str(role.id), timestamp=datetime.utcnow(), color=0x00ff3c))
+        await bot.send(channel, embed=bot.buildEmbed(title="Role created ▪ `{}`".format(role.name), footer="Role ID: {}".format(role.id), timestamp=datetime.utcnow(), color=0x00ff3c))
 
 @bot.event
 async def on_guild_role_delete(role):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if role.guild.id in guilds:
         channel = guilds[role.guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(title="Role deleted ▪ `" + role.name + "`", footer="Role ID: " + str(role.id), timestamp=datetime.utcnow(), color=0xff0000))
+        await bot.send(channel, embed=bot.buildEmbed(title="Role deleted ▪ `{}`".format(role.name), footer="Role ID: {}".format(role.id), timestamp=datetime.utcnow(), color=0xff0000))
 
 @bot.event
 async def on_guild_role_update(before, after):
@@ -921,25 +918,39 @@ async def on_guild_role_update(before, after):
     if before.guild.id in guilds:
         channel = guilds[before.guild.id]
         if before.name != after.name:
-            await bot.send(channel, embed=bot.buildEmbed(title="Role name updated", fields=[{'name':"Before", 'value':before.name}, {'name':"After", 'value':after.name}], footer="Role ID: " + str(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
+            await bot.send(channel, embed=bot.buildEmbed(title="Role name updated", fields=[{'name':"Before", 'value':before.name}, {'name':"After", 'value':after.name}], footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
         elif before.colour != after.colour:
-            await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▪ `" + after.name + "`", description="Color changed", footer="Role ID: " + str(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
+            await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▪ `" + after.name + "`", description="Color changed", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
         elif before.hoist != after.hoist:
             if after.hoist:
-                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▪ `" + after.name + "`", description="Role is displayed separately from other members", footer="Role ID: " + str(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
+                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▪ `{}`".format(after.name), description="Role is displayed separately from other members", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
             else:
-                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▪ `" + after.name + "`", description="Role is displayed as the other members", footer="Role ID: " + str(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
+                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▪ `{}`".format(after.name), description="Role is displayed as the other members", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
         elif before.mentionable != after.mentionable:
             if after.mentionable:
-                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▪ `" + after.name + "`", description="Role is mentionable", footer="Role ID: " + str(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
+                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▪ `{}`".format(after.name), description="Role is mentionable", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
             else:
-                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▪ `" + after.name + "`", description="Role isn't mentionable", footer="Role ID: " + str(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
+                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▪ `{}`".format(after.name), description="Role isn't mentionable", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
+
+@bot.event
+async def on_guild_channel_create(channel):
+    guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
+    if channel.guild.id in guilds:
+        c = guilds[role.guild.id]
+        await bot.send(c, embed=bot.buildEmbed(title="Channel created ▪ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=datetime.utcnow(), color=0xebe007))
+
+@bot.event
+async def on_guild_channel_delete(channel):
+    guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
+    if channel.guild.id in guilds:
+        c = guilds[role.guild.id]
+        await bot.send(c, embed=bot.buildEmbed(title="Channel deleted ▪ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=datetime.utcnow(), color=0x8a8306))
 
 # create the graceful exit
 grace = GracefulExit(bot)
 
 # load cogs from the cogs folder
-bot.loadCog("general", "gbf_game.GBF_Game", "gbf_utility.GBF_Utility", "gw.GW", "management", "owner", "baguette", "rpg.RPG")
+bot.loadCog("general", "gbf_game.GBF_Game", "gbf_utility.GBF_Utility", "gw.GW", "management", "owner", "baguette")
 
 # start the loop
 bot.mainLoop()

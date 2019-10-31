@@ -339,7 +339,6 @@ class GBF_Utility(commands.Cog):
         await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('crystal') + " GBF Roll Tracker", description=self.bot.strings["rolltracker()"], color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['charlist', 'asset'])
-    @isDisabled()
     async def datamining(self, ctx):
         """Post a link to my autistic datamining Sheet"""
         await ctx.send(embed=self.bot.buildEmbed(title="Asset Datamining Sheet", description=self.bot.strings["datamining()"], color=self.color))
