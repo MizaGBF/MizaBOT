@@ -31,22 +31,22 @@ class Owner(commands.Cog):
         embed.set_thumbnail(url=self.bot.user.avatar_url)
         msg = ""
         for s in self.bot.guilds:
-            msg += "**" + s.name + ":** " + str(s.id) + " owned by " + s.owner.name + " (" + str(s.owner.id) + ")\n"
+            msg += "**{}:** {} owned by {} ({})\n".format(s.name, s.id, s.owner.name, s.owner.id)
         if msg == "": msg = "None"
         embed.add_field(name="Server List", value=msg, inline=False)
         msg = ""
         for s in self.bot.newserver['pending']:
-            msg += "**" + s + ":** " + str(self.bot.newserver['pending'][s]) + "\n"
+            msg += "**{}:** {}\n".format(s, self.bot.newserver['pending'][s])
         if msg == "": msg = "None"
         embed.add_field(name="Pending Servers", value=msg, inline=False)
         msg = ""
         for s in self.bot.newserver['servers']:
-            msg += "[" + str(s) + "] "
+            msg += "[{}] ".format(s)
         if msg == "": msg = "None"
         embed.add_field(name="Banned Servers", value=msg, inline=False)
         msg = ""
         for s in self.bot.newserver['owners']:
-            msg += "[" + str(s) + "] "
+            msg += "[{}] ".format(s)
         if msg == "": msg = "None"
         embed.add_field(name="Banned owners", value=msg, inline=False)
         await self.bot.send('debug', embed=embed)
@@ -124,7 +124,7 @@ class Owner(commands.Cog):
                 if guild:
                     general = self.getGeneral(guild)
                     if general and general.permissions_for(guild.me).send_messages:
-                        await general.send("I'm now available for use, {}!\nUse $help for my list of commands.\nIf you encounter an issue, use $bug_report and describe the problem.\nIf I'm down, I might be rebooting or in maintenance.".format(guild.name))
+                        await general.send("I'm now available for use, {}!\nUse $help for my list of commands.\nUse $setPrefix to change the command prefix (default: `$`)\nIf you encounter an issue, use $bug_report and describe the problem.\nIf I'm down, I might be rebooting or in maintenance.".format(guild.name))
                 await ctx.message.add_reaction('✅') # white check mark
                 await self.guildList()
         except Exception as e:
@@ -190,7 +190,7 @@ class Owner(commands.Cog):
             if b[3]: msg += '[Warning] '
             if b[4]: msg += '[Double duration] '
             msg += '\n'
-        await self.bot.send('debug', embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " Guild War (You) Buff debug check", description=msg, color=self.color))
+        await self.bot.send('debug', embed=self.bot.buildEmbed(title="{} Guild War (You) Buff debug check".format(self.bot.getEmote('gw')), description=msg, color=self.color))
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -368,10 +368,10 @@ class Owner(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def broadcast(self, ctx, *, terms):
-        """Broadcast a emssage (Owner only)"""
+        """Broadcast a message (Owner only)"""
         if len(terms) == 0:
             return
-        embed=discord.Embed(title=ctx.guild.me.display_name + " Broadcast", description=terms, thumbnail=ctx.guild.me.avatar_url, color=self.color)
+        embed=discord.Embed(title="{} Broadcast".format(ctx.guild.me.display_name), description=terms, thumbnail=ctx.guild.me.avatar_url, color=self.color)
         for g in self.bot.news:
             for id in self.bot.news[g]:
                 try:
@@ -394,18 +394,15 @@ class Owner(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def invite(self, ctx):
         """Post the invite link (Owner only)"""
-        await self.bot.send('debug', embed=self.bot.buildEmbed(title="Invite Request", description=str(ctx.author) + " ▪ " + str(ctx.author.id), thumbnail=ctx.author.avatar_url, timestamp=datetime.utcnow(), color=self.color))
-        await ctx.author.send(embed=self.bot.buildEmbed(title=ctx.guild.me.name, description=self.bot.strings["invite()"] + "\nYou'll have to wait for my owner approval.\nMisuses will result in a ban.", thumbnail=ctx.guild.me.avatar_url, timestamp=datetime.utcnow(), color=self.color))
+        await self.bot.send('debug', embed=self.bot.buildEmbed(title="Invite Request", description="{} ▪ {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar_url, timestamp=datetime.utcnow(), color=self.color))
+        await ctx.author.send(embed=self.bot.buildEmbed(title=ctx.guild.me.name, description="{}\nYou'll have to wait for my owner approval.\nMisuses will result in a ban.".format(self.bot.strings["invite()"]), thumbnail=ctx.guild.me.avatar_url, timestamp=datetime.utcnow(), color=self.color))
 
     @commands.command(no_pm=True)
     @isOwner()
     async def nitro(self, ctx):
         """Get the nitro boost status of the guild (Owner only)"""
         guild = ctx.guild
-        msg = "Premium Tier: " + str(guild.premium_tier) + "\n"
-        msg += "Boosted members: " + str(guild.premium_subscription_count) + "\n"
-        msg += "Icon animated: " + str(guild.is_icon_animated()) + "\n"
-        await ctx.send(embed=self.bot.buildEmbed(title=guild.name + " status", description=msg, thumbnail=guild.icon_url, footer=str(guild.id), color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title=guild.name + " status", description="Premium Tier: {}\nBoosted members: {}\nIcon animated: {}".format(guild.premium_tier, guild.premium_subscription_count, guild.is_icon_animated()), thumbnail=guild.icon_url, footer=str(guild.id), color=self.color))
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -431,7 +428,7 @@ class Owner(commands.Cog):
                         i += 1
                     break
         await self.bot.unreact(ctx, 'time')
-        await ctx.send(embed=self.bot.buildEmbed(title="*ubaha-hl* purge results", description=str(i) + " inactive user(s)", color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="*ubaha-hl* purge results", description="{} inactive user(s)".format(i), color=self.color))
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -457,7 +454,7 @@ class Owner(commands.Cog):
                         i += 1
                     break
         await self.bot.unreact(ctx, 'time')
-        await ctx.send(embed=self.bot.buildEmbed(title="*ubaha-hl* purge results", description=str(i) + " inactive user(s)", color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="*ubaha-hl* purge results", description="{} inactive user(s)".format(i), color=self.color))
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -475,7 +472,7 @@ class Owner(commands.Cog):
                     whitelist[message.author.id] = 0
             except:
                 pass
-        await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ purge starting", description="Kicking " + str(len(g.members) - len(whitelist)) + " inactive user(s)", color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ purge starting", description="Kicking {} inactive user(s)".format(len(g.members) - len(whitelist)), color=self.color))
         i = 0
         for member in g.members:
             try:
@@ -485,7 +482,7 @@ class Owner(commands.Cog):
             except:
                 pass
         await self.bot.unreact(ctx, 'time')
-        await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ purge results", description=str(i) + " inactive user(s) successfully kicked", color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ purge results", description="{} inactive user(s) successfully kicked".format(i), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
@@ -521,4 +518,4 @@ class Owner(commands.Cog):
                         mc += 1
         except:
             pass
-        await ctx.send(embed=self.bot.buildEmbed(title="Results", description=str(sc) + " message(s) from Snacks in the last 50000 messages of this channel.\n" + str(mc) + " are mono-emotes (" + str(mc/sc*100) + "%).", color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="Results", description="{} message(s) from Snacks in the last 50000 messages of this channel.\n{} are mono-emotes ({:.2f}%).".format(sc, mc, mc/sc*100), color=self.color))

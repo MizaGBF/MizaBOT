@@ -249,7 +249,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.31
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.32
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -534,11 +534,6 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 return None
         return None
 
-    def getEmoteStr(self, key): # same but we get the string equivalent
-        e = self.getEmote(key)
-        if e is None: return ""
-        return str(e)
-
     async def react(self, ctx, key): # add a reaction using a custom emote defined in config.json
         try:
             await ctx.message.add_reaction(self.getEmote(key))
@@ -634,8 +629,12 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
 
     def uptime(self, string=True): # get the uptime
         delta = datetime.utcnow() - self.starttime
-        if string: return "{}d{}h{}m{}s".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60, delta.seconds % 60)
+        if string: return "{}d{}h{}m{}s".format(self.getTimedeltaStr(delta, True))
         else: return delta
+
+    def getTimedeltaStr(self, delta, day=False):
+        if day: return "{}d{}h{}m".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60)
+        else: return "{}d{}m".format(delta.seconds // 3600, (delta.seconds // 60) % 60)
 
     # function to build a timedelta from a string (for $remind)
     def makeTimedelta(self, d): # return None if error

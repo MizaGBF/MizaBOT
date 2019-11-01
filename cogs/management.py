@@ -40,7 +40,7 @@ class Management(commands.Cog):
         else:
             self.bot.prefixes[id] = prefix_string
             self.bot.savePending = True
-        await ctx.send(embed=self.bot.buildEmbed(title=ctx.guild.name, description="Server Prefix changed to `" + prefix_string + "`", color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title=ctx.guild.name, description="Server Prefix changed to `{}`".format(prefix_string), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['bug', 'report', 'bug_report'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -48,7 +48,7 @@ class Management(commands.Cog):
         """Send a bug report (or your love confessions) to the author"""
         if len(terms) == 0:
             return
-        await self.bot.send('debug', embed=self.bot.buildEmbed(title="Bug Report", description=terms, footer=str(ctx.author) + " ▪ User ID: " + str(ctx.author.id), thumbnail=ctx.author.avatar_url, color=self.color))
+        await self.bot.send('debug', embed=self.bot.buildEmbed(title="Bug Report", description=terms, footer="{} ▪ User ID: {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar_url, color=self.color))
         await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -97,8 +97,8 @@ class Management(commands.Cog):
         if id not in self.bot.spark[1]:
             self.bot.spark[1].append(id)
             self.bot.savePending = True
-            await ctx.send(embed=self.bot.buildEmbed(title=member.display_name, description="Banned from all roll rankings by " + ctx.author.display_name, thumbnail=member.avatar_url, color=self.color))
-            await self.bot.send('debug', embed=self.bot.buildEmbed(title=member.display_name + " ▪ " + id, description="Banned from all roll rankings by " + ctx.author.display_name, thumbnail=member.avatar_url, color=self.color, footer=ctx.guild.name))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} ▪ {}".format(member.display_name, id), description="Banned from all roll rankings by {}".format(ctx.author.display_name), thumbnail=member.avatar_url, color=self.color, footer=ctx.guild.name))
+            await self.bot.send('debug', embed=self.bot.buildEmbed(title="{} ▪ {}".format(member.display_name, id), description="Banned from all roll rankings by {}".format(ctx.author.display_name), thumbnail=member.avatar_url, color=self.color, footer=ctx.guild.name))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title=member.display_name, description="Already banned", thumbnail=member.avatar_url, color=self.color))
 
@@ -172,7 +172,7 @@ class Management(commands.Cog):
             self.bot.gw['state'] = True
             self.bot.savePending = True
             self.bot.runTask('check_buff', self.bot.get_cog('GW').checkGWBuff)
-            await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + "Guild War Mode", description="Set to : **{0:%m/%d %H:%M}**".format(self.bot.gw['dates']["Preliminaries"]), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} Guild War Mode".format(self.bot.getEmote('gw')), description="Set to : **{:%m/%d %H:%M}**".format(self.bot.gw['dates']["Preliminaries"]), color=self.color))
         except Exception as e:
             self.bot.cancelTask('check_buff')
             self.bot.gw['dates'] = {}
@@ -197,7 +197,7 @@ class Management(commands.Cog):
     async def enableGW(self, ctx):
         """Enable the GW mode ((You) Mod only)"""
         if self.bot.gw['state'] == True:
-            await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + "Guild War Mode", description="Already enabled", color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} Guild War Mode".format(self.bot.getEmote('gw')), description="Already enabled", color=self.color))
         elif len(self.bot.gw['dates']) == 8:
             self.bot.gw['state'] = True
             self.bot.runTask('check_buff', self.bot.get_cog('GW').checkGWBuff)
@@ -333,12 +333,4 @@ class Management(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def status(self, ctx):
         """Post the bot status"""
-        msg = "**Uptime**: " + str(self.bot.uptime()) + "\n"
-        msg += "**CPU**: " + str(self.bot.process.cpu_percent()) + "%\n"
-        msg += "**Memory**: " + str(self.bot.process.memory_info().rss >> 20) + "MB\n"
-        msg += "**Save Pending**: " + str(self.bot.savePending) + "\n"
-        msg += "**Errors since boot**: " + str(self.bot.errn) + "\n"
-        msg += "**Tasks Count**: " + str(len(asyncio.all_tasks())) + "\n"
-        msg += "**Servers Count**: " + str(len(self.bot.guilds)) + "\n"
-        msg += "**Cogs Loaded**: " + str(len(self.bot.cogs)) + "/" + str(self.bot.cogn)
-        await ctx.send(embed=self.bot.buildEmbed(title=ctx.guild.me.display_name + "'s status", description=msg, thumbnail=ctx.guild.me.avatar_url, color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title=ctx.guild.me.display_name + "'s status", description="**Uptime**: {}\n**CPU**: {}%\n**Memory**: {}MB\n**Save Pending**: {}\n**Errors since boot**: {}\n**Tasks Count**: {}\n**Servers Count**: {}\n**Cogs Loaded**: {}/{}".format(self.bot.uptime(), self.bot.process.cpu_percent(), self.bot.process.memory_info().rss >> 20, self.bot.savePending, self.bot.errn, len(asyncio.all_tasks()), len(self.bot.guilds), len(self.bot.cogs), self.bot.cogn), thumbnail=ctx.guild.me.avatar_url, color=self.color))

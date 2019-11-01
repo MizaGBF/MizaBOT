@@ -75,18 +75,18 @@ class GBF_Utility(commands.Cog):
         if self.bot.maintenance['state'] == True:
             if current_time < self.bot.maintenance['time']:
                 d = self.bot.maintenance['time'] - current_time
-                msg = self.bot.getEmoteStr('cog') + " Maintenance in **" + str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**, for **" + str(self.bot.maintenance['duration']) + " hour(s)**"
+                msg = "{} Maintenance starts in **{}**, for **{} hour(s)**".format(self.bot.getEmote('cog'), self.bot.getTimedeltaStr(d, True), self.bot.maintenance['duration'])
             else:
                 d = current_time - self.bot.maintenance['time']
                 if self.bot.maintenance['duration'] <= 0:
-                    msg = self.bot.getEmoteStr('cog') + " Emergency maintenance on going"
+                    msg = "{} Emergency maintenance on going".format(self.bot.getEmote('cog'))
                 elif (d.seconds // 3600) >= self.bot.maintenance['duration']:
                     self.bot.maintenance = {"state" : False, "time" : None, "duration" : 0}
                     self.bot.savePending = True
                 else:
                     e = self.bot.maintenance['time'] + timedelta(seconds=3600*self.bot.maintenance['duration'])
                     d = e - current_time
-                    msg = self.bot.getEmoteStr('cog') + " Maintenance ends in **" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**"
+                    msg = "{} Maintenance ends in **{}**".format(self.bot.getEmote('cog'), self.bot.getTimedeltaStr(d, True))
         return msg
 
     def checkMaintenance(self):
@@ -146,12 +146,12 @@ class GBF_Utility(commands.Cog):
                     async with session.get(url) as r:
                         if r.status != 200:
                             raise Exception("HTTP Error 404: Not Found")
-                if full: await ctx.send("Click here :point_right: " + url)
-                else: await ctx.send(embed=self.bot.buildEmbed(title=" ".join(terms) + " search result", description="Click here :point_right: " + url, color=self.color))
+                if full: await ctx.send("Click here :point_right: {}".format(url))
+                else: await ctx.send(embed=self.bot.buildEmbed(title="{} search result".format(" ".join(terms)), description="Click here :point_right: {}".format(url), color=self.color))
             except Exception as e:
                 if str(e) != "HTTP Error 404: Not Found":
                     await self.bot.sendError("wiki", str(e))
-                await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Click here to refine the search\nhttps://gbf.wiki/index.php?title=Special:Search&search=" + " ".join(terms), color=self.color, footer=str(e)))
+                await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Click here to refine the search\nhttps://gbf.wiki/index.php?title=Special:Search&search={}".format(" ".join(terms)), color=self.color, footer=str(e)))
 
 
     wiki_options = {'en':0, 'english':0, 'noel':1, 'radio':1, 'channel':1, 'tv':1, 'wawi':2, 'raidpic':3, 'pic':3, 'kmr':4, 'fkhr':5, 'kakage':6,
@@ -171,7 +171,7 @@ class GBF_Utility(commands.Cog):
         try:
             a = self.wiki_accounts[self.wiki_options[terml]]
         except:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="`" + term + "` isn't in my database", footer="Use the help for the full list", color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="`{}` isn't in my database".format(term), footer="Use the help for the full list", color=self.color))
             return
 
         # get avatar url
@@ -203,13 +203,13 @@ class GBF_Utility(commands.Cog):
         Also maintenance and gw times if set"""
         current_time = self.bot.getJST()
 
-        title = self.bot.getEmoteStr('clock') + " Current Time: " + str(current_time.hour).zfill(2) + ":" + str(current_time.minute).zfill(2)
+        title = "{} Current Time: {:02d}:{:02d}".format(self.bot.getEmote('clock'), current_time.hour, current_time.minute)
 
         reset = current_time.replace(hour=5, minute=0, second=0, microsecond=0)
         if current_time.hour >= reset.hour:
             reset += timedelta(days=1)
         d = reset - current_time
-        description = self.bot.getEmoteStr('mark') + " Reset in **" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**"
+        description = "{} Reset in **{}**".format(self.bot.getEmote('mark'), self.bot.getTimedeltaStr(d))
 
         id = str(ctx.message.author.guild.id)
         if id in self.bot.st:
@@ -222,11 +222,11 @@ class GBF_Utility(commands.Cog):
                 st2 += timedelta(days=1)
 
             d = st1 - current_time
-            if d.seconds >= 82800: description += "\n" + self.bot.getEmoteStr('st') + " Strike times in " + self.bot.getEmoteStr('1') + " **NOW!** "
-            else: description += "\n" + self.bot.getEmoteStr('st') + " Strike times in " + self.bot.getEmoteStr('1') + " **" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m** "
+            if d.seconds >= 82800: description += "\n{} Strike times in {} **On going** ".format(self.bot.getEmote('st'), self.bot.getEmote('1'))
+            else: description += "\n{} Strike times in {} **{}** ".format(self.bot.getEmote('st'), self.bot.getEmote('1'), self.bot.getTimedeltaStr(d))
             d = st2 - current_time
-            if d.seconds >= 82800: description += self.bot.getEmoteStr('2') + " **right now!**"
-            else: description += self.bot.getEmoteStr('2') + " **" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m**"
+            if d.seconds >= 82800: description += "{} **On going**".format(self.bot.getEmote('2'))
+            else: description += "{} **{}**".format(self.bot.getEmote('2'), self.bot.getTimedeltaStr(d))
 
         try:
             buf = self.maintenanceUpdate()
@@ -308,7 +308,7 @@ class GBF_Utility(commands.Cog):
             tickets = cog.getLatestTicket()
             l = len(tickets)
             if l > 0:
-                await ctx.send(embed=self.bot.buildEmbed(title="Last Gacha update", description="New: " + str(l), thumbnail=tickets[0], color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="Last Gacha update", description="New: {}".format(l), thumbnail=tickets[0], color=self.color))
             else:
                 await ctx.send(embed=self.bot.buildEmbed(title="No new upcoming gacha", color=self.color))
         except Exception as e:
@@ -331,12 +331,12 @@ class GBF_Utility(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['arcarum', 'arca', 'oracle', 'evoker', 'astra'])
     async def arcanum(self, ctx):
         """Post a link to my autistic Arcanum Sheet"""
-        await ctx.send(embed=self.bot.buildEmbed(title="Arcanum Tracking Sheet", description=self.bot.strings["arcanum()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/item/article/s/250" + str(random.randint(1, 46)).zfill(2) + ".jpg", color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="Arcanum Tracking Sheet", description=self.bot.strings["arcanum()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/item/article/s/250{:02d}.jpg".format(random.randint(1, 46)), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['sparktracker'])
     async def rollTracker(self, ctx):
         """Post a link to my autistic roll tracking Sheet"""
-        await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('crystal') + " GBF Roll Tracker", description=self.bot.strings["rolltracker()"], color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="{} GBF Roll Tracker".format(self.bot.getEmote('crystal')), description=self.bot.strings["rolltracker()"], color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['charlist', 'asset'])
     async def datamining(self, ctx):
@@ -368,12 +368,6 @@ class GBF_Utility(commands.Cog):
         """Post the motocal link"""
         await ctx.send(embed=self.bot.buildEmbed(title="(You) Motocal", description=self.bot.strings["motocal()"], color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isDisabled()
-    async def _leak(self, ctx):
-        """Post a link to the /gbfg/ leak pastebin"""
-        await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ Leak Pastebin", description=self.bot.strings["leak()"], color=self.color))
-
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['raidfinder', 'python_raidfinder'])
     async def pyfinder(self, ctx):
         """Post the (You) python raidfinder"""
@@ -399,7 +393,7 @@ class GBF_Utility(commands.Cog):
             if self.bot.stream['time'] is not None:
                 if current_time < self.bot.stream['time']:
                     d = self.bot.stream['time'] - current_time
-                    cd = str(d.days) + "d" + str(d.seconds // 3600) + "h" + str((d.seconds // 60) % 60) + "m"
+                    cd = "{}".format(self.bot.getTimedeltaStr(d, True))
                 else:
                     cd = "On going!!"
             else:
@@ -430,14 +424,14 @@ class GBF_Utility(commands.Cog):
                 if raw == 'raw':
                     if i != 0: msg += ";"
                     else: msg += "`"
-                    msg += self.bot.schedule[i] + ";" + self.bot.schedule[i+1]
+                    msg += "{};{}".format(self.bot.schedule[i], self.bot.schedule[i+1])
                 elif l > 12: # enable or not emotes (I have 6 numbered emotes, so 6 field max aka 12 elements in my array)
-                    msg += self.bot.schedule[i] + " ▪ " + self.bot.schedule[i+1] + "\n"
+                    msg += "{} ▪ {}\n".format(self.bot.schedule[i], self.bot.schedule[i+1])
                 else:
-                    msg += self.bot.getEmoteStr(str((i//2)+1)) + " " + self.bot.schedule[i] + " ▪ " + self.bot.schedule[i+1] + "\n"
+                    msg += "{} {} ▪ {}\n".format(self.bot.getEmote(str((i//2)+1)), self.bot.schedule[i], self.bot.schedule[i+1])
                 i += 2
             if raw == 'raw': msg += "`"
-            await ctx.send(embed=self.bot.buildEmbed(title="🗓 Event Schedule " + self.bot.getEmoteStr('clock') + " {0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), url="https://twitter.com/granblue_en", color=self.color, description=msg))
+            await ctx.send(embed=self.bot.buildEmbed(title="🗓 Event Schedule {} {:%Y/%m/%d %H:%M} JST".format(self.bot.getEmote('clock'), self.bot.getJST()), url="https://twitter.com/granblue_en", color=self.color, description=msg))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tokens', 'box'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -466,29 +460,6 @@ class GBF_Utility(commands.Cog):
         except:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid box number", color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gbfvs', 'versus'])
-    @commands.cooldown(1, 10, commands.BucketType.guild)
-    async def gbfv(self, ctx):
-        """Post the time to the next Versus beta"""
-        return
-        c = self.bot.getJST()
-        betas = [
-            [c.replace(year=2019, month=5, day=31, hour=18, minute=0, second=0, microsecond=0), c.replace(year=2019, month=5, day=31, hour=23, minute=0, second=0, microsecond=0)],
-            [c.replace(year=2019, month=6, day=1, hour=10, minute=0, second=0, microsecond=0), c.replace(year=2019, month=6, day=1, hour=15, minute=0, second=0, microsecond=0)],
-            [c.replace(year=2019, month=6, day=2, hour=1, minute=0, second=0, microsecond=0), c.replace(year=2019, month=6, day=2, hour=6, minute=0, second=0, microsecond=0)]
-        ]
-        msg = ""
-        for i in range(0, len(betas)):
-            if c < betas[i][0]:
-                delta = betas[i][0] - c
-                msg += "Test period " + self.bot.getEmoteStr(str(i+1)) + " starts in **" + str(delta.days) + "d" + str(delta.seconds // 3600) + "h" + str((delta.seconds // 60) % 60) + "m**\n"
-            elif c < betas[i][1]:
-                delta = betas[i][1] - c
-                msg += "Test period " + self.bot.getEmoteStr(str(i+1)) + " is **on going** and ends in **" + str(delta.days) + "d" + str(delta.seconds // 3600) + "h" + str((delta.seconds // 60) % 60) + "m**\n"
-            else:
-                msg += "Test period " + self.bot.getEmoteStr(str(i+1)) + " is over\n"
-        await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('clock') + " GBF Versus ▪ Beta Calendar", description=msg, url="https://versus.granbluefantasy.jp/en/closedbeta/", thumbnail="https://versus.granbluefantasy.jp/en/assets/images/footer_cyg.png", color=self.color))
-
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['friday'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def premium(self, ctx):
@@ -508,7 +479,7 @@ class GBF_Utility(commands.Cog):
                     end = c.replace(hour=23, minute=59, second=59) + timedelta(days=2, seconds=1)
                     if c >= beg and c < end:
                         end = end - c
-                        await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('clock') + " Premium Friday", description="Premium Friday ends in **" + str(end.days) + "d" + str(end.seconds // 3600) + "h" + str((end.seconds // 60) % 60) + "m**", url="http://game.granbluefantasy.jp", thumbnail=thumbnail, color=self.color))
+                        await ctx.send(embed=self.bot.buildEmbed(title="{} Premium Friday".format(self.bot.getEmote('clock')), description="Premium Friday ends in **{}**".format(self.bot.getTimedeltaStr(end, True)), url="http://game.granbluefantasy.jp", thumbnail=thumbnail, color=self.color))
                         return
                     elif c >= end:
                         pass
@@ -518,7 +489,7 @@ class GBF_Utility(commands.Cog):
                 else:
                     searching = False
         last = last.replace(hour=15, minute=00, second=00) - c
-        await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('clock') + " Premium Friday", description="Premium Friday starts in **" + str(last.days) + "d" + str(last.seconds // 3600) + "h" + str((last.seconds // 60) % 60) + "m**",  url="http://game.granbluefantasy.jp", thumbnail=thumbnail, color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="{} Premium Friday".format(self.bot.getEmote('clock')), description="Premium Friday starts in **{}**".format(self.bot.getTimedeltaStr(last, True)),  url="http://game.granbluefantasy.jp", thumbnail=thumbnail, color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['koregura', 'koregra'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -533,7 +504,7 @@ class GBF_Utility(commands.Cog):
         else:
             target = datetime(year=c.year, month=c.month+1, day=1, hour=12, minute=0, second=0, microsecond=0)
         delta = target - c
-        await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('clock') + " Kore Kara", description="Release approximately in **" + str(delta.days) + "d" + str(delta.seconds // 3600) + "h" + str((delta.seconds // 60) % 60) + "m**",  url="https://granbluefantasy.jp/news/index.php", thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="{} Kore Kara".format(self.bot.getEmote('clock')), description="Release approximately in **{}**".format(self.bot.getTimedeltaStr(delta, True)),  url="https://granbluefantasy.jp/news/index.php", thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['sl', 'skillup'])
     @commands.cooldown(2, 5, commands.BucketType.user)
@@ -545,41 +516,42 @@ class GBF_Utility(commands.Cog):
         try:
             if level < 1: raise Exception("Current level can't be negative")
             if type == "sr":
-                if level >= 15: raise Exception("Can't skill up a " + self.bot.getEmoteStr('SR') + " weapon **SL" + str(level) + "**")
+                if level >= 15: raise Exception("Can't skill up a {} weapon **SL{}**".format(self.bot.getEmote('SR'), level))
                 if level >= 5:
-                    msg = "**" + str(level) + "** " + self.bot.getEmoteStr('SR') + " to reach **SL" + str(level+1) + "**"
+                    msg = "**{}** {} to reach **SL{}**".format(level, self.bot.getEmote('SR'), level+1)
                 else:
-                    msg = "**" + str(level) + "** " + self.bot.getEmoteStr('SR') + " or **" + str(level*4) + "** " + self.bot.getEmoteStr('R') + " to reach SL" + str(level+1) + "**"
+                    msg = "**{}** {} or **{}** {} to reach **SL{}**".format(level, self.bot.getEmote('SR'), level*4, self.bot.getEmote('R'), level+1)
             elif type in ["ssr", "magna", "omega"]:
-                if level >= 20: raise Exception("Can't skill up a " + self.bot.getEmoteStr('SSR') + " weapon **SL" + str(level) + "**")
+                if level >= 20: raise Exception("Can't skill up a {} weapon **SL{}**".format(self.bot.getEmote('SSR'), level))
                 if level >= 15: 
-                    msg = "**" + str(level) + "** " + self.bot.getEmoteStr('SSR') + " to reach **SL" + str(level+1) + "**"
+                    msg = "**{}** {} to reach **SL{}**".format(level, self.bot.getEmote('SSR'), level+1)
                 elif level > 10: 
-                    msg = "**2** " + self.bot.getEmoteStr('SSR') + " and **" + str((level-10)*2) + "** " + self.bot.getEmoteStr('SR') + " to reach **SL" + str(level+1) + "**"
+                    msg = "**2** {} and **{}** {} to reach **SL{}**".format(self.bot.getEmote('SSR'), (level-10)*2, self.bot.getEmote('SR'), level+1)
                 elif level == 10: 
-                    msg = "**2** " + self.bot.getEmoteStr('SSR') + " to reach **SL" + str(level+1) + "**"
+                    msg = "**2** {} to reach **SL{}**".format(self.bot.getEmote('SSR'), level+1)
                 elif level > 5: 
-                    msg = "**1** " + self.bot.getEmoteStr('SSR') + " and **" + str((level-5)*2) + "** " + self.bot.getEmoteStr('SR') + " to reach **SL" + str(level+1) + "**"
+                    msg = "**1** {} and **{}** {} to reach **SL{}**".format(self.bot.getEmote('SSR'), (level-5)*2, self.bot.getEmote('SR'), level+1)
                 elif level == 5: 
-                    msg = "**1** " + self.bot.getEmoteStr('SSR') + " to reach **SL" + str(level+1) + "**"
+                    msg = "**1** {} to reach **SL{}**".format(self.bot.getEmote('SSR'), level+1)
                 else:
-                    msg = "**" + str(2*level) + "** " + self.bot.getEmoteStr('SR') + " to reach **SL" + str(level+1) + "**"
+                    msg = "**{}** {} to reach **SL{}**".format(level*2, self.bot.getEmote('SR'), level+1)
             elif type in ["bahamut", "baha", "ultima", "seraph", "seraphic", "opus"]:
-                if level >= 20: raise Exception("Can't skill up a " + self.bot.getEmoteStr('SSR') + " weapon **SL" + str(level) + "**")
+                if level >= 20: raise Exception("Can't skill up a {} weapon **SL{}**".format(self.bot.getEmote('SSR'), level))
                 if level == 19: 
-                    msg = "**32** " + self.bot.getEmoteStr('SSR') + " or **8** " + self.bot.getEmoteStr('SSR') + " SL4 to reach **SL" + str(level+1) + "**"
+                    msg = "**32** {} or **8** {} SL4 to reach **SL{}**".format(self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), level+1)
                 elif level == 18: 
-                    msg = "**30** " + self.bot.getEmoteStr('SSR') + " or **6** " + self.bot.getEmoteStr('SSR') + " SL4 and **2** " + self.bot.getEmoteStr('SSR') + " SL3 to reach **SL" + str(level+1) + "**"
+                    msg = "**30** {} or **6** {} SL4 and **2** {} SL3 to reach **SL{}**".format(self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), level+1)
                 elif level == 17: 
-                    msg = "**29** " + self.bot.getEmoteStr('SSR') + " or **5** " + self.bot.getEmoteStr('SSR') + " SL4 and **3** " + self.bot.getEmoteStr('SSR') + " SL3 to reach **SL" + str(level+1) + "**"
+                    msg = "**29** {} or **5** {} SL4 and **3** {} SL3 to reach **SL{}**".format(self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), level+1)
                 elif level == 16: 
-                    msg = "**27** " + self.bot.getEmoteStr('SSR') + " or **6** " + self.bot.getEmoteStr('SSR') + " SL4 and **1** " + self.bot.getEmoteStr('SSR') + " SL3 to reach **SL" + str(level+1) + "**"
+                    msg = "**27** {} or **6** {} SL4 and **1** {} SL3 to reach **SL{}**".format(self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), level+1)
                 elif level == 15: 
-                    msg = "**25** " + self.bot.getEmoteStr('SSR') + " or **4** " + self.bot.getEmoteStr('SSR') + " SL4 and **3** " + self.bot.getEmoteStr('SSR') + " SL3 to reach **SL" + str(level+1) + "**"
+                    msg = "**25** {} or **4** {} SL4 and **3** {} SL3 to reach **SL{}**".format(self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), level+1)
                 else:
-                    msg = "**" + str(level) + "** " + self.bot.getEmoteStr('SSR') + " to reach **SL" + str(level+1) + "**"
+                    msg = "**" + str(level) + "** " + self.bot.getEmote('SSR') + " to reach **SL" + str(level+1) + "**"
+                    msg = "**{}** {} to reach **SL{}**".format(level, self.bot.getEmote('SSR'), level+1)
             else:
-                raise Exception("Unknown type `" + type + "`")
+                raise Exception("Unknown type `{}`".format(type))
             await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg,  url="https://gbf.wiki/Raising_Weapon_Skills", color=self.color))
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=str(e),  url="https://gbf.wiki/Raising_Weapon_Skills", color=self.color))
@@ -648,18 +620,18 @@ class GBF_Utility(commands.Cog):
 
     def arcaStepToString(self, step):
         if step == 0: return "None"
-        elif step == 1: return self.bot.getEmoteStr('SR') + " ☆☆☆"
-        elif step == 2: return self.bot.getEmoteStr('SR') + " ★☆☆"
-        elif step == 3: return self.bot.getEmoteStr('SR') + " ★★☆"
-        elif step == 4: return self.bot.getEmoteStr('SR') + " ★★★"
-        elif step == 5: return self.bot.getEmoteStr('SSR') + " ★★★☆☆"
-        elif step == 6: return self.bot.getEmoteStr('SSR') + " ★★★★☆"
-        elif step == 7: return self.bot.getEmoteStr('SSR') + " ★★★★★"
-        elif step == 8: return self.bot.getEmoteStr('question') + " ☆☆☆☆"
-        elif step == 9: return self.bot.getEmoteStr('question') + " ★☆☆☆"
-        elif step == 10: return self.bot.getEmoteStr('question') + " ★★☆☆"
-        elif step == 11: return self.bot.getEmoteStr('question') + " ★★★☆"
-        elif step == 12: return self.bot.getEmoteStr('question') + " ★★★★"
+        elif step == 1: return "{} ☆☆☆".format(self.bot.getEmote('SR'))
+        elif step == 2: return "{} ★☆☆".format(self.bot.getEmote('SR'))
+        elif step == 3: return "{} ★★☆".format(self.bot.getEmote('SR'))
+        elif step == 4: return "{} ★★★".format(self.bot.getEmote('SR'))
+        elif step == 5: return "{} ★★★☆☆".format(self.bot.getEmote('SSR'))
+        elif step == 6: return "{} ★★★★☆".format(self.bot.getEmote('SSR'))
+        elif step == 7: return "{} ★★★★★".format(self.bot.getEmote('SSR'))
+        elif step == 8: return "{} ☆☆☆☆".format(self.bot.getEmote('question'))
+        elif step == 9: return "{} ★☆☆☆".format(self.bot.getEmote('question'))
+        elif step == 10: return "{} ★★☆☆".format(self.bot.getEmote('question'))
+        elif step == 11: return "{} ★★★☆".format(self.bot.getEmote('question'))
+        elif step == 12: return "{} ★★★★".format(self.bot.getEmote('question'))
         raise Exception("Invalid Arcarum Step Value")
 
     def arcaStepToItem(self, step, item):
@@ -697,62 +669,31 @@ class GBF_Utility(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description=member.display_name + " didn't set its progress yet", color=self.color))
         else:
             try:
-                msg1 = "**Justice** ▪ " + self.arcaStepToString(self.bot.arca[id][0]) + "\n"
-                msg1 += "**Hanged Man** ▪ " + self.arcaStepToString(self.bot.arca[id][1]) + "\n"
-                msg1 += "**Death** ▪ " + self.arcaStepToString(self.bot.arca[id][2]) + "\n"
-                msg1 += "**Temperance** ▪ " + self.arcaStepToString(self.bot.arca[id][3]) + "\n"
-                msg1 += "**Devil** ▪ " + self.arcaStepToString(self.bot.arca[id][4]) + "\n"
-                msg1 += "**Tower** ▪ " + self.arcaStepToString(self.bot.arca[id][5]) + "\n"
-                msg1 += "**Star** ▪ " + self.arcaStepToString(self.bot.arca[id][6]) + "\n"
-                msg1 += "**Moon** ▪ " + self.arcaStepToString(self.bot.arca[id][7]) + "\n"
-                msg1 += "**Sun** ▪ " + self.arcaStepToString(self.bot.arca[id][8]) + "\n"
-                msg1 += "**Judgement** ▪ " + self.arcaStepToString(self.bot.arca[id][9]) + "\n"
+                msg1 = "**Justice** ▪ {}\n**Hanged Man** ▪ {}\n**Death** ▪ {}\n**Temperance** ▪ {}\n**Devil** ▪ {}\n**Tower** ▪ {}\n**Star** ▪ {}\n**Moon** ▪ {}\n**Sun** ▪ {}\n**Judgement** ▪ {}\n".format(self.arcaStepToString(self.bot.arca[id][0]), self.arcaStepToString(self.bot.arca[id][1]), self.arcaStepToString(self.bot.arca[id][2]), self.arcaStepToString(self.bot.arca[id][3]), self.arcaStepToString(self.bot.arca[id][4]), self.arcaStepToString(self.bot.arca[id][5]), self.arcaStepToString(self.bot.arca[id][6]), self.arcaStepToString(self.bot.arca[id][7]), self.arcaStepToString(self.bot.arca[id][8]), self.arcaStepToString(self.bot.arca[id][9]))
 
+                item_show = [
+                    ["Sephira Stones", 1370, self.bot.arca[id][10] + self.arcaDataToItem(self.bot.arca[id], 0)],
+                    ["Fire Astras", 628, self.bot.arca[id][11] + self.arcaStepToItem(self.bot.arca[id][4], 1) + self.arcaStepToItem(self.bot.arca[id][8], 1)],
+                    ["Water Astras", 628, self.bot.arca[id][12] + self.arcaStepToItem(self.bot.arca[id][0], 1) + self.arcaStepToItem(self.bot.arca[id][7], 1)],
+                    ["Earth Astras", 628, self.bot.arca[id][13] + self.arcaStepToItem(self.bot.arca[id][1], 1) + self.arcaStepToItem(self.bot.arca[id][5], 1)],
+                    ["Wind Astras", 628, self.bot.arca[id][14] + self.arcaStepToItem(self.bot.arca[id][3], 1) + self.arcaStepToItem(self.bot.arca[id][9], 1)],
+                    ["Light Astras", 314, self.bot.arca[id][15] + self.arcaStepToItem(self.bot.arca[id][6], 1)],
+                    ["Dark Astras", 314, self.bot.arca[id][16] + self.arcaStepToItem(self.bot.arca[id][2], 1)],
+                    ["Aquila Fragment", 90, self.bot.arca[id][17] + self.arcaStepToItem(self.bot.arca[id][1], 2) + self.arcaStepToItem(self.bot.arca[id][4], 2) + self.arcaStepToItem(self.bot.arca[id][8], 2)],
+                    ["Bellator Fragment", 90, self.bot.arca[id][18] + self.arcaStepToItem(self.bot.arca[id][0], 2) + self.arcaStepToItem(self.bot.arca[id][7], 2) + self.arcaStepToItem(self.bot.arca[id][9], 2)],
+                    ["Celsus Fragment", 120, self.bot.arca[id][19] + self.arcaStepToItem(self.bot.arca[id][2], 2) + self.arcaStepToItem(self.bot.arca[id][3], 2) + self.arcaStepToItem(self.bot.arca[id][5], 2) + self.arcaStepToItem(self.bot.arca[id][6], 2)]
+                ]
+                mean = 0.0
+                msg2 = ""
+                for idt in item_show:
+                    v = min(idt[1], idt[2])
+                    mean += v / (idt[1] * 1.0)
+                    msg2 += "**{}** ▪ {} / {} ({:.2f}%)\n".format(idt[0], v, idt[1], 100.0 * v / (idt[1] * 1.0))
 
-                v = min(1370, self.bot.arca[id][10] + self.arcaDataToItem(self.bot.arca[id], 0))
-                mean = v / 1370.0
-                msg2 = "**Sephira Stones** ▪ " + str(v) + " / 1370 ({0:.2f}%)\n".format(100.0 * v / 1370.0)
+                mean = 100 * mean / (len(item_show)*1.0)
+                msg2 = "**Total Progression** ▪ {:.2f}%\n".format(mean) + msg2
 
-                v = min(628, self.bot.arca[id][11] + self.arcaStepToItem(self.bot.arca[id][4], 1) + self.arcaStepToItem(self.bot.arca[id][8], 1))
-                mean += v / 628.0
-                msg2 += "**Fire Astras** ▪ " + str(v) + " / 628 ({0:.2f}%)\n".format(100.0 * v / 628.0)
-
-                v = min(628, self.bot.arca[id][12] + self.arcaStepToItem(self.bot.arca[id][0], 1) + self.arcaStepToItem(self.bot.arca[id][7], 1))
-                mean += v / 628.0
-                msg2 += "**Water Astras** ▪ " + str(v) + " / 628 ({0:.2f}%)\n".format(100.0 * v / 628.0)
-
-                v = min(628, self.bot.arca[id][13] + self.arcaStepToItem(self.bot.arca[id][1], 1) + self.arcaStepToItem(self.bot.arca[id][5], 1))
-                mean += v / 628.0
-                msg2 += "**Earth Astras** ▪ " + str(v) + " / 628 ({0:.2f}%)\n".format(100.0 * v / 628.0)
-
-                v = min(628, self.bot.arca[id][14] + self.arcaStepToItem(self.bot.arca[id][3], 1) + self.arcaStepToItem(self.bot.arca[id][9], 1))
-                mean += v / 628.0
-                msg2 += "**Wind Astras** ▪ " + str(v) + " / 628 ({0:.2f}%)\n".format(100.0 * v / 628.0)
-
-                v = min(314, self.bot.arca[id][15] + self.arcaStepToItem(self.bot.arca[id][6], 1))
-                mean += v / 314.0
-                msg2 += "**Light Astras** ▪ " + str(v) + " / 314 ({0:.2f}%)\n".format(100.0 * v / 314.0)
-
-                v = min(314, self.bot.arca[id][16] + self.arcaStepToItem(self.bot.arca[id][2], 1))
-                mean += v / 314.0
-                msg2 += "**Dark Astras** ▪ " + str(v) + " / 314 ({0:.2f}%)\n".format(100.0 * v / 314.0)
-
-                v = min(90, self.bot.arca[id][17] + self.arcaStepToItem(self.bot.arca[id][1], 2) + self.arcaStepToItem(self.bot.arca[id][4], 2) + self.arcaStepToItem(self.bot.arca[id][8], 2))
-                mean += v / 90.0
-                msg2 += "**Aquila Fragment** ▪ " + str(v) + " / 90 ({0:.2f}%)\n".format(100.0 * v / 90.0)
-
-                v = min(90, self.bot.arca[id][18] + self.arcaStepToItem(self.bot.arca[id][0], 2) + self.arcaStepToItem(self.bot.arca[id][7], 2) + self.arcaStepToItem(self.bot.arca[id][9], 2))
-                mean += v / 90.0
-                msg2 += "**Bellator Fragment** ▪ " + str(v) + " / 90 ({0:.2f}%)\n".format(100.0 * v / 90.0)
-
-                v = min(120, self.bot.arca[id][19] + self.arcaStepToItem(self.bot.arca[id][2], 2) + self.arcaStepToItem(self.bot.arca[id][3], 2) + self.arcaStepToItem(self.bot.arca[id][5], 2) + self.arcaStepToItem(self.bot.arca[id][6], 2))
-                mean += v / 120.0
-                msg2 += "**Celsus Fragment** ▪ " + str(v) + " / 120 ({0:.2f}%)\n".format(100.0 * v / 120.0)
-
-                mean = 100 * mean / 10.0
-                msg2 = "**Total Progression** ▪ {0:.2f}%\n".format(mean) + msg2
-
-                await ctx.send(embed=self.bot.buildEmbed(title="**Arcarum Progress of " + member.display_name + "**", fields=[{'name':self.bot.getEmoteStr('summon') + " **Summons**\n", 'value':msg1}, {'name':self.bot.getEmoteStr('gold') + " **Items**\n", 'value':msg2}], inline=True, color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="**Arcarum Progress of {}**".format(member.display_name), fields=[{'name':"{} **Summons**".format(self.bot.getEmote('summon')), 'value':msg1}, {'name':"{} **Items**".format(self.bot.getEmote('gold')), 'value':msg2}], inline=True, color=self.color))
 
             except Exception as e:
                 await self.bot.sendError('arcasee', str(e))

@@ -50,9 +50,9 @@ class GBF_Game(commands.Cog):
         else: footer = ""
         r = self.getRoll(300*l)
 
-        if r == 0: msg = "Luckshitter! It's a " + self.bot.getEmoteStr('SSR')
-        elif r == 1: msg = "It's a " + self.bot.getEmoteStr('SR')
-        else: msg = "It's a " + self.bot.getEmoteStr('R') + ", too bad!"
+        if r == 0: msg = "Luckshitter! It's a {}".format(self.bot.getEmote('SSR'))
+        elif r == 1: msg = "It's a {}".format(self.bot.getEmote('SR'))
+        else: msg = "It's a {}, too bad!".format(self.bot.getEmote('R'))
 
         await ctx.send(embed=self.bot.buildEmbed(title="{} did a single roll".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
 
@@ -71,9 +71,9 @@ class GBF_Game(commands.Cog):
             if i == 9: r = self.getRoll(300*l, True)
             else: r = self.getRoll(300*l)
             if i == 5: msg += '\n'
-            if r == 0: msg += self.bot.getEmoteStr('SSR')
-            elif r == 1: msg += self.bot.getEmoteStr('SR')
-            else: msg += self.bot.getEmoteStr('R')
+            if r == 0: msg += '{}'.format(self.bot.getEmote('SSR'))
+            elif r == 1: msg += '{}'.format(self.bot.getEmote('SR'))
+            else: msg += '{}'.format(self.bot.getEmote('R'))
             i += 1
 
         await ctx.send(embed=self.bot.buildEmbed(title="{} did ten rolls".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
@@ -95,10 +95,7 @@ class GBF_Game(commands.Cog):
                 else: r = self.getRoll(300*l)
                 result[r] += 1
                 i += 1
-        msg = self.bot.getEmoteStr('SSR') + ": " + str(result[0]) + "\n"
-        msg += self.bot.getEmoteStr('SR') + ": " + str(result[1]) + "\n"
-        msg += self.bot.getEmoteStr('R') + ": " + str(result[2]) + "\n"
-        msg += "SSR rate: **{:.2f}%**\n".format(100*result[0]/300)
+        msg = "{}: {}\n{}: {}\n{}: {}\nSSR rate: **{:.2f}%**\n".format(self.bot.getEmote('SSR'), result[0], self.bot.getEmote('SR'), result[1], self.bot.getEmote('R'), result[2], 100*result[0]/300)
 
         await ctx.send(embed=self.bot.buildEmbed(title="{} sparked".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
 
@@ -125,11 +122,7 @@ class GBF_Game(commands.Cog):
                 i += 1
             if ssr_flag:
                 break
-        msg = "Gachapin stopped after **" + str(count*10) + "** rolls\n"
-        msg += self.bot.getEmoteStr('SSR') + ": " + str(result[0]) + "\n"
-        msg += self.bot.getEmoteStr('SR') + ": " + str(result[1]) + "\n"
-        msg += self.bot.getEmoteStr('R') + ": " + str(result[2]) + "\n"
-        msg += "SSR rate: **{:.2f}%**\n".format(100*result[0]/(count*10))
+        msg = "Gachapin stopped after **{}** rolls\n{}: {}\n{}: {}\n{}: {}\nSSR rate: **{:.2f}%**\n".format(count*10, self.bot.getEmote('SSR'), result[0], self.bot.getEmote('SR'), result[1], self.bot.getEmote('R'), result[2], 100*result[0]/(count*10))
 
         await ctx.send(embed=self.bot.buildEmbed(title="{} rolled the Gachapin".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
 
@@ -160,11 +153,7 @@ class GBF_Game(commands.Cog):
                 i += 1
             if limit <= 0:
                 break
-        msg = "Mukku stopped after **" + str(count*10) + "** rolls\n"
-        msg += self.bot.getEmoteStr('SSR') + ": " + str(result[0]) + "\n"
-        msg += self.bot.getEmoteStr('SR') + ": " + str(result[1]) + "\n"
-        msg += self.bot.getEmoteStr('R') + ": " + str(result[2]) + "\n"
-        msg += "SSR rate: **{:.2f}%**\n".format(100*result[0]/(count*10))
+        msg = "Mukku stopped after **{}** rolls\n{}: {}\n{}: {}\n{}: {}\nSSR rate: **{:.2f}%**\n".format(count*10, self.bot.getEmote('SSR'), result[0], self.bot.getEmote('SR'), result[1], self.bot.getEmote('R'), result[2], 100*result[0]/(count*10))
 
         await ctx.send(embed=self.bot.buildEmbed(title="{} rolled the Mukku".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
 
@@ -202,7 +191,7 @@ class GBF_Game(commands.Cog):
             try:
                 await self.bot.callCommand(ctx, 'seeRoll', 'GBF_Game')
             except Exception as e:
-                await ctx.send(embed=self.bot.buildEmbed(title="Summary", description="**" + str(crystal) + "** crystal(s)\n**" + str(single) + "** single roll ticket(s)\n**" +str(ten) + "** ten roll ticket(s)", color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="Summary", description="**{}** crystal(s)\n**{}** single roll ticket(s)\n**{}** ten roll ticket(s)".format(crystal, single, ten), color=self.color))
                 await self.bot.sendError('setRoll', str(e), 'B')
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color, footer="setRoll <crystal> [single] [ten]"))
@@ -249,30 +238,30 @@ class GBF_Game(commands.Cog):
                     t_max += timedelta(days=1)
 
             # roll count text
-            msg1 = "{} {} has {} roll".format(self.bot.getEmoteStr('crystal'), member.display_name, fr)
-            if fr != 1: msg1 += "s"
+            title = "{} {} has {} roll".format(self.bot.getEmote('crystal'), member.display_name, fr)
+            if fr != 1: title += "s"
             # flavor text
-            if r >= 1200: msg2 = "0̴̧̛͙̠͕͎̭͎̞͚̥̹̟̫̳̫̥͍͙̳̠͈̮̈̂͗̈́̾͐̉1̶̧̛̼͉̟̻̼͍̥̱͖̲̜̬̝̟̦̻̤͓̼̰̱͔̙͔̩̮̝̩̰̐̾͐͑̍̈́̈̋̒̊̔̿́͘͝ͅ0̶̨̢̢̢̨̧̨̡̧̛̛̱̲̫͕̘͍̟̞̬͍͇̜͓̹̹̗̤̗̖̻̞͈̩̪̗̬̖͍̙͙̗̩̳̩̫͕̥̘̩̲̲̩̈́̏̀̽͑̅̔̇̎͂͗̄̂̒̈̇̊̎̔͐̍̓̓̆͒͑̾̓̿̊̀̎̈́̓̂̉̎̉̋̆̇̆̍̈́͗͂̚͘͘͘̚̚̚͜͜͜͝͝͝ͅ1̷̢̧̫͖̤͉̞͓͖̱͎͔̮͔̺̺͈̜͔͇̦͍͓̲̩̼̺̹͙̪̺͉̰͚̺̗̹̝̥̱͍̥͚͓̲̻̣͈̣̥̆̑̋͒̆̆̒̐͑́̏̀̋̍̅͂̇͛̑́̏͑̑͛̈́̒͜͜͠͝͠͝ͅ0̸̧̧̻̦̱̳͖̝̣̻̩͒͂̓̒̈́̆̓̑̅̎͗̓͛͗̍̃̈́̒̈̄̄̚͠͝0̷̢̨̛͔͍̝͉̗͇̫͈̣̳̼͙͓̮̞̻̫̝͓̬̼̲̘̼̫̤͎͛̈̒͒̎͊̌̑̂̉̂̍͂̀̐̈́̓̓̃͊̈́̑̍͂̋̐͂̕͜͝͝1̵̢̡̡̧̡̨̘̖͓̭̩͍̦̭͍̭̙̜̝̙̹̰̻͖̳̱̫̦̙͓̙̺̮͈̳͇͍̹̗̬̖͇͉̳̃̏͗̉ͅ1̴̡̢̨̨̯̺͕̮͈͈̪̮̘̱͓̜̗͓͓͚͕̱̮̬͈̦̖͚̪̬̠͎̫̻̯̭̫̫̜̺̪̞̝̞͖͈͓̖͓̼̲̓̓̈̿̒̋̏̓͂̋̔̿̀̌̏̐̓͑̎̓͐̃̇͑͐̒̀̑͗̇̀̃͘͘̚͜͝ͅ0̷̨̡̡̧̨̛̣͕̖͎̱͚̦̯̻̳̠̞͇̙̣̜͎͍̬̹͖̟̖̠̘̪̞͓͖̫̣̹̫͓̯̖̯͓̻̯̘̫̣̤̤̝̘͙̣͇̯̥̓̒͐͂̄̈́̾͋͐̃̍͛̍͒̓̌̌̇̋͌͂̎̽̇́̈́̒̈́̑̿̈́̇͊̀̽̿͛́͆̊͒͒͊̀̄͌̈͑͂̄̏̿̕̚̕͘͜͠͝͠ͅ1̷̛͕͎̲̙̦͑̔̐̀̊́̊̾̊͂͊̎̀̂͊͐̍́̀̓̊͊̒͊̇̋̉̂̏͌̀̈̓̚͝ͅ1̵̡̡̡̨̧̢̳͉̺̯͓̗̞̺̯͔̯̫̠̮̭͉̗̬̝̜͙̥̠̝͈̯͍̜͉̪̺̘̈̌̏̆̄1̴̛̺̋̄͛̈́́̒̈́̊͂͊͆̍̇̔͊̐̎̇̆̃̈́̈́̌̉̈́̽͑́͑̆̋̀̽̍̎͛̿̊͊̊͛̄̄̓̌́̓́̿̓́̓͘̚̕͠͝͝͠0̸̛͓̑̍̊̒0̵̢̧̪͉̖͕͇̟͔̟͕͙̠͎̥̝̣̬͕͚̤̟͙̣̳̲͆̒͂͆̿̍̈́̕0̴̨̨̧̢̛͚̦̟̟̩̳̘̮͔̭̰̘̹̱͉͕̱̭̬̦̮͈̜̙̻̼̝͚̳͔͎͔͈̦͉̤͔͕͊̉̽̄̋͒͛͒̓̊̃̔͒͌͑̈́̆̅́̍͋̅̏̈́́͒̆̍̽͌́̕̚̕̚͜ͅ0̷̧̧̡̨̱̺̤̪̝͈̲̪̻̹̞̰̼̣̻̮̠͙͚̤̻͚̘̠͔͓͈͎̙͉̩̰͎͍̤̼̞̜̦̲͍̲̭͈̱̠͕̲̯͍͋̑̐̎̉̆̇̉̚͜͜͝ͅͅͅͅ0̶̡̲̼̦͎̬͚͉͓̻̝͙̪̪̫̭̥̰̺͈̜̝͖̭̰̤̈͂̈͌͊͛͆̔̓̉̍̍̇̃͂̇̔̿̾̒̆̓͊͊̑̍̅̔͆͝͝ͅ1̸̛̛̛̛̼͙͇̗͈͚̤̅͛͊̾͌̌̌̑̒̆̐̇̃̎̅̈́̂͋̽͗̀̐̎̒͊̏̿̓̐͆́̒̐̋̌̂͂̈̀̚͠͝1̷̡̨̧̢̡̨̝̟͚̜̞̻͙̳̻̣̱̗̬̠̘̤̪̮̻̟͔̺̥̳̯͔̲͈͉͇̥̼̘͖͉̼͙̠͓̘̯̱̜̗̼͓͓̳̠͊͌͌͛̌́̉̽̿͐̆͌̽̕͜ͅͅͅ0̴͙̩̤̳̼̼̰̲͍̝̳͎̭̙͓̙̱͉͚̯̌̋̐̒̒̍́́̏̍̈́͐̀͗̓͋̿̋̏0̵̡̧̡̢̨̣̻͖̹͕̬͉̟̰̱̬͙̪̬̰̫͖͚̩̪̘͖͓̫̣͉̮̲͎̘͓̗̥̦̞͇̖̦̩̼̮̝̙̈́͐̇̇̄̿̒̆̓̐̌̄̃̐͐̃͆̄̂̉͑͋̉͆͋̓͊̆͌̆̍̔̍͐̈́̾̓͋͗̀̈́͌̓͋̐̉͂͗̒̕̚͘͠͝͝0̸̧̢̨̡̨̧̛̖͙̰̮̙͉̬̬̪̟̮̣̫̳̭̤̞̖̩͔̰̣͇͓͓͋͂͂̄̉̀̊͂̌̍͋̒̋̋̓͂̽̌́̎̀̄̅̄̒̉͐̓͑͐̃̿̍̕̕͘͠ͅ0̸̡̢̡̧̛̪̫̺̪̩̜̜̼̘̺͚͉̩̮͍̜̪̪̪̰́̓͊̾̽̃̿̅͗̏̐̅͗̅͋̇̓̑͆͌͂̅̃͋͒̿̔͛̀̄̐͂͊̒̂͋̕̚͜͝͝͠1̷̛̛̛̫̙̝̺̹̜͕̮̺͈̏̽͛͒̃̈́͐̂̓̍͒́̑̃̒̒͋̅̐̋̌͗̎͒̓̊̉͒͒͗͋̓̓́̅̊̋̽̚͘͝͝͝͝͠0̸̧̨̢̡̧̡̧̛̼̦͓͔͍̠͇̯̘͓̮̼̠̼̫̝̮̪̹̘̘̗̬̫͍̺̭͈̜̲̭̳̜̹̖̩͋̓͋̈́́̈̍̇́͋̋̔̌̀̓̓͊͐̃̇̎́̋̈̀͛̎̒̏̊͂͗̕͝͝͝͝͠ͅ1̸̛̦̉̇̐̒̈͑̾̽͒̈̋̏̍̅̈̈́̊̂̾̀̕̚͘͘̕͝1̷̛̮̱͇̮̦̞̝̣͔̇́̍̔̄̀͂̏̿͗̎̚̕͘ͅͅ1̸̺̭̼̤̩̫̬̳͇̗̭̬̫̺͍̳̠͆̈́̔̓͋̄̈́̀̒̔̅͋̅̓̑̊͑̿̉͒͌̍̓̆͊́̚͝͝͝͝ͅ0̴̨̨̨̘̞͓̮̬̹̪͉̻͎͔̪̗͙̉̈̆̈͋͒̾̊͐̐͆̈̉̇̈́̏́̌͗̍̏̒̋̔͒͒͘̚̕͘͠͝ͅ0̴̡̧̛̭̘̞̹̮̼̼̥̫̯͚̮̙̮͓͚̝͇̆̓͂̇͂͒̆̒̂̀͆́̇̉̈́̐̀̿̌̎̿̃͛̊̄̑̃͛̍͂͒̚̚͜͜͠1̸̢̧̢̧̨̛̛̱̠̖̫̬̦̘͓͍̯̺̞͈̱̞͔̮̮̪͔͚̟̞̰̠̪͑̅̀̈́̀̈́͑̏̋̈́̂̓̄́͋̿͌̇͑̈̈͛̀̈͐̃̄͛́̊̌̂͋͒̉̀̀̍͆͒͆̈́͌̎̍̃͌͜͝͝͝͠ͅͅ0̸̻̺̱̦̖͈̯̼͙̳̤͉̬̫͖͚̲̝͖͈͉̼̺̲̬̣̘̦̺͈͕̈̅̌͂̋̋̏̀͒́͌̐̀̄͆͐̐̊́́̄́̓́̑̾͗̃͒̋̽̍̆̚̕͘͜͝͝͝ͅ0̶̨̧̨̡̗̣̬͍͈̱̣̭͉͌1̵̨̛̛̛̘͍̠̟̹͚̟͚̻͚͔̗̘̻̭͙͇̇̀͂̉̂͛̎̂́̽̒͗̑̾̊̅́͛͗̾͌̉͌́͌̔͆̊͆̍̊̔͂͑̓̊̓̋̿͌́̇̀̃́͆̐͗̿̋̑̓̚̕͜͝͝1̵̧̧̛̘͕̹̥͔̻͇͖̪̘̙̪̯̭̺͓͎̣̳̦̻̻͓͍͓̹̙̲̝̘̞̱̯̝̘̖͓̤̜̭͙͎̑̃̃̌͆̃͌̋͋̾͒̈́̎͌̈́͒̆̌͆̅̀̅͑̑̿͌̏̀̇͗̈́̚̕͜͠͝͝ͅ0̴̢̧̨̧̡̢̡̡̝̖̥̖̮̲͔͚̳͙̹̪̣̭̹̠̪̯͍͇̼͈̙̭͈̤̤̼̺̱̰̥̭̺͇̘̻͙̺̮̹͚̯̤̩̹̟̝̟́̔̊̀̊̽̓͜͜1̵̡̨̨̛̺͎̤̰̤͎̯̮͔͎͇̱̠̳͙̻̳̗̬͙̼̱͈̰͓͕͕͔͍̫̼̯͖̘͒̓̒͆̎̋̆͌͌̿̾̑̀̑̄͐̈́͑̒͗̔͋̾̿̐͑͂͊͐͆̿͑͐͗̐̑̈́̅́̍̋̎̃͂̌̃͘͘͘͘͘̕͠͠0̶̨̨̧̨̢̪͙̩̜̩̟͍̮̟̪̙͚̭̭͇̲̹̟̳͙͇̥̗̭̹̺̥͇̮̞͙̹͎̍̃̎̊̐̎͜͜͜1̸̡̨̡̢̢̧̨̠̝͉̤̹̺̠͕̹̬̝̳̟̦͙͕̯̦̟̰͚̹͙͔̫͖̹̪̙̪̞̖̠͔́͗̓͜ͅͅ1̸̢̨̛̛͍̣̠̠̭̯͈̱͕̘̼͖͖͇̠̰̟̙̪̪̳͙̞̭͉͙̓̔̈́͌͑̌͑̉̈́́͌̍̿̀͌͂̎͊̎̇̌̆̒͊͒͆͊̆́͐̕͘̕͝͠͠ :robot:\n"
-            elif r >= 1150: msg2 = "P̶̧̢̺̜̮̟̼͔͔̻̲̩͎̘̖̲̐͂̑͂͛́͑̍̊̓͌̀̃͛͊͑͋̑̽̀́̆̀̔͋̋̂̏͒̀̎̈̾͑̉̅͒̉͂̑͒̕̕̚̚͝͝͝͝͝͝͝ļ̴̡̩͓͙̪̫̥͇͈͈̪̭̣̲͇̥̪͍̫̼̟͙̱̟̤̩̬͇̬̝͇̞͆͆͆̓̾̎͌̈͆̾̅̀͐̄̇̈́̔̊́̾̈͗̊̏̊̀̀̕̚̕͜͝͝ͅe̵̡̢̨̢̨̧̨̛̛̗̪̟̼̘̤̻̭̮̙̼̞͙̲̗̟͔̠̲̦̯̖̪̪͖̱̳̼̺͎͎̬̜̤̣͍̩̫̱̪̮̰̗̲̫̾̀̀̍̈́͂͋̑͑̑͒̈́̊͊̑́̐̅̿̈́̎͗̀̔̍̔̋̍̄͊̑̆̀̏̏̈́̀̉̈̐̅̚͘͘͜͜͝͝ͅͅȧ̴̢̢̧̧̢̡̳͕̲͖̰͔̝͖̱̙͙̫̞͕̮̫̼̤̹͔̫̹͉͚̞̠̬͎̘̯̱̳̯̠̪̰͎̖̻̹̖̜̪̣͍͋̄̐̍̽̒̓̀̐̈́̚͜ͅͅs̷̢̨̡̡̢̛̛̙̫̮͙̤͎̗̭̯̭͚̖͕̰̜̱̘̥̝͖̺͇̳̥̆͒̽͒̓̅̀́̽͌͌͌͂̉͛̊͌̌̉̌̋̈̀̽̍̀̔̋̀̒͒̃̌̊̆̍̀͊̐̐̇̑̽̊͘̕̕͝ͅe̶̢̧̨̢̧̨̝̗̝̠͙̳̼̙̤͍̠͖̙̖̱̳̼̘͉͍̲̦͉̝̞̞̬̮̝̱̥̪̟̯̹̹̘͇̗̯͓̬͖͐̓͛͛̓̌̂͊̚͘͠ͅ ̴̧̢̩̪̥̺̼͙̺̱̞̩̞͕͇̰͔̙͎͈̼̠̮͓̬̺͍̥͍͙̰̮̹̔̈͒̋͂͋̇̿̀̓̏̋̋̅̓͘̚͜͠͝͝Ş̵̛̛͇̙̟̼̤̫̱͖͖̮̩̹̭̮̣̩̫̙̳̗̜͓̪̻̖͇̼͖̣̝̈̏̏̈́̍̍̃̓̒̾̎͐͗͂̑͐͆̃͐̎̽͂͆͊̐̀̎̂͗̀́̿̎̆̀̾́̃̃̌̒̍̓͌̉̍̕͘̕͝͠͝ͅp̵̡̧̙͈̗̟͚̳̱͔̳̺̟̤̞̰̺̫̤͙̜̩͚̹̰͎͚͕̭͕̀̈̈̉̎̔̇ͅͅa̷̢̧̢̧̨̙͔͇͈̭̥̦͖̭̲͎̥͈͚͖̟͓̱͚͉̰̣͍͉̰͇͔̖̲̖͙̫̰̜̯̦͆̌̋̂̀̓͊́̓̄̒̈́̓͌̅́́̀͑́͊̚̕͜ͅŗ̵̡̗̲͇̺̰̭͕̪̩͋̊̎̔͒͛̈́̿͊͂̂̏̑́̉́͒͌̑̎͐͊̒͂́̄̋́͋͂̅̅͗͊̕̚͘̕̕̚͘͠͠ͅķ̵̨̧̧̹̩͇̣͔̤̦͍͉̘̘̹̹̠̪̰͉̗̯̦̣̘͉̳̦̼̥͕̣̪̭̩̦̥͓̝̣̰͉̻̇̈́̾̈͊̈́͗̈́̈́̌̂̈́͒̏̐͆̀̔̿̉̅̈́̀̈́͌̌̈͊̐̂͒̓́̀͛̌͘̚͘͘̚͘͜͜͝͝͠͠ :robot:\n"
-            elif r >= 1100: msg2 = "Į̵̨̡̧̧̢̧̧͈͍͓͎̻͓͚̼̭̬̺̠̺̘̰̬̖̥̘̪̞̠̟̦̪͕̺̙͍͈̭͚̫̤͕̪̖̩̲̜̈́̅̍͛̽̑̐͋̀̅͂̑͋̊͂̒̊̀̂͊̈́͆̃͌̂̆̓́̒̓̈̒̍̑̂̓̕͘͘̕̕̕͝͝ͅͅt̷̨͇̥͇̭̹̀̔́̉͗̃͂̀͗̐̐̈́̎̀͘͜ ̸̡̛̗̭̫̟̫̬͇̲̳̺̗̦̭̤̠̗͓̳̥͉̗̖̰͎̩̬͚̙̯͕̟̭̗̮̤̲̭̲͉̠̦̹͎̩̤̺̖͈̘̞͇͒̂͆͆͗̂͗͛̒̏͒́͛̏͂͋̿͊̽̊͊̂̋́̐͌̇̄͛̐̐̌͒̏̔̑́͐͐͘̕͜͜͝͝͝h̸̢̡͔̗͕̻͍͚̦̪͇̺̘̗̞̭͇̰̼̠̟͉̰̤̞̞͔͙̻̯̬̬̬͓̩̻͖̞͈̙̐̊̓͒̒́͊̓̆̀͑́̌̀̊̓̿̎͛̍̅̋̔́̆̓̎̊̊́̀̄̂̾̎̍̏̒͛̆̇̉͐̏̏̂̃̕̚͘̕̚͠͝ͅŭ̷̢̯̱̤͎̦̥̜͈̉̆̏̊̄̈́̾̍̇͗̈́̈́͑̑́͌́̊̂͂̈́̉̓̐̑̃̾̽̊̂̕̕͜͝͝͝r̴̡̢̫̪͎̜͉͕̹̼̞̭̥̖̼̤̻̥͈͇̓̓͊͂͑̐̉̂̍̈́̏̓͜͝ͅţ̵̛̩̮̝̼̲͚̩̼̖̫̖͔̪̘̫͍̗̭̦̪͒͐̆̔͛̋̑̒̄̓̏̃̎̓̈́͛̇͛͋͗̅̏̊́̿̐͐͌͑͐̎̏̀̏͐̔̊̎̆̽̓̀̄̌́͘͜͝͝͝ͅs̸̛͚̣͛̀́́̌͌̏͌̉̐̒͑͋̐̍̚̕͝ :robot:\n"
-            elif r >= 1050: msg2 = "S̷̨̧̢̯̝̱̩̥̺̹̜̬̳̜̳̞̪̳̘̼͓̭͖̮̱͈̼̫̰̘̟̻̞͈̩͔̻̯̥̜͔̭̰̾͌̌̊̍͊͛̊̉̀͛̑̍͆̂̐̔̈̍̅̎̐͊̐̓͂̀͒̾̑̄͗͛̄͊̑̿̿̉́̉̌͋̂̕͜͜͝͠ͅͅţ̸̢̨̢̨̨̳̳̮͉̰͖͈͓͈̖̗̻̭̺̳̮̜͕͕͚̜͎̳͇̹̪̪̯͓̤͔͖͇̣̼̬̺͙̞͉͋͊͐͆̽͜͜ơ̵̡̨̧̰̫͔͓̘̗̺͚̺͓̠̹̤̻̟͖̮͎͎̰̦̤̥̘̹̼̗̭͓̻͈͔̱̈́̔͒͗̈͒̈́͛̎̋͛̌̏͂͂̊͊͊̓̏̈́̑̆͗͊̄̎͒̌̎̈́̀̆͑̒̾͌͂́͌̽̋̕̚̚̕͠͝͝͝͝ṕ̶̨͈̜̰̓̾̏̍̐̊̾̃͑̏̂̐̽̔͋̽̀̈́̍̾͊̑̃̽́̈́̚͜͠͠͝ ̴̛͍͙̺̳͚̖͉̝̜̦̘̥̭̤̹̂̈́̌̀̂͌̑̔͊̅̾͗̊̈͝ņ̵̧̢̳̣̥̙̭̭̖̖̲͓̦̗̩̝͉̦̣͉̬̗̙̘̪̲͖̜̟̫͓̖̦̣̩̝͙̫͈́̋̽͂̓͐͌̀̂̌̑̏͌̍̑̿̒̌͗̽͆͐̈́̆̅̋̆̽̍̅̅̃̑̈́̍̃͘͜͜͝ͅö̵͈́w̷̧̧̧̢̛̛̗̺̪͍̬̪͚͇͇̯͈͓̰̯̻̭̹̺̞̣͍͇̯̪̮̬̙͓̤̱̘̱͓̫̅̈̓͛͗̋̐̓̑̎́̓͆͒͂́̈́̈́͗́̌̌͂͊̄̊̈́̋͌́̓̌̒̑̆̐́̐͛̆̈́̓̓̚̚͝͠͝͝͝͠͝ͅͅͅ :robot: \n"
-            elif r >= 1000: msg2 = "ReAcHiNg CrItIcAl :robot:\n"
-            elif r >= 900: msg2 = "Will you spark soon? :skull:\n"
-            elif r >= 600: msg2 = "**STOP HOARDING** :confounded:\n"
-            elif r >= 350: msg2 = "What are you waiting for? :thinking:\n"
-            elif r >= 300: msg2 = "Dickpick or e-sport pick? :smirk:\n"
-            elif r >= 250: msg2 = "Almost! :blush: \n"
-            elif r >= 220: msg2 = "One more month :thumbsup: \n"
-            elif r >= 180: msg2 = "You are getting close :ok_hand: \n"
-            elif r >= 150: msg2 = "Half-way done :relieved:\n"
-            elif r >= 100: msg2 = "Stay strong :wink:\n"
-            elif r >= 50: msg2 = "You better save these rolls :spy: \n"
-            elif r >= 20: msg2 = "Start saving **NOW** :rage:\n"
-            else: msg2 = "Pathetic :nauseated_face: \n"
+            if r >= 1200: description = "0̴̧̛͙̠͕͎̭͎̞͚̥̹̟̫̳̫̥͍͙̳̠͈̮̈̂͗̈́̾͐̉1̶̧̛̼͉̟̻̼͍̥̱͖̲̜̬̝̟̦̻̤͓̼̰̱͔̙͔̩̮̝̩̰̐̾͐͑̍̈́̈̋̒̊̔̿́͘͝ͅ0̶̨̢̢̢̨̧̨̡̧̛̛̱̲̫͕̘͍̟̞̬͍͇̜͓̹̹̗̤̗̖̻̞͈̩̪̗̬̖͍̙͙̗̩̳̩̫͕̥̘̩̲̲̩̈́̏̀̽͑̅̔̇̎͂͗̄̂̒̈̇̊̎̔͐̍̓̓̆͒͑̾̓̿̊̀̎̈́̓̂̉̎̉̋̆̇̆̍̈́͗͂̚͘͘͘̚̚̚͜͜͜͝͝͝ͅ1̷̢̧̫͖̤͉̞͓͖̱͎͔̮͔̺̺͈̜͔͇̦͍͓̲̩̼̺̹͙̪̺͉̰͚̺̗̹̝̥̱͍̥͚͓̲̻̣͈̣̥̆̑̋͒̆̆̒̐͑́̏̀̋̍̅͂̇͛̑́̏͑̑͛̈́̒͜͜͠͝͠͝ͅ0̸̧̧̻̦̱̳͖̝̣̻̩͒͂̓̒̈́̆̓̑̅̎͗̓͛͗̍̃̈́̒̈̄̄̚͠͝0̷̢̨̛͔͍̝͉̗͇̫͈̣̳̼͙͓̮̞̻̫̝͓̬̼̲̘̼̫̤͎͛̈̒͒̎͊̌̑̂̉̂̍͂̀̐̈́̓̓̃͊̈́̑̍͂̋̐͂̕͜͝͝1̵̢̡̡̧̡̨̘̖͓̭̩͍̦̭͍̭̙̜̝̙̹̰̻͖̳̱̫̦̙͓̙̺̮͈̳͇͍̹̗̬̖͇͉̳̃̏͗̉ͅ1̴̡̢̨̨̯̺͕̮͈͈̪̮̘̱͓̜̗͓͓͚͕̱̮̬͈̦̖͚̪̬̠͎̫̻̯̭̫̫̜̺̪̞̝̞͖͈͓̖͓̼̲̓̓̈̿̒̋̏̓͂̋̔̿̀̌̏̐̓͑̎̓͐̃̇͑͐̒̀̑͗̇̀̃͘͘̚͜͝ͅ0̷̨̡̡̧̨̛̣͕̖͎̱͚̦̯̻̳̠̞͇̙̣̜͎͍̬̹͖̟̖̠̘̪̞͓͖̫̣̹̫͓̯̖̯͓̻̯̘̫̣̤̤̝̘͙̣͇̯̥̓̒͐͂̄̈́̾͋͐̃̍͛̍͒̓̌̌̇̋͌͂̎̽̇́̈́̒̈́̑̿̈́̇͊̀̽̿͛́͆̊͒͒͊̀̄͌̈͑͂̄̏̿̕̚̕͘͜͠͝͠ͅ1̷̛͕͎̲̙̦͑̔̐̀̊́̊̾̊͂͊̎̀̂͊͐̍́̀̓̊͊̒͊̇̋̉̂̏͌̀̈̓̚͝ͅ1̵̡̡̡̨̧̢̳͉̺̯͓̗̞̺̯͔̯̫̠̮̭͉̗̬̝̜͙̥̠̝͈̯͍̜͉̪̺̘̈̌̏̆̄1̴̛̺̋̄͛̈́́̒̈́̊͂͊͆̍̇̔͊̐̎̇̆̃̈́̈́̌̉̈́̽͑́͑̆̋̀̽̍̎͛̿̊͊̊͛̄̄̓̌́̓́̿̓́̓͘̚̕͠͝͝͠0̸̛͓̑̍̊̒0̵̢̧̪͉̖͕͇̟͔̟͕͙̠͎̥̝̣̬͕͚̤̟͙̣̳̲͆̒͂͆̿̍̈́̕0̴̨̨̧̢̛͚̦̟̟̩̳̘̮͔̭̰̘̹̱͉͕̱̭̬̦̮͈̜̙̻̼̝͚̳͔͎͔͈̦͉̤͔͕͊̉̽̄̋͒͛͒̓̊̃̔͒͌͑̈́̆̅́̍͋̅̏̈́́͒̆̍̽͌́̕̚̕̚͜ͅ0̷̧̧̡̨̱̺̤̪̝͈̲̪̻̹̞̰̼̣̻̮̠͙͚̤̻͚̘̠͔͓͈͎̙͉̩̰͎͍̤̼̞̜̦̲͍̲̭͈̱̠͕̲̯͍͋̑̐̎̉̆̇̉̚͜͜͝ͅͅͅͅ0̶̡̲̼̦͎̬͚͉͓̻̝͙̪̪̫̭̥̰̺͈̜̝͖̭̰̤̈͂̈͌͊͛͆̔̓̉̍̍̇̃͂̇̔̿̾̒̆̓͊͊̑̍̅̔͆͝͝ͅ1̸̛̛̛̛̼͙͇̗͈͚̤̅͛͊̾͌̌̌̑̒̆̐̇̃̎̅̈́̂͋̽͗̀̐̎̒͊̏̿̓̐͆́̒̐̋̌̂͂̈̀̚͠͝1̷̡̨̧̢̡̨̝̟͚̜̞̻͙̳̻̣̱̗̬̠̘̤̪̮̻̟͔̺̥̳̯͔̲͈͉͇̥̼̘͖͉̼͙̠͓̘̯̱̜̗̼͓͓̳̠͊͌͌͛̌́̉̽̿͐̆͌̽̕͜ͅͅͅ0̴͙̩̤̳̼̼̰̲͍̝̳͎̭̙͓̙̱͉͚̯̌̋̐̒̒̍́́̏̍̈́͐̀͗̓͋̿̋̏0̵̡̧̡̢̨̣̻͖̹͕̬͉̟̰̱̬͙̪̬̰̫͖͚̩̪̘͖͓̫̣͉̮̲͎̘͓̗̥̦̞͇̖̦̩̼̮̝̙̈́͐̇̇̄̿̒̆̓̐̌̄̃̐͐̃͆̄̂̉͑͋̉͆͋̓͊̆͌̆̍̔̍͐̈́̾̓͋͗̀̈́͌̓͋̐̉͂͗̒̕̚͘͠͝͝0̸̧̢̨̡̨̧̛̖͙̰̮̙͉̬̬̪̟̮̣̫̳̭̤̞̖̩͔̰̣͇͓͓͋͂͂̄̉̀̊͂̌̍͋̒̋̋̓͂̽̌́̎̀̄̅̄̒̉͐̓͑͐̃̿̍̕̕͘͠ͅ0̸̡̢̡̧̛̪̫̺̪̩̜̜̼̘̺͚͉̩̮͍̜̪̪̪̰́̓͊̾̽̃̿̅͗̏̐̅͗̅͋̇̓̑͆͌͂̅̃͋͒̿̔͛̀̄̐͂͊̒̂͋̕̚͜͝͝͠1̷̛̛̛̫̙̝̺̹̜͕̮̺͈̏̽͛͒̃̈́͐̂̓̍͒́̑̃̒̒͋̅̐̋̌͗̎͒̓̊̉͒͒͗͋̓̓́̅̊̋̽̚͘͝͝͝͝͠0̸̧̨̢̡̧̡̧̛̼̦͓͔͍̠͇̯̘͓̮̼̠̼̫̝̮̪̹̘̘̗̬̫͍̺̭͈̜̲̭̳̜̹̖̩͋̓͋̈́́̈̍̇́͋̋̔̌̀̓̓͊͐̃̇̎́̋̈̀͛̎̒̏̊͂͗̕͝͝͝͝͠ͅ1̸̛̦̉̇̐̒̈͑̾̽͒̈̋̏̍̅̈̈́̊̂̾̀̕̚͘͘̕͝1̷̛̮̱͇̮̦̞̝̣͔̇́̍̔̄̀͂̏̿͗̎̚̕͘ͅͅ1̸̺̭̼̤̩̫̬̳͇̗̭̬̫̺͍̳̠͆̈́̔̓͋̄̈́̀̒̔̅͋̅̓̑̊͑̿̉͒͌̍̓̆͊́̚͝͝͝͝ͅ0̴̨̨̨̘̞͓̮̬̹̪͉̻͎͔̪̗͙̉̈̆̈͋͒̾̊͐̐͆̈̉̇̈́̏́̌͗̍̏̒̋̔͒͒͘̚̕͘͠͝ͅ0̴̡̧̛̭̘̞̹̮̼̼̥̫̯͚̮̙̮͓͚̝͇̆̓͂̇͂͒̆̒̂̀͆́̇̉̈́̐̀̿̌̎̿̃͛̊̄̑̃͛̍͂͒̚̚͜͜͠1̸̢̧̢̧̨̛̛̱̠̖̫̬̦̘͓͍̯̺̞͈̱̞͔̮̮̪͔͚̟̞̰̠̪͑̅̀̈́̀̈́͑̏̋̈́̂̓̄́͋̿͌̇͑̈̈͛̀̈͐̃̄͛́̊̌̂͋͒̉̀̀̍͆͒͆̈́͌̎̍̃͌͜͝͝͝͠ͅͅ0̸̻̺̱̦̖͈̯̼͙̳̤͉̬̫͖͚̲̝͖͈͉̼̺̲̬̣̘̦̺͈͕̈̅̌͂̋̋̏̀͒́͌̐̀̄͆͐̐̊́́̄́̓́̑̾͗̃͒̋̽̍̆̚̕͘͜͝͝͝ͅ0̶̨̧̨̡̗̣̬͍͈̱̣̭͉͌1̵̨̛̛̛̘͍̠̟̹͚̟͚̻͚͔̗̘̻̭͙͇̇̀͂̉̂͛̎̂́̽̒͗̑̾̊̅́͛͗̾͌̉͌́͌̔͆̊͆̍̊̔͂͑̓̊̓̋̿͌́̇̀̃́͆̐͗̿̋̑̓̚̕͜͝͝1̵̧̧̛̘͕̹̥͔̻͇͖̪̘̙̪̯̭̺͓͎̣̳̦̻̻͓͍͓̹̙̲̝̘̞̱̯̝̘̖͓̤̜̭͙͎̑̃̃̌͆̃͌̋͋̾͒̈́̎͌̈́͒̆̌͆̅̀̅͑̑̿͌̏̀̇͗̈́̚̕͜͠͝͝ͅ0̴̢̧̨̧̡̢̡̡̝̖̥̖̮̲͔͚̳͙̹̪̣̭̹̠̪̯͍͇̼͈̙̭͈̤̤̼̺̱̰̥̭̺͇̘̻͙̺̮̹͚̯̤̩̹̟̝̟́̔̊̀̊̽̓͜͜1̵̡̨̨̛̺͎̤̰̤͎̯̮͔͎͇̱̠̳͙̻̳̗̬͙̼̱͈̰͓͕͕͔͍̫̼̯͖̘͒̓̒͆̎̋̆͌͌̿̾̑̀̑̄͐̈́͑̒͗̔͋̾̿̐͑͂͊͐͆̿͑͐͗̐̑̈́̅́̍̋̎̃͂̌̃͘͘͘͘͘̕͠͠0̶̨̨̧̨̢̪͙̩̜̩̟͍̮̟̪̙͚̭̭͇̲̹̟̳͙͇̥̗̭̹̺̥͇̮̞͙̹͎̍̃̎̊̐̎͜͜͜1̸̡̨̡̢̢̧̨̠̝͉̤̹̺̠͕̹̬̝̳̟̦͙͕̯̦̟̰͚̹͙͔̫͖̹̪̙̪̞̖̠͔́͗̓͜ͅͅ1̸̢̨̛̛͍̣̠̠̭̯͈̱͕̘̼͖͖͇̠̰̟̙̪̪̳͙̞̭͉͙̓̔̈́͌͑̌͑̉̈́́͌̍̿̀͌͂̎͊̎̇̌̆̒͊͒͆͊̆́͐̕͘̕͝͠͠ :robot:\n"
+            elif r >= 1150: description = "P̶̧̢̺̜̮̟̼͔͔̻̲̩͎̘̖̲̐͂̑͂͛́͑̍̊̓͌̀̃͛͊͑͋̑̽̀́̆̀̔͋̋̂̏͒̀̎̈̾͑̉̅͒̉͂̑͒̕̕̚̚͝͝͝͝͝͝͝ļ̴̡̩͓͙̪̫̥͇͈͈̪̭̣̲͇̥̪͍̫̼̟͙̱̟̤̩̬͇̬̝͇̞͆͆͆̓̾̎͌̈͆̾̅̀͐̄̇̈́̔̊́̾̈͗̊̏̊̀̀̕̚̕͜͝͝ͅe̵̡̢̨̢̨̧̨̛̛̗̪̟̼̘̤̻̭̮̙̼̞͙̲̗̟͔̠̲̦̯̖̪̪͖̱̳̼̺͎͎̬̜̤̣͍̩̫̱̪̮̰̗̲̫̾̀̀̍̈́͂͋̑͑̑͒̈́̊͊̑́̐̅̿̈́̎͗̀̔̍̔̋̍̄͊̑̆̀̏̏̈́̀̉̈̐̅̚͘͘͜͜͝͝ͅͅȧ̴̢̢̧̧̢̡̳͕̲͖̰͔̝͖̱̙͙̫̞͕̮̫̼̤̹͔̫̹͉͚̞̠̬͎̘̯̱̳̯̠̪̰͎̖̻̹̖̜̪̣͍͋̄̐̍̽̒̓̀̐̈́̚͜ͅͅs̷̢̨̡̡̢̛̛̙̫̮͙̤͎̗̭̯̭͚̖͕̰̜̱̘̥̝͖̺͇̳̥̆͒̽͒̓̅̀́̽͌͌͌͂̉͛̊͌̌̉̌̋̈̀̽̍̀̔̋̀̒͒̃̌̊̆̍̀͊̐̐̇̑̽̊͘̕̕͝ͅe̶̢̧̨̢̧̨̝̗̝̠͙̳̼̙̤͍̠͖̙̖̱̳̼̘͉͍̲̦͉̝̞̞̬̮̝̱̥̪̟̯̹̹̘͇̗̯͓̬͖͐̓͛͛̓̌̂͊̚͘͠ͅ ̴̧̢̩̪̥̺̼͙̺̱̞̩̞͕͇̰͔̙͎͈̼̠̮͓̬̺͍̥͍͙̰̮̹̔̈͒̋͂͋̇̿̀̓̏̋̋̅̓͘̚͜͠͝͝Ş̵̛̛͇̙̟̼̤̫̱͖͖̮̩̹̭̮̣̩̫̙̳̗̜͓̪̻̖͇̼͖̣̝̈̏̏̈́̍̍̃̓̒̾̎͐͗͂̑͐͆̃͐̎̽͂͆͊̐̀̎̂͗̀́̿̎̆̀̾́̃̃̌̒̍̓͌̉̍̕͘̕͝͠͝ͅp̵̡̧̙͈̗̟͚̳̱͔̳̺̟̤̞̰̺̫̤͙̜̩͚̹̰͎͚͕̭͕̀̈̈̉̎̔̇ͅͅa̷̢̧̢̧̨̙͔͇͈̭̥̦͖̭̲͎̥͈͚͖̟͓̱͚͉̰̣͍͉̰͇͔̖̲̖͙̫̰̜̯̦͆̌̋̂̀̓͊́̓̄̒̈́̓͌̅́́̀͑́͊̚̕͜ͅŗ̵̡̗̲͇̺̰̭͕̪̩͋̊̎̔͒͛̈́̿͊͂̂̏̑́̉́͒͌̑̎͐͊̒͂́̄̋́͋͂̅̅͗͊̕̚͘̕̕̚͘͠͠ͅķ̵̨̧̧̹̩͇̣͔̤̦͍͉̘̘̹̹̠̪̰͉̗̯̦̣̘͉̳̦̼̥͕̣̪̭̩̦̥͓̝̣̰͉̻̇̈́̾̈͊̈́͗̈́̈́̌̂̈́͒̏̐͆̀̔̿̉̅̈́̀̈́͌̌̈͊̐̂͒̓́̀͛̌͘̚͘͘̚͘͜͜͝͝͠͠ :robot:\n"
+            elif r >= 1100: description = "Į̵̨̡̧̧̢̧̧͈͍͓͎̻͓͚̼̭̬̺̠̺̘̰̬̖̥̘̪̞̠̟̦̪͕̺̙͍͈̭͚̫̤͕̪̖̩̲̜̈́̅̍͛̽̑̐͋̀̅͂̑͋̊͂̒̊̀̂͊̈́͆̃͌̂̆̓́̒̓̈̒̍̑̂̓̕͘͘̕̕̕͝͝ͅͅt̷̨͇̥͇̭̹̀̔́̉͗̃͂̀͗̐̐̈́̎̀͘͜ ̸̡̛̗̭̫̟̫̬͇̲̳̺̗̦̭̤̠̗͓̳̥͉̗̖̰͎̩̬͚̙̯͕̟̭̗̮̤̲̭̲͉̠̦̹͎̩̤̺̖͈̘̞͇͒̂͆͆͗̂͗͛̒̏͒́͛̏͂͋̿͊̽̊͊̂̋́̐͌̇̄͛̐̐̌͒̏̔̑́͐͐͘̕͜͜͝͝͝h̸̢̡͔̗͕̻͍͚̦̪͇̺̘̗̞̭͇̰̼̠̟͉̰̤̞̞͔͙̻̯̬̬̬͓̩̻͖̞͈̙̐̊̓͒̒́͊̓̆̀͑́̌̀̊̓̿̎͛̍̅̋̔́̆̓̎̊̊́̀̄̂̾̎̍̏̒͛̆̇̉͐̏̏̂̃̕̚͘̕̚͠͝ͅŭ̷̢̯̱̤͎̦̥̜͈̉̆̏̊̄̈́̾̍̇͗̈́̈́͑̑́͌́̊̂͂̈́̉̓̐̑̃̾̽̊̂̕̕͜͝͝͝r̴̡̢̫̪͎̜͉͕̹̼̞̭̥̖̼̤̻̥͈͇̓̓͊͂͑̐̉̂̍̈́̏̓͜͝ͅţ̵̛̩̮̝̼̲͚̩̼̖̫̖͔̪̘̫͍̗̭̦̪͒͐̆̔͛̋̑̒̄̓̏̃̎̓̈́͛̇͛͋͗̅̏̊́̿̐͐͌͑͐̎̏̀̏͐̔̊̎̆̽̓̀̄̌́͘͜͝͝͝ͅs̸̛͚̣͛̀́́̌͌̏͌̉̐̒͑͋̐̍̚̕͝ :robot:\n"
+            elif r >= 1050: description = "S̷̨̧̢̯̝̱̩̥̺̹̜̬̳̜̳̞̪̳̘̼͓̭͖̮̱͈̼̫̰̘̟̻̞͈̩͔̻̯̥̜͔̭̰̾͌̌̊̍͊͛̊̉̀͛̑̍͆̂̐̔̈̍̅̎̐͊̐̓͂̀͒̾̑̄͗͛̄͊̑̿̿̉́̉̌͋̂̕͜͜͝͠ͅͅţ̸̢̨̢̨̨̳̳̮͉̰͖͈͓͈̖̗̻̭̺̳̮̜͕͕͚̜͎̳͇̹̪̪̯͓̤͔͖͇̣̼̬̺͙̞͉͋͊͐͆̽͜͜ơ̵̡̨̧̰̫͔͓̘̗̺͚̺͓̠̹̤̻̟͖̮͎͎̰̦̤̥̘̹̼̗̭͓̻͈͔̱̈́̔͒͗̈͒̈́͛̎̋͛̌̏͂͂̊͊͊̓̏̈́̑̆͗͊̄̎͒̌̎̈́̀̆͑̒̾͌͂́͌̽̋̕̚̚̕͠͝͝͝͝ṕ̶̨͈̜̰̓̾̏̍̐̊̾̃͑̏̂̐̽̔͋̽̀̈́̍̾͊̑̃̽́̈́̚͜͠͠͝ ̴̛͍͙̺̳͚̖͉̝̜̦̘̥̭̤̹̂̈́̌̀̂͌̑̔͊̅̾͗̊̈͝ņ̵̧̢̳̣̥̙̭̭̖̖̲͓̦̗̩̝͉̦̣͉̬̗̙̘̪̲͖̜̟̫͓̖̦̣̩̝͙̫͈́̋̽͂̓͐͌̀̂̌̑̏͌̍̑̿̒̌͗̽͆͐̈́̆̅̋̆̽̍̅̅̃̑̈́̍̃͘͜͜͝ͅö̵͈́w̷̧̧̧̢̛̛̗̺̪͍̬̪͚͇͇̯͈͓̰̯̻̭̹̺̞̣͍͇̯̪̮̬̙͓̤̱̘̱͓̫̅̈̓͛͗̋̐̓̑̎́̓͆͒͂́̈́̈́͗́̌̌͂͊̄̊̈́̋͌́̓̌̒̑̆̐́̐͛̆̈́̓̓̚̚͝͠͝͝͝͠͝ͅͅͅ :robot: \n"
+            elif r >= 1000: description = "ReAcHiNg CrItIcAl :robot:\n"
+            elif r >= 900: description = "Will you spark soon? :skull:\n"
+            elif r >= 600: description = "**STOP HOARDING** :confounded:\n"
+            elif r >= 350: description = "What are you waiting for? :thinking:\n"
+            elif r >= 300: description = "Dickpick or e-sport pick? :smirk:\n"
+            elif r >= 250: description = "Almost! :blush: \n"
+            elif r >= 220: description = "One more month :thumbsup: \n"
+            elif r >= 180: description = "You are getting close :ok_hand: \n"
+            elif r >= 150: description = "Half-way done :relieved:\n"
+            elif r >= 100: description = "Stay strong :wink:\n"
+            elif r >= 50: description = "You better save these rolls :spy: \n"
+            elif r >= 20: description = "Start saving **NOW** :rage:\n"
+            else: description = "Pathetic :nauseated_face: \n"
             # estimation text
-            msg3 = "Next spark between {}/{}/{} and {}/{}/{}".format(t_min.year, t_min.month, t_min.day, t_max.year, t_max.month, t_max.day)
+            footer = "Next spark between {}/{}/{} and {}/{}/{}".format(t_min.year, t_min.month, t_min.day, t_max.year, t_max.month, t_max.day)
             # sending
-            await ctx.send(embed=self.bot.buildEmbed(title=msg1, description=msg2, footer=msg3, color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title=title, description=description, footer=footer, color=self.color))
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I warned my owner", color=self.color, footer=str(e)))
             await self.bot.sendError('seeRoll', str(e))
@@ -303,13 +292,13 @@ class GBF_Game(commands.Cog):
                 return
             ar = -1
             i = 0
-            emotes = {0:self.bot.getEmoteStr('SSR'), 1:self.bot.getEmoteStr('SR'), 2:self.bot.getEmoteStr('R')}
+            emotes = {0:self.bot.getEmote('SSR'), 1:self.bot.getEmote('SR'), 2:self.bot.getEmote('R')}
             msg = ""
             top = 15
             for key, value in sorted(ranking.items(), key = itemgetter(1), reverse = True):
                 if i < top:
                     fr = math.floor(value)
-                    msg += "**#" + str(i+1).ljust(2) + emotes.pop(i, "▪") + " " + guild.get_member(int(key)).display_name + "** with " + str(fr) + " roll"
+                    msg += "**#{:<2}{} {}** with {} roll".format(i+1, emotes.pop(i, "▪"), guild.get_member(int(key)).display_name, fr)
                     if fr != 1: msg += "s"
                     msg += "\n"
                 if key == str(ctx.message.author.id):
@@ -318,10 +307,10 @@ class GBF_Game(commands.Cog):
                 i += 1
                 if i >= 100:
                     break
-            if ar >= top: footer = "You are ranked #" + str(ar+1)
+            if ar >= top: footer = "You are ranked #{}".format(ar+1)
             elif ar == -1: footer = "You aren't ranked ▪ You need at least one roll to be ranked"
             else: footer = ""
-            await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('crown') + " Spark ranking of " + guild.name, color=self.color, description=msg, footer=footer, thumbnail=guild.icon_url))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} Spark ranking of {}".format(self.bot.getEmote('crown'), guild.name), color=self.color, description=msg, footer=footer, thumbnail=guild.icon_url))
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Sorry, something went wrong :bow:", footer=str(e)))
             await self.bot.sendError("rollRanking", str(e))
@@ -351,38 +340,12 @@ class GBF_Game(commands.Cog):
         except:
             pass
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True, aliases=['yawn', 'mig', 'mizako', 'miza', 'xenn', 'rubbfish', 'rubb', 'snak', 'snakdol', 'xell', 'kins', 'pics', 'roli', 'fresh', 'scrub', 'scrubp', 'milk', 'chen', 'marie', 'kinssim', 'tori', 'leader', 'simova', 'simo', 'den', 'snacks', 'varuna'])
-    @isDisabled()
-    @commands.cooldown(3, 180, commands.BucketType.user)
-    @commands.cooldown(1, 50, commands.BucketType.guild)
-    async def selfping(self, ctx):
-        """Bully trap"""
-        try:
-            if ctx.author.id == self.bot.ids['owner']: return
-            guild = ctx.message.author.guild
-            author = ctx.message.author
-            ch = guild.text_channels
-            chlist = [] # build a list of channels where is the author
-            for c in ch:
-                if c.permissions_for(guild.me).send_messages and author in c.members:
-                    chlist.append(c)
-
-            msg = author.mention # get the ping for the author
-            n = random.randint(4, 6) # number between 4 and 6
-            await self.bot.react(ctx, 'kmr') # reaction
-            await asyncio.sleep(1) # wait one second
-            for i in range(0, n):
-                await random.choice(chlist).send(msg) # send the ping in a random channel
-                await asyncio.sleep(1) # wait one second
-        except:
-            pass
-
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 180, commands.BucketType.user)
     async def quota(self, ctx):
         """Give you your GW quota for the day"""
         if ctx.author.id == self.bot.ids['yawn']:
-            await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " " + ctx.author.display_name + " is a bad boy", description="Your account is **restricted.**", thumbnail=ctx.author.avatar_url ,color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} {} is a bad boy".format(self.bot.getEmote('gw'), ctx.author.display_name), description="Your account is **restricted.**", thumbnail=ctx.author.avatar_url ,color=self.color))
             return
 
         h = random.randint(300, 2000)
@@ -393,7 +356,7 @@ class GBF_Game(commands.Cog):
             c = 7
 
         if c == 1:
-            await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " " + ctx.author.display_name + "'s daily quota", description="You got a **free leech pass**\nCongratulations", thumbnail=ctx.author.avatar_url ,color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} {}'s daily quota".format(self.bot.getEmote('gw'), ctx.author.display_name), description="You got a **free leech pass**\nCongratulations", thumbnail=ctx.author.avatar_url ,color=self.color))
             return
         elif c == 2:
             h = h * random.randint(30, 50)
@@ -430,7 +393,7 @@ class GBF_Game(commands.Cog):
             elif c == 3: m = 666
             elif c == 4: m = 6666
 
-        await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " " + ctx.author.display_name + "'s daily quota", description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.avatar_url ,color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="{} {}'s daily quota".format(self.bot.getEmote('gw'), ctx.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.avatar_url ,color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isGBFGgeneralAndMod()
@@ -456,31 +419,8 @@ class GBF_Game(commands.Cog):
     async def character(self, ctx):
         """Generate a random GBF character"""
         seed = (ctx.author.id + int(datetime.utcnow().timestamp()) // 86400) % 4428
+        rarity = ['SSR', 'SR', 'R']
+        race = ['Human', 'Erun', 'Draph', 'Harvin', 'Primal', 'Other']
+        element = ['fire', 'water', 'earth', 'wind', 'light', 'dark']
 
-        msg = "**Rarity** ▪ "
-        rare = seed % 3
-        if rare == 0: msg += self.bot.getEmoteStr('SSR')
-        elif rare == 1: msg += self.bot.getEmoteStr('SR')
-        elif rare == 2: msg += self.bot.getEmoteStr('R')
-        
-        msg += "\n**Race** ▪ "
-        r = (seed - 1) % 6
-        if r == 0: msg += 'Human'
-        elif r == 1: msg += 'Erun'
-        elif r == 2: msg += 'Draph'
-        elif r == 3: msg += 'Harvin'
-        elif r == 4: msg += 'Primal'
-        elif r == 5: msg += 'Unknown'
-        
-        msg += "\n**Element** ▪ "
-        r = (seed - 3) % 6
-        if r == 0: msg += self.bot.getEmoteStr('fire')
-        elif r == 1: msg += self.bot.getEmoteStr('water')
-        elif r == 2: msg += self.bot.getEmoteStr('earth')
-        elif r == 3: msg += self.bot.getEmoteStr('wind')
-        elif r == 4: msg += self.bot.getEmoteStr('light')
-        elif r == 5: msg += self.bot.getEmoteStr('dark')
-        
-        msg += "\n**Rating** ▪ {0:.1f}".format(((seed % 41) * 0.1) + 6.0 - rare * 1.5)
-
-        await ctx.send(embed=self.bot.buildEmbed(author={'name':ctx.author.display_name + "'s daily character", 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="**Rarity** ▪ {}\n**Race** ▪ {}\n**Element** ▪ {}\n**Rating** ▪ {:.1f}".format(self.bot.getEmote(rarity[seed % 3]), race[(seed - 1) % 6], self.bot.getEmote(element[(seed - 3) % 6]), ((seed % 41) * 0.1) + 6.0 - (seed % 3) * 1.5), inline=True, color=self.color))

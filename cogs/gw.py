@@ -114,9 +114,9 @@ class GW(commands.Cog):
                     if (current_time - self.bot.gw['buffs'][0][0]) < timedelta(seconds=200):
                         if self.bot.gw['buffs'][0][1]:
                             for r in buff_role:
-                                msg += self.bot.getEmoteStr(r[1]) + ' ' + r[0].mention + ' '
+                                msg += "{} {} ".format(self.bot.getEmote(r[1]), r[0].mention)
                         if self.bot.gw['buffs'][0][2]:
-                            msg += self.bot.getEmoteStr('foace') + ' ' + fo_role.mention + ' '
+                            msg += "{} {} ".format(self.bot.getEmote('foace'), fo_role.mention)
                         if self.bot.gw['buffs'][0][4]:
                             if self.bot.gw['buffs'][0][3]:
                                 msg += '**DOUBLE** buffs in 5 minutes'
@@ -151,14 +151,14 @@ class GW(commands.Cog):
 
     def buildDayList(self): # used by the gw schedule command
         return [
-            [self.bot.getEmoteStr('kmr') + " Ban Wave", "BW", ""],
-            [self.bot.getEmoteStr('gold') + " Preliminaries", "Preliminaries", "Interlude"],
-            [self.bot.getEmoteStr('wood') + " Interlude", "Interlude", "Day 1"],
-            [self.bot.getEmoteStr('1') + " Day 1", "Day 1", "Day 2"],
-            [self.bot.getEmoteStr('2') + " Day 2", "Day 2", "Day 3"],
-            [self.bot.getEmoteStr('3') + " Day 3", "Day 3", "Day 4"],
-            [self.bot.getEmoteStr('4') + " Day 4", "Day 4", "Day 5"],
-            [self.bot.getEmoteStr('red') + " Final Rally", "Day 5", "End"]
+            ["{} Ban Wave".format(self.bot.getEmote('kmr')), "BW", ""],
+            ["{} Preliminaries".format(self.bot.getEmote('gold')), "Preliminaries", "Interlude"],
+            ["{} Interlude".format(self.bot.getEmote('wood')), "Interlude", "Day 1"],
+            ["{} Day 1".format(self.bot.getEmote('1')), "Day 1", "Day 2"],
+            ["{} Day 2".format(self.bot.getEmote('2')), "Day 2", "Day 3"],
+            ["{} Day 3".format(self.bot.getEmote('3')), "Day 3", "Day 4"],
+            ["{} Day 4".format(self.bot.getEmote('4')), "Day 4", "Day 5"],
+            ["{} Final Rally".format(self.bot.getEmote('red')), "Day 5", "End"]
         ]
 
     def isAuthorized(): # for decorators
@@ -181,10 +181,6 @@ class GW(commands.Cog):
             return (ctx.bot.isYouServer(ctx) or ctx.bot.isAuthorized(ctx))
         return commands.check(predicate)
 
-    def getTimedeltaStr(self, delta, day=False):
-        if day: return str(delta.days) + "d" + str(delta.seconds // 3600) + "h" + str((delta.seconds // 60) % 60) + "m"
-        else: return str(delta.seconds // 3600) + "h" + str((delta.seconds // 60) % 60) + "m"
-
     def dayCheck(self, current, day, final_day=False):
         d = day - current
         if current < day and (final_day or d >= timedelta(seconds=25200)):
@@ -196,7 +192,7 @@ class GW(commands.Cog):
             current_time = self.bot.getJST()
             if current_time < self.bot.gw['dates']["Preliminaries"]:
                 d = self.bot.gw['dates']["Preliminaries"] - current_time
-                return self.bot.getEmoteStr('time') + " Guild War starts in **" + self.getTimedeltaStr(d, True) + "**"
+                return "{} Guild War starts in **{}**".format(self.bot.getEmote('time'), self.bot.getTimedeltaStr(d, True))
             elif current_time >= self.bot.gw['dates']["End"]:
                 self.bot.gw['state'] = False
                 self.bot.gw['dates'] = {}
@@ -205,24 +201,24 @@ class GW(commands.Cog):
                 return ""
             elif current_time > self.bot.gw['dates']["Day 5"]:
                 d = self.bot.gw['dates']["End"] - current_time
-                return self.bot.getEmoteStr('mark_a') + " Final Rally is on going\n" + self.bot.getEmoteStr('time') + " Guild War ends in **" + self.getTimedeltaStr(d) + "**"
+                return "{} Final Rally is on going\n{} Guild War ends in **{}**".format(self.bot.getEmote('mark_a'), self.bot.getEmote('time'), self.bot.getTimedeltaStr(d))
             elif current_time > self.bot.gw['dates']["Day 1"]:
                 it = ['Day 5', 'Day 4', 'Day 3', 'Day 2', 'Day 1']
                 for i in range(1, len(it)): # loop to not copy paste this 5 more times
                     if current_time > self.bot.gw['dates'][it[i]]:
                         d = self.bot.gw['dates'][it[i-1]] - current_time
-                        if d < timedelta(seconds=25200): msg = self.bot.getEmoteStr('mark_a') + " " + it[i] + " ended"
-                        else: msg = self.bot.getEmoteStr('mark_a') + " " + it[i] + " is on going (Time left: **" + self.getTimedeltaStr(self.bot.gw['dates'][it[i]] + timedelta(seconds=61200) - current_time) + "**)"
-                        if i == 1: return msg + "\n" + self.bot.getEmoteStr('time') + " " + it[i-1].replace('Day 5', 'Final Rally') + " starts in **" + self.getTimedeltaStr(d) + "**"
-                        else: return msg + "\n" + self.bot.getEmoteStr('time') + " " + it[i-1] + " starts in **" + self.getTimedeltaStr(d) + "**"
+                        if d < timedelta(seconds=25200): msg = "{} {} ended".format(self.bot.getEmote('mark_a'), it[i])
+                        else: msg = "{} {} is on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.gw['dates'][it[i]] + timedelta(seconds=61200) - current_time))
+                        if i == 1: return msg + "{}\n{} {} starts in **{}**".format(msg, self.bot.getEmote('time'), it[i-1].replace('Day 5', 'Final Rally'), self.bot.getTimedeltaStr(d))
+                        else: return "{}\n{} {} starts in **{}**".format(msg,self.bot.getEmote('time'), it[i-1], self.bot.getTimedeltaStr(d) )
             elif current_time > self.bot.gw['dates']["Interlude"]:
                 d = self.bot.gw['dates']["Day 1"] - current_time
-                return self.bot.getEmoteStr('mark_a') + " Interlude is on going\n" + self.bot.getEmoteStr('time') + " Day 1 starts in **" + self.getTimedeltaStr(d) + "**"
+                return "{} Interlude is on going\n{} Day 1 starts in **{}**".format(self.bot.getEmote('mark_a'), self.bot.getEmote('time'), self.bot.getTimedeltaStr(d))
             elif current_time > self.bot.gw['dates']["Preliminaries"]:
                 d = self.bot.gw['dates']['Interlude'] - current_time
-                if d < timedelta(seconds=25200): msg = self.bot.getEmoteStr('mark_a') + " Preliminaries ended"
-                else: msg = self.bot.getEmoteStr('mark_a') + " Preliminaries are on going (Time left: **" + self.getTimedeltaStr(self.bot.gw['dates']["Preliminaries"] + timedelta(seconds=104400) - current_time, True) + "**)"
-                return msg + "\n" + self.bot.getEmoteStr('time') + " Interlude starts in **" + self.getTimedeltaStr(d, True) + "**"
+                if d < timedelta(seconds=25200): msg = " Preliminaries ended".format(self.bot.getEmote('mark_a'))
+                else: msg = "{} Preliminaries are on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), self.bot.getTimedeltaStr(self.bot.gw['dates']["Preliminaries"] + timedelta(seconds=104400) - current_time, True))
+                return "{}\n{} Interlude starts in **{}**".format(msg, self.bot.getEmote('time'), self.bot.getTimedeltaStr(d, True))
             else:
                 return ""
         else:
@@ -235,13 +231,13 @@ class GW(commands.Cog):
                 return ""
             for b in self.bot.gw['buffs']:
                 if not b[3] and current_time < b[0]:
-                    msg = self.bot.getEmoteStr('question') + " Next buffs in **" + self.getTimedeltaStr(b[0] - current_time, True) + "** ("
+                    msg = "{} Next buffs in **{}** (".format(self.bot.getEmote('question'), self.bot.getTimedeltaStr(b[0] - current_time, True))
                     if b[1]:
-                        msg += "Attack " + self.bot.getEmoteStr('atkace') + ", Defense " + self.bot.getEmoteStr('deface')
+                        msg += "Attack {}, Defense {}".format(self.bot.getEmote('atkace'), self.bot.getEmote('deface'))
                         if b[2]:
-                            msg += ", FO " + self.bot.getEmoteStr('foace')
+                            msg += ", FO {}".format(self.bot.getEmote('foace'))
                     elif b[2]:
-                        msg += "FO " + self.bot.getEmoteStr('foace')
+                        msg += "FO {}".format(self.bot.getEmote('foace'))
                     msg += ")"
                     return msg
         return ""
@@ -253,7 +249,7 @@ class GW(commands.Cog):
         if self.bot.gw['state'] == True:
             try:
                 current_time = self.bot.getJST()
-                title = self.bot.getEmoteStr('gw') + " **Guild War " + str(self.bot.gw['id']) + "** :black_small_square: Time: **{0:%a. %m/%d %H:%M}**\n".format(current_time)
+                title = "{} **Guild War {}** :black_small_square: Time: **{:%a. %m/%d %H:%M}**\n".format(self.bot.getEmote('gw'), self.bot.gw['id'], current_time)
                 description = ""
                 day_list = self.buildDayList()
                 if current_time < self.bot.gw['dates']["End"]:
@@ -261,12 +257,12 @@ class GW(commands.Cog):
                         if it[1] == "BW":
                             d = self.bot.gw['dates']["Preliminaries"] - timedelta(days=random.randint(1, 4))
                             if current_time < d and random.randint(1, 8) == 1:
-                                description += it[0] + " **{0:%a. %m/%d %H:%M}**\n".format(d)
+                                description += it[0] + " **{:%a. %m/%d %H:%M}**\n".format(d)
                         else:
                             if self.dayCheck(current_time, self.bot.gw['dates'][it[2]], it[1]=="Day 5") or (it[1] == "Interlude" and self.dayCheck(current_time, self.bot.gw['dates'][it[2]] + timedelta(seconds=25200), False)):
-                                description += it[0] + ": **{0:%a. %m/%d %H:%M}**\n".format(self.bot.gw['dates'][it[1]])
+                                description += it[0] + ": **{:%a. %m/%d %H:%M}**\n".format(self.bot.gw['dates'][it[1]])
                 else:
-                    await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " **Guild War**", description="Not available", color=self.color))
+                    await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Not available", color=self.color))
                     self.bot.gw['state'] = False
                     self.bot.gw['dates'] = {}
                     self.bot.cancelTask('gwtask')
@@ -287,7 +283,7 @@ class GW(commands.Cog):
             except Exception as e:
                 await self.bot.sendError("gw", str(e))
         else:
-            await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " **Guild War**", description="Not available", color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Not available", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwtime'])
     @commands.cooldown(10, 10, commands.BucketType.guild)
@@ -296,7 +292,7 @@ class GW(commands.Cog):
         try:
             d = self.getGWState()
             if d != "":
-                await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " **Guild War " + str(self.bot.gw['id']) + "** :black_small_square: status", description=d, color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** :black_small_square: status".format(self.bot.getEmote('gw'), self.bot.gw['id']), description=d, color=self.color))
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
             await self.bot.sendError("fugdidgwstart", str(e))
@@ -309,7 +305,7 @@ class GW(commands.Cog):
         try:
             d = self.getNextBuff(ctx)
             if d != "":
-                await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " Guild War (You) Buff status", description=d, color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="{} Guild War (You) Buff status".format(self.bot.getEmote('gw')), description=d, color=self.color))
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
             await self.bot.sendError("gwbuff", str(e))
@@ -330,20 +326,20 @@ class GW(commands.Cog):
                     return
                 except:
                     pass
-            embed = discord.Embed(title=self.bot.getEmoteStr('gw') + " Guild Searcher", url="http://gbf.gw.lt/gw-guild-searcher/search", color=self.color) # random color
+            embed = discord.Embed(title="{} Guild Searcher".format(self.bot.getEmote('gw')), url="http://gbf.gw.lt/gw-guild-searcher/search", color=self.color) # random color
             embed.set_footer(text="crew history: searchid <crew id>")
             i = 0
             for c in data['result']:
-                msg = "GW**" + str(c['data'][0]['gw_num']) + "** score: **" + "{:,}".format(c['data'][0]['points'])
+                msg = "GW**{}** score: **{:,}".format(c['data'][0]['gw_num'], c['data'][0]['points'])
                 if c['data'][0]['is_seed']: msg += " (seeded)"
                 msg += "**"
-                embed.add_field(name=c["data"][0]["name"] + " ▪ " + msg, value="http://game.granbluefantasy.jp/#guild/detail/" + str(c['id']), inline=False)
+                embed.add_field(name="{} ▪ {}".format(c["data"][0]["name"], msg), value="http://game.granbluefantasy.jp/#guild/detail/{}".format(c['id']), inline=False)
                 i += 1
                 if i >= 5: break
             if len(data["result"]) > 5: 
-                embed.add_field(name="5 / " + str(len(data["result"])) + " results shown", value="please go here for more: http://gbf.gw.lt/gw-guild-searcher/", inline=False)
+                embed.add_field(name="5 / {} results shown".format(len(data["result"])), value="please go here for more: http://gbf.gw.lt/gw-guild-searcher/", inline=False)
             if i > 0: await ctx.send(embed=embed)
-            else: await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " Guild Searcher", description="No Crews found", color=self.color))
+            else: await ctx.send(embed=self.bot.buildEmbed(title="{} Guild Searcher".format(self.bot.getEmote('gw')), description="No Crews found", color=self.color))
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="The seach couldn't be completed", footer=str(e), color=self.color))
             await self.bot.sendError("search", str(e))
@@ -356,23 +352,23 @@ class GW(commands.Cog):
         try:
             if id < 0: raise Exception("Negative ID")
             async with aiohttp.ClientSession() as session:
-                async with session.get("http://gbf.gw.lt/gw-guild-searcher/info/" + str(id)) as resp:
+                async with session.get("http://gbf.gw.lt/gw-guild-searcher/info/{}".format(id)) as resp:
                     if resp.status != 200: raise Exception("HTTP Error " + str(resp.status))
                     data = json.loads(await resp.read())
             if len(data["data"]) == 0:
-                await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " Guild Searcher", description="Crew not found", color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="{} Guild Searcher".format(self.bot.getEmote('gw')), description="Crew not found", color=self.color))
                 return
-            embed = discord.Embed(title=self.bot.getEmoteStr('gw') + " Guild Searcher", url="http://gbf.gw.lt/gw-guild-searcher/search", description=data["data"][0]["name"] + " ▪ http://game.granbluefantasy.jp/#guild/detail/" + str(data["id"]), color=random.randint(0, 16777216)) # random color
+            embed = discord.Embed(title="{} Guild Searcher".format(self.bot.getEmote('gw')), url="http://gbf.gw.lt/gw-guild-searcher/search", description="{} ▪ http://game.granbluefantasy.jp/#guild/detail/{}".format(data["data"][0]["name"], data["id"]), color=random.randint(0, 16777216)) # random color
             i = 0
             for c in data["data"]:
-                msg = "score: **" + "{:,}".format(c["points"])
+                msg = "score: **{:,}".format(c["points"])
                 if c["is_seed"]: msg += " (seeded)**"
                 else: msg += "**"
-                embed.add_field(name="GW" + str(c["gw_num"]), value=msg, inline=True)
+                embed.add_field(name="GW{}".format(c["gw_num"]), value=msg, inline=True)
                 i += 1
                 if i >= 6: break
             if len(data["data"]) > 6: 
-                embed.add_field(name="6 / " + str(len(data["data"])) + " past GWs shown", value="please go here for more: http://gbf.gw.lt/gw-guild-searcher/", inline=False)
+                embed.add_field(name="6 / {} past GWs shown".format(len(data["data"])), value="please go here for more: http://gbf.gw.lt/gw-guild-searcher/", inline=False)
             await ctx.send(embed=embed)
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="The seach couldn't be completed", footer=str(e), color=self.color))
@@ -400,6 +396,6 @@ class GW(commands.Cog):
                         fields[1]['value'] += " ( {:+,.2f} / min )".format(self.bot.gw['ranking'][3][c])
                     fields[1]['value'] += "\n"
 
-                await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('gw') + " **Guild War " + str(self.bot.gw['id']) + "**", fields=fields, footer="Last Update ▪ {0:%a. %m/%d %H:%M} JST".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), self.bot.gw['id']), fields=fields, footer="Last Update ▪ {:%a. %m/%d %H:%M} JST".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
         except Exception as e:
             await self.bot.sendError("ranking", str(e))

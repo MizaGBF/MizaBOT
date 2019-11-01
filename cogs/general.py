@@ -420,10 +420,10 @@ class General(commands.Cog):
         if id not in self.bot.reminders or len(self.bot.reminders[id]) == 0:
             await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="You don't have any reminders", color=self.color))
         else:
-            embed = discord.Embed(title=ctx.author.display_name + "'s Reminder List", color=random.randint(0, 16777216)) # random color
+            embed = discord.Embed(title="{}'s Reminder List".format(ctx.author.display_name), color=random.randint(0, 16777216)) # random color
             embed.set_thumbnail(url=ctx.author.avatar_url)
             for i in range(0, len(self.bot.reminders[id])):
-                embed.add_field(name="#" + str(i) + " ▪ " + "{:%Y/%m/%d %H:%M} JST".format(self.bot.reminders[id][i][0]), value=self.bot.reminders[id][i][1], inline=False)
+                embed.add_field(name="#{} ▪ {:%Y/%m/%d %H:%M} JST".format(i, self.bot.reminders[id][i][0]), value=self.bot.reminders[id][i][1], inline=False)
             await ctx.send(embed=embed)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rd', 'reminderdel'])
