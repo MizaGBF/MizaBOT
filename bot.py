@@ -629,11 +629,12 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
 
     def uptime(self, string=True): # get the uptime
         delta = datetime.utcnow() - self.starttime
-        if string: return "{}d{}h{}m{}s".format(self.getTimedeltaStr(delta, True))
+        if string: return "{}".format(self.getTimedeltaStr(delta, None))
         else: return delta
 
     def getTimedeltaStr(self, delta, day=False):
-        if day: return "{}d{}h{}m".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60)
+        if day is None: return "{}d{}h{}m{}s".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60, delta.seconds % 60)
+        elif day: return "{}d{}h{}m".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60)
         else: return "{}d{}m".format(delta.seconds // 3600, (delta.seconds // 60) % 60)
 
     # function to build a timedelta from a string (for $remind)
