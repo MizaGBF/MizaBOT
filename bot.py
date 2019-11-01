@@ -635,7 +635,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
     def getTimedeltaStr(self, delta, day=False):
         if day is None: return "{}d{}h{}m{}s".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60, delta.seconds % 60)
         elif day: return "{}d{}h{}m".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60)
-        else: return "{}d{}m".format(delta.seconds // 3600, (delta.seconds // 60) % 60)
+        else: return "{}h{}m".format(delta.seconds // 3600, (delta.seconds // 60) % 60)
 
     # function to build a timedelta from a string (for $remind)
     def makeTimedelta(self, d): # return None if error
