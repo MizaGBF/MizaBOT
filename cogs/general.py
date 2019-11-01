@@ -19,18 +19,14 @@ class Parser:
             }
         for var in vars.keys():
             if self.vars.get(var) != None:
-                raise Exception("Cannot redefine the value of " + var)
+                raise Exception("Cannot redefine the value of {}".format(var))
             self.vars[var] = vars[var]
     
     def getValue(self):
         value = self.parseExpression()
         self.skipWhitespace()
         if self.hasNext():
-            raise Exception(
-                "Unexpected character found: '" +
-                self.peek() +
-                "' at index " +
-                str(self.index))
+            raise Exception("Unexpected character found: '{}' at index {}".format(self.peek(), self.index))
         return value
     
     def peek(self):
@@ -77,20 +73,14 @@ class Parser:
                 self.index += 1
                 denominator = self.parseParenthesis()
                 if denominator == 0:
-                    raise Exception(
-                        "Division by 0 (occured at index " +
-                        str(div_index) +
-                        ")")
+                    raise Exception("Division by 0 (occured at index {})".format(div_index))
                 values.append(1.0 / denominator)
             elif char == '%': # hack
                 div_index = self.index
                 self.index += 1
                 denominator = self.parseParenthesis()
                 if denominator == 0:
-                    raise Exception(
-                        "Division by 0 (occured at index " +
-                        str(div_index) +
-                        ")")
+                    raise Exception("Division by 0 (occured at index {})".format(div_index))
                 values[-1] = values[-1] % denominator
             elif char == '^': # hack
                 self.index += 1
@@ -114,9 +104,7 @@ class Parser:
             value = self.parseExpression()
             self.skipWhitespace()
             if self.peek() != ')':
-                raise Exception(
-                    "No closing parenthesis found at character "
-                    + str(self.index))
+                raise Exception("No closing parenthesis found at character {}".format(self.index))
             self.index += 1
             return value
         else:
@@ -152,10 +140,7 @@ class Parser:
         
         value = self.vars.get(var, None)
         if value == None:
-            raise Exception(
-                "Unrecognized variable: '" +
-                var +
-                "'")
+            raise Exception("Unrecognized variable: '{}'".format(var))
         return float(value)
     
     def parseNumber(self):
@@ -168,9 +153,7 @@ class Parser:
             char = self.peek()            
             if char == '.':
                 if decimal_found:
-                    raise Exception(
-                        "Found an extra period in a number at character " +
-                        str(self.index))
+                    raise Exception("Found an extra period in a number at character {}".format(self.index))
                 decimal_found = True
                 strValue += '.'
             elif char in '0123456789':
@@ -183,12 +166,7 @@ class Parser:
             if char == '':
                 raise Exception("Unexpected end found")
             else:
-                raise Exception(
-                    "I was expecting to find a number at character " +
-                    str(self.index) +
-                    " but instead I found a '" +
-                    char)
-    
+                raise Exception("I was expecting to find a number at character {} but instead I found a '{}'".format(self.index, char))
         return float(strValue)
         
 def evaluate(expression, vars={}):
@@ -240,7 +218,7 @@ class General(commands.Cog):
                             try:
                                 await u.send(embed=self.bot.buildEmbed(title="Reminder", description=self.bot.reminders[r][di][1]))
                             except Exception as e:
-                                await self.bot.sendError('remindertask', "User: " + str(u) + "\nReminder: " + self.bot.reminders[r][di][1] + "\nError: " + str(e))
+                                await self.bot.sendError('remindertask', "User: {}\nReminder: {}\nError: {}".format(u.name, self.bot.reminders[r][di][1], e))
                             self.bot.reminders[r].pop(di)
                             self.bot.savePending = True
                         else:
@@ -269,7 +247,7 @@ class General(commands.Cog):
     async def get4chan(self, board : str, search : str): # be sure to not abuse it, you are not supposed to call the api more than once per second
         try:
             search = search.lower()
-            url = 'http://a.4cdn.org/' + board + '/catalog.json' # board catalog url
+            url = 'http://a.4cdn.org/{}/catalog.json'.format(board) # board catalog url
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
                     if r.status == 200:
@@ -323,15 +301,15 @@ class General(commands.Cog):
                 x = m[i].replace(" ", "").split("=")
                 if len(x) == 2: d[x[0]] = float(x[1])
                 else: raise Exception('')
-            await ctx.send(embed=self.bot.buildEmbed(title="Calculator 🤓", description=m[0] + " = " + str(evaluate(m[0], d)), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Calculator 🤓", description="{} = {}".format(m[0], evaluate(m[0], d)), color=self.color))
         except Exception as e:
-            await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('kmr') + " Error, use the help for details", footer=str(e), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} Error, use the help for details".format(self.bot.getEmote('kmr')), footer=str(e), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def jst(self, ctx):
         """Post the current time, JST timezone"""
-        await ctx.send(embed=self.bot.buildEmbed(title=self.bot.getEmoteStr('clock') + " {0:%Y/%m/%d %H:%M} JST".format(self.bot.getJST()), color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="{} {:%Y/%m/%d %H:%M} JST".format(self.bot.getEmote('clock'), self.bot.getJST()), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isAuthorized()
@@ -352,9 +330,9 @@ class General(commands.Cog):
                 if r.name == name or (exact == False and r.name.lower().find(name.lower()) != -1):
                     i += 1
         if exact != "exact":
-            await ctx.send(embed=self.bot.buildEmbed(title="Roles containing: " + name, description=str(i) + " user(s)", thumbnail=g.icon_url, footer="on server " + g.name, color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Roles containing: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon_url, footer="on server {}".format(g.name), color=self.color))
         else:
-            await ctx.send(embed=self.bot.buildEmbed(title="Role matching: " + name, description=str(i) + " user(s)", thumbnail=g.icon_url, footer="on server " + g.name, color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Roles matching: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon_url, footer="on server {}".format(g.name), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['hgg2d'])
     @commands.cooldown(1, 10, commands.BucketType.default)
@@ -367,7 +345,7 @@ class General(commands.Cog):
         if len(threads) > 0:
             msg = ""
             for t in threads:
-                msg += '🔞 https://boards.4channel.org/vg/thread/'+str(t)+'\n'
+                msg += '🔞 https://boards.4channel.org/vg/thread/{}\n'.format(t)
             await ctx.send(embed=self.bot.buildEmbed(title="/hgg2d/ latest thread(s)", description=msg, footer="Good fap, fellow 4channeler", color=self.color))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="/hgg2d/ Error", description="I couldn't find a single /hgg2d/ thread 😔", color=self.color))
@@ -380,7 +358,7 @@ class General(commands.Cog):
         if len(threads) > 0:
             msg = ""
             for t in threads:
-                msg += ':poop: https://boards.4channel.org/vg/thread/'+str(t)+'\n'
+                msg += ':poop: https://boards.4channel.org/vg/thread/{}\n'.format(t)
             await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ Error", description="I couldn't find a single /gbfg/ thread 😔", color=self.color))
@@ -392,13 +370,13 @@ class General(commands.Cog):
         nsfw = ['b', 'r9k', 'pol', 'bant', 'soc', 's4s', 's', 'hc', 'hm', 'h', 'e', 'u', 'd', 'y', 't', 'hr', 'gif', 'aco', 'r']
         board = board.lower()
         if board in nsfw and not ctx.channel.is_nsfw():
-            await ctx.send(embed=self.bot.buildEmbed(title=":underage: The board `" + board + "` is restricted to NSFW channels"))
+            await ctx.send(embed=self.bot.buildEmbed(title=":underage: The board `{}` is restricted to NSFW channels".format(board)))
             return
         threads = await self.get4chan(board, term)
         if len(threads) > 0:
             msg = ""
             for t in threads:
-                msg += ':four_leaf_clover: https://boards.4channel.org/' + board + '/thread/'+str(t)+'\n'
+                msg += ':four_leaf_clover: https://boards.4channel.org/{}/thread/{}\n'.format(board, t)
             await ctx.send(embed=self.bot.buildEmbed(title="4chan Search result", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="4chan Search result", description="No matching threads found", color=self.color))
@@ -419,7 +397,7 @@ class General(commands.Cog):
             d = self.bot.makeTimedelta(duration)
             if d is None: raise Exception()
         except:
-            await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="Invalid duration string `" + duration + "`, format is `NdNhNm`", color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="Invalid duration string `{}`, format is `NdNhNm`".format(duration), color=self.color))
             return
         if msg == "":
             await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="Tell me what I'm supposed to remind you 🤔", color=self.color))
@@ -445,7 +423,7 @@ class General(commands.Cog):
             embed = discord.Embed(title=ctx.author.display_name + "'s Reminder List", color=random.randint(0, 16777216)) # random color
             embed.set_thumbnail(url=ctx.author.avatar_url)
             for i in range(0, len(self.bot.reminders[id])):
-                embed.add_field(name="#" + str(i) + " ▪ " + "{0:%Y/%m/%d %H:%M} JST".format(self.bot.reminders[id][i][0]), value=self.bot.reminders[id][i][1], inline=False)
+                embed.add_field(name="#" + str(i) + " ▪ " + "{:%Y/%m/%d %H:%M} JST".format(self.bot.reminders[id][i][0]), value=self.bot.reminders[id][i][1], inline=False)
             await ctx.send(embed=embed)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rd', 'reminderdel'])
@@ -457,19 +435,10 @@ class General(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="You don't have any reminders", color=self.color))
         else:
             if rid < 0 or rid >= len(self.bot.reminders[id]):
-                await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="Invalid id `" + str(rid) + "`", color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="Invalid id `{}`".format(rid), color=self.color))
             else:
                 self.bot.reminders[id].pop(rid)
                 if len(self.bot.reminders[id]) == 0:
                     self.bot.reminders.pop(id)
                 self.bot.savePending = True
                 await ctx.message.add_reaction('✅') # white check mark
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isDisabled()
-    @commands.cooldown(10, 20, commands.BucketType.guild)
-    async def sadpanda(self, ctx):
-        """Time since sadpanda died"""
-        t = self.bot.getJST() - datetime.utcnow().replace(year=2019, month=7, day=26, hour=17, minute=13, second=0, microsecond=0)
-        #await ctx.send(embed=self.bot.buildEmbed(title="Time since Sadpanda died", description="**" + str(t.days) + "d" + str(t.seconds // 3600) + "h" + str((t.seconds // 60) % 60) + "m**", thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/604762049532395540/kokomade.png", color=self.color))
-        await ctx.send(embed=self.bot.buildEmbed(title="Time since Sadpanda died", description="**A L I V E**", thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/604762049532395540/kokomade.png", color=self.color))

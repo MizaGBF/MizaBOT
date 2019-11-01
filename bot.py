@@ -51,17 +51,17 @@ class MizabotHelp(commands.DefaultHelpCommand):
         for category, commands in to_iterate: # iterate on them
             if category != no_category:
                 commands = sorted(commands, key=lambda c: c.name) if self.sort_commands else list(commands) # sort
-                embed = discord.Embed(title=bot.getEmoteStr('mark') + " **" + category[:-1] + "** Category", color=random.randint(0, 16777216)) # make an embed, random color
+                embed = discord.Embed(title="{} **{}** Category".format(bot.getEmote('mark'), category[:-1]), color=random.randint(0, 16777216)) # make an embed, random color
                 for c in commands: # fill the embed fields with the command infos
-                    if c.short_doc == "": embed.add_field(name=c.name + " ▫ " + self.get_command_signature(c), value="No description", inline=False)
-                    else: embed.add_field(name=c.name + " ▫ " + self.get_command_signature(c), value=c.short_doc, inline=False)
+                    if c.short_doc == "": embed.add_field(name="{} ▫ {}".format(c.name, self.get_command_signature(c)), value="No description", inline=False)
+                    else: embed.add_field(name="{} ▫ {}".format(c.name, self.get_command_signature(c)), value=c.short_doc, inline=False)
                     if len(embed) > 5800 or len(embed.fields) > 24: # embeds have a 6000 and 25 fields characters limit, I send and make a new embed if needed
                         try:
                             await ctx.author.send(embed=embed) # author.send = dm
                         except:
                             await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
                             return
-                        embed = discord.Embed(title=bot.getEmoteStr('mark') + " **" + category[:-1] + "** Category", color=embed.colour)
+                        embed = discord.Embed(title="{} **{}** Category".format(bot.getEmote('mark'), category[:-1]), color=embed.colour)
                 if len(embed.fields) > 0: # only send if there is at least one field
                     try:
                         await ctx.author.send(embed=embed) # author.send = dm
@@ -70,7 +70,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
                         return
 
         # final words
-        await ctx.author.send(embed=bot.buildEmbed(title=bot.getEmoteStr('question') + " Need more help?", description="Use help <command name>\nOr help <category name>"))
+        await ctx.author.send(embed=bot.buildEmbed(title="{} Need more help?".format(bot.getEmote('question')), description="Use help <command name>\nOr help <category name>"))
 
         await ctx.message.remove_reaction('📬', ctx.guild.me)
         await ctx.message.add_reaction('✅') # white check mark
@@ -78,12 +78,14 @@ class MizabotHelp(commands.DefaultHelpCommand):
     async def send_command_help(self, command): # same thing, but for a command ($help <command>)
         ctx = self.context
         bot = ctx.bot
-        if not await bot.react(ctx, 'time'):
+        try:
+            await ctx.message.add_reaction('📬')
+        except:
             await ctx.send(embed=bot.buildEmbed(title="Help Error", description="Unblock me to receive the Help"))
             return
 
         # send the help
-        embed = discord.Embed(title=bot.getEmoteStr('mark') + " **" + command.name + "** Command", description=command.help, color=random.randint(0, 16777216)) # random color
+        embed = discord.Embed(title="{} **{}** Command".format(bot.getEmote('mark'), command.name), description=command.help, color=random.randint(0, 16777216)) # random color
         embed.add_field(name="Usage", value=self.get_command_signature(command), inline=False)
 
         try:
@@ -92,26 +94,30 @@ class MizabotHelp(commands.DefaultHelpCommand):
             await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
             return
 
-        await bot.unreact(ctx, 'time')
+        await ctx.message.remove_reaction('📬', ctx.guild.me)
         await self.context.message.add_reaction('✅') # white check mark
 
     async def send_cog_help(self, cog): # category help ($help <category)
         ctx = self.context
         bot = ctx.bot
-        await ctx.message.add_reaction('✅') # white check mark
+        try:
+            await ctx.message.add_reaction('📬')
+        except:
+            await ctx.send(embed=bot.buildEmbed(title="Help Error", description="Unblock me to receive the Help"))
+            return
 
         filtered = await self.filter_commands(cog.get_commands(), sort=self.sort_commands) # sort
-        embed = discord.Embed(title=bot.getEmoteStr('mark') + " **" + cog.qualified_name + "** Category", description=cog.description, color=random.randint(0, 16777216)) # random color
+        embed = discord.Embed(title="{} **{}** Category".format(bot.getEmote('mark'), cog.qualified_name), description=cog.description, color=random.randint(0, 16777216)) # random color
         for c in filtered:
-            if c.short_doc == "": embed.add_field(name=c.name + " ▫ " + self.get_command_signature(c), value="No description", inline=False)
-            else: embed.add_field(name=c.name + " ▫ " + self.get_command_signature(c), value=c.short_doc, inline=False)
+            if c.short_doc == "": embed.add_field(name="{} ▫ {}".format(c.name, self.get_command_signature(c)), value="No description", inline=False)
+            else: embed.add_field(name="{} ▫ {}".format(c.name, self.get_command_signature(c)), value=c.short_doc, inline=False)
             if len(embed) > 5800 or len(embed.fields) > 24: # embeds have a 6000 and 25 fields characters limit, I send and make a new embed if needed
                 try:
                     await ctx.author.send(embed=embed) # author.send = dm
                 except:
                     await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
                     return
-                embed = discord.Embed(title=bot.getEmoteStr('mark') + " **" + cog.qualified_name + "** Category", description=cog.description, color=embed.colour)
+                embed = discord.Embed(title="{} **{}** Category".format(bot.getEmote('mark'), cog.qualified_name), description=cog.description, color=embed.colour)
         if len(embed.fields) > 0:
             try:
                 await ctx.author.send(embed=embed) # author.send = dm
@@ -119,7 +125,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
                 await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
                 return
 
-        await bot.unreact(ctx, 'time')
+        await ctx.message.remove_reaction('📬', ctx.guild.me)
         await self.context.message.add_reaction('✅') # white check mark
 
 # #####################################################################################
@@ -243,7 +249,7 @@ class Mizabot(commands.Bot):
             elif i == 99: exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.30
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.31
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 

@@ -399,15 +399,6 @@ class Owner(commands.Cog):
 
     @commands.command(no_pm=True)
     @isOwner()
-    async def snail(self, ctx, member : discord.Member = None):
-        """React with the snail emote to an user (Owner only)"""
-        channel = ctx.channel
-        async for message in channel.history(limit=500):
-            if member is None or message.author.id == member.id:
-                await message.add_reaction('🐌')
-
-    @commands.command(no_pm=True)
-    @isOwner()
     async def nitro(self, ctx):
         """Get the nitro boost status of the guild (Owner only)"""
         guild = ctx.guild
@@ -512,7 +503,6 @@ class Owner(commands.Cog):
     async def punish(self, ctx):
         """Punish the bot"""
         await ctx.send("Please, Master, make it hurt.")
-
 
     @commands.command(no_pm=True)
     @isOwner()
