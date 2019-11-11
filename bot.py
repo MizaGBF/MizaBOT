@@ -38,6 +38,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
                 await ctx.author.send(embed=bot.buildEmbed(title=me.name + " Help", description=bot.description, thumbnail=me.avatar_url)) # author.send = dm
             except:
                 await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
+                await ctx.message.remove_reaction('📬', ctx.guild.me)
                 return
 
         no_category = "No Category:"
@@ -60,6 +61,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
                             await ctx.author.send(embed=embed) # author.send = dm
                         except:
                             await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
+                            await ctx.message.remove_reaction('📬', ctx.guild.me)
                             return
                         embed = discord.Embed(title="{} **{}** Category".format(bot.getEmote('mark'), category[:-1]), color=embed.colour)
                 if len(embed.fields) > 0: # only send if there is at least one field
@@ -67,6 +69,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
                         await ctx.author.send(embed=embed) # author.send = dm
                     except:
                         await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
+                        await ctx.message.remove_reaction('📬', ctx.guild.me)
                         return
 
         # final words
@@ -92,6 +95,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
             await ctx.author.send(embed=embed) # author.send = dm
         except:
             await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
+            await ctx.message.remove_reaction('📬', ctx.guild.me)
             return
 
         await ctx.message.remove_reaction('📬', ctx.guild.me)
@@ -116,6 +120,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
                     await ctx.author.send(embed=embed) # author.send = dm
                 except:
                     await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
+                    await ctx.message.remove_reaction('📬', ctx.guild.me)
                     return
                 embed = discord.Embed(title="{} **{}** Category".format(bot.getEmote('mark'), cog.qualified_name), description=cog.description, color=embed.colour)
         if len(embed.fields) > 0:
@@ -123,6 +128,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
                 await ctx.author.send(embed=embed) # author.send = dm
             except:
                 await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
+                await ctx.message.remove_reaction('📬', ctx.guild.me)
                 return
 
         await ctx.message.remove_reaction('📬', ctx.guild.me)
@@ -154,7 +160,9 @@ class MizabotDrive():
     def load(self): # load save.json from the folder id in bot.tokens
         if self.saving: return False
         drive = self.login()
-        if not drive: return False
+        if not drive:
+            print("Can't login into Google Drive")
+            return False
         try:
             file_list = drive.ListFile({'q': "'" + self.bot.tokens['drive'] + "' in parents and trashed=false"}).GetList() # get the file list in our folder
             for s in file_list:
@@ -162,7 +170,6 @@ class MizabotDrive():
             return True
         except Exception as e:
             print(e)
-            self.saving = False
             return False
 
     def save(self, data, sortBackup): # write save.json to the folder id in bot.tokens
@@ -171,20 +178,25 @@ class MizabotDrive():
         if not drive: return False
         try:
             self.saving = True
+            prev = None
             # backup
             file_list = drive.ListFile({'q': "'" + self.bot.tokens['drive'] + "' in parents and trashed=false"}).GetList()
             if sortBackup and len(file_list) > 9: # delete if we have too many backups
                 for f in file_list:
                     if f['title'].find('backup') == 0:
                         f.Delete()
-            for f in file_list: # rename the previous save
+            for f in file_list: # search the previous save
                 if f['title'] == "save.json":
-                    f['title'] = "backup_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".json"
-                    f.Upload()
+                    prev = f
+                    break
             # saving
             s = drive.CreateFile({'title':'save.json', 'mimeType':'text/JSON', "parents": [{"kind": "drive#file", "id": self.bot.tokens['drive']}]})
             s.SetContentString(data)
             s.Upload()
+            # rename the previous save
+            if prev is not None:
+                prev['title'] = "backup_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".json"
+                prev.Upload()
             self.saving = False
             return True
         except Exception as e:
@@ -246,10 +258,12 @@ class Mizabot(commands.Bot):
         self.loadConfig()
         for i in range(0, 100): # try multiple times in case google drive is unresponsive
             if self.drive.load(): break
-            elif i == 99: exit(3)
+            elif i == 99:
+                print("Google Drive might be unaivalable")
+                exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.32
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.33
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), activity=discord.activity.Game(name='Booting up, please wait'), owner=self.ids['owner'])
 
@@ -703,7 +717,9 @@ async def on_ready(): # when the bot starts or reconnects
 @bot.event
 async def on_guild_join(guild): # when the bot joins a new guild
     id = str(guild.id)
-    if id in bot.newserver['servers'] or str(guild.owner.id) in bot.newserver['owners']: # leave if the server is blacklisted
+    if id == str(bot.ids['debug_server']):
+        return
+    elif id in bot.newserver['servers'] or str(guild.owner.id) in bot.newserver['owners']: # leave if the server is blacklisted
         try:
             await bot.send('debug', embed=bot.buildEmbed(title="Banned guild request", description="{} ▪ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▪ {}".format(guild.owner.name, guild.owner.id)))
         except Exception as e:
