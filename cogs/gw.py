@@ -119,9 +119,9 @@ class GW(commands.Cog):
                             msg += "{} {} ".format(self.bot.getEmote('foace'), fo_role.mention)
                         if self.bot.gw['buffs'][0][4]:
                             if self.bot.gw['buffs'][0][3]:
-                                msg += '**DOUBLE** buffs in 5 minutes'
+                                msg += '**Max Duration** buffs in 5 minutes'
                             else:
-                                msg += '**DOUBLE** buffs now!'
+                                msg += '**Max Duration** buffs now! (Single use next time)'
                         else:
                             if self.bot.gw['buffs'][0][3]:
                                 msg += 'buffs in 5 minutes'
@@ -216,7 +216,7 @@ class GW(commands.Cog):
                 return "{} Interlude is on going\n{} Day 1 starts in **{}**".format(self.bot.getEmote('mark_a'), self.bot.getEmote('time'), self.bot.getTimedeltaStr(d))
             elif current_time > self.bot.gw['dates']["Preliminaries"]:
                 d = self.bot.gw['dates']['Interlude'] - current_time
-                if d < timedelta(seconds=25200): msg = " Preliminaries ended".format(self.bot.getEmote('mark_a'))
+                if d < timedelta(seconds=25200): msg = "{} Preliminaries ended".format(self.bot.getEmote('mark_a'))
                 else: msg = "{} Preliminaries are on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), self.bot.getTimedeltaStr(self.bot.gw['dates']["Preliminaries"] + timedelta(seconds=104400) - current_time, True))
                 return "{}\n{} Interlude starts in **{}**".format(msg, self.bot.getEmote('time'), self.bot.getTimedeltaStr(d, True))
             else:
@@ -306,6 +306,8 @@ class GW(commands.Cog):
             d = self.getNextBuff(ctx)
             if d != "":
                 await ctx.send(embed=self.bot.buildEmbed(title="{} Guild War (You) Buff status".format(self.bot.getEmote('gw')), description=d, color=self.color))
+            else:
+                await ctx.send(embed=self.bot.buildEmbed(title="{} Guild War (You) Buff status".format(self.bot.getEmote('gw')), description="Only available when Guild War is on going", color=self.color))
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
             await self.bot.sendError("gwbuff", str(e))
@@ -385,16 +387,32 @@ class GW(commands.Cog):
             else:
                 fields = [{'name':'**Crew Ranking**', 'value':''}, {'name':'**Player Ranking**', 'value':''}]
                 for c in self.bot.gw['ranking'][0]:
-                    fields[0]['value'] += "**{:,}** ▪ {:,}".format(int(c), self.bot.gw['ranking'][0][c])
-                    if c in self.bot.gw['ranking'][2] and self.bot.gw['ranking'][2][c] > 0:
-                        fields[0]['value'] += " ( {:+,.2f} / min )".format(self.bot.gw['ranking'][2][c])
+                    fields[0]['value'] += "**#{:,}K** \▪ {:,}".format(int(c)//1000, self.bot.gw['ranking'][0][c])
+                    if c in self.bot.gw['ranking'][2]:
+                        if self.bot.gw['ranking'][2][c] > 1000000000:
+                            fields[0]['value'] += " \▪  {:,.1f}B/min".format(self.bot.gw['ranking'][2][c]/1000000000)
+                        elif self.bot.gw['ranking'][2][c] > 1000000:
+                            fields[0]['value'] += " \▪  {:,.1f}M/min".format(self.bot.gw['ranking'][2][c]/1000000)
+                        elif self.bot.gw['ranking'][2][c] > 1000:
+                            fields[0]['value'] += " \▪  {:,.1f}K/min".format(self.bot.gw['ranking'][2][c]/1000)
+                        elif self.bot.gw['ranking'][2][c] > 0:
+                            fields[0]['value'] += " \▪  {:,.1f}/min".format(self.bot.gw['ranking'][2][c])
                     fields[0]['value'] += "\n"
+                if fields[0]['value'] == '': fields[0]['value'] = 'Unaivalable'
 
                 for c in self.bot.gw['ranking'][1]:
-                    fields[1]['value'] += "**{:,}** ▪ {:,}".format(int(c), self.bot.gw['ranking'][1][c])
-                    if c in self.bot.gw['ranking'][3] and self.bot.gw['ranking'][3][c] > 0:
-                        fields[1]['value'] += " ( {:+,.2f} / min )".format(self.bot.gw['ranking'][3][c])
+                    fields[1]['value'] += "**#{:,}K** \▪ {:,}".format(int(c)//1000, self.bot.gw['ranking'][1][c])
+                    if c in self.bot.gw['ranking'][3]:
+                        if self.bot.gw['ranking'][3][c] > 1000000000:
+                            fields[1]['value'] += " \▪  {:,.1f}B/min".format(self.bot.gw['ranking'][3][c]/1000000000)
+                        elif self.bot.gw['ranking'][3][c] > 1000000:
+                            fields[1]['value'] += " \▪  {:,.1f}M/min".format(self.bot.gw['ranking'][3][c]/1000000)
+                        elif self.bot.gw['ranking'][3][c] > 1000:
+                            fields[1]['value'] += " \▪  {:,.1f}K/min".format(self.bot.gw['ranking'][3][c]/1000)
+                        elif self.bot.gw['ranking'][3][c] > 0:
+                            fields[1]['value'] += " \▪  {:,.1f}/min".format(self.bot.gw['ranking'][3][c])
                     fields[1]['value'] += "\n"
+                if fields[1]['value'] == '': fields[1]['value'] = 'Unaivalable'
 
                 await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), self.bot.gw['id']), fields=fields, footer="Last Update ▪ {:%a. %m/%d %H:%M} JST".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
         except Exception as e:
