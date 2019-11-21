@@ -413,7 +413,7 @@ class General(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", footer="I have no clues about what went wrong", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rl', 'reminderlist'])
-    @commands.cooldown(1, 3, commands.BucketType.user)
+    @commands.cooldown(1, 6, commands.BucketType.user)
     async def remindlist(self, ctx):
         """Post your current list of reminders"""
         id = str(ctx.author.id)
@@ -427,7 +427,7 @@ class General(commands.Cog):
             await ctx.send(embed=embed)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rd', 'reminderdel'])
-    @commands.cooldown(1, 3, commands.BucketType.user)
+    @commands.cooldown(2, 3, commands.BucketType.user)
     async def reminddel(self, ctx, rid : int):
         """Delete one of your reminders"""
         id = str(ctx.author.id)

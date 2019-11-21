@@ -341,11 +341,11 @@ class GBF_Game(commands.Cog):
             pass
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(1, 180, commands.BucketType.user)
+    @commands.cooldown(1, 600, commands.BucketType.user)
     async def quota(self, ctx):
         """Give you your GW quota for the day"""
-        if ctx.author.id == self.bot.ids['yawn']:
-            await ctx.send(embed=self.bot.buildEmbed(title="{} {} is a bad boy".format(self.bot.getEmote('gw'), ctx.author.display_name), description="Your account is **restricted.**", thumbnail=ctx.author.avatar_url ,color=self.color))
+        if ctx.author.id in self.bot.ids.get('branded', []):
+            await ctx.send(embed=self.bot.buildEmbed(title="{} {} is a bad boy".format(self.bot.getEmote('gw'), ctx.author.display_name), description="Your account is **restricted.**", thumbnail=ctx.author.avatar_url, color=self.color))
             return
 
         h = random.randint(300, 2000)
@@ -355,25 +355,31 @@ class GBF_Game(commands.Cog):
         if ctx.author.id == self.bot.ids['wawi']:
             c = 7
 
-        if c == 1:
-            await ctx.send(embed=self.bot.buildEmbed(title="{} {}'s daily quota".format(self.bot.getEmote('gw'), ctx.author.display_name), description="You got a **free leech pass**\nCongratulations", thumbnail=ctx.author.avatar_url ,color=self.color))
+        if c <= 2:
+            c = random.randint(1, 100)
+            if c <= 5:
+                await ctx.send(embed=self.bot.buildEmbed(title="{} {}'s daily quota".format(self.bot.getEmote('gw'), ctx.author.display_name), description="You got a **Slave Pass** 🤖\nCongratulations!!!\nCall your boss and take a day off now!", footer="Full Auto and Botting are forbidden", thumbnail=ctx.author.avatar_url ,color=self.color))
+            elif c <= 15:
+                await ctx.send(embed=self.bot.buildEmbed(title="{} {}'s daily quota".format(self.bot.getEmote('gw'), ctx.author.display_name), description="You got a **Chen Pass** 😈\nCongratulations!!!\nYour daily honor and meat count must be composed only of the digit 6.", thumbnail=ctx.author.avatar_url ,color=self.color))
+            else:
+                await ctx.send(embed=self.bot.buildEmbed(title="{} {}'s daily quota".format(self.bot.getEmote('gw'), ctx.author.display_name), description="You got a **Free Leech Pass** 👍\nCongratulations!!!", thumbnail=ctx.author.avatar_url ,color=self.color))
             return
-        elif c == 2:
+        elif c == 3:
             h = h * random.randint(30, 50)
             m = m * random.randint(30, 50)
-        elif c <= 4:
+        elif c <= 5:
             h = h * random.randint(10, 20)
             m = m * random.randint(10, 20)
-        elif c <= 6:
+        elif c <= 7:
             h = h * random.randint(3, 6)
             m = m * random.randint(3, 6)
-        elif c == 7:
+        elif c == 8:
             h = h // random.randint(30, 50)
             m = m // random.randint(30, 50)
-        elif c <= 9:
+        elif c <= 10:
             h = h // random.randint(10, 20)
             m = m // random.randint(10, 20)
-        elif c <= 11:
+        elif c <= 12:
             h = h // random.randint(3, 6)
             m = m // random.randint(3, 6)
         h = h * 100000

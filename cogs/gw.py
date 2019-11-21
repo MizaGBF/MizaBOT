@@ -27,6 +27,7 @@ class GW(commands.Cog):
         players = [2000, 50000, 100000, 160000, 250000, 350000]
 
         days = ["End", "Day 5", "Day 4", "Day 3", "Day 2", "Day 1", "Interlude", "Preliminaries"]
+        minute_update = [5, 25, 45]
 
         while True:
             self.getGWState()
@@ -43,50 +44,53 @@ class GW(commands.Cog):
                 elif self.bot.getJST() > self.bot.gw['dates']["Day 5"] - timedelta(seconds=21600):
                     await asyncio.sleep(3600)
                 else:
-                    current_time = self.bot.getJST()
-                    m = current_time.minute
-                    h = current_time.hour
-                    skip = False
-                    for d in days:
-                        if current_time < self.bot.gw['dates'][d]:
-                            continue
-                        elif(d == "Preliminaries" and current_time > self.bot.gw['dates']["Interlude"] - timedelta(seconds=24000)) or (d.startswith("Day") and h < 7 and not (h == 0 and m == 9)) or d == "Day 5":
-                            skip = True
-                        break
-                    if skip:
-                        await asyncio.sleep(600)
-                    elif m == 6 or m == 26 or m == 46:
-                        try:
-                            data = [{}, {}, {}, {}, current_time - timedelta(seconds=60 * (current_time.minute % 20))]
-                            if self.bot.gw['ranking'] is not None:
-                                diff = data[4] - self.bot.gw['ranking'][4]
-                                diff = round(diff.total_seconds() / 60.0)
-                            else: diff = 0
-                            for c in crews:
-                                r = await cog.requestRanking(c // 10, True)
-                                if r is not None and 'list' in r and len(r['list']) > 0:
-                                    data[0][str(c)] = int(r['list'][-1]['point'])
-                                    if diff > 0 and self.bot.gw['ranking'] is not None and str(c) in self.bot.gw['ranking'][0]:
-                                        data[2][str(c)] = (data[0][str(c)] - self.bot.gw['ranking'][0][str(c)]) / diff
-                                await asyncio.sleep(0.001)
+                    if not self.checkMaintenance():
+                        current_time = self.bot.getJST()
+                        m = current_time.minute
+                        h = current_time.hour
+                        skip = False
+                        for d in days:
+                            if current_time < self.bot.gw['dates'][d]:
+                                continue
+                            elif(d == "Preliminaries" and current_time > self.bot.gw['dates']["Interlude"] - timedelta(seconds=24000)) or (d.startswith("Day") and h < 7 and not (h == 0 and m < 20)) or d == "Day 5":
+                                skip = True
+                            break
+                        if skip:
+                            await asyncio.sleep(600)
+                        elif m in minute_update:
+                            try:
+                                data = [{}, {}, {}, {}, current_time - timedelta(seconds=60 * (current_time.minute % 20))]
+                                if self.bot.gw['ranking'] is not None:
+                                    diff = data[4] - self.bot.gw['ranking'][4]
+                                    diff = round(diff.total_seconds() / 60.0)
+                                else: diff = 0
+                                for c in crews:
+                                    r = await cog.requestRanking(c // 10, True)
+                                    if r is not None and 'list' in r and len(r['list']) > 0:
+                                        data[0][str(c)] = int(r['list'][-1]['point'])
+                                        if diff > 0 and self.bot.gw['ranking'] is not None and str(c) in self.bot.gw['ranking'][0]:
+                                            data[2][str(c)] = (data[0][str(c)] - self.bot.gw['ranking'][0][str(c)]) / diff
+                                    await asyncio.sleep(0.001)
 
-                            for p in players:
-                                r = await cog.requestRanking(p // 10, False)
-                                if r is not None and 'list' in r and len(r['list']) > 0:
-                                    data[1][str(p)] = int(r['list'][-1]['point'])
-                                    if diff > 0 and self.bot.gw['ranking'] is not None and str(p) in self.bot.gw['ranking'][1]:
-                                        data[3][str(p)] = (data[1][str(p)] - self.bot.gw['ranking'][1][str(p)]) / diff
-                                await asyncio.sleep(0.001)
+                                for p in players:
+                                    r = await cog.requestRanking(p // 10, False)
+                                    if r is not None and 'list' in r and len(r['list']) > 0:
+                                        data[1][str(p)] = int(r['list'][-1]['point'])
+                                        if diff > 0 and self.bot.gw['ranking'] is not None and str(p) in self.bot.gw['ranking'][1]:
+                                            data[3][str(p)] = (data[1][str(p)] - self.bot.gw['ranking'][1][str(p)]) / diff
+                                    await asyncio.sleep(0.001)
 
-                            self.bot.gw['ranking'] = data
-                            self.bot.savePending = True
-                        except Exception as ex:
-                            await self.bot.sendError('checkgwranking', str(ex))
-                            self.bot.gw['ranking'] = None
-                            self.bot.savePending = True
-                        await asyncio.sleep(600)
+                                self.bot.gw['ranking'] = data
+                                self.bot.savePending = True
+                            except Exception as ex:
+                                await self.bot.sendError('checkgwranking', str(ex))
+                                self.bot.gw['ranking'] = None
+                                self.bot.savePending = True
+                            await asyncio.sleep(600)
+                        else:
+                            await asyncio.sleep(30)
                     else:
-                        await asyncio.sleep(30)
+                        await asyncio.sleep(60)
             except asyncio.CancelledError:
                 await self.bot.sendError('checkgwranking', 'cancelled')
                 await asyncio.sleep(30)
@@ -104,6 +108,7 @@ class GW(commands.Cog):
             if guild is None:
                 await self.bot.sendError('checkgwbuff', 'cancelled, no guild found')
             channel = self.bot.get_channel(self.bot.ids['you_announcement'])
+            gl_role = guild.get_role(self.bot.ids['gl'])
             fo_role = guild.get_role(self.bot.ids['fo'])
             buff_role = [[guild.get_role(self.bot.ids['atkace']), 'atkace'], [guild.get_role(self.bot.ids['deface']), 'deface']]
             msg = ""
@@ -134,8 +139,8 @@ class GW(commands.Cog):
                     self.bot.gw['buffs'].pop(0)
                     self.bot.savePending = True
                 else:
-                    if len(msg) > 0:
-                        await channel.send(msg)
+                    if msg != "":
+                        await channel.send("{} {}".format(gl_role.mention, msg))
                         msg = ""
                     if len(self.bot.gw['buffs']) > 0:
                         d = self.bot.gw['buffs'][0][0] - current_time
@@ -148,6 +153,12 @@ class GW(commands.Cog):
         except Exception as e:
             await self.bot.sendError('checkgwbuff', str(e))
         await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwbuff() ended", timestamp=datetime.utcnow()))
+
+    def checkMaintenance(self):
+        try:
+            return self.bot.get_cog('GBF_Utility').checkMaintenance()
+        except:
+            return False
 
     def buildDayList(self): # used by the gw schedule command
         return [
@@ -209,7 +220,7 @@ class GW(commands.Cog):
                         d = self.bot.gw['dates'][it[i-1]] - current_time
                         if d < timedelta(seconds=25200): msg = "{} {} ended".format(self.bot.getEmote('mark_a'), it[i])
                         else: msg = "{} {} is on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.gw['dates'][it[i]] + timedelta(seconds=61200) - current_time))
-                        if i == 1: return msg + "{}\n{} {} starts in **{}**".format(msg, self.bot.getEmote('time'), it[i-1].replace('Day 5', 'Final Rally'), self.bot.getTimedeltaStr(d))
+                        if i == 1: return "{}\n{} {} starts in **{}**".format(msg, self.bot.getEmote('time'), it[i-1].replace('Day 5', 'Final Rally'), self.bot.getTimedeltaStr(d))
                         else: return "{}\n{} {} starts in **{}**".format(msg,self.bot.getEmote('time'), it[i-1], self.bot.getTimedeltaStr(d) )
             elif current_time > self.bot.gw['dates']["Interlude"]:
                 d = self.bot.gw['dates']["Day 1"] - current_time
@@ -414,6 +425,6 @@ class GW(commands.Cog):
                     fields[1]['value'] += "\n"
                 if fields[1]['value'] == '': fields[1]['value'] = 'Unaivalable'
 
-                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), self.bot.gw['id']), fields=fields, footer="Last Update ▪ {:%a. %m/%d %H:%M} JST".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), self.bot.gw['id']), fields=fields, footer="Last Update ▪ {:%a. %m/%d %H:%M} JST ▪ Update on minute 5, 25 and 45".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
         except Exception as e:
             await self.bot.sendError("ranking", str(e))
