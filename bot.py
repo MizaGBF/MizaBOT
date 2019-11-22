@@ -247,7 +247,8 @@ class Mizabot(commands.Bot):
         self.games = {} # bot status messages
         self.strings = {} # bot strings
         self.specialstrings = {} # bot special strings
-        self.emotes = {} # bot custom emotes
+        self.emotes = {} # bot custom emote ids
+        self.emote_cache = {} # store used emotes
         # /gbfg/ game
         self.pitroulette = False
         self.pitroulettevictim = []
@@ -445,7 +446,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 # check if it's time for the bot maintenance for me (every 2 weeks or so)
                 c = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
                 if self.bot_maintenance and c > self.bot_maintenance and (c.day == 1 or c.day == 17):
-                    await self.send('debug', self.get_user(self.ids['owner']).mention + " ▪ Time for maintenance!")
+                    await self.send('debug', self.get_user(self.ids['owner']).mention + " ▫️ Time for maintenance!")
                     self.bot_maintenance = c
                     self.savePending = True
                 # autosave
@@ -497,11 +498,11 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                                 else: msg += "**Duration:** {} hours\n".format(currents[i].max_age // 3600)
                             msg += "**Channel:** {}\n".format(currents[i].channel.name)
                             msg += "**Url:** {}\n".format(currents[i].url)
-                            await self.send(log_channels[g.id], embed=bot.buildEmbed(title="New Invite ▪ `{}`".format(i), description=msg, timestamp=datetime.utcnow(), color=0xfcba03))
+                            await self.send(log_channels[g.id], embed=bot.buildEmbed(title="New Invite ▫️ `{}`".format(i), description=msg, timestamp=datetime.utcnow(), color=0xfcba03))
 
                     for i in invites[g.id]:
                         if i not in currents:
-                            await self.send(log_channels[g.id], embed=bot.buildEmbed(title="Revoked Invite ▪ `{}`".format(i), timestamp=datetime.utcnow(), color=0xfcba03))
+                            await self.send(log_channels[g.id], embed=bot.buildEmbed(title="Revoked Invite ▫️ `{}`".format(i), timestamp=datetime.utcnow(), color=0xfcba03))
 
                     invites[g.id] = currents
             except asyncio.CancelledError:
@@ -541,9 +542,13 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
         return False
 
     def getEmote(self, key): # retrieve a custom emote
-        if key in self.emotes:
+        if key in self.emote_cache:
+            return self.emote_cache[key]
+        elif key in self.emotes:
             try:
-                return self.get_emoji(self.emotes[key]) # ids are defined in config.json
+                e = self.get_emoji(self.emotes[key]) # ids are defined in config.json
+                if e is not None: self.emote_cache[key] = e
+                return e
             except:
                 return None
         return None
@@ -724,14 +729,14 @@ async def on_guild_join(guild): # when the bot joins a new guild
         return
     elif id in bot.newserver['servers'] or str(guild.owner.id) in bot.newserver['owners']: # leave if the server is blacklisted
         try:
-            await bot.send('debug', embed=bot.buildEmbed(title="Banned guild request", description="{} ▪ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▪ {}".format(guild.owner.name, guild.owner.id)))
+            await bot.send('debug', embed=bot.buildEmbed(title="Banned guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
         except Exception as e:
             await bot.send('debug', "on_guild_join(): {}".format(e))
         await guild.leave()
     else: # notify me and add to the pending servers
         bot.newserver['pending'][id] = guild.name
         bot.savePending = True
-        await bot.send('debug', embed=bot.buildEmbed(title="Pending guild request", description="{} ▪ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▪ {}".format(guild.owner.name, guild.owner.id)))
+        await bot.send('debug', embed=bot.buildEmbed(title="Pending guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
 
 # called by on_message
 # games/jokes for /gbfg/
@@ -750,8 +755,8 @@ async def pitroulette():
         if bot.pitroulettemax == 0 and len(bot.pitroulettelist) > 1:
             fields = []
             for a in bot.pitroulettelist:
-                if len(a[2]) == 0: fields.append({'name': "{} ▪ after {} message(s)".format(a[0], a[1]), 'value':a[3]})
-                else: fields.append({'name': "{} ▪ after {} message(s)".format(a[0], a[1]), 'value':'{}\n{}'.format(a[2], a[3])})
+                if len(a[2]) == 0: fields.append({'name': "{} ▫️ after {} message(s)".format(a[0], a[1]), 'value':a[3]})
+                else: fields.append({'name': "{} ▫️ after {} message(s)".format(a[0], a[1]), 'value':'{}\n{}'.format(a[2], a[3])})
             await message.channel.send(embed=bot.buildEmbed(title="Pit Roulette results", fields=fields, inline=False, thumbnail=message.author.avatar_url))
         g = bot.get_guild(bot.ids['gbfg'])
         await message.author.add_roles(g.get_role(bot.ids['pit']))
@@ -867,16 +872,16 @@ async def on_member_update(before, after):
     if before.guild.id in guilds:
         channel = guilds[before.guild.id]
         if before.display_name != after.display_name:
-                await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▪ Name change".format(after.display_name), 'icon_url':after.avatar_url}, description="{}\n**Before** ▪ {}\n**After** ▪ {}".format(after.mention, before.display_name, after.display_name), footer="User ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
+                await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▫️ Name change".format(after.display_name), 'icon_url':after.avatar_url}, description="{}\n**Before** ▫️ {}\n**After** ▫️ {}".format(after.mention, before.display_name, after.display_name), footer="User ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
         elif len(before.roles) < len(after.roles):
             for r in after.roles:
                 if r not in before.roles:
-                    await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▪ Role added".format(after.name), 'icon_url':after.avatar_url}, description="{} was given the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x1b55b3, timestamp=datetime.utcnow()))
+                    await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▫️ Role added".format(after.name), 'icon_url':after.avatar_url}, description="{} was given the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x1b55b3, timestamp=datetime.utcnow()))
                     break
         elif len(before.roles) > len(after.roles):
             for r in before.roles:
                 if r not in after.roles:
-                    await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▪ Role removed".format(after.name), 'icon_url':after.avatar_url}, description="{} was removed from the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x0b234a, timestamp=datetime.utcnow()))
+                    await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▫️ Role removed".format(after.name), 'icon_url':after.avatar_url}, description="{} was removed from the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x0b234a, timestamp=datetime.utcnow()))
                     break
 
 @bot.event
@@ -884,28 +889,28 @@ async def on_member_remove(member):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if member.guild.id in guilds:
         channel = guilds[member.guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▪ Left the server".format(member.name), 'icon_url':member.avatar_url}, footer="User ID: {}".format(member.id), timestamp=datetime.utcnow(), color=0xff0000))
+        await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▫️ Left the server".format(member.name), 'icon_url':member.avatar_url}, footer="User ID: {}".format(member.id), timestamp=datetime.utcnow(), color=0xff0000))
 
 @bot.event
 async def on_member_join(member):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if member.guild.id in guilds:
         channel = guilds[member.guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▪ Joined the server".format(member.name), 'icon_url':member.avatar_url}, footer="User ID: {}".format(member.id), timestamp=datetime.utcnow(), color=0x00ff3c))
+        await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▫️ Joined the server".format(member.name), 'icon_url':member.avatar_url}, footer="User ID: {}".format(member.id), timestamp=datetime.utcnow(), color=0x00ff3c))
 
 @bot.event
 async def on_member_ban(guild, user):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if guild.id in guilds:
         channel = guilds[guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▪ Banned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=datetime.utcnow(), color=0xff0000))
+        await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▫️ Banned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=datetime.utcnow(), color=0xff0000))
 
 @bot.event
 async def on_member_unban(guild, user):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if guild.id in guilds:
         channel = guilds[guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▪ Unbanned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=datetime.utcnow(), color=0x00ff3c))
+        await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▫️ Unbanned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=datetime.utcnow(), color=0x00ff3c))
 
 @bot.event
 async def on_guild_emojis_update(guild, before, after):
@@ -915,12 +920,12 @@ async def on_guild_emojis_update(guild, before, after):
         if len(before) < len(after):
             for e in after:
                 if e not in before:
-                    await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▪ Emoji added".format(e.name), 'icon_url':e.url}, footer="Emoji ID: {}".format(e.id), timestamp=datetime.utcnow(), color=0x00ff3c))
+                    await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▫️ Emoji added".format(e.name), 'icon_url':e.url}, footer="Emoji ID: {}".format(e.id), timestamp=datetime.utcnow(), color=0x00ff3c))
                     break
         else:
             for e in before:
                 if e not in after:
-                    await bot.send(channel, embed=bot.buildEmbed(author={'name':" ▪ Emoji removed".format(e.name), 'icon_url':e.url}, footer="Emoji ID: {}".format(e.id), timestamp=datetime.utcnow(), color=0xff0000))
+                    await bot.send(channel, embed=bot.buildEmbed(author={'name':" ▫️ Emoji removed".format(e.name), 'icon_url':e.url}, footer="Emoji ID: {}".format(e.id), timestamp=datetime.utcnow(), color=0xff0000))
                     break
 
 @bot.event
@@ -928,14 +933,14 @@ async def on_guild_role_create(role):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if role.guild.id in guilds:
         channel = guilds[role.guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(title="Role created ▪ `{}`".format(role.name), footer="Role ID: {}".format(role.id), timestamp=datetime.utcnow(), color=0x00ff3c))
+        await bot.send(channel, embed=bot.buildEmbed(title="Role created ▫️ `{}`".format(role.name), footer="Role ID: {}".format(role.id), timestamp=datetime.utcnow(), color=0x00ff3c))
 
 @bot.event
 async def on_guild_role_delete(role):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if role.guild.id in guilds:
         channel = guilds[role.guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(title="Role deleted ▪ `{}`".format(role.name), footer="Role ID: {}".format(role.id), timestamp=datetime.utcnow(), color=0xff0000))
+        await bot.send(channel, embed=bot.buildEmbed(title="Role deleted ▫️ `{}`".format(role.name), footer="Role ID: {}".format(role.id), timestamp=datetime.utcnow(), color=0xff0000))
 
 @bot.event
 async def on_guild_role_update(before, after):
@@ -945,31 +950,31 @@ async def on_guild_role_update(before, after):
         if before.name != after.name:
             await bot.send(channel, embed=bot.buildEmbed(title="Role name updated", fields=[{'name':"Before", 'value':before.name}, {'name':"After", 'value':after.name}], footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
         elif before.colour != after.colour:
-            await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▪ `" + after.name + "`", description="Color changed", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
+            await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▫️ `" + after.name + "`", description="Color changed", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
         elif before.hoist != after.hoist:
             if after.hoist:
-                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▪ `{}`".format(after.name), description="Role is displayed separately from other members", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
+                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▫️ `{}`".format(after.name), description="Role is displayed separately from other members", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
             else:
-                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▪ `{}`".format(after.name), description="Role is displayed as the other members", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
+                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▫️ `{}`".format(after.name), description="Role is displayed as the other members", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
         elif before.mentionable != after.mentionable:
             if after.mentionable:
-                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▪ `{}`".format(after.name), description="Role is mentionable", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
+                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▫️ `{}`".format(after.name), description="Role is mentionable", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
             else:
-                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▪ `{}`".format(after.name), description="Role isn't mentionable", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
+                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▫️ `{}`".format(after.name), description="Role isn't mentionable", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
 
 @bot.event
 async def on_guild_channel_create(channel):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if channel.guild.id in guilds:
         c = guilds[role.guild.id]
-        await bot.send(c, embed=bot.buildEmbed(title="Channel created ▪ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=datetime.utcnow(), color=0xebe007))
+        await bot.send(c, embed=bot.buildEmbed(title="Channel created ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=datetime.utcnow(), color=0xebe007))
 
 @bot.event
 async def on_guild_channel_delete(channel):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if channel.guild.id in guilds:
         c = guilds[role.guild.id]
-        await bot.send(c, embed=bot.buildEmbed(title="Channel deleted ▪ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=datetime.utcnow(), color=0x8a8306))
+        await bot.send(c, embed=bot.buildEmbed(title="Channel deleted ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=datetime.utcnow(), color=0x8a8306))
 
 # create the graceful exit
 grace = GracefulExit(bot)

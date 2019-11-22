@@ -423,7 +423,7 @@ class General(commands.Cog):
             embed = discord.Embed(title="{}'s Reminder List".format(ctx.author.display_name), color=random.randint(0, 16777216)) # random color
             embed.set_thumbnail(url=ctx.author.avatar_url)
             for i in range(0, len(self.bot.reminders[id])):
-                embed.add_field(name="#{} ▪ {:%Y/%m/%d %H:%M} JST".format(i, self.bot.reminders[id][i][0]), value=self.bot.reminders[id][i][1], inline=False)
+                embed.add_field(name="#{} ▫️ {:%Y/%m/%d %H:%M} JST".format(i, self.bot.reminders[id][i][0]), value=self.bot.reminders[id][i][1], inline=False)
             await ctx.send(embed=embed)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rd', 'reminderdel'])

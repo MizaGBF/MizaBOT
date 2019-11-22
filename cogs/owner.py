@@ -394,7 +394,7 @@ class Owner(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def invite(self, ctx):
         """Post the invite link (Owner only)"""
-        await self.bot.send('debug', embed=self.bot.buildEmbed(title="Invite Request", description="{} ▪ {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar_url, timestamp=datetime.utcnow(), color=self.color))
+        await self.bot.send('debug', embed=self.bot.buildEmbed(title="Invite Request", description="{} ▫️ {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar_url, timestamp=datetime.utcnow(), color=self.color))
         await ctx.author.send(embed=self.bot.buildEmbed(title=ctx.guild.me.name, description="{}\nYou'll have to wait for my owner approval.\nMisuses will result in a ban.".format(self.bot.strings["invite()"]), thumbnail=ctx.guild.me.avatar_url, timestamp=datetime.utcnow(), color=self.color))
 
     @commands.command(no_pm=True)

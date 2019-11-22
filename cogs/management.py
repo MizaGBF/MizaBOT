@@ -48,7 +48,7 @@ class Management(commands.Cog):
         """Send a bug report (or your love confessions) to the author"""
         if len(terms) == 0:
             return
-        await self.bot.send('debug', embed=self.bot.buildEmbed(title="Bug Report", description=terms, footer="{} ▪ User ID: {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar_url, color=self.color))
+        await self.bot.send('debug', embed=self.bot.buildEmbed(title="Bug Report", description=terms, footer="{} ▫️ User ID: {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar_url, color=self.color))
         await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -97,8 +97,8 @@ class Management(commands.Cog):
         if id not in self.bot.spark[1]:
             self.bot.spark[1].append(id)
             self.bot.savePending = True
-            await ctx.send(embed=self.bot.buildEmbed(title="{} ▪ {}".format(member.display_name, id), description="Banned from all roll rankings by {}".format(ctx.author.display_name), thumbnail=member.avatar_url, color=self.color, footer=ctx.guild.name))
-            await self.bot.send('debug', embed=self.bot.buildEmbed(title="{} ▪ {}".format(member.display_name, id), description="Banned from all roll rankings by {}".format(ctx.author.display_name), thumbnail=member.avatar_url, color=self.color, footer=ctx.guild.name))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} ▫️ {}".format(member.display_name, id), description="Banned from all roll rankings by {}".format(ctx.author.display_name), thumbnail=member.avatar_url, color=self.color, footer=ctx.guild.name))
+            await self.bot.send('debug', embed=self.bot.buildEmbed(title="{} ▫️ {}".format(member.display_name, id), description="Banned from all roll rankings by {}".format(ctx.author.display_name), thumbnail=member.avatar_url, color=self.color, footer=ctx.guild.name))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title=member.display_name, description="Already banned", thumbnail=member.avatar_url, color=self.color))
 
@@ -263,9 +263,9 @@ class Management(commands.Cog):
         if gid in self.bot.permitted:
             self.bot.permitted.pop(gid)
             self.bot.savePending = True
-            await ctx.send(embed=self.bot.buildEmbed(title="Commands are now sauthorized everywhere", thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▪ " + str(ctx.guild.id), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Commands are now sauthorized everywhere", thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
         else:
-            await ctx.send(embed=self.bot.buildEmbed(title="Commands are already sauthorized everywhere", thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▪ " + str(ctx.guild.id), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Commands are already sauthorized everywhere", thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isMod()
@@ -280,9 +280,9 @@ class Management(commands.Cog):
                         msg += c.name + "\n"
                     except:
                         pass
-            await ctx.send(embed=self.bot.buildEmbed(title="Channels permitted to use all commands", description=msg, thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▪ " + str(ctx.guild.id), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Channels permitted to use all commands", description=msg, thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
         else:
-            await ctx.send(embed=self.bot.buildEmbed(title="Commands are sauthorized everywhere", thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▪ " + str(ctx.guild.id), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Commands are sauthorized everywhere", thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isMod()
@@ -324,9 +324,9 @@ class Management(commands.Cog):
                         msg += c.name + "\n"
                     except:
                         pass
-            await ctx.send(embed=self.bot.buildEmbed(title="Channels receiving broadcasts", description=msg, thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▪ " + str(ctx.guild.id), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Channels receiving broadcasts", description=msg, thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
         else:
-            await ctx.send(embed=self.bot.buildEmbed(title="No channels set to receive broadcasts", thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▪ " + str(ctx.guild.id), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="No channels set to receive broadcasts", thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
 
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['mizabot'])

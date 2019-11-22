@@ -134,7 +134,7 @@ class GBF_Game(commands.Cog):
         You can add "super" for a 9% rate and 5 ssr mukku"""
         if super.lower() == "super":
             ssr = 1500
-            footer = "Super Mukku ▪ 15% SSR Rate and at least 5 SSRs\n"
+            footer = "Super Mukku ▫️ 15% SSR Rate and at least 5 SSRs\n"
             limit = 5
         else:
             ssr = 900
@@ -298,7 +298,7 @@ class GBF_Game(commands.Cog):
             for key, value in sorted(ranking.items(), key = itemgetter(1), reverse = True):
                 if i < top:
                     fr = math.floor(value)
-                    msg += "**#{:<2}{} {}** with {} roll".format(i+1, emotes.pop(i, "▪"), guild.get_member(int(key)).display_name, fr)
+                    msg += "**#{:<2}{} {}** with {} roll".format(i+1, emotes.pop(i, "▫️"), guild.get_member(int(key)).display_name, fr)
                     if fr != 1: msg += "s"
                     msg += "\n"
                 if key == str(ctx.message.author.id):
@@ -308,7 +308,7 @@ class GBF_Game(commands.Cog):
                 if i >= 100:
                     break
             if ar >= top: footer = "You are ranked #{}".format(ar+1)
-            elif ar == -1: footer = "You aren't ranked ▪ You need at least one roll to be ranked"
+            elif ar == -1: footer = "You aren't ranked ▫️ You need at least one roll to be ranked"
             else: footer = ""
             await ctx.send(embed=self.bot.buildEmbed(title="{} Spark ranking of {}".format(self.bot.getEmote('crown'), guild.name), color=self.color, description=msg, footer=footer, thumbnail=guild.icon_url))
         except Exception as e:
@@ -429,4 +429,4 @@ class GBF_Game(commands.Cog):
         race = ['Human', 'Erun', 'Draph', 'Harvin', 'Primal', 'Other']
         element = ['fire', 'water', 'earth', 'wind', 'light', 'dark']
 
-        await ctx.send(embed=self.bot.buildEmbed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="**Rarity** ▪ {}\n**Race** ▪ {}\n**Element** ▪ {}\n**Rating** ▪ {:.1f}".format(self.bot.getEmote(rarity[seed % 3]), race[(seed - 1) % 6], self.bot.getEmote(element[(seed - 3) % 6]), ((seed % 41) * 0.1) + 6.0 - (seed % 3) * 1.5), inline=True, color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="**Rarity** ▫️ {}\n**Race** ▫️ {}\n**Element** ▫️ {}\n**Rating** ▫️ {:.1f}".format(self.bot.getEmote(rarity[seed % 3]), race[(seed - 1) % 6], self.bot.getEmote(element[(seed - 3) % 6]), ((seed % 41) * 0.1) + 6.0 - (seed % 3) * 1.5), inline=True, color=self.color))
