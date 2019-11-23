@@ -966,15 +966,13 @@ async def on_guild_role_update(before, after):
 async def on_guild_channel_create(channel):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if channel.guild.id in guilds:
-        c = guilds[role.guild.id]
-        await bot.send(c, embed=bot.buildEmbed(title="Channel created ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=datetime.utcnow(), color=0xebe007))
+        await bot.send(guilds[channel.guild.id], embed=bot.buildEmbed(title="Channel created ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=datetime.utcnow(), color=0xebe007))
 
 @bot.event
 async def on_guild_channel_delete(channel):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if channel.guild.id in guilds:
-        c = guilds[role.guild.id]
-        await bot.send(c, embed=bot.buildEmbed(title="Channel deleted ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=datetime.utcnow(), color=0x8a8306))
+        await bot.send(guilds[channel.guild.id], embed=bot.buildEmbed(title="Channel deleted ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=datetime.utcnow(), color=0x8a8306))
 
 # create the graceful exit
 grace = GracefulExit(bot)
