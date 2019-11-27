@@ -793,6 +793,7 @@ async def global_check(ctx):
     id = str(ctx.guild.id)
     if id in bot.newserver['servers'] or str(ctx.guild.owner.id) in bot.newserver['owners']: # ban check
         await ctx.guild.leave() # leave the server if banned
+        return False
     if id in bot.newserver['pending']: # pending check
         await bot.react(ctx, 'cooldown')
         return False
@@ -888,8 +889,7 @@ async def on_member_update(before, after):
 async def on_member_remove(member):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if member.guild.id in guilds:
-        channel = guilds[member.guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▫️ Left the server".format(member.name), 'icon_url':member.avatar_url}, footer="User ID: {}".format(member.id), timestamp=datetime.utcnow(), color=0xff0000))
+        await bot.send(guilds[member.guild.id], embed=bot.buildEmbed(author={'name':"{} ▫️ Left the server".format(member.name), 'icon_url':member.avatar_url}, footer="User ID: {}".format(member.id), timestamp=datetime.utcnow(), color=0xff0000))
 
 @bot.event
 async def on_member_join(member):
@@ -902,15 +902,13 @@ async def on_member_join(member):
 async def on_member_ban(guild, user):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if guild.id in guilds:
-        channel = guilds[guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▫️ Banned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=datetime.utcnow(), color=0xff0000))
+        await bot.send(guilds[guild.id], embed=bot.buildEmbed(author={'name':"{} ▫️ Banned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=datetime.utcnow(), color=0xff0000))
 
 @bot.event
 async def on_member_unban(guild, user):
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if guild.id in guilds:
-        channel = guilds[guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▫️ Unbanned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=datetime.utcnow(), color=0x00ff3c))
+        await bot.send(guilds[guild.id], embed=bot.buildEmbed(author={'name':"{} ▫️ Unbanned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=datetime.utcnow(), color=0x00ff3c))
 
 @bot.event
 async def on_guild_emojis_update(guild, before, after):

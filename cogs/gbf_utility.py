@@ -550,7 +550,6 @@ class GBF_Utility(commands.Cog):
                 elif level == 15: 
                     msg = "**25** {} or **4** {} SL4 and **3** {} SL3 to reach **SL{}**".format(self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), level+1)
                 else:
-                    msg = "**" + str(level) + "** " + self.bot.getEmote('SSR') + " to reach **SL" + str(level+1) + "**"
                     msg = "**{}** {} to reach **SL{}**".format(level, self.bot.getEmote('SSR'), level+1)
             else:
                 raise Exception("Unknown type `{}`".format(type))
@@ -577,6 +576,7 @@ class GBF_Utility(commands.Cog):
             return
         parameters = parameters.lower().split(';')
 
+        errors = []
         for what in parameters:
             if what == "": continue
             found = False
@@ -593,9 +593,9 @@ class GBF_Utility(commands.Cog):
                             self.bot.arca[str(ctx.author.id)] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
                         self.bot.arca[str(ctx.author.id)][id] = sumsteps[what]
                         self.bot.savePending = True
-                        await ctx.message.add_reaction('✅') # white check mark
                     else:
-                        await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I can't parse this value: `" + what + "`", color=self.color))
+                        errors.append(what)
+                    await asyncio.sleep(0.001)
                     break
             if found: continue
             items = {"sephira ":10, "sephira stone ":10, "sephira stones ":10, "fire astra ":11, "water astra ":12, "earth astra ":13, "dirt astra ":13, "wind astra ":14, "light astra ":15, "dark astra ":16, "aquila fragment":17, "aquila":17, "bellator fragment":18, "bellator":18, "celsus fragment":19, "celsus":19}
@@ -603,22 +603,24 @@ class GBF_Utility(commands.Cog):
                 if what.startswith(i):
                     found = True
                     id = items[i]
-                    what = what[len(i):]
+                    value = what[len(i):]
                     try:
-                        v = int(what)
+                        v = int(value)
                         if v < 0: raise Exception()
                     except:
-                        await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I can't parse this value: `" + what + "`, not a positive number", color=self.color))
-                        return
+                        errors.append(value)
+                        break
                     if str(ctx.author.id) not in self.bot.arca:
                         self.bot.arca[str(ctx.author.id)] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
                     self.bot.arca[str(ctx.author.id)][id] = v
                     self.bot.savePending = True
-                    await ctx.message.add_reaction('✅') # white check mark
                     break
+                await asyncio.sleep(0.001)
             if found: continue
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Unknown parameter `" + what + "`\nUse `help aSet` for details.", color=self.color))
-            return
+            errors.append(what)
+        if len(errors) > 0:
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Those terms caused an error `{}`\nUse `help aSet` for details.".format(errors), color=self.color))
+        await ctx.message.add_reaction('✅') # white check mark
 
     def arcaStepToString(self, step):
         if step == 0: return "None"
