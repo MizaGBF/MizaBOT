@@ -714,7 +714,6 @@ async def on_ready(): # when the bot starts or reconnects
     await bot.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=random.choice(bot.games)))
     if not bot.boot_flag:
         # send a pretty message
-        bot.setChannelID('wawitest', 650681452153012244)
         bot.setChannel('debug', 'debug_channel') # set our debug channel
         bot.setChannel('pinned', 'you_pinned') # set (you) pinned channel
         bot.setChannel('gbfglog', 'gbfg_log') # set /gbfg/ lucilius log channel
