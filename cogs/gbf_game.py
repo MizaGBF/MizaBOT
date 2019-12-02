@@ -315,31 +315,6 @@ class GBF_Game(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Sorry, something went wrong :bow:", footer=str(e)))
             await self.bot.sendError("rollRanking", str(e))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['diexil', 'nemo', 'killxil'])
-    @commands.cooldown(3, 30, commands.BucketType.guild)
-    async def xil(self, ctx):
-        """Bully Xil"""
-        try:
-            msg = random.choice(self.bot.specialstrings['xil'])
-            await ctx.send(msg.format(ctx.message.author.guild.get_member(self.bot.ids['xil']).mention))
-        except:
-            pass
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(5, 30, commands.BucketType.guild)
-    async def wawi(self, ctx):
-        """Bully Wawi"""
-        try:
-            wawiuser = ctx.message.author.guild.get_member(self.bot.ids['wawi'])
-            if wawiuser is None:
-                return
-            msg = random.choice(self.bot.specialstrings['wawi'])
-            r = ctx.message.author.guild.get_role(self.bot.ids['wawi_role'])
-            if r is not None: await ctx.send(msg.format(r.mention))
-            else: await ctx.send(msg.format(wawiuser.mention))
-        except:
-            pass
-
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 600, commands.BucketType.user)
     async def quota(self, ctx):
