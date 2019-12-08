@@ -345,7 +345,7 @@ class GBF_Utility(commands.Cog):
                     status = "Account isn't restricted"
             except:
                 status = "Account isn't restricted"
-            await ctx.send(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('gw'), data['user']['nickname']), description=status, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/leader/btn/{}.png".format(data['user']['image']), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('gw'), data['user']['nickname']), description=status, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/leader/talk/{}.png".format(data['user']['image']), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
 
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
@@ -386,7 +386,7 @@ class GBF_Utility(commands.Cog):
                 else: rank = ""
                 trophy = soup.find_all("div", class_="prt-title-name")[0].string
                 comment = soup.find_all("div", class_="prt-other-comment")[0].string.replace('\t', '').replace('\n', '')
-                mc_url = soup.find_all("img", class_="img-pc")[0]['src'].replace("/po/", "/btn/").replace("/img_low/", "/img/")
+                mc_url = soup.find_all("img", class_="img-pc")[0]['src'].replace("/po/", "/talk/").replace("/img_low/", "/img/")
                 stats = soup.find_all("div", class_="num")
                 hp = int(stats[0].string)
                 atk = int(stats[1].string)
