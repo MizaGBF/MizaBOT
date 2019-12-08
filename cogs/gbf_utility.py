@@ -16,8 +16,11 @@ class GBF_Utility(commands.Cog):
         self.lucilius_guide = []
         self.rankre = re.compile("Rank ([0-9])+")
         self.sumre = re.compile("<div id=\"js-fix-summon([0-9]{2})-name\" class=\"prt-fix-name\" name=\"[A-Za-z'-. ]+\">(Lvl [0-9]+ [A-Za-z'-. ]+)<\/div>")
-        self.starre = re.compile("<span class=\"prt-current-npc-name\">\s*(Lvl [0-9]+ [A-Za-z'-. ]+)\s*<\/span>")
-        self.empre = re.compile("<div class=\"txt-npc-rank\">([0-9]+)</div>")
+        self.starre = re.compile("<span class=\"prt-current-npc-name\">\s*(Lvl [0-9]+ [A-Za-z'-.μ ]+)\s*<\/span>")
+        self.starcomre = re.compile("<div class=\"prt-pushed-info\">(.+)<\/div>")
+        self.empre = re.compile("<div class=\"txt-npc-rank\">([0-9]+)<\/div>")
+        self.starringre = re.compile("<div class=\"ico-augment2-s\"><\/div>\s*<\/div>\s*<div class=\"prt-pushed-spec\">\s*<div class=\"prt-pushed-info\">")
+        self.starplusre = re.compile("<div class=\"prt-quality\">(\+[0-9]+)<\/div>")
         self.badprofilecache = []
 
     def startTasks(self):
@@ -318,11 +321,37 @@ class GBF_Utility(commands.Cog):
         except Exception as e:
             await self.bot.sendError("getgachabanner", str(e))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["id"])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['badboi', 'branded', 'restricted'])
+    @commands.cooldown(5, 30, commands.BucketType.guild)
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    async def brand(self, ctx, id : int):
+        """Check if a GBF profile is restricted"""
+        try:
+            if id < 0 or id >= 100000000:
+                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
+                return
+            if id in self.badprofilecache:
+                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
+                return
+            cog = self.bot.get_cog('Baguette')
+            data = await cog.getScoutData(id)
+            try:
+                if data['user']["restriction_flag_list"]["event_point_deny_flag"]:
+                    status = "Account is restricted"
+                else:
+                    status = "Account isn't restricted"
+            except:
+                status = "Account isn't restricted"
+            await ctx.send(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('gw'), data['user']['nickname']), description=status, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/leader/btn/{}.png".format(data['user']['image']), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+
+        except Exception as e:
+            await self.bot.sendError("brand", str(e))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['id'])
     @commands.cooldown(5, 30, commands.BucketType.guild)
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def profile(self, ctx, id : int):
-        """retrieve a GBF profile"""
+        """Retrieve a GBF profile"""
         try:
             if id < 0 or id >= 100000000:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
@@ -337,11 +366,24 @@ class GBF_Utility(commands.Cog):
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
                 return
             soup = BeautifulSoup(data, 'html.parser')
-            try: header = soup.find_all("div", class_="prt-title-bg-gld")[0]
-            except: header = None
-            if header is not None:
-                rank = self.rankre.search(str(header)).group(0)
-                name = soup.find_all("span", class_="txt-other-name")[0].string
+            try: name = soup.find_all("span", class_="txt-other-name")[0].string
+            except: name = None
+            if name is not None:
+                rarity = "R"
+                try:
+                    header = soup.find_all("div", class_="prt-title-bg-gld")[0]
+                    rarity = "SSR"
+                except:
+                    try:
+                        header = soup.find_all("div", class_="prt-title-bg-slv")[0]
+                        rarity = "SR"
+                    except:
+                        try: header = soup.find_all("div", class_="prt-title-bg-nml")[0]
+                        except:
+                            try: header = soup.find_all("div", class_="prt-title-bg-cpr")[0]
+                            except: header = None
+                if header is not None: rank = self.rankre.search(str(header)).group(0)
+                else: rank = "Rank ???"
                 trophy = soup.find_all("div", class_="prt-title-name")[0].string
                 mc_url = soup.find_all("img", class_="img-pc")[0]['src'].replace("/po/", "/btn/").replace("/img_low/", "/img/")
                 stats = soup.find_all("div", class_="num")
@@ -355,12 +397,12 @@ class GBF_Utility(commands.Cog):
                 try:
                     try: crew = soup.find_all("div", class_="prt-guild-name")[0].string
                     except: crew = soup.find_all("div", class_="txt-notjoin")[0].string
-                    fields.append({'name':'Crew', 'value':crew})
+                    fields.append({'name':'{} Crew'.format(self.bot.getEmote('gw')), 'value':crew})
                 except:
                     pass
 
                 try:
-                    summons_res = self.sumre.findall(str(soup))
+                    summons_res = self.sumre.findall(data)
                     summons = {}
                     for s in summons_res:
                         summons[s[0]] = s[1]
@@ -373,24 +415,40 @@ class GBF_Utility(commands.Cog):
                     if '60' in summons: msg += "{} {}\n".format(self.bot.getEmote('dark'), summons['60'])
                     if '00' in summons: msg += "{} {}\n".format(self.bot.getEmote('misc'), summons['00'])
                     if '01' in summons: msg += "{} {}\n".format(self.bot.getEmote('misc'), summons['01'])
-                    fields.append({'name':'Summons', 'value':msg})
+                    if msg != "":
+                        fields.append({'name':'{} Summons'.format(self.bot.getEmote('summon')), 'value':msg})
                 except:
                     pass
 
                 try:
-                    star = self.starre.findall(str(soup))[0]
-                    emp = self.empre.findall(str(soup))[0]
-                    fields.append({'name':'Star Character', 'value':'{} ▫️ {} EMP'.format(star, emp)})
+                    beg = data.find('<div class="prt-inner-title">Star Character</div>')
+                    end = data.find('<div class="prt-2tabs">')
+                    star_section = data[beg:end]
+                    try:
+                        ring = self.starringre.findall(star_section)[0]
+                        msg = "\💍 "
+                    except:
+                        msg = ""
+                    msg += "{}".format(self.starre.findall(star_section)[0]) # name
+                    try: msg += " {}".format(self.starplusre.findall(star_section)[0]) # plus
+                    except: pass
+                    try: msg += " ▫️ {} EMP".format(self.empre.findall(star_section)[0]) # emp
+                    except: pass
+                    starcom = self.starcomre.findall(star_section)
+                    if starcom is not None and starcom[0] != "(Blank)": msg += "\n`{}`".format(starcom[0])
+                    fields.append({'name':'{} Star Character'.format(self.bot.getEmote('skill2')), 'value':msg})
                 except:
                     pass
+                if trophy == "No Trophy Displayed": title = "{} **{}**".format(self.bot.getEmote(rarity), name)
+                else: title = "{} **{}** ▫️ {}".format(self.bot.getEmote(rarity), name, trophy)
 
-                await ctx.send(embed=self.bot.buildEmbed(title="**{}** ▫️ {}".format(name, trophy), description="**{}** ▫️ {} {}\n{} **{}** ▫️ {} **{}**".format(rank, job, job_lvl, self.bot.getEmote('hp'), hp, self.bot.getEmote('atk'), atk), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title=title, description="**{}** ▫️ {} {}\n{} **{}** ▫️ {} **{}**".format(rank, job, job_lvl, self.bot.getEmote('hp'), hp, self.bot.getEmote('atk'), atk), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             else:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile is private", url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
                 return
 
         except Exception as e:
-            await self.bot.sendError("getgachabanner", str(e))
+            await self.bot.sendError("profile", str(e))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['ticket'])
     @commands.cooldown(1, 30, commands.BucketType.guild)

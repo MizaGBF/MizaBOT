@@ -189,10 +189,9 @@ class MizabotDrive():
                 for f in file_list:
                     if f['title'].find('backup') == 0:
                         f.Delete()
-            for f in file_list: # search the previous save
+            for f in file_list: # search the previous save(s)
                 if f['title'] == "save.json":
                     prev = f
-                    break
             # saving
             s = drive.CreateFile({'title':'save.json', 'mimeType':'text/JSON', "parents": [{"kind": "drive#file", "id": self.bot.tokens['drive']}]})
             s.SetContentString(data)
