@@ -385,6 +385,7 @@ class GBF_Utility(commands.Cog):
                 if header is not None: rank = "**{}** ▫️ ".format(self.rankre.search(str(header)).group(0))
                 else: rank = ""
                 trophy = soup.find_all("div", class_="prt-title-name")[0].string
+                comment = soup.find_all("div", class_="prt-other-comment")[0].string.replace('\t', '').replace('\n', '')
                 mc_url = soup.find_all("img", class_="img-pc")[0]['src'].replace("/po/", "/btn/").replace("/img_low/", "/img/")
                 stats = soup.find_all("div", class_="num")
                 hp = int(stats[0].string)
@@ -435,14 +436,14 @@ class GBF_Utility(commands.Cog):
                     try: msg += " ▫️ {} EMP".format(self.empre.findall(star_section)[0]) # emp
                     except: pass
                     starcom = self.starcomre.findall(star_section)
-                    if starcom is not None and starcom[0] != "(Blank)": msg += "\n`{}`".format(starcom[0])
+                    if starcom is not None and starcom[0] != "(Blank)": msg += "\n💬 `{}`".format(starcom[0])
                     fields.append({'name':'{} Star Character'.format(self.bot.getEmote('skill2')), 'value':msg})
                 except:
                     pass
                 if trophy == "No Trophy Displayed": title = "{} **{}**".format(self.bot.getEmote(rarity), name)
                 else: title = "{} **{}** ▫️ {}".format(self.bot.getEmote(rarity), name, trophy)
 
-                await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}{} {}\n{} **{}** ▫️ {} **{}**".format(rank, job, job_lvl, self.bot.getEmote('hp'), hp, self.bot.getEmote('atk'), atk), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}{} {}\n{} **{}** ▫️ {} **{}**\n💬 `{}`".format(rank, job, job_lvl, self.bot.getEmote('hp'), hp, self.bot.getEmote('atk'), atk, comment), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             else:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile is private", url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
                 return
