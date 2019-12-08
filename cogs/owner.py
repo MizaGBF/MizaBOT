@@ -484,6 +484,41 @@ class Owner(commands.Cog):
         await self.bot.unreact(ctx, 'time')
         await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ purge results", description="{} inactive user(s) successfully kicked".format(i), color=self.color))
 
+    @commands.command(no_pm=True)
+    @isOwner()
+    async def gbfg_emote(self, ctx):
+        """Check emote usage in the /gbfg/ server (Owner only)"""
+        await self.bot.react(ctx, 'time')
+        g = self.bot.get_guild(self.bot.ids['gbfg'])
+        u = self.bot.get_user(156948874630660096) # snak
+        emotecount = {}
+        for e in g.emojis:
+            emotecount[str(e)] = 0
+
+        regex = re.compile("^<:\w*:\d+>$|^:\w*:$")
+        for c in g.channels:
+            try:
+                async for message in c.history(limit=50000): 
+                    try:
+                        res = regex.findall(message.content)
+                        for r in res:
+                            if r in emotecount:
+                                emotecount[r] += 1
+                    except:
+                        pass
+            except:
+                pass
+        msg = ""
+        for e in emotecount:
+            msg += "{} ▫️ {} use(s)\n".format(e, emotecount[e])
+            if len(msg) > 1800:
+                await u.send(msg)
+                msg = ""
+        await self.bot.unreact(ctx, 'time')
+        if len(msg) > 0:
+            await u.send(msg)
+        await ctx.send('DONE')
+
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
     async def getfile(self, ctx, *, filename: str):
@@ -512,10 +547,13 @@ class Owner(commands.Cog):
         c = ctx.channel
         try:
             async for message in c.history(limit=50000): 
-                if message.author.id == self.bot.ids['snacks']:
-                    sc += 1
-                    if regex.search(message.content):
-                        mc += 1
+                try:
+                    if message.author.id == self.bot.ids['snacks']:
+                        sc += 1
+                        if regex.search(message.content):
+                            mc += 1
+                except:
+                    pass
         except:
             pass
         await ctx.send(embed=self.bot.buildEmbed(title="Results", description="{} message(s) from Snacks in the last 50000 messages of this channel.\n{} are mono-emotes ({:.2f}%).".format(sc, mc, mc/sc*100), color=self.color))

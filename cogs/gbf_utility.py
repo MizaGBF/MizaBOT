@@ -5,6 +5,8 @@ import aiohttp
 from datetime import datetime, timedelta
 import random
 import math
+import re
+from bs4 import BeautifulSoup
 
 class GBF_Utility(commands.Cog):
     """GBF related commands."""
@@ -12,6 +14,11 @@ class GBF_Utility(commands.Cog):
         self.bot = bot
         self.color = 0x46fc46
         self.lucilius_guide = []
+        self.rankre = re.compile("Rank ([0-9])+")
+        self.sumre = re.compile("<div id=\"js-fix-summon([0-9]{2})-name\" class=\"prt-fix-name\" name=\"[A-Za-z'-. ]+\">(Lvl [0-9]+ [A-Za-z'-. ]+)<\/div>")
+        self.starre = re.compile("<span class=\"prt-current-npc-name\">\s*(Lvl [0-9]+ [A-Za-z'-. ]+)\s*<\/span>")
+        self.empre = re.compile("<div class=\"txt-npc-rank\">([0-9]+)</div>")
+        self.badprofilecache = []
 
     def startTasks(self):
         self.bot.runTask('maintenance', self.maintenancetask)
@@ -50,6 +57,11 @@ class GBF_Utility(commands.Cog):
     def isYou(): # for decorators
         async def predicate(ctx):
             return ctx.bot.isYouServer(ctx)
+        return commands.check(predicate)
+
+    def isOwner(): # for decorators
+        async def predicate(ctx):
+            return ctx.bot.isOwner(ctx)
         return commands.check(predicate)
 
     def isDisabled(): # for decorators
@@ -100,6 +112,12 @@ class GBF_Utility(commands.Cog):
         up = False
         if term.lower() == "and": # if it's just 'and', we don't don't fix anything and return a lowercase 'and'
             return "and"
+        elif term.lower() == "(sr)":
+            return "(SR)"
+        elif term.lower() == "(ssr)":
+            return "(SSR)"
+        elif term.lower() == "(r)":
+            return "(R)"
         for i in range(0, len(term)): # for each character
             if term[i].isalpha(): # if letter
                 if term[i].isupper(): # is uppercase
@@ -300,6 +318,80 @@ class GBF_Utility(commands.Cog):
         except Exception as e:
             await self.bot.sendError("getgachabanner", str(e))
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["id"])
+    @commands.cooldown(5, 30, commands.BucketType.guild)
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    async def profile(self, ctx, id : int):
+        """retrieve a GBF profile"""
+        try:
+            if id < 0 or id >= 100000000:
+                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
+                return
+            if id in self.badprofilecache:
+                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
+                return
+            cog = self.bot.get_cog('Baguette')
+            data = await cog.getProfileData(id)
+            if data is None:
+                self.badprofilecache.append(id)
+                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
+                return
+            soup = BeautifulSoup(data, 'html.parser')
+            try: header = soup.find_all("div", class_="prt-title-bg-gld")[0]
+            except: header = None
+            if header is not None:
+                rank = self.rankre.search(str(header)).group(0)
+                name = soup.find_all("span", class_="txt-other-name")[0].string
+                trophy = soup.find_all("div", class_="prt-title-name")[0].string
+                mc_url = soup.find_all("img", class_="img-pc")[0]['src'].replace("/po/", "/btn/").replace("/img_low/", "/img/")
+                stats = soup.find_all("div", class_="num")
+                hp = int(stats[0].string)
+                atk = int(stats[1].string)
+                job = soup.find_all("div", class_="txt-other-job-info")[0].string
+                job_lvl = soup.find_all("div", class_="txt-other-job-level")[0].string.replace("  ", " ")
+
+                fields = []
+
+                try:
+                    try: crew = soup.find_all("div", class_="prt-guild-name")[0].string
+                    except: crew = soup.find_all("div", class_="txt-notjoin")[0].string
+                    fields.append({'name':'Crew', 'value':crew})
+                except:
+                    pass
+
+                try:
+                    summons_res = self.sumre.findall(str(soup))
+                    summons = {}
+                    for s in summons_res:
+                        summons[s[0]] = s[1]
+                    msg = ""
+                    if '10' in summons: msg += "{} {}\n".format(self.bot.getEmote('fire'), summons['10'])
+                    if '20' in summons: msg += "{} {}\n".format(self.bot.getEmote('water'), summons['20'])
+                    if '30' in summons: msg += "{} {}\n".format(self.bot.getEmote('earth'), summons['30'])
+                    if '40' in summons: msg += "{} {}\n".format(self.bot.getEmote('wind'), summons['40'])
+                    if '50' in summons: msg += "{} {}\n".format(self.bot.getEmote('light'), summons['50'])
+                    if '60' in summons: msg += "{} {}\n".format(self.bot.getEmote('dark'), summons['60'])
+                    if '00' in summons: msg += "{} {}\n".format(self.bot.getEmote('misc'), summons['00'])
+                    if '01' in summons: msg += "{} {}\n".format(self.bot.getEmote('misc'), summons['01'])
+                    fields.append({'name':'Summons', 'value':msg})
+                except:
+                    pass
+
+                try:
+                    star = self.starre.findall(str(soup))[0]
+                    emp = self.empre.findall(str(soup))[0]
+                    fields.append({'name':'Star Character', 'value':'{} ▫️ {} EMP'.format(star, emp)})
+                except:
+                    pass
+
+                await ctx.send(embed=self.bot.buildEmbed(title="**{}** ▫️ {}".format(name, trophy), description="**{}** ▫️ {} {}\n{} **{}** ▫️ {} **{}**".format(rank, job, job_lvl, self.bot.getEmote('hp'), hp, self.bot.getEmote('atk'), atk), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+            else:
+                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile is private", url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                return
+
+        except Exception as e:
+            await self.bot.sendError("getgachabanner", str(e))
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['ticket'])
     @commands.cooldown(1, 30, commands.BucketType.guild)
     async def upcoming(self, ctx, jp : str = ""):
@@ -379,7 +471,7 @@ class GBF_Utility(commands.Cog):
         """Post a simple Ultimate Baha HL image guide"""
         await ctx.send(embed=self.bot.buildEmbed(title="Ultimate Bahamut HL", description=self.bot.strings["ubahahl() 1"], image=self.bot.strings["ubahahl() 2"], color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["christmas", "anniversary", "xmas", "anniv", "summer"])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["christmas", "anniversary", "anniv", "summer"])
     @commands.cooldown(3, 30, commands.BucketType.guild)
     async def stream(self, ctx, op : str = ""):
         """Post the stream text"""

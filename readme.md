@@ -4,7 +4,8 @@
 * Python 3.7.  
 * [discord.py](https://github.com/Rapptz/discord.py) (formerly the rewrite branch).  
 * [PyDrive](https://pythonhosted.org/PyDrive/) to access the google drive where the save file is stored.  
-* [psutil](https://psutil.readthedocs.io/en/latest/) is only used to get CPU and memory usage.  
+* [psutil](https://psutil.readthedocs.io/en/latest/).  
+* [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/).  
 * `pip install -r requirements.txt` to install all the modules.  
 ### Setup  
 The bot is designed to be used on [Heroku](https://www.heroku.com).  

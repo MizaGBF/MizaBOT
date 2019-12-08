@@ -22,6 +22,10 @@ class MizabotHelp(commands.DefaultHelpCommand):
         super().__init__()
         self.dm_help = True # force dm only (although our own functions only send in dm, so it should be unneeded)
 
+    async def send_error_message(self, error):
+        destination = self.get_destination()
+        await destination.send(embed=bot.buildEmbed(title="Help Error", description=error))
+
     async def send_bot_help(self, mapping): # main help command (called when you do $help). this function reuse the code from the commands.DefaultHelpCommand class
         ctx = self.context # get $help context
         bot = ctx.bot
@@ -249,6 +253,7 @@ class Mizabot(commands.Bot):
         self.specialstrings = {} # bot special strings
         self.emotes = {} # bot custom emote ids
         self.emote_cache = {} # store used emotes
+        self.extra = {} # extra data storage for plug'n'play cogs
         # /gbfg/ game
         self.pitroulette = False
         self.pitroulettevictim = []
@@ -264,7 +269,7 @@ class Mizabot(commands.Bot):
                 exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.35
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.36
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), owner=self.ids['owner'])
 
@@ -388,6 +393,8 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 else: self.permitted = {}
                 if 'news' in data: self.news = data['news']
                 else: self.news = {}
+                if 'extra' in data: self.extra = data['extra']
+                else: self.extra = {}
                 return True
         except Exception as e:
             self.errn += 1
@@ -412,6 +419,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 data['reminders'] = self.reminders
                 data['news'] = self.news
                 data['permitted'] = self.permitted
+                data['extra'] = self.extra
                 json.dump(data, outfile, default=self.json_serial) # locally first
                 if not self.drive.save(json.dumps(data, default=self.json_serial), sortBackup): # sending to the google drive
                     raise Exception("Couldn't save to google drive")
@@ -512,6 +520,8 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 await self.sendError('invitetracker', str(e))
                 try: invites[g.id] = currents
                 except: pass
+                if str(e).startswith('500 INTERNAL SERVER ERROR'): # assume discord server issues and sleep
+                    await asyncio.sleep(1000)
 
     def isAuthorized(self, ctx): # check if the command is authorized
         id = str(ctx.guild.id)
@@ -639,6 +649,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             print("{} error: {}".format(channel_name, e))
 
     async def sendError(self, func_name : str, msg : str, id = None): # send an error to the debug channel
+        if msg.startswith("403 FORBIDDEN"): return # I'm tired of those errors because people didn't set their channel permissions right
         if self.errn >= 30: return # disable error messages if too many messages got sent
         if id is None: id = ""
         else: id = " {}".format(id)
@@ -808,7 +819,7 @@ async def on_command_error(ctx, error):
         return
     elif msg.find('check functions for command') != -1:
         return
-    elif msg.find('Command "') == 0 or msg == 'Command raised an exception: Forbidden: FORBIDDEN (status code: 403): Missing Permissions':
+    elif msg.find('Member "') == 0 or msg.find('Command "') == 0 or msg.startswith('Command raised an exception: Forbidden: 403'):
         return
     else:
         bot.errn += 1
@@ -976,7 +987,7 @@ async def on_guild_channel_delete(channel):
 grace = GracefulExit(bot)
 
 # load cogs from the cogs folder
-bot.loadCog("general", "gbf_game.GBF_Game", "gbf_utility.GBF_Utility", "gw.GW", "management", "owner", "baguette")
+bot.loadCog("general", "gbf_game.GBF_Game", "gbf_utility.GBF_Utility", "gw.GW", "management", "owner", "baguette", "xmas2019.Xmas")
 
 # start the loop
 bot.mainLoop()
