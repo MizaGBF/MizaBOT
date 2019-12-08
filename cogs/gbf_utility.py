@@ -335,6 +335,9 @@ class GBF_Utility(commands.Cog):
                 return
             cog = self.bot.get_cog('Baguette')
             data = await cog.getScoutData(id)
+            if len(data['user']) == 0:
+                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="In game message:\n`{}`".format(data['no_member_msg'].replace("<br>", " ")), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                return
             try:
                 if data['user']["restriction_flag_list"]["event_point_deny_flag"]:
                     status = "Account is restricted"
@@ -345,6 +348,7 @@ class GBF_Utility(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('gw'), data['user']['nickname']), description=status, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/leader/btn/{}.png".format(data['user']['image']), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
 
         except Exception as e:
+            await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
             await self.bot.sendError("brand", str(e))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['id'])
