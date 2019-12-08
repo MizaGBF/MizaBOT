@@ -369,21 +369,17 @@ class GBF_Utility(commands.Cog):
             try: name = soup.find_all("span", class_="txt-other-name")[0].string
             except: name = None
             if name is not None:
+                header = None
                 rarity = "R"
-                try:
-                    header = soup.find_all("div", class_="prt-title-bg-gld")[0]
-                    rarity = "SSR"
-                except:
+                possible_headers = [("prt-title-bg-gld", "SSR"), ("prt-title-bg-slv", "SR"), ("prt-title-bg-nml", "R"), ("prt-title-bg-cpr", "R")]
+                for h in possible_headers:
                     try:
-                        header = soup.find_all("div", class_="prt-title-bg-slv")[0]
-                        rarity = "SR"
+                        header = soup.find_all("div", class_=h[0])[0]
+                        rarity = h[1]
                     except:
-                        try: header = soup.find_all("div", class_="prt-title-bg-nml")[0]
-                        except:
-                            try: header = soup.find_all("div", class_="prt-title-bg-cpr")[0]
-                            except: header = None
-                if header is not None: rank = self.rankre.search(str(header)).group(0)
-                else: rank = "Rank ???"
+                        pass
+                if header is not None: rank = "**{}** ▫️ ".format(self.rankre.search(str(header)).group(0))
+                else: rank = ""
                 trophy = soup.find_all("div", class_="prt-title-name")[0].string
                 mc_url = soup.find_all("img", class_="img-pc")[0]['src'].replace("/po/", "/btn/").replace("/img_low/", "/img/")
                 stats = soup.find_all("div", class_="num")
@@ -442,7 +438,7 @@ class GBF_Utility(commands.Cog):
                 if trophy == "No Trophy Displayed": title = "{} **{}**".format(self.bot.getEmote(rarity), name)
                 else: title = "{} **{}** ▫️ {}".format(self.bot.getEmote(rarity), name, trophy)
 
-                await ctx.send(embed=self.bot.buildEmbed(title=title, description="**{}** ▫️ {} {}\n{} **{}** ▫️ {} **{}**".format(rank, job, job_lvl, self.bot.getEmote('hp'), hp, self.bot.getEmote('atk'), atk), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}{} {}\n{} **{}** ▫️ {} **{}**".format(rank, job, job_lvl, self.bot.getEmote('hp'), hp, self.bot.getEmote('atk'), atk), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             else:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile is private", url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
                 return
