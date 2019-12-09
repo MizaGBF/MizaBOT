@@ -268,7 +268,7 @@ class Mizabot(commands.Bot):
                 exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.36
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.37
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), owner=self.ids['owner'])
 

@@ -7,6 +7,7 @@ import random
 import math
 import re
 from bs4 import BeautifulSoup
+from xml.sax import saxutils as su
 
 class GBF_Utility(commands.Cog):
     """GBF related commands."""
@@ -22,12 +23,13 @@ class GBF_Utility(commands.Cog):
         self.starringre = re.compile("<div class=\"ico-augment2-s\"><\/div>\s*<\/div>\s*<div class=\"prt-pushed-spec\">\s*<div class=\"prt-pushed-info\">")
         self.starplusre = re.compile("<div class=\"prt-quality\">(\+[0-9]+)<\/div>")
         self.badprofilecache = []
+        self.badcrewcache = []
+        self.crewcache = {}
 
     def startTasks(self):
         self.bot.runTask('maintenance', self.maintenancetask)
 
     async def maintenancetask(self): # gbf emergency maintenance detection
-        await asyncio.sleep(3)
         await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="maintenancetask() started", timestamp=datetime.utcnow()))
         while True:
             try:
@@ -327,13 +329,14 @@ class GBF_Utility(commands.Cog):
     async def brand(self, ctx, id : int):
         """Check if a GBF profile is restricted"""
         try:
+            cog = self.bot.get_cog('Baguette')
+            if cog is None: return
             if id < 0 or id >= 100000000:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
                 return
             if id in self.badprofilecache:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
                 return
-            cog = self.bot.get_cog('Baguette')
             data = await cog.getScoutData(id)
             if len(data['user']) == 0:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="In game message:\n`{}`".format(data['no_member_msg'].replace("<br>", " ")), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
@@ -357,13 +360,14 @@ class GBF_Utility(commands.Cog):
     async def profile(self, ctx, id : int):
         """Retrieve a GBF profile"""
         try:
+            cog = self.bot.get_cog('Baguette')
+            if cog is None: return
             if id < 0 or id >= 100000000:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
                 return
             if id in self.badprofilecache:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
                 return
-            cog = self.bot.get_cog('Baguette')
             data = await cog.getProfileData(id)
             if data is None:
                 self.badprofilecache.append(id)
@@ -383,9 +387,11 @@ class GBF_Utility(commands.Cog):
                     except:
                         pass
                 if header is not None: rank = "**{}** ▫️ ".format(self.rankre.search(str(header)).group(0))
-                else: rank = ""
+                else:
+                    await self.bot.send('debug', 'profile: debug this profile: {}'.format(id))
+                    rank = ""
                 trophy = soup.find_all("div", class_="prt-title-name")[0].string
-                comment = soup.find_all("div", class_="prt-other-comment")[0].string.replace('\t', '').replace('\n', '')
+                comment = su.unescape(soup.find_all("div", class_="prt-other-comment")[0].string).replace('\t', '').replace('\n', '')
                 mc_url = soup.find_all("img", class_="img-pc")[0]['src'].replace("/po/", "/talk/").replace("/img_low/", "/img/")
                 stats = soup.find_all("div", class_="num")
                 hp = int(stats[0].string)
@@ -423,33 +429,105 @@ class GBF_Utility(commands.Cog):
 
                 try:
                     beg = data.find('<div class="prt-inner-title">Star Character</div>')
-                    end = data.find('<div class="prt-2tabs">')
+                    end = data.find('<div class="prt-2tabs">', beg+1)
                     star_section = data[beg:end]
                     try:
                         ring = self.starringre.findall(star_section)[0]
-                        msg = "\💍 "
+                        msg = "**\💍** "
                     except:
                         msg = ""
                     msg += "{}".format(self.starre.findall(star_section)[0]) # name
-                    try: msg += " {}".format(self.starplusre.findall(star_section)[0]) # plus
+                    try: msg += " **{}**".format(self.starplusre.findall(star_section)[0]) # plus
                     except: pass
-                    try: msg += " ▫️ {} EMP".format(self.empre.findall(star_section)[0]) # emp
+                    try: msg += " ▫️ **{}** EMP".format(self.empre.findall(star_section)[0]) # emp
                     except: pass
                     starcom = self.starcomre.findall(star_section)
-                    if starcom is not None and starcom[0] != "(Blank)": msg += "\n💬 `{}`".format(starcom[0])
+                    if starcom is not None and starcom[0] != "(Blank)": msg += "\n💬 ``{}``".format(su.unescape(starcom[0]))
                     fields.append({'name':'{} Star Character'.format(self.bot.getEmote('skill2')), 'value':msg})
                 except:
                     pass
                 if trophy == "No Trophy Displayed": title = "{} **{}**".format(self.bot.getEmote(rarity), name)
                 else: title = "{} **{}** ▫️ {}".format(self.bot.getEmote(rarity), name, trophy)
 
-                await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}{} {}\n{} **{}** ▫️ {} **{}**\n💬 `{}`".format(rank, job, job_lvl, self.bot.getEmote('hp'), hp, self.bot.getEmote('atk'), atk, comment), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}**{}** {}\n{} **{}** ▫️ {} **{}**\n💬 ``{}``".format(rank, job, job_lvl, self.bot.getEmote('hp'), hp, self.bot.getEmote('atk'), atk, comment), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             else:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile is private", url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
                 return
 
         except Exception as e:
             await self.bot.sendError("profile", str(e))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(5, 30, commands.BucketType.guild)
+    @commands.cooldown(1, 15, commands.BucketType.user)
+    async def crew(self, ctx, id : int):
+        """Get a crew profile"""
+        try:
+            cog = self.bot.get_cog('Baguette')
+            if cog is None: return
+            if id < 0 or id >= 10000000:
+                await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Invalid ID", color=self.color))
+                return
+            if id in self.badcrewcache:
+                await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Crew not found", color=self.color))
+                return
+
+            crew = {}
+            if id in self.crewcache:
+                crew = self.crewcache[id]
+            else:
+                for i in range(0, 4):
+                    get = cog.requestCrew(id, i)
+                    if get is None:
+                        if i == 0:
+                            self.badcrewcache.append(id)
+                            await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Crew not found", color=self.color))
+                            return
+                        elif i == 1:
+                            crew['private'] = True
+                        break
+                    else:
+                        if i == 0:
+                            crew['timestamp'] = datetime.utcnow()
+                            crew['footer'] = ""
+                            crew['private'] = False # in preparation
+                            crew['name'] = get['guild_name']
+                            crew['rank'] = get['guild_rank']
+                            crew['ship'] = "http://game-a.granbluefantasy.jp/assets_en/img/sp/guild/thumb/top/{}.png".format(get['ship_img'])
+                            crew['leader'] = get['leader_name']
+                            crew['leader_id'] = get['leader_user_id']
+                            crew['donator'] = get['most_donated_name']
+                            crew['donator_id'] = get['most_donated_id']
+                            crew['donator_amount'] = get['most_donated_lupi']
+                            crew['message'] = get['introduction']
+                            crew['total_rank'] = 0
+                        else:
+                            if 'player' not in crew: crew['player'] = []
+                            for p in get['list']:
+                                crew['total_rank'] += int(p['level'])
+                                crew['player'].append({'id':p['id'], 'name':p['name'], 'level':p['level'], 'is_leader':p['is_leader']})
+                if not crew['private']:
+                    crew['footer'] = "Public crews are updated only once per day"
+                    self.crewcache[id] = crew # only cache public crews
+
+            title = "{} **{}** ▫️ Rank {}".format(self.bot.getEmote('gw'), crew['name'], crew['rank'])
+            description = "{} **Captain** ▫️ [{}](http://game.granbluefantasy.jp/#profile/{})\n{} **Top Donator** ▫️ [{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ {} rupies\n💬 ``{}``".format(self.bot.getEmote('crown'), crew['leader'], crew['leader_id'], self.bot.getEmote('gold'), crew['donator'], crew['donator_id'], crew['donator_amount'], crew['message'])
+            fields = []
+            if crew['private']:
+                description += '\n*Crew is private*'
+            else:
+                description += "\n**{}** Members ▫️ Average Rank **{}**\n".format(len(crew['player']), round(crew['total_rank'] / (len(crew['player']) * 1.0)))
+                i = 0
+                for p in crew['player']:
+                    if i % 10 == 0: fields.append({'name':'Page {}'.format(self.bot.getEmote(str((i // 10) + 1))), 'value':''})
+                    i += 1
+                    if p['is_leader']: fields[-1]['value'] += "**[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ {}**\n".format(p['name'], p['id'], p['level'])
+                    else: fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ {}\n".format(p['name'], p['id'], p['level'])
+
+            await ctx.send(embed=self.bot.buildEmbed(title=title, description=description, fields=fields, inline=True, thumbnail=crew['ship'], url="http://game.granbluefantasy.jp/#guild/detail/{}".format(id), footer=crew['footer'], timestamp=crew['timestamp'], color=self.color))
+
+        except Exception as e:
+            await self.bot.sendError("crew", str(e))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['ticket'])
     @commands.cooldown(1, 30, commands.BucketType.guild)

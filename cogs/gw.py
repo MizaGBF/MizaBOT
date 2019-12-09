@@ -17,7 +17,6 @@ class GW(commands.Cog):
         self.bot.runTask('check_buff', self.checkGWBuff)
 
     async def checkGWRanking(self):
-        await asyncio.sleep(3)
         await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwranking() started", timestamp=datetime.utcnow()))
 
         cog = self.bot.get_cog('Baguette')
