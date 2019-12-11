@@ -25,9 +25,11 @@ class GBF_Utility(commands.Cog):
         self.badprofilecache = []
         self.badcrewcache = []
         self.crewcache = {}
+        self.subsum = {'chev':'luminiera omega', 'chevalier':'luminiera omega', 'lumi':'luminiera omega', 'luminiera':'luminiera omega', 'colossus':'colossus omega', 'colo':'colossus omega', 'leviathan':'leviathan omega', 'levi':'leviathan omega', 'yggdrasil':'yggdrasil omega', 'yugu':'yggdrasil omega', 'tiamat':'tiamat omega', 'tia':'tiamat omega', 'celeste':'celeste omega', 'boat':'celeste omega', 'alex':'godsworn alexiel', 'alexiel':'godsworn alexiel', 'zeph':'zephyrus', 'longdong':'huanglong', 'dong':'huanglong', 'long':'huanglong', 'bunny':'white rabbit'}
 
     def startTasks(self):
         self.bot.runTask('maintenance', self.maintenancetask)
+        self.bot.runTask('summon', self.summontask)
 
     async def maintenancetask(self): # gbf emergency maintenance detection
         await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="maintenancetask() started", timestamp=datetime.utcnow()))
@@ -58,6 +60,50 @@ class GBF_Utility(commands.Cog):
             except Exception as e:
                 await self.bot.sendError('maintenancetask', str(e))
             await asyncio.sleep(random.randint(30, 45))
+
+    async def summontask(self): # summon update task
+        cog = self.bot.get_cog('Baguette')
+        if cog is None: return
+        await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="summontask() started", timestamp=datetime.utcnow()))
+        while True:
+            try:
+                uptime = self.bot.uptime(False)
+                if self.bot.summonlast is None: delta = None
+                else: delta = self.bot.getJST() - self.bot.summonlast
+                if uptime.seconds > 3600 and uptime.seconds < 30000 and (delta is None or delta.days >= 7):
+                    await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="summontask()", description="auto update started", timestamp=datetime.utcnow()))
+                    temp = {}
+                    for sid in list(self.bot.gbfids.keys()):
+                        id = self.bot.gbfids[sid]
+                        data = await cog.getProfileData(id)
+                        if data is None:
+                            return
+                        soup = BeautifulSoup(data, 'html.parser')
+                        try: name = soup.find_all("span", class_="txt-other-name")[0].string
+                        except: name = None
+                        if name is not None: # private
+                            try:
+                                summons_res = self.sumre.findall(data)
+                                for s in summons_res:
+                                    sp = s[1].lower().split() # Lvl 000 Name1 Name2 ... NameN
+                                    sn = " ".join(sp[2:])
+                                    if sn not in temp:
+                                        temp[sn] = {str(id):[name, int(sp[1])]}
+                                    else:
+                                        temp[sn][str(id)] = [name, int(sp[1])]
+                            except:
+                                pass
+                    self.bot.summons = temp
+                    self.bot.savePending = True
+                    await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="summontask()", description="auto update ended", timestamp=datetime.utcnow()))
+                    await asyncio.sleep(80000)
+                else:
+                    await asyncio.sleep(300)
+            except asyncio.CancelledError:
+                await self.bot.sendError('summontask', 'cancelled')
+                return
+            except Exception as e:
+                await self.bot.sendError('summontask', str(e))
 
     def isYou(): # for decorators
         async def predicate(ctx):
@@ -354,14 +400,129 @@ class GBF_Utility(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
             await self.bot.sendError("brand", str(e))
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setid'])
+    @commands.cooldown(1, 60, commands.BucketType.user)
+    async def setProfile(self, ctx, id : int):
+        """Link your GBF id to your Discord ID"""
+        try:
+            cog = self.bot.get_cog('Baguette')
+            if cog is None: return
+            if id < 0 or id >= 100000000:
+                await ctx.send(embed=self.bot.buildEmbed(title="Set Profile Error", description="Invalid ID", color=self.color))
+                return
+            data = await cog.getProfileData(id)
+            if data is None:
+                await ctx.send(embed=self.bot.buildEmbed(title="Set Profile Error", description="Profile not found", color=self.color))
+                return
+            for u in self.bot.gbfids:
+                if self.bot.gbfids[u] == id:
+                    await ctx.send(embed=self.bot.buildEmbed(title="Set Profile Error", description="This id is already in use", footer="use the bug_report command if it's a case of griefing", color=self.color))
+                    return
+            # delete previous entries
+            if str(ctx.author.id) in self.bot.gbfids:
+                search = self.bot.gbfids[str(ctx.author.id)]
+                for sn in self.bot.summons:
+                    for key in list(self.bot.summons[sn].keys()):
+                        if key == str(id):
+                            del self.bot.summons[sn][key]
+            # get current summons
+            soup = BeautifulSoup(data, 'html.parser')
+            try: name = soup.find_all("span", class_="txt-other-name")[0].string
+            except: name = None
+            if name is not None: # private
+                try:
+                    summons_res = self.sumre.findall(data)
+                    for s in summons_res:
+                        sp = s[1].lower().split() # Lvl 000 Name1 Name2 ... NameN
+                        sn = " ".join(sp[2:])
+                        if sn not in self.bot.summons:
+                            self.bot.summons[sn] = {str(id):[name, int(sp[1])]}
+                        else:
+                            self.bot.summons[sn][str(id)] = [name, int(sp[1])]
+                except:
+                    pass
+            # register
+            self.bot.gbfids[str(ctx.author.id)] = id
+            self.bot.savePending = True
+            await ctx.message.add_reaction('✅') # white check mark
+        except Exception as e:
+            await self.bot.sendError("setprofile", str(e))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['friend'])
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    async def summon(self, ctx, *search : str):
+        """Search a summon
+        <summon name> or <level min> <summon name>
+         or <summon name> <level min>"""
+        try:
+            level = int(search[0])
+            name = " ".join(search[1:]).lower()
+        except:
+            try:
+                level = int(search[-1])
+                name = " ".join(search[:-1]).lower()
+            except:
+                level = 0
+                name = " ".join(search).lower()
+        name = self.subsum.get(name, name)
+        if name == "" or name not in self.bot.summons:
+            await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="`{}` ▫️ No one has this summon".format(name), footer="Be sure to type the full name", color=self.color))
+            return
+        msg = ""
+        keys = list(self.bot.summons[name].keys())
+        random.shuffle(keys)
+        for uid in keys:
+            if len(msg) > 800:
+                msg += "And many more..."
+                break
+            u = self.bot.summons[name][uid]
+            if u[1] >= level:
+                msg += "Lvl **{}** ▫️ [{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ *{}*\n".format(str(u[1]).capitalize(), u[0], uid, uid)
+        if msg == "":
+            await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="`{}` ▫️ No one has this summon above level {}".format(name, level), footer="Be sure to type the full name", color=self.color))
+        else:
+            if level > 0:
+                await ctx.send(embed=self.bot.buildEmbed(title="{} {} ▫️ Lvl {} and more".format(self.bot.getEmote('summon'), name.capitalize(), level), description=msg, footer="Auto update once per week", color=self.color))
+            else:
+                await ctx.send(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('summon'), name.capitalize()), description=msg, footer="Auto update once per week", color=self.color))
+
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['id'])
     @commands.cooldown(5, 30, commands.BucketType.guild)
     @commands.cooldown(1, 10, commands.BucketType.user)
-    async def profile(self, ctx, id : int):
+    async def profile(self, ctx, target):
         """Retrieve a GBF profile"""
         try:
             cog = self.bot.get_cog('Baguette')
             if cog is None: return
+            if isinstance(target, int):
+                id = target
+            elif isinstance(target, str):
+                if target.startswith('<@') and target.endswith('>'):
+                    try:
+                        target = int(target[2:-1])
+                        member = ctx.guild.get_member(target)
+                        if str(member.id) not in self.bot.gbfids:
+                            await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), color=self.color))
+                            return
+                        id = self.bot.gbfids[str(member.id)]
+                    except:
+                        await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid parameter {} -> {}".format(target, type(target)), color=self.color))
+                        return
+                else:
+                    try: id = int(target)
+                    except:
+                        member = ctx.guild.get_member_named(target)
+                        if member is None:
+                            await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Member not found", color=self.color))
+                            return
+                        elif str(member.id) not in self.bot.gbfids:
+                            await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), color=self.color))
+                            return
+                        id = self.bot.gbfids[str(member.id)]
+            else:
+                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid parameter {} -> {}".format(target, type(target)), color=self.color))
+                return
             if id < 0 or id >= 100000000:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
                 return
@@ -491,21 +652,21 @@ class GBF_Utility(commands.Cog):
                             crew['timestamp'] = datetime.utcnow()
                             crew['footer'] = ""
                             crew['private'] = False # in preparation
-                            crew['name'] = get['guild_name']
+                            crew['name'] = su.unescape(get['guild_name'])
                             crew['rank'] = get['guild_rank']
                             crew['ship'] = "http://game-a.granbluefantasy.jp/assets_en/img/sp/guild/thumb/top/{}.png".format(get['ship_img'])
-                            crew['leader'] = get['leader_name']
+                            crew['leader'] = su.unescape(get['leader_name'])
                             crew['leader_id'] = get['leader_user_id']
-                            crew['donator'] = get['most_donated_name']
+                            crew['donator'] = su.unescape(get['most_donated_name'])
                             crew['donator_id'] = get['most_donated_id']
                             crew['donator_amount'] = get['most_donated_lupi']
-                            crew['message'] = get['introduction']
+                            crew['message'] = su.unescape(get['introduction'])
                             crew['total_rank'] = 0
                         else:
                             if 'player' not in crew: crew['player'] = []
                             for p in get['list']:
                                 crew['total_rank'] += int(p['level'])
-                                crew['player'].append({'id':p['id'], 'name':p['name'], 'level':p['level'], 'is_leader':p['is_leader']})
+                                crew['player'].append({'id':p['id'], 'name':su.unescape(p['name']), 'level':p['level'], 'is_leader':p['is_leader']})
                 if not crew['private']:
                     crew['footer'] = "Public crews are updated only once per day"
                     self.crewcache[id] = crew # only cache public crews

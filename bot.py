@@ -245,6 +245,9 @@ class Mizabot(commands.Bot):
         self.baguette = {} # secret, config
         self.baguette_save = {} # secret, save
         self.ids = {} # discord ids used by the bot
+        self.gbfids = {} # gbf profile ids linked to discord ids
+        self.summons = {} # support summon database
+        self.summonlast = None # support summon database last update
         self.permitted = {} # guild permitted channels
         self.news = {} # guild news channels
         self.games = {} # bot status messages
@@ -268,7 +271,7 @@ class Mizabot(commands.Bot):
                 exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.37
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.38
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), owner=self.ids['owner'])
 
@@ -394,6 +397,12 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 else: self.news = {}
                 if 'extra' in data: self.extra = data['extra']
                 else: self.extra = {}
+                if 'gbfids' in data: self.gbfids = data['gbfids']
+                else: self.gbfids = {}
+                if 'summons' in data: self.summons = data['summons']
+                else: self.summons = {}
+                if 'summonlast' in data: self.summonlast = data['summonlast']
+                else: self.summonlast = None
                 return True
         except Exception as e:
             self.errn += 1
@@ -419,6 +428,9 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 data['news'] = self.news
                 data['permitted'] = self.permitted
                 data['extra'] = self.extra
+                data['gbfids'] = self.gbfids
+                data['summons'] = self.summons
+                data['summonlast'] = self.summonlast
                 json.dump(data, outfile, default=self.json_serial) # locally first
                 if not self.drive.save(json.dumps(data, default=self.json_serial), sortBackup): # sending to the google drive
                     raise Exception("Couldn't save to google drive")
@@ -836,19 +848,25 @@ async def on_raw_reaction_add(payload):
         await bot.sendError('raw_react', str(e))
         return
     me = message.guild.me
+    role = message.guild.get_role(bot.ids['you_member'])
+    if role is None: return
     for reaction in reactions:
         if reaction.emoji == '📌':
             users = await reaction.users().flatten()
             guild = message.guild
             content = message.content
             isMod = False
+            count = 0
             for u in users:
                 if u.id == me.id:
                     return
                 m = guild.get_member(u.id)
                 if m.guild_permissions.manage_messages:
                     isMod = True
-            if not isMod:
+                    break
+                elif role in m.roles:
+                    count += 1
+            if not isMod and count < 3:
                 return
 
             await message.add_reaction('📌')
