@@ -408,10 +408,12 @@ class GBF_Utility(commands.Cog):
         """Unlink a GBF id (Owner only)"""
         for discord_id in self.bot.gbfids:
             if self.bot.gbfids[discord_id] == id:
-                for sn in self.bot.summons:
+                for sn in list(self.bot.summons.keys()):
                     for key in list(self.bot.summons[sn].keys()):
                         if key == str(id):
                             del self.bot.summons[sn][key]
+                    if len(self.bot.summons[sn]) == 0:
+                        del self.bot.summons[sn]
                 del self.bot.gbfids[discord_id]
                 self.bot.savePending = True
                 await self.bot.send('debug', 'User `{}` has been removed'.format(discord_id))
@@ -421,6 +423,11 @@ class GBF_Utility(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Clear Profile Error", description="ID not found", color=self.color))
             return
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isOwner()
+    async def profileStat(self, ctx):
+        """Linked GBF id statistics (Owner only)"""
+        await ctx.send(embed=self.bot.buildEmbed(title="{} Summon statistics".format(self.bot.getEmote('summon')), description="**{}** Registered Users\n**{}** Summons available".format(len(self.bot.gbfids), len(self.bot.summons)), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['unsetid'])
     @commands.cooldown(1, 60, commands.BucketType.user)
@@ -430,10 +437,12 @@ class GBF_Utility(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Unset Profile Error", description="You didn't set your GBF profile ID", color=self.color))
             return
         search = self.bot.gbfids[str(ctx.author.id)]
-        for sn in self.bot.summons:
+        for sn in list(self.bot.summons.keys()):
             for key in list(self.bot.summons[sn].keys()):
                 if key == str(search):
                     del self.bot.summons[sn][key]
+            if len(self.bot.summons[sn]) == 0:
+                del self.bot.summons[sn]
         del self.bot.gbfids[str(ctx.author.id)]
         self.bot.savePending = True
         await ctx.message.add_reaction('✅') # white check mark
@@ -459,10 +468,12 @@ class GBF_Utility(commands.Cog):
             # delete previous entries
             if str(ctx.author.id) in self.bot.gbfids:
                 search = self.bot.gbfids[str(ctx.author.id)]
-                for sn in self.bot.summons:
+                for sn in list(self.bot.summons.keys()):
                     for key in list(self.bot.summons[sn].keys()):
                         if key == str(search):
                             del self.bot.summons[sn][key]
+                    if len(self.bot.summons[sn]) == 0:
+                        del self.bot.summons[sn]
             # get current summons
             soup = BeautifulSoup(data, 'html.parser')
             try: name = soup.find_all("span", class_="txt-other-name")[0].string
@@ -529,39 +540,34 @@ class GBF_Utility(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['id'])
     @commands.cooldown(5, 30, commands.BucketType.guild)
     @commands.cooldown(1, 10, commands.BucketType.user)
-    async def profile(self, ctx, target):
+    async def profile(self, ctx, *target : str):
         """Retrieve a GBF profile"""
+        target = " ".join(target)
         try:
             cog = self.bot.get_cog('Baguette')
             if cog is None: return
-            if isinstance(target, int):
-                id = target
-            elif isinstance(target, str):
-                if target.startswith('<@') and target.endswith('>'):
-                    try:
-                        target = int(target[2:-1])
-                        member = ctx.guild.get_member(target)
-                        if str(member.id) not in self.bot.gbfids:
-                            await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), color=self.color))
-                            return
-                        id = self.bot.gbfids[str(member.id)]
-                    except:
-                        await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid parameter {} -> {}".format(target, type(target)), color=self.color))
+            if target.startswith('<@') and target.endswith('>'):
+                try:
+                    target = int(target[2:-1])
+                    member = ctx.guild.get_member(target)
+                    if str(member.id) not in self.bot.gbfids:
+                        await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), color=self.color))
                         return
-                else:
-                    try: id = int(target)
-                    except:
-                        member = ctx.guild.get_member_named(target)
-                        if member is None:
-                            await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Member not found", color=self.color))
-                            return
-                        elif str(member.id) not in self.bot.gbfids:
-                            await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), color=self.color))
-                            return
-                        id = self.bot.gbfids[str(member.id)]
+                    id = self.bot.gbfids[str(member.id)]
+                except:
+                    await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid parameter {} -> {}".format(target, type(target)), color=self.color))
+                    return
             else:
-                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid parameter {} -> {}".format(target, type(target)), color=self.color))
-                return
+                try: id = int(target)
+                except:
+                    member = ctx.guild.get_member_named(target)
+                    if member is None:
+                        await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Member not found", color=self.color))
+                        return
+                    elif str(member.id) not in self.bot.gbfids:
+                        await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), color=self.color))
+                        return
+                    id = self.bot.gbfids[str(member.id)]
             if id < 0 or id >= 100000000:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
                 return
