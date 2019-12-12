@@ -404,19 +404,23 @@ class GBF_Utility(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['clearid'])
     @isOwner()
-    async def clearProfile(self, ctx, discord_id : int):
+    async def clearProfile(self, ctx, gbf_id : int):
         """Unlink a GBF id (Owner only)"""
+        for discord_id in self.bot.gbfids:
+            if self.bot.gbfids[discord_id] == id:
+                for sn in self.bot.summons:
+                    for key in list(self.bot.summons[sn].keys()):
+                        if key == str(id):
+                            del self.bot.summons[sn][key]
+                del self.bot.gbfids[discord_id]
+                self.bot.savePending = True
+                await self.bot.send('debug', 'User `{}` has been removed'.format(discord_id))
+                await ctx.message.add_reaction('✅') # white check mark
+                return
         if str(discord_id) not in self.bot.gbfids:
             await ctx.send(embed=self.bot.buildEmbed(title="Clear Profile Error", description="ID not found", color=self.color))
             return
-        search = self.bot.gbfids[str(discord_id)]
-        for sn in self.bot.summons:
-            for key in list(self.bot.summons[sn].keys()):
-                if key == str(search):
-                    del self.bot.summons[sn][key]
-        del self.bot.gbfids[str(discord_id)]
-        self.bot.savePending = True
-        await ctx.message.add_reaction('✅') # white check mark
+
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['unsetid'])
     @commands.cooldown(1, 60, commands.BucketType.user)
