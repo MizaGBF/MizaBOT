@@ -93,7 +93,9 @@ class GBF_Utility(commands.Cog):
                                         temp[sn][str(id)] = [name, int(sp[1])]
                             except:
                                 pass
+                        await asyncio.sleep(0.001)
                     self.bot.summons = temp
+                    self.bot.summonlast = self.bot.getJST()
                     self.bot.savePending = True
                     await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="summontask()", description="auto update ended", timestamp=datetime.utcnow()))
                     await asyncio.sleep(80000)
@@ -400,6 +402,38 @@ class GBF_Utility(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
             await self.bot.sendError("brand", str(e))
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['clearid'])
+    @isOwner()
+    async def clearProfile(self, ctx, discord_id : int):
+        """Unlink a GBF id (Owner only)"""
+        if str(discord_id) not in self.bot.gbfids:
+            await ctx.send(embed=self.bot.buildEmbed(title="Clear Profile Error", description="ID not found", color=self.color))
+            return
+        search = self.bot.gbfids[str(discord_id)]
+        for sn in self.bot.summons:
+            for key in list(self.bot.summons[sn].keys()):
+                if key == str(search):
+                    del self.bot.summons[sn][key]
+        del self.bot.gbfids[str(discord_id)]
+        self.bot.savePending = True
+        await ctx.message.add_reaction('✅') # white check mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['unsetid'])
+    @commands.cooldown(1, 60, commands.BucketType.user)
+    async def unsetProfile(self, ctx):
+        """Unlink your GBF id"""
+        if str(ctx.author.id) not in self.bot.gbfids:
+            await ctx.send(embed=self.bot.buildEmbed(title="Unset Profile Error", description="You didn't set your GBF profile ID", color=self.color))
+            return
+        search = self.bot.gbfids[str(ctx.author.id)]
+        for sn in self.bot.summons:
+            for key in list(self.bot.summons[sn].keys()):
+                if key == str(search):
+                    del self.bot.summons[sn][key]
+        del self.bot.gbfids[str(ctx.author.id)]
+        self.bot.savePending = True
+        await ctx.message.add_reaction('✅') # white check mark
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setid'])
     @commands.cooldown(1, 60, commands.BucketType.user)
     async def setProfile(self, ctx, id : int):
@@ -423,7 +457,7 @@ class GBF_Utility(commands.Cog):
                 search = self.bot.gbfids[str(ctx.author.id)]
                 for sn in self.bot.summons:
                     for key in list(self.bot.summons[sn].keys()):
-                        if key == str(id):
+                        if key == str(search):
                             del self.bot.summons[sn][key]
             # get current summons
             soup = BeautifulSoup(data, 'html.parser')
@@ -449,7 +483,7 @@ class GBF_Utility(commands.Cog):
             await self.bot.sendError("setprofile", str(e))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['friend'])
-    @commands.cooldown(1, 10, commands.BucketType.user)
+    @commands.cooldown(1, 7, commands.BucketType.user)
     async def summon(self, ctx, *search : str):
         """Search a summon
         <summon name> or <level min> <summon name>
@@ -471,13 +505,15 @@ class GBF_Utility(commands.Cog):
         msg = ""
         keys = list(self.bot.summons[name].keys())
         random.shuffle(keys)
+        count = 0
         for uid in keys:
             if len(msg) > 800:
-                msg += "And many more..."
+                msg += "\n*Only {} random result(s) shown, specify a minimum level to affine the result*.".format(count)
                 break
             u = self.bot.summons[name][uid]
             if u[1] >= level:
                 msg += "Lvl **{}** ▫️ [{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ *{}*\n".format(str(u[1]).capitalize(), u[0], uid, uid)
+                count += 1
         if msg == "":
             await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="`{}` ▫️ No one has this summon above level {}".format(name, level), footer="Be sure to type the full name", color=self.color))
         else:
@@ -485,7 +521,6 @@ class GBF_Utility(commands.Cog):
                 await ctx.send(embed=self.bot.buildEmbed(title="{} {} ▫️ Lvl {} and more".format(self.bot.getEmote('summon'), name.capitalize(), level), description=msg, footer="Auto update once per week", color=self.color))
             else:
                 await ctx.send(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('summon'), name.capitalize()), description=msg, footer="Auto update once per week", color=self.color))
-
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['id'])
     @commands.cooldown(5, 30, commands.BucketType.guild)
