@@ -34,20 +34,34 @@ class GBF_Game(commands.Cog):
         elif (not sr_mode and d < 1500 + ssr) or sr_mode: return 1
         return 2
 
-    legfestWord = {"double", "x2", "legfest", "flashfest"}
+    legfestWord = {"double", "x2", "legfest", "flashfest", "flash", "leg", "gala", "2"}
     def isLegfest(self, word):
         if word.lower() in self.legfestWord: return 2 # 2 because the rates are doubled
         return 1
+
+    def tenDraws(self, rate, draw, mode = 0):
+        result = [0, 0, 0]
+        x = 0
+        while mode > 0 or (mode == 0 and x < draw):
+            i = 0
+            while i < 10:
+                r = self.getRoll(rate, i == 9)
+                result[r] += 1
+                i += 1
+            if mode == 1 and result[0] > 0: break # gachapin / mukku
+            elif mode == 2 and result[0] >= 5: break # super mukku
+            x += 1
+        return result
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['1'])
     @isAuthorized()
     @commands.cooldown(60, 60, commands.BucketType.guild)
     async def single(self, ctx, double : str = ""):
         """Do a single roll
-        You can add "double", "x2", "legfest", "flashfest" to double the SSR rates"""
+        6% keywords: "double", "x2", "legfest", "flashfest", "flash", "leg", "gala", "2"."""
         l = self.isLegfest(double)
-        if l == 2: footer = "SSR Rate is doubled"
-        else: footer = ""
+        if l == 2: footer = "6% SSR rate"
+        else: footer = "3% SSR rate"
         r = self.getRoll(300*l)
 
         if r == 0: msg = "Luckshitter! It's a {}".format(self.bot.getEmote('SSR'))
@@ -61,15 +75,14 @@ class GBF_Game(commands.Cog):
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def ten(self, ctx, double : str = ""):
         """Do ten gacha rolls
-        You can add "double", "x2", "legfest", "flashfest" to double the SSR rates"""
+        6% keywords: "double", "x2", "legfest", "flashfest", "flash", "leg", "gala", "2"."""
         l = self.isLegfest(double)
-        if l == 2: footer = "SSR Rate is doubled"
-        else: footer = ""
+        if l == 2: footer = "6% SSR rate"
+        else: footer = "3% SSR rate"
         msg = ""
         i = 0
         while i < 10:
-            if i == 9: r = self.getRoll(300*l, True)
-            else: r = self.getRoll(300*l)
+            r = self.getRoll(300*l, i == 9)
             if i == 5: msg += '\n'
             if r == 0: msg += '{}'.format(self.bot.getEmote('SSR'))
             elif r == 1: msg += '{}'.format(self.bot.getEmote('SR'))
@@ -83,19 +96,12 @@ class GBF_Game(commands.Cog):
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def spark(self, ctx, double : str = ""):
         """Do thirty times ten gacha rolls
-        You can add "double", "x2", "legfest", "flashfest" to double the SSR rates"""
+        6% keywords: "double", "x2", "legfest", "flashfest", "flash", "leg", "gala", "2"."""
         l = self.isLegfest(double)
-        if l == 2: footer = "SSR Rate is doubled"
-        else: footer = ""
-        result = [0, 0, 0]
-        for x in range(0, 30):
-            i = 0
-            while i < 10:
-                if i == 9: r = self.getRoll(300*l, True)
-                else: r = self.getRoll(300*l)
-                result[r] += 1
-                i += 1
-        msg = "{}: {}\n{}: {}\n{}: {}\nSSR rate: **{:.2f}%**\n".format(self.bot.getEmote('SSR'), result[0], self.bot.getEmote('SR'), result[1], self.bot.getEmote('R'), result[2], 100*result[0]/300)
+        if l == 2: footer = "6% SSR rate"
+        else: footer = "3% SSR rate"
+        result = self.tenDraws(300*l, 30)
+        msg = "{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/300)
 
         await ctx.send(embed=self.bot.buildEmbed(title="{} sparked".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
 
@@ -104,25 +110,13 @@ class GBF_Game(commands.Cog):
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def gachapin(self, ctx, double : str = ""):
         """Do ten rolls until you get a ssr
-        You can add "double", "x2", "legfest", "flashfest" to double the SSR rates"""
+        6% keywords: "double", "x2", "legfest", "flashfest", "flash", "leg", "gala", "2"."""
         l = self.isLegfest(double)
-        if l == 2: footer = "SSR Rate is doubled"
-        else: footer = ""
-        result = [0, 0, 0]
-        count = 0
-        for x in range(0, 30):
-            i = 0
-            count += 1
-            ssr_flag = False
-            while i < 10:
-                if i == 9: r = self.getRoll(300*l, True)
-                else: r = self.getRoll(300*l)
-                if r == 0: ssr_flag = True
-                result[r] += 1
-                i += 1
-            if ssr_flag:
-                break
-        msg = "Gachapin stopped after **{}** rolls\n{}: {}\n{}: {}\n{}: {}\nSSR rate: **{:.2f}%**\n".format(count*10, self.bot.getEmote('SSR'), result[0], self.bot.getEmote('SR'), result[1], self.bot.getEmote('R'), result[2], 100*result[0]/(count*10))
+        if l == 2: footer = "6% SSR rate"
+        else: footer = "3% SSR rate"
+        result = self.tenDraws(300*l, 0, 1)
+        count = result[0]+result[1]+result[2]
+        msg = "Gachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
 
         await ctx.send(embed=self.bot.buildEmbed(title="{} rolled the Gachapin".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
 
@@ -133,43 +127,95 @@ class GBF_Game(commands.Cog):
         """Do ten rolls until you get a ssr, 9% ssr rate
         You can add "super" for a 9% rate and 5 ssr mukku"""
         if super.lower() == "super":
-            ssr = 1500
-            footer = "Super Mukku ▫️ 15% SSR Rate and at least 5 SSRs\n"
-            limit = 5
+            footer = "Super Mukku ▫️ 15% SSR Rate and at least 5 SSRs"
+            result = self.tenDraws(1500, 0, 2)
         else:
-            ssr = 900
-            footer = ""
-            limit = 1
-        result = [0, 0, 0]
-        count = 0
-        for x in range(0, 30):
-            i = 0
-            count += 1
-            while i < 10:
-                if i == 9: r = self.getRoll(ssr, True)
-                else: r = self.getRoll(ssr)
-                if r == 0: limit -= 1
-                result[r] += 1
-                i += 1
-            if limit <= 0:
-                break
-        msg = "Mukku stopped after **{}** rolls\n{}: {}\n{}: {}\n{}: {}\nSSR rate: **{:.2f}%**\n".format(count*10, self.bot.getEmote('SSR'), result[0], self.bot.getEmote('SR'), result[1], self.bot.getEmote('R'), result[2], 100*result[0]/(count*10))
+            footer = "9% SSR rate"
+            result = self.tenDraws(900, 0, 1)
+        count = result[0]+result[1]+result[2]
+        msg = "Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
 
         await ctx.send(embed=self.bot.buildEmbed(title="{} rolled the Mukku".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isAuthorized()
-    @commands.cooldown(30, 30, commands.BucketType.guild)
-    async def roulette(self, ctx):
-        """Imitate the GBF roulette"""
+    @commands.cooldown(1, 180, commands.BucketType.user)
+    async def roulette(self, ctx, double : str = ""):
+        """Imitate the GBF roulette
+        6% keywords: "double", "x2", "legfest", "flashfest", "flash", "leg", "gala", "2"."""
+        l = self.isLegfest(double)
+        if l == 2: footer = "6% SSR rate"
+        else: footer = "3% SSR rate"
+        mode = 0
+        roll = 0
+        rps = ['rock', 'paper', 'scissor']
         d = random.randint(1, 36000)
-        if d < 500: msg = ":confetti_ball: :tada: **100** rolls!! :tada: :confetti_ball:"
-        elif d < 2000: msg = "**Gachapin Frenzy** :four_leaf_clover:"
-        elif d < 6500: msg = "**30** rolls! :clap:"
-        elif d < 19000: msg = "**20** rolls :open_mouth:"
-        else: msg = "**10** rolls :pensive:"
+        ct = self.bot.getJST()
+        fix200S = ct.replace(year=2020, month=1, day=3, hour=18, minute=0, second=0, microsecond=0)
+        fix200E = fix200S.replace(day=5)
+        if ct >= fix200S and ct < fix200E:
+            msg = "{} {} :confetti_ball: :tada: Guaranteed **2 0 0 R O L L S** :tada: :confetti_ball: {} {}".format(self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'))
+            roll = 20
+            d = 0
+            if l == 2: footer = "3% SSR rate ▪️ You won't get legfest rates, you fool"
+            else: footer = "3% SSR rate"
+            l = 1
+            mode = 3
+        elif d < 300:
+            msg = "{} {} :confetti_ball: :tada: **2 0 0 R O L L S** :tada: :confetti_ball: {} {}".format(self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'))
+            roll = 20
+        elif d < 1500:
+            msg = "**Gachapin Frenzy** :four_leaf_clover:"
+            mode = 1
+        elif d < 2000:
+            msg = ":confetti_ball: :tada: **100** rolls!! :tada: :confetti_ball:"
+            roll = 10
+        elif d < 6200:
+            msg = "**30** rolls! :clap:"
+            roll = 3
+        elif d < 18000:
+            msg = "**20** rolls :open_mouth:"
+            roll = 2
+        else:
+            msg = "**10** rolls :pensive:"
+            roll = 1
+        # janken
+        if d >= 2000 and random.randint(0, 2) > 0:
+            a = 0
+            b = 0
+            while a == b:
+                a = random.randint(0, 2)
+                b = random.randint(0, 2)
+            msg += "\nYou got **{}**, Gachapin got **{}**".format(rps[a], rps[b])
+            if (a == 1 and b == 0) or (a == 2 and b == 1) or (a == 0 and b == 2):
+                msg += " :thumbsup:\nYou **won** rock paper scissor, your rolls are **doubled** :confetti_ball:"
+                roll = roll * 2
+            else:
+                msg += " :pensive:"
+        # rolls
+        if mode == 0 or mode == 3:
+            result = self.tenDraws(300*l, roll)
+            msg += "\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/(roll*10))
+        elif mode == 1:
+            result = self.tenDraws(300*l, 0, 1)
+            count = result[0]+result[1]+result[2]
+            msg += "\nGachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
+            if count == 10 and random.randint(1, 100) < 99: mode = 2
+            elif count == 20 and random.randint(1, 100) < 60: mode = 2
+            elif count == 30 and random.randint(1, 100) < 30: mode = 2
 
-        await ctx.send(embed=self.bot.buildEmbed(title="{} spun the Roulette".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url))
+        if mode == 2:
+            result = self.tenDraws(900, 0, 1)
+            count = result[0]+result[1]+result[2]
+            msg += "\n:confetti_ball: Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
+
+        if mode == 3:
+            result = self.tenDraws(1500, 0, 2)
+            count = result[0]+result[1]+result[2]
+            msg += "\n:confetti_ball: :confetti_ball: **Super Mukku** stopped after **{}** rolls :confetti_ball: :confetti_ball:\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
+
+        await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        #await ctx.send(embed=self.bot.buildEmbed(title="{} spun the Roulette".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setcrystal', 'setspark'])
     @isAuthorized()
@@ -405,3 +451,15 @@ class GBF_Game(commands.Cog):
         element = ['fire', 'water', 'earth', 'wind', 'light', 'dark']
 
         await ctx.send(embed=self.bot.buildEmbed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="**Rarity** ▫️ {}\n**Race** ▫️ {}\n**Element** ▫️ {}\n**Rating** ▫️ {:.1f}".format(self.bot.getEmote(rarity[seed % 3]), race[(seed - 1) % 6], self.bot.getEmote(element[(seed - 3) % 6]), ((seed % 41) * 0.1) + 6.0 - (seed % 3) * 1.5), inline=True, color=self.color))
+
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 30, commands.BucketType.guild)
+    async def xil(self, ctx):
+        """Generate a random element for Xil"""
+        g = random.Random()
+        elems = ['fire', 'water', 'earth', 'wind', 'light', 'dark']
+        g.seed(int((int(datetime.utcnow().timestamp()) // 86400) * (1.0 + 1.0/4.2)))
+        e = g.choice(elems)
+
+        await ctx.send(embed=self.bot.buildEmbed(title="Today, Xil's main element is", description="{} **{}**".format(self.bot.getEmote(e), e.capitalize()), color=self.color))

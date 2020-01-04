@@ -176,30 +176,30 @@ class MizabotDrive():
             print(e)
             return False
 
-    def save(self, data, sortBackup): # write save.json to the folder id in bot.tokens
+    def save(self, data): # write save.json to the folder id in bot.tokens
         if self.saving: return False
         drive = self.login()
         if not drive: return False
         try:
             self.saving = True
-            prev = None
+            prev = []
             # backup
             file_list = drive.ListFile({'q': "'" + self.bot.tokens['drive'] + "' in parents and trashed=false"}).GetList()
-            if sortBackup and len(file_list) > 9: # delete if we have too many backups
+            if len(file_list) > 9: # delete if we have too many backups
                 for f in file_list:
                     if f['title'].find('backup') == 0:
                         f.Delete()
             for f in file_list: # search the previous save(s)
                 if f['title'] == "save.json":
-                    prev = f
+                    prev.append(f)
             # saving
             s = drive.CreateFile({'title':'save.json', 'mimeType':'text/JSON', "parents": [{"kind": "drive#file", "id": self.bot.tokens['drive']}]})
             s.SetContentString(data)
             s.Upload()
-            # rename the previous save
-            if prev is not None:
-                prev['title'] = "backup_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".json"
-                prev.Upload()
+            # rename the previous save(s)
+            for f in prev:
+                f['title'] = "backup_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".json"
+                f.Upload()
             self.saving = False
             return True
         except Exception as e:
@@ -270,7 +270,7 @@ class Mizabot(commands.Bot):
                 exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.39
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.40
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), owner=self.ids['owner'])
 
@@ -406,7 +406,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             print('load(): {}'.format(e))
             return False
 
-    def save(self, sortBackup=True): # saving
+    def save(self): # saving
         try:
             with open('save.json', 'w') as outfile:
                 data = {}
@@ -428,7 +428,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 data['summons'] = self.summons
                 data['summonlast'] = self.summonlast
                 json.dump(data, outfile, default=self.json_serial) # locally first
-                if not self.drive.save(json.dumps(data, default=self.json_serial), sortBackup): # sending to the google drive
+                if not self.drive.save(json.dumps(data, default=self.json_serial)): # sending to the google drive
                     raise Exception("Couldn't save to google drive")
             return True
         except Exception as e:
@@ -754,6 +754,7 @@ async def on_guild_join(guild): # when the bot joins a new guild
     else: # notify me and add to the pending servers
         bot.newserver['pending'][id] = guild.name
         bot.savePending = True
+        await guild.owner.send(embed=bot.buildEmbed(title="Pending guild request", description="Wait until my owner approve the new server", thumbnail=guild.icon_url))
         await bot.send('debug', embed=bot.buildEmbed(title="Pending guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
 
 # called by on_message

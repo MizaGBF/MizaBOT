@@ -122,11 +122,9 @@ class Owner(commands.Cog):
                 self.bot.savePending = True
                 guild = self.bot.get_guild(id)
                 if guild:
-                    general = self.getGeneral(guild)
-                    if general and general.permissions_for(guild.me).send_messages:
-                        await general.send("I'm now available for use, {}!\nUse $help for my list of commands.\nUse $setPrefix to change the command prefix (default: `$`)\nIf you encounter an issue, use $bug_report and describe the problem.\nIf I'm down, I might be rebooting or in maintenance.".format(guild.name))
-                await ctx.message.add_reaction('✅') # white check mark
-                await self.guildList()
+                    await guild.owner.send(embed=bot.buildEmbed(title="I'm now available for use in {}".format(guild.name), description="Use `$help` for my list of commands, `$help Management` for mod only commands.\nUse `$setPrefix` to change the command prefix (default: `$`)\nIf you encounter an issue, use `$bug_report` and describe the problem.\nIf I'm down or slow, I might be rebooting, in maintenance or Discord itself might be acting up.", thumbnail=guild.icon_url))
+                    await ctx.message.add_reaction('✅') # white check mark
+                    await self.guildList()
         except Exception as e:
             await self.bot.sendError('accept', str(e))
 

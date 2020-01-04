@@ -25,6 +25,7 @@ class GBF_Utility(commands.Cog):
         self.badprofilecache = []
         self.badcrewcache = []
         self.crewcache = {}
+        self.possiblesum = {'10':'fire', '20':'water', '30':'earth', '40':'wind', '50':'light', '60':'dark', '00':'misc', '01':'misc'}
         self.subsum = {'chev':'luminiera omega', 'chevalier':'luminiera omega', 'lumi':'luminiera omega', 'luminiera':'luminiera omega', 'colossus':'colossus omega', 'colo':'colossus omega', 'leviathan':'leviathan omega', 'levi':'leviathan omega', 'yggdrasil':'yggdrasil omega', 'yugu':'yggdrasil omega', 'tiamat':'tiamat omega', 'tia':'tiamat omega', 'celeste':'celeste omega', 'boat':'celeste omega', 'alex':'godsworn alexiel', 'alexiel':'godsworn alexiel', 'zeph':'zephyrus', 'longdong':'huanglong', 'dong':'huanglong', 'long':'huanglong', 'bunny':'white rabbit', 'kirin':'qilin'}
 
     def startTasks(self):
@@ -67,6 +68,9 @@ class GBF_Utility(commands.Cog):
         await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="summontask() started", timestamp=datetime.utcnow()))
         while True:
             try:
+                if self.checkMaintenance():
+                    await asyncio.sleep(3600)
+                    continue
                 uptime = self.bot.uptime(False)
                 if self.bot.summonlast is None: delta = None
                 else: delta = self.bot.getJST() - self.bot.summonlast
@@ -93,7 +97,7 @@ class GBF_Utility(commands.Cog):
                                         temp[sn][str(id)] = [name, int(sp[1])]
                             except:
                                 pass
-                        await asyncio.sleep(0.001)
+                        await asyncio.sleep(0.1)
                     self.bot.summons = temp
                     self.bot.summonlast = self.bot.getJST()
                     self.bot.savePending = True
@@ -373,7 +377,6 @@ class GBF_Utility(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['badboi', 'branded', 'restricted'])
     @commands.cooldown(5, 30, commands.BucketType.guild)
-    @commands.cooldown(1, 10, commands.BucketType.user)
     async def brand(self, ctx, id : int):
         """Check if a GBF profile is restricted"""
         try:
@@ -386,7 +389,10 @@ class GBF_Utility(commands.Cog):
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
                 return
             data = await cog.getScoutData(id)
-            if len(data['user']) == 0:
+            if data == "Maintenance":
+                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Game is in maintenance", color=self.color))
+                return
+            elif len(data['user']) == 0:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="In game message:\n`{}`".format(data['no_member_msg'].replace("<br>", " ")), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
                 return
             try:
@@ -522,8 +528,11 @@ class GBF_Utility(commands.Cog):
         random.shuffle(keys)
         count = 0
         for uid in keys:
-            if len(msg) > 800:
-                msg += "\n*Only {} random result(s) shown, specify a minimum level to affine the result*.".format(count)
+            if len(msg) > 600:
+                if level > 0:
+                    msg += "*Only {} random result shown*.".format(count)
+                else:
+                    msg += "*Only {} random result shown, specify a minimum level to affine the result*.".format(count)
                 break
             u = self.bot.summons[name][uid]
             if u[1] >= level:
@@ -533,22 +542,26 @@ class GBF_Utility(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="`{}` ▫️ No one has this summon above level {}".format(name, level), footer="Be sure to type the full name", color=self.color))
         else:
             if level > 0:
-                await ctx.send(embed=self.bot.buildEmbed(title="{} {} ▫️ Lvl {} and more".format(self.bot.getEmote('summon'), name.capitalize(), level), description=msg, footer="Auto update once per week", color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="{} {} ▫️ Lvl {} and more".format(self.bot.getEmote('summon'), name.capitalize(), level), description=msg, footer="Auto updated once per week", color=self.color))
             else:
-                await ctx.send(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('summon'), name.capitalize()), description=msg, footer="Auto update once per week", color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('summon'), name.capitalize()), description=msg, footer="Auto updated once per week", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['id'])
     @commands.cooldown(5, 30, commands.BucketType.guild)
-    @commands.cooldown(1, 10, commands.BucketType.user)
     async def profile(self, ctx, *target : str):
         """Retrieve a GBF profile"""
         target = " ".join(target)
         try:
             cog = self.bot.get_cog('Baguette')
             if cog is None: return
-            if target.startswith('<@') and target.endswith('>'):
+            if target == "":
+                if str(ctx.author.id) not in self.bot.gbfids:
+                    await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(ctx.author.display_name), color=self.color))
+                    return
+                id = self.bot.gbfids[str(ctx.author.id)]
+            elif target.startswith('<@!') and target.endswith('>'):
                 try:
-                    target = int(target[2:-1])
+                    target = int(target[3:-1])
                     member = ctx.guild.get_member(target)
                     if str(member.id) not in self.bot.gbfids:
                         await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), color=self.color))
@@ -575,7 +588,10 @@ class GBF_Utility(commands.Cog):
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
                 return
             data = await cog.getProfileData(id)
-            if data is None:
+            if data == "Maintenance":
+                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Game is in maintenance", color=self.color))
+                return
+            elif data is None:
                 self.badprofilecache.append(id)
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
                 return
@@ -605,31 +621,35 @@ class GBF_Utility(commands.Cog):
                 job = soup.find_all("div", class_="txt-other-job-info")[0].string
                 job_lvl = soup.find_all("div", class_="txt-other-job-level")[0].string.replace("  ", " ")
 
-                fields = []
-
                 try:
-                    try: crew = soup.find_all("div", class_="prt-guild-name")[0].string
+                    try:
+                        crew = soup.find_all("div", class_="prt-guild-name")[0].string
+                        crewid = soup.find_all("div", class_="btn-guild-detail")[0]['data-location-href']
+                        crew = "[{}](http://game.granbluefantasy.jp/#{})".format(crew, crewid)
                     except: crew = soup.find_all("div", class_="txt-notjoin")[0].string
-                    fields.append({'name':'{} Crew'.format(self.bot.getEmote('gw')), 'value':crew})
                 except:
-                    pass
+                    crew = None
+
+                fields = []
 
                 try:
                     summons_res = self.sumre.findall(data)
                     summons = {}
                     for s in summons_res:
                         summons[s[0]] = s[1]
+                    count = 0
+                    half = len(summons) // 2
+                    if half < 4: half = 4
                     msg = ""
-                    if '10' in summons: msg += "{} {}\n".format(self.bot.getEmote('fire'), summons['10'])
-                    if '20' in summons: msg += "{} {}\n".format(self.bot.getEmote('water'), summons['20'])
-                    if '30' in summons: msg += "{} {}\n".format(self.bot.getEmote('earth'), summons['30'])
-                    if '40' in summons: msg += "{} {}\n".format(self.bot.getEmote('wind'), summons['40'])
-                    if '50' in summons: msg += "{} {}\n".format(self.bot.getEmote('light'), summons['50'])
-                    if '60' in summons: msg += "{} {}\n".format(self.bot.getEmote('dark'), summons['60'])
-                    if '00' in summons: msg += "{} {}\n".format(self.bot.getEmote('misc'), summons['00'])
-                    if '01' in summons: msg += "{} {}\n".format(self.bot.getEmote('misc'), summons['01'])
+                    for s in self.possiblesum:
+                        if s in summons:
+                            msg += "{} {}\n".format(self.bot.getEmote(self.possiblesum[s]), summons[s])
+                            count += 1
+                            if count == half and msg != "":
+                                fields.append({'name':'{} Summons'.format(self.bot.getEmote('summon')), 'value':msg, 'inline':True})
+                                msg = ""
                     if msg != "":
-                        fields.append({'name':'{} Summons'.format(self.bot.getEmote('summon')), 'value':msg})
+                        fields.append({'name':'{} Summons'.format(self.bot.getEmote('summon')), 'value':msg, 'inline':True})
                 except:
                     pass
 
@@ -655,7 +675,7 @@ class GBF_Utility(commands.Cog):
                 if trophy == "No Trophy Displayed": title = "{} **{}**".format(self.bot.getEmote(rarity), name)
                 else: title = "{} **{}** ▫️ {}".format(self.bot.getEmote(rarity), name, trophy)
 
-                await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}**{}** {}\n{} **{}** ▫️ {} **{}**\n💬 ``{}``".format(rank, job, job_lvl, self.bot.getEmote('hp'), hp, self.bot.getEmote('atk'), atk, comment), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}**{}** {}\n{} **{}** ▫️ {} **{}**\n💬 ``{}``\n{} Crew ▫️ {}".format(rank, job, job_lvl, self.bot.getEmote('hp'), hp, self.bot.getEmote('atk'), atk, comment, self.bot.getEmote('gw'), crew), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             else:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile is private", url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
                 return
@@ -665,7 +685,6 @@ class GBF_Utility(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(5, 30, commands.BucketType.guild)
-    @commands.cooldown(1, 15, commands.BucketType.user)
     async def crew(self, ctx, id : int):
         """Get a crew profile"""
         try:
