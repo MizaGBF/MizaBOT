@@ -63,53 +63,56 @@ class GBF_Utility(commands.Cog):
             await asyncio.sleep(random.randint(30, 45))
 
     async def summontask(self): # summon update task
-        cog = self.bot.get_cog('Baguette')
-        if cog is None: return
-        await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="summontask() started", timestamp=datetime.utcnow()))
         while True:
             try:
-                if self.checkMaintenance():
-                    await asyncio.sleep(3600)
-                    continue
                 uptime = self.bot.uptime(False)
                 if self.bot.summonlast is None: delta = None
                 else: delta = self.bot.getJST() - self.bot.summonlast
                 if uptime.seconds > 3600 and uptime.seconds < 30000 and (delta is None or delta.days >= 7):
                     await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="summontask()", description="auto update started", timestamp=datetime.utcnow()))
-                    temp = {}
-                    for sid in list(self.bot.gbfids.keys()):
-                        id = self.bot.gbfids[sid]
-                        data = await cog.getProfileData(id)
-                        if data is None:
-                            return
-                        soup = BeautifulSoup(data, 'html.parser')
-                        try: name = soup.find_all("span", class_="txt-other-name")[0].string
-                        except: name = None
-                        if name is not None: # private
-                            try:
-                                summons_res = self.sumre.findall(data)
-                                for s in summons_res:
-                                    sp = s[1].lower().split() # Lvl 000 Name1 Name2 ... NameN
-                                    sn = " ".join(sp[2:])
-                                    if sn not in temp:
-                                        temp[sn] = {str(id):[name, int(sp[1])]}
-                                    else:
-                                        temp[sn][str(id)] = [name, int(sp[1])]
-                            except:
-                                pass
-                        await asyncio.sleep(0.1)
-                    self.bot.summons = temp
-                    self.bot.summonlast = self.bot.getJST()
-                    self.bot.savePending = True
+                    await self.updateSummon()
                     await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="summontask()", description="auto update ended", timestamp=datetime.utcnow()))
                     await asyncio.sleep(80000)
+                    return
                 else:
-                    await asyncio.sleep(300)
+                    await asyncio.sleep(3600)
             except asyncio.CancelledError:
                 await self.bot.sendError('summontask', 'cancelled')
                 return
             except Exception as e:
                 await self.bot.sendError('summontask', str(e))
+
+    async def updateSummon(self):
+        cog = self.bot.get_cog('Baguette')
+        if cog is None: return
+        if self.checkMaintenance():
+            await asyncio.sleep(3600)
+            return
+        temp = {}
+        for sid in list(self.bot.gbfids.keys()):
+            id = self.bot.gbfids[sid]
+            data = await cog.getProfileData(id)
+            if data is None:
+                return
+            soup = BeautifulSoup(data, 'html.parser')
+            try: name = soup.find_all("span", class_="txt-other-name")[0].string
+            except: name = None
+            if name is not None: # private
+                try:
+                    summons_res = self.sumre.findall(data)
+                    for s in summons_res:
+                        sp = s[1].lower().split() # Lvl 000 Name1 Name2 ... NameN
+                        sn = " ".join(sp[2:])
+                        if sn not in temp:
+                            temp[sn] = {str(id):[name, int(sp[1])]}
+                        else:
+                            temp[sn][str(id)] = [name, int(sp[1])]
+                except:
+                    pass
+            await asyncio.sleep(0.1)
+        self.bot.summons = temp
+        self.bot.summonlast = self.bot.getJST()
+        self.bot.savePending = True
 
     def isYou(): # for decorators
         async def predicate(ctx):
@@ -431,6 +434,15 @@ class GBF_Utility(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
+    async def forceSummonUpdate(self, ctx):
+        """Force update the summon list (Owner only)"""
+        await self.bot.react(ctx, 'time')
+        await self.updateSummon()
+        await self.bot.unreact(ctx, 'time')
+        await ctx.message.add_reaction('✅') # white check mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isOwner()
     async def profileStat(self, ctx):
         """Linked GBF id statistics (Owner only)"""
         await ctx.send(embed=self.bot.buildEmbed(title="{} Summon statistics".format(self.bot.getEmote('summon')), description="**{}** Registered Users\n**{}** Summons available".format(len(self.bot.gbfids), len(self.bot.summons)), color=self.color))
@@ -527,13 +539,18 @@ class GBF_Utility(commands.Cog):
         keys = list(self.bot.summons[name].keys())
         random.shuffle(keys)
         count = 0
+        fields = []
         for uid in keys:
-            if len(msg) > 600:
-                if level > 0:
-                    msg += "*Only {} random result shown*.".format(count)
-                else:
-                    msg += "*Only {} random result shown, specify a minimum level to affine the result*.".format(count)
-                break
+            if count != 0 and count % 7 == 0:
+                if len(fields) < 2:
+                    fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':msg, 'inline':True})
+                    msg = ""
+                if len(fields) == 2:
+                    if level > 0:
+                        msg += "*Only {} random result shown*.".format(count)
+                    else:
+                        msg += "*Only {} random result shown, specify a minimum level to affine the result*.".format(count)
+                    break
             u = self.bot.summons[name][uid]
             if u[1] >= level:
                 msg += "Lvl **{}** ▫️ [{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ *{}*\n".format(str(u[1]).capitalize(), u[0], uid, uid)
@@ -541,10 +558,13 @@ class GBF_Utility(commands.Cog):
         if msg == "":
             await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="`{}` ▫️ No one has this summon above level {}".format(name, level), footer="Be sure to type the full name", color=self.color))
         else:
+            if msg != "" and len(fields) < 2:
+                fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':msg, 'inline':True})
+                msg = ""
             if level > 0:
-                await ctx.send(embed=self.bot.buildEmbed(title="{} {} ▫️ Lvl {} and more".format(self.bot.getEmote('summon'), name.capitalize(), level), description=msg, footer="Auto updated once per week", color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="{} {} ▫️ Lvl {} and more".format(self.bot.getEmote('summon'), name.capitalize(), level), description=msg, fields=fields, footer="Auto updated once per week", color=self.color))
             else:
-                await ctx.send(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('summon'), name.capitalize()), description=msg, footer="Auto updated once per week", color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('summon'), name.capitalize()), description=msg, fields=fields, footer="Auto updated once per week", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['id'])
     @commands.cooldown(5, 30, commands.BucketType.guild)

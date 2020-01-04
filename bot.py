@@ -270,7 +270,7 @@ class Mizabot(commands.Bot):
                 exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.41
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.42
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), owner=self.ids['owner'])
 
@@ -289,7 +289,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 self.loop.run_until_complete(self.start(self.tokens['discord']))
             except Exception as e: # handle exceptions here to avoid the bot dying
                 if self.savePending:
-                    self.save(False)
+                    self.save()
                 self.errn += 1
                 print("Main Loop Exception: " + str(e))
         if self.save():
@@ -715,7 +715,7 @@ class GracefulExit: # when heroku force the bot to shutdown
     self.bot.exit_flag = True
     if self.bot.savePending:
         self.bot.autosaving = False
-        if self.bot.save(False):
+        if self.bot.save():
             print('Autosave Success')
         else:
             print('Autosave Failed')
