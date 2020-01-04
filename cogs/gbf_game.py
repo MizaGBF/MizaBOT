@@ -12,6 +12,31 @@ class GBF_Game(commands.Cog):
         self.bot = bot
         self.color = 0xfce746
 
+    def startTasks(self):
+        self.bot.runTask('cleanroll', self.cleanrolltask)
+
+    async def cleanrolltask(self): # silent task
+        await asyncio.sleep(3600)
+        if self.bot.exit_flag: return
+        try:
+            c = datetime.utcnow()
+            change = False
+            for id in list(self.bot.spark[0].keys()):
+                if len(self.bot.spark[0][id]) == 3: # backward compatibility
+                    self.bot.spark[0][id].append(c)
+                    change = True
+                else:
+                    d = c - self.bot.spark[0][id][3]
+                    if d.days >= 30:
+                        del self.bot.spark[0][id]
+                        change = True
+            if change: self.bot.savePending = True
+        except asyncio.CancelledError:
+            await self.bot.sendError('cleanrolltask', 'cancelled')
+            return
+        except Exception as e:
+            await self.bot.sendError('cleanrolltask', str(e))
+
     def isDisabled(): # for decorators
         async def predicate(ctx):
             return False
@@ -232,7 +257,7 @@ class GBF_Game(commands.Cog):
                 if id in self.bot.spark[0]:
                     self.bot.spark[0].pop(id)
             else:
-                self.bot.spark[0][id] = [crystal, single, ten]
+                self.bot.spark[0][id] = [crystal, single, ten, datetime.utcnow()]
             self.bot.savePending = True
             try:
                 await self.bot.callCommand(ctx, 'seeRoll', 'GBF_Game')
@@ -257,9 +282,12 @@ class GBF_Game(commands.Cog):
                     raise Exception('Negative numbers')
                 r = (s[0] / 300) + s[1] + s[2] * 10
                 fr = math.floor(r)
+                if len(s) > 3: timestamp = s[3]
+                else: timestamp = None
             else:
                 r = 0
                 fr = 0
+                timestamp = None
 
             # calculate estimation
             # note: those numbers are from my own experimentation
@@ -268,7 +296,8 @@ class GBF_Game(commands.Cog):
             month_day = [31.0, 28.25, 31.0, 30.0, 31.0, 30.0, 31.0, 31.0, 30.0, 31.0, 30.0, 31.0]
 
             # get current day
-            now = self.bot.getJST().replace(hour=0, minute=0, second=0) + timedelta(days=1)
+            if timestamp is None: now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+            else: now = timestamp.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
             t_min = now
             t_max = now
             r_min = r % 300
@@ -307,7 +336,7 @@ class GBF_Game(commands.Cog):
             # estimation text
             footer = "Next spark between {}/{}/{} and {}/{}/{}".format(t_min.year, t_min.month, t_min.day, t_max.year, t_max.month, t_max.day)
             # sending
-            await ctx.send(embed=self.bot.buildEmbed(title=title, description=description, footer=footer, color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title=title, description=description, footer=footer, timestamp=timestamp, color=self.color))
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I warned my owner", color=self.color, footer=str(e)))
             await self.bot.sendError('seeRoll', str(e))
