@@ -177,7 +177,7 @@ class GBF_Game(commands.Cog):
         d = random.randint(1, 36000)
         ct = self.bot.getJST()
         fix200S = ct.replace(year=2020, month=1, day=3, hour=18, minute=0, second=0, microsecond=0)
-        fix200E = fix200S.replace(day=5)
+        fix200E = fix200S.replace(day=5, hour=5)
         if ct >= fix200S and ct < fix200E:
             msg = "{} {} :confetti_ball: :tada: Guaranteed **2 0 0 R O L L S** :tada: :confetti_ball: {} {}".format(self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'))
             roll = 20

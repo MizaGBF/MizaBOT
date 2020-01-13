@@ -46,6 +46,12 @@ class GBF_Utility(commands.Cog):
                             self.bot.savePending = True
                         await asyncio.sleep(500)
                 else:
+                    c = self.bot.getJST()
+                    if c > self.bot.maintenance['time']:
+                        d = c - self.bot.maintenance['time']
+                        if d.days == 0 and d.seconds < 120:
+                            await asyncio.sleep(300)
+                            continue
                     req = await self.requestGBF()
                     if req[0].status == 200 and req[1].find("The app is now undergoing") != -1:
                         await self.bot.send('debug', embed=self.bot.buildEmbed(title="Emergency maintenance detected", timestamp=datetime.utcnow(), color=self.color))
@@ -576,7 +582,7 @@ class GBF_Utility(commands.Cog):
             if cog is None: return
             if target == "":
                 if str(ctx.author.id) not in self.bot.gbfids:
-                    await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(ctx.author.display_name), color=self.color))
+                    await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(ctx.author.display_name), footer="setProfile <id>", color=self.color))
                     return
                 id = self.bot.gbfids[str(ctx.author.id)]
             elif target.startswith('<@!') and target.endswith('>'):
@@ -584,7 +590,7 @@ class GBF_Utility(commands.Cog):
                     target = int(target[3:-1])
                     member = ctx.guild.get_member(target)
                     if str(member.id) not in self.bot.gbfids:
-                        await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), color=self.color))
+                        await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), footer="setProfile <id>", color=self.color))
                         return
                     id = self.bot.gbfids[str(member.id)]
                 except:
@@ -598,7 +604,7 @@ class GBF_Utility(commands.Cog):
                         await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Member not found", color=self.color))
                         return
                     elif str(member.id) not in self.bot.gbfids:
-                        await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), color=self.color))
+                        await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), footer="setProfile <id>", color=self.color))
                         return
                     id = self.bot.gbfids[str(member.id)]
             if id < 0 or id >= 100000000:
@@ -705,11 +711,22 @@ class GBF_Utility(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(5, 30, commands.BucketType.guild)
-    async def crew(self, ctx, id : int):
+    async def crew(self, ctx, *id : str):
         """Get a crew profile"""
         try:
+            if self.checkMaintenance():
+                await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Game is in maintenance", color=self.color))
+                return
+
             cog = self.bot.get_cog('Baguette')
             if cog is None: return
+            id = " ".join(id)
+            id = self.bot.granblue['gbfgcrew'].get(id.lower(), id)
+            try:
+                id = int(id)
+            except:
+                await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Invalid string `{}`".format(id), color=self.color))
+                return
             if id < 0 or id >= 10000000:
                 await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Invalid ID", color=self.color))
                 return

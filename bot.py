@@ -254,6 +254,7 @@ class Mizabot(commands.Bot):
         self.specialstrings = {} # bot special strings
         self.emotes = {} # bot custom emote ids
         self.emote_cache = {} # store used emotes
+        self.granblue = {} # store player/crew ids
         self.extra = {} # extra data storage for plug'n'play cogs
         # /gbfg/ game
         self.pitroulette = False
@@ -348,12 +349,13 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             with open('config.json') as f:
                 data = json.load(f, object_pairs_hook=self.json_deserial_dict) # deserializer here
                 self.tokens = data['tokens']
-                self.baguette = data['baguette']
-                self.ids = data['ids']
-                self.games = data['games']
-                self.strings = data['strings']
-                self.specialstrings = data['specialstrings']
-                self.emotes = data['emotes']
+                self.baguette = data.get('baguette', {})
+                self.ids = data.get('ids', {})
+                self.games = data.get('games', ['Granblue Fantasy'])
+                self.strings = data.get('strings', {})
+                self.specialstrings = data.get('specialstrings', {})
+                self.emotes = data.get('emotes', {})
+                self.granblue = data.get('granblue', {"gbfgcrew":{}})
         except Exception as e:
             print('loadConfig(): {}'.format(e))
             exit(1) # instant quit if error
