@@ -267,7 +267,7 @@ class Mizabot(commands.Bot):
         for i in range(0, 100): # try multiple times in case google drive is unresponsive
             if self.drive.load(): break
             elif i == 99:
-                print("Google Drive might be unaivalable")
+                print("Google Drive might be unavailable")
                 exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success

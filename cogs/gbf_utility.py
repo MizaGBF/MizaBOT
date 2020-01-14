@@ -46,12 +46,6 @@ class GBF_Utility(commands.Cog):
                             self.bot.savePending = True
                         await asyncio.sleep(500)
                 else:
-                    c = self.bot.getJST()
-                    if c > self.bot.maintenance['time']:
-                        d = c - self.bot.maintenance['time']
-                        if d.days == 0 and d.seconds < 120:
-                            await asyncio.sleep(300)
-                            continue
                     req = await self.requestGBF()
                     if req[0].status == 200 and req[1].find("The app is now undergoing") != -1:
                         await self.bot.send('debug', embed=self.bot.buildEmbed(title="Emergency maintenance detected", timestamp=datetime.utcnow(), color=self.color))
@@ -66,7 +60,7 @@ class GBF_Utility(commands.Cog):
                 return
             except Exception as e:
                 await self.bot.sendError('maintenancetask', str(e))
-            await asyncio.sleep(random.randint(30, 45))
+            await asyncio.sleep(60)
 
     async def summontask(self): # summon update task
         while True:
@@ -170,7 +164,7 @@ class GBF_Utility(commands.Cog):
 
     def checkMaintenance(self):
         msg = self.maintenanceUpdate()
-        return (msg.find("ends in") != -1 or msg.find("Emergency maintenance on going") != -1)
+        return (msg != "")
 
     # function to fix the case (for $wiki)
     def fixCase(self, term): # term is a string
