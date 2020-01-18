@@ -256,7 +256,7 @@ class General(commands.Cog):
                 for t in p["threads"]:
                     try:
                         if t["sub"].lower().find(search) != -1 or t["com"].lower().find(search) != -1:
-                            threads.append(t["no"]) # store the thread ids matching our search word
+                            threads.append([t["no"], t["replies"]]) # store the thread ids matching our search word
                     except:
                         pass
             threads.sort(reverse=True)
@@ -344,7 +344,7 @@ class General(commands.Cog):
         if len(threads) > 0:
             msg = ""
             for t in threads:
-                msg += '🔞 https://boards.4channel.org/vg/thread/{}\n'.format(t)
+                msg += '🔞 https://boards.4channel.org/vg/thread/{} ▫️ *{} replies*\n'.format(t[0], t[1])
             await ctx.send(embed=self.bot.buildEmbed(title="/hgg2d/ latest thread(s)", description=msg, footer="Good fap, fellow 4channeler", color=self.color))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="/hgg2d/ Error", description="I couldn't find a single /hgg2d/ thread 😔", color=self.color))
@@ -357,7 +357,7 @@ class General(commands.Cog):
         if len(threads) > 0:
             msg = ""
             for t in threads:
-                msg += ':poop: https://boards.4channel.org/vg/thread/{}\n'.format(t)
+                msg += ':poop: https://boards.4channel.org/vg/thread/{} ▫️ *{} replies*\n'.format(t[0], t[1])
             await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ Error", description="I couldn't find a single /gbfg/ thread 😔", color=self.color))
@@ -375,7 +375,7 @@ class General(commands.Cog):
         if len(threads) > 0:
             msg = ""
             for t in threads:
-                msg += ':four_leaf_clover: https://boards.4channel.org/{}/thread/{}\n'.format(board, t)
+                msg += ':four_leaf_clover: https://boards.4channel.org/{}/thread/{} ▫️ *{} replies*\n'.format(board, t[0], t[1])
             await ctx.send(embed=self.bot.buildEmbed(title="4chan Search result", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="4chan Search result", description="No matching threads found", color=self.color))

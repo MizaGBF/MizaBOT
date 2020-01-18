@@ -541,7 +541,7 @@ class Owner(commands.Cog):
         await self.bot.react(ctx, 'time')
         sc = 0
         mc = 0
-        regex = re.compile("^<:\w*:\d+>$|^:\w*:$")
+        regex = re.compile("^<a?:\w*:\d+>$|^:\w*:$")
         c = ctx.channel
         try:
             async for message in c.history(limit=50000): 

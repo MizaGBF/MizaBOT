@@ -256,12 +256,8 @@ class Mizabot(commands.Bot):
         self.emote_cache = {} # store used emotes
         self.granblue = {} # store player/crew ids
         self.extra = {} # extra data storage for plug'n'play cogs
-        # /gbfg/ game
-        self.pitroulette = False
-        self.pitroulettevictim = []
-        self.pitroulettelist = []
-        self.pitroulettecount = 0
-        self.pitroulettemax = 0
+        self.on_message_high = {} # on message callback (high priority)
+        self.on_message_low = {} # on message callback
         # load
         self.loadConfig()
         for i in range(0, 100): # try multiple times in case google drive is unresponsive
@@ -271,7 +267,7 @@ class Mizabot(commands.Bot):
                 exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.42
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.43
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), owner=self.ids['owner'])
 
@@ -626,6 +622,25 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             except:
                 pass
 
+    def setOnMessageCallback(self, name, callback, high_prio=False): # register a function to be called by on_message (high prio ones will be called first). Must return True (or False to interrupt on_message) and take message as parameter
+        if high_prio:
+            self.on_message_high[name] = callback
+        else:
+            self.on_message_low[name] = callback
+
+    async def runOnMessageCallback(self, message):
+        for name in self.on_message_high:
+            try:
+                if not await self.on_message_high[name](message): return False
+            except:
+                pass
+        for name in self.on_message_low:
+            try:
+                if not await self.on_message_low[name](message): return False
+            except:
+                pass
+        return True
+
     def setChannel(self, name, id_key : str): # "register" a channel to use with send()
         try:
             c = self.get_channel(self.ids[id_key])
@@ -655,7 +670,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             await self.channels[channel_name].send(msg, embed=embed, file=file)
         except Exception as e:
             self.errn += 1
-            print("{} error: {}".format(channel_name, e))
+            print("Channel {} error: {}".format(channel_name, e))
 
     async def sendError(self, func_name : str, msg : str, id = None): # send an error to the debug channel
         if msg.startswith("403 FORBIDDEN"): return # I'm tired of those errors because people didn't set their channel permissions right
@@ -759,55 +774,10 @@ async def on_guild_join(guild): # when the bot joins a new guild
         await guild.owner.send(embed=bot.buildEmbed(title="Pending guild request", description="Wait until my owner approve the new server", thumbnail=guild.icon_url))
         await bot.send('debug', embed=bot.buildEmbed(title="Pending guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
 
-# called by on_message
-# games/jokes for /gbfg/
-async def pitroulette():
-    try:
-        message = bot.pitroulettevictim.pop()
-        bot.pitroulettelist.append([message.author.display_name, bot.pitroulettecount, message.content, "[**Link**](https://discordapp.com/channels/{}/{}/{})".format(message.guild.id, message.channel.id, message.id)])
-        description = "After **{}** message(s)".format(bot.pitroulettecount)
-        title = random.choice(["{} has fallen into the pit...", "{} tripped and fell...", "{} jumped into the pit willingly...", "{} got pushed in the back..."]).format(message.author.display_name)
-        footer = random.choice(["Will {} manage to climb up?".format(message.author.display_name), "Stay down here where you belong", "Straight into the hellish pit", "{} has met with a terrible fate".format(message.author.display_name)])
-        if bot.pitroulettemax > 0:
-            description += "\nI'm expecting **{}** more victim(s)".format(bot.pitroulettemax)
-        else:
-            bot.pitroulette = False # disable
-        await message.channel.send(embed=bot.buildEmbed(title=title, description=description, thumbnail=message.author.avatar_url, footer=footer))
-        if bot.pitroulettemax == 0 and len(bot.pitroulettelist) > 1:
-            fields = []
-            for a in bot.pitroulettelist:
-                if len(a[2]) == 0: fields.append({'name': "{} ▫️ after {} message(s)".format(a[0], a[1]), 'value':a[3]})
-                else: fields.append({'name': "{} ▫️ after {} message(s)".format(a[0], a[1]), 'value':'{}\n{}'.format(a[2], a[3])})
-            await message.channel.send(embed=bot.buildEmbed(title="Pit Roulette results", fields=fields, inline=False, thumbnail=message.author.avatar_url))
-        g = bot.get_guild(bot.ids['gbfg'])
-        await message.author.add_roles(g.get_role(bot.ids['pit']))
-        await asyncio.sleep(60)
-        await message.author.remove_roles(g.get_role(bot.ids['pit']))
-    except asyncio.CancelledError:
-        try:
-            await message.author.remove_roles(g.get_role(bot.ids['pit']))
-        except:
-            pass
-        return
-    except Exception as e:
-        await bot.sendError('pitroulette', str(e))
-
 @bot.event
 async def on_message(message): # to do something with a message
-    try:
-        # games/jokes for /gbfg/
-        if bot.pitroulette and bot.pitroulettemax > 0 and message.channel.id == bot.ids['gbfg_general'] and message.author.id != bot.ids['owner'] and not message.author.bot:
-            bot.pitroulettecount += 1
-            proba = 3 * (bot.pitroulettemax + 1)
-            if random.randint(1, 100) <= proba:
-                bot.pitroulettevictim.append(message)
-                bot.runTask('pitroulette', pitroulette)
-                bot.pitroulettemax -= 1
-                return
-    except:
-        pass
-    # don't forget this
-    await bot.process_commands(message)
+    if await bot.runOnMessageCallback(message):
+        await bot.process_commands(message) # don't forget
 
 @bot.check # authorize or not a command on a global scale
 async def global_check(ctx):

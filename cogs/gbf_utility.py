@@ -26,7 +26,7 @@ class GBF_Utility(commands.Cog):
         self.badcrewcache = []
         self.crewcache = {}
         self.possiblesum = {'10':'fire', '20':'water', '30':'earth', '40':'wind', '50':'light', '60':'dark', '00':'misc', '01':'misc'}
-        self.subsum = {'chev':'luminiera omega', 'chevalier':'luminiera omega', 'lumi':'luminiera omega', 'luminiera':'luminiera omega', 'colossus':'colossus omega', 'colo':'colossus omega', 'leviathan':'leviathan omega', 'levi':'leviathan omega', 'yggdrasil':'yggdrasil omega', 'yugu':'yggdrasil omega', 'tiamat':'tiamat omega', 'tia':'tiamat omega', 'celeste':'celeste omega', 'boat':'celeste omega', 'alex':'godsworn alexiel', 'alexiel':'godsworn alexiel', 'zeph':'zephyrus', 'longdong':'huanglong', 'dong':'huanglong', 'long':'huanglong', 'bunny':'white rabbit', 'kirin':'qilin'}
+        self.subsum = {'chev':'luminiera omega', 'chevalier':'luminiera omega', 'lumi':'luminiera omega', 'luminiera':'luminiera omega', 'colossus':'colossus omega', 'colo':'colossus omega', 'leviathan':'leviathan omega', 'levi':'leviathan omega', 'yggdrasil':'yggdrasil omega', 'yugu':'yggdrasil omega', 'tiamat':'tiamat omega', 'tia':'tiamat omega', 'celeste':'celeste omega', 'boat':'celeste omega', 'alex':'godsworn alexiel', 'alexiel':'godsworn alexiel', 'zeph':'zephyrus', 'longdong':'huanglong', 'dong':'huanglong', 'long':'huanglong', 'bunny':'white rabbit', 'kirin':'qilin', 'sylph gacha':'sylph, flutterspirit of purity', 'poseidon gacha':'poseidon, the tide father', 'anat gacha':'anat, for love and war', 'cerberus gacha':'cerberus, hellhound trifecta', 'marduck gacha':'marduk, battlefield reaper'}
 
     def startTasks(self):
         self.bot.runTask('maintenance', self.maintenancetask)
@@ -540,25 +540,27 @@ class GBF_Utility(commands.Cog):
         random.shuffle(keys)
         count = 0
         fields = []
+
         for uid in keys:
-            if count != 0 and count % 7 == 0:
-                if len(fields) < 2:
-                    fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':msg, 'inline':True})
-                    msg = ""
-                if len(fields) == 2:
-                    if level > 0:
-                        msg += "*Only {} random result shown*.".format(count)
-                    else:
-                        msg += "*Only {} random result shown, specify a minimum level to affine the result*.".format(count)
-                    break
             u = self.bot.summons[name][uid]
             if u[1] >= level:
                 msg += "Lvl **{}** ▫️ [{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ *{}*\n".format(str(u[1]).capitalize(), u[0], uid, uid)
                 count += 1
-        if msg == "":
+                if count >= 14:
+                    fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':msg, 'inline':True})
+                    if level > 0:
+                        msg = "*Only {} random result shown*.".format(count)
+                    else:
+                        msg = "*Only {} random result shown, specify a minimum level to affine the result*.".format(count)
+                    break
+                elif count > 0 and count % 7 == 0:
+                    fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':msg, 'inline':True})
+                    msg = ""
+
+        if count == 0:
             await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="`{}` ▫️ No one has this summon above level {}".format(name, level), footer="Be sure to type the full name", color=self.color))
         else:
-            if msg != "" and len(fields) < 2:
+            if count < 14 and msg != "":
                 fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':msg, 'inline':True})
                 msg = ""
             if level > 0:
