@@ -341,7 +341,7 @@ class Owner(commands.Cog):
     async def config(self, ctx):
         """Post the current config file in the debug channel (Owner only)"""
         try:
-            with open('config.json', 'r') as infile:
+            with open('config.json', 'rb') as infile:
                 await self.bot.send('debug', 'config.json', file=discord.File(infile))
         except Exception as e:
             await self.bot.sendError('config', str(e))
@@ -522,7 +522,7 @@ class Owner(commands.Cog):
     async def getfile(self, ctx, *, filename: str):
         """Retrieve a bot file (Owner only)"""
         try:
-            with open(filename, 'r') as infile:
+            with open(filename, 'rb') as infile:
                 await self.bot.send('debug', file=discord.File(infile))
             await ctx.message.add_reaction('✅') # white check mark
         except Exception as e:

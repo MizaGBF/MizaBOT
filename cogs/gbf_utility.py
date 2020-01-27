@@ -37,10 +37,11 @@ class GBF_Utility(commands.Cog):
         while True:
             try:
                 if self.checkMaintenance():
-                    if self.bot.maintenance['duration'] == 0: # check if infinite maintenance
+                    current_time = self.bot.getJST()
+                    if current_time >= self.bot.maintenance['time'] and self.bot.maintenance['duration'] == 0: # check if infinite maintenance
                         req = await self.requestGBF()
                         if req[0].status == 200 and req[1].find("The app is now undergoing") == -1:
-                            await self.bot.send('debug', embed=self.bot.buildEmbed(title="Emergency maintenance detected", timestamp=datetime.utcnow(), color=self.color))
+                            await self.bot.send('debug', embed=self.bot.buildEmbed(title="Emergency maintenance ended", timestamp=datetime.utcnow(), color=self.color))
                             c = self.bot.getJST()
                             self.bot.maintenance = {"state" : False, "time" : None, "duration" : 0}
                             self.bot.savePending = True
@@ -148,7 +149,10 @@ class GBF_Utility(commands.Cog):
         if self.bot.maintenance['state'] == True:
             if current_time < self.bot.maintenance['time']:
                 d = self.bot.maintenance['time'] - current_time
-                msg = "{} Maintenance starts in **{}**, for **{} hour(s)**".format(self.bot.getEmote('cog'), self.bot.getTimedeltaStr(d, True), self.bot.maintenance['duration'])
+                if self.bot.maintenance['duration'] == 0:
+                    msg = "{} Maintenance starts in **{}**".format(self.bot.getEmote('cog'), self.bot.getTimedeltaStr(d, True))
+                else:
+                    msg = "{} Maintenance starts in **{}**, for **{} hour(s)**".format(self.bot.getEmote('cog'), self.bot.getTimedeltaStr(d, True), self.bot.maintenance['duration'])
             else:
                 d = current_time - self.bot.maintenance['time']
                 if self.bot.maintenance['duration'] <= 0:
@@ -172,6 +176,8 @@ class GBF_Utility(commands.Cog):
         up = False
         if term.lower() == "and": # if it's just 'and', we don't don't fix anything and return a lowercase 'and'
             return "and"
+        elif term.lower() == "of":
+            return "of"
         elif term.lower() == "(sr)":
             return "(SR)"
         elif term.lower() == "(ssr)":
@@ -541,32 +547,46 @@ class GBF_Utility(commands.Cog):
         count = 0
         fields = []
 
+        # get thumbnail from the wiki
+        try:
+            terms = name.split(" ")
+            for i in range(0, len(terms)): terms[i] = self.fixCase(terms[i])
+            async with aiohttp.ClientSession() as session:
+                async with session.get("http://gbf.wiki/{}".format("_".join(terms))) as r:
+                    if r.status != 200:
+                        raise Exception("HTTP Error 404: Not Found")
+                    else:
+                        soup = BeautifulSoup(await r.read(), 'html.parser')
+                        thumbnail = "http://game-a1.granbluefantasy.jp/assets_en/img_low/sp/assets/summon/m/{}.jpg".format(soup.find_all("div", class_="mw-parser-output")[0].findChildren("div" , recursive=False)[0].findChildren("div" , recursive=False)[0].findChildren("div" , recursive=False)[1].findChildren("div" , recursive=False)[0].findChildren("div" , recursive=False)[1].findChildren("table" , recursive=False)[0].findChildren("tbody" , recursive=False)[0].findChildren("tr" , recursive=False)[1].findChildren("td" , recursive=False)[0].text.replace(" ", ""))
+        except:
+            thumbnail = ""
+
         for uid in keys:
             u = self.bot.summons[name][uid]
             if u[1] >= level:
-                msg += "Lvl **{}** ▫️ [{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ *{}*\n".format(str(u[1]).capitalize(), u[0], uid, uid)
+                msg += "**{}**▫️[{}](http://game.granbluefantasy.jp/#profile/{})▫️*{}*\n".format(str(u[1]).capitalize(), u[0], uid, uid)
                 count += 1
                 if count >= 14:
                     fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':msg, 'inline':True})
                     if level > 0:
-                        msg = "*Only {} random result shown*.".format(count)
+                        msg = "*Only {} random results shown*.".format(count)
                     else:
-                        msg = "*Only {} random result shown, specify a minimum level to affine the result*.".format(count)
+                        msg = "*Only {} random results shown, specify a minimum level to affine the result*.".format(count)
                     break
                 elif count > 0 and count % 7 == 0:
                     fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':msg, 'inline':True})
                     msg = ""
 
         if count == 0:
-            await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="`{}` ▫️ No one has this summon above level {}".format(name, level), footer="Be sure to type the full name", color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="`{}` ▫️ No one has this summon above level {}".format(name, level), footer="Be sure to type the full name", thumbnail=thumbnail, color=self.color))
         else:
             if count < 14 and msg != "":
                 fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':msg, 'inline':True})
                 msg = ""
             if level > 0:
-                await ctx.send(embed=self.bot.buildEmbed(title="{} {} ▫️ Lvl {} and more".format(self.bot.getEmote('summon'), name.capitalize(), level), description=msg, fields=fields, footer="Auto updated once per week", color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="{} {} ▫️ Lvl {} and more".format(self.bot.getEmote('summon'), name.capitalize(), level), description=msg, fields=fields, footer="Auto updated once per week", thumbnail=thumbnail, color=self.color))
             else:
-                await ctx.send(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('summon'), name.capitalize()), description=msg, fields=fields, footer="Auto updated once per week", color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('summon'), name.capitalize()), description=msg, fields=fields, footer="Auto updated once per week", thumbnail=thumbnail, color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['id'])
     @commands.cooldown(5, 30, commands.BucketType.guild)
@@ -710,41 +730,43 @@ class GBF_Utility(commands.Cog):
     async def crew(self, ctx, *id : str):
         """Get a crew profile"""
         try:
-            if self.checkMaintenance():
+            cog = self.bot.get_cog('Baguette') # secret sauce to access the game
+            if cog is None: return
+
+            if self.checkMaintenance(): # check for maintenance
                 await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Game is in maintenance", color=self.color))
                 return
-
-            cog = self.bot.get_cog('Baguette')
-            if cog is None: return
             id = " ".join(id)
-            id = self.bot.granblue['gbfgcrew'].get(id.lower(), id)
+            id = self.bot.granblue['gbfgcrew'].get(id.lower(), id) # check if the id is a gbfgcrew
+            # check id validityy
             try:
                 id = int(id)
             except:
-                await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Invalid string `{}`".format(id), color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Invalid name `{}`\nOnly /gbfg/ crews are registered, please input an id".format(id), color=self.color))
                 return
             if id < 0 or id >= 10000000:
-                await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Invalid ID", color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Out of range ID", color=self.color))
                 return
-            if id in self.badcrewcache:
+            if id in self.badcrewcache: # if already searched (to limit bad requests)
                 await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Crew not found", color=self.color))
                 return
 
             crew = {}
-            if id in self.crewcache:
+            if id in self.crewcache: # public crews are stored until next reboot (to limit the request amount)
                 crew = self.crewcache[id]
             else:
-                for i in range(0, 4):
+                for i in range(0, 4): # for each page (page 0 being the crew page, 1 to 3 being the crew page
                     get = cog.requestCrew(id, i)
                     if get is None:
-                        if i == 0:
+                        if i == 0: # if error on page 0, the crew doesn't exist
                             self.badcrewcache.append(id)
                             await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Crew not found", color=self.color))
                             return
-                        elif i == 1:
+                        elif i == 1: # if error on page 1, the crew is private
                             crew['private'] = True
                         break
                     else:
+                        # store the data
                         if i == 0:
                             crew['timestamp'] = datetime.utcnow()
                             crew['footer'] = ""
@@ -765,11 +787,22 @@ class GBF_Utility(commands.Cog):
                                 crew['total_rank'] += int(p['level'])
                                 crew['player'].append({'id':p['id'], 'name':su.unescape(p['name']), 'level':p['level'], 'is_leader':p['is_leader']})
                 if not crew['private']:
-                    crew['footer'] = "Public crews are updated only once per day"
+                    crew['footer'] = "Public crews are updated once per day"
                     self.crewcache[id] = crew # only cache public crews
 
+            # prepare the message
             title = "{} **{}** ▫️ Rank {}".format(self.bot.getEmote('gw'), crew['name'], crew['rank'])
             description = "{} **Captain** ▫️ [{}](http://game.granbluefantasy.jp/#profile/{})\n{} **Top Donator** ▫️ [{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ {} rupies\n💬 ``{}``".format(self.bot.getEmote('crown'), crew['leader'], crew['leader_id'], self.bot.getEmote('gold'), crew['donator'], crew['donator_id'], crew['donator_amount'], crew['message'])
+
+            # get the last gw score
+            cog = self.bot.get_cog('GW')
+            if cog is not None:
+                data = await cog.searchGWDB(ctx, id, 2)
+                if data is not None and 'result' in data and len(data['result']) == 1:
+                    if data['result'][0][0] is not None:
+                        description += "\n{} GW**{}** ▫️ #**{}**  ▫️ **{:,}** honors ".format(self.bot.getEmote('gw'), data.get('gw', ''), data['result'][0][0], data['result'][0][11])
+
+            # prepare the member list
             fields = []
             if crew['private']:
                 description += '\n*Crew is private*'
@@ -782,6 +815,7 @@ class GBF_Utility(commands.Cog):
                     if p['is_leader']: fields[-1]['value'] += "**[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ {}**\n".format(p['name'], p['id'], p['level'])
                     else: fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ {}\n".format(p['name'], p['id'], p['level'])
 
+            # send
             await ctx.send(embed=self.bot.buildEmbed(title=title, description=description, fields=fields, inline=True, thumbnail=crew['ship'], url="http://game.granbluefantasy.jp/#guild/detail/{}".format(id), footer=crew['footer'], timestamp=crew['timestamp'], color=self.color))
 
         except Exception as e:
@@ -1044,49 +1078,3 @@ class GBF_Utility(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg,  url="https://gbf.wiki/Raising_Weapon_Skills", color=self.color))
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=str(e),  url="https://gbf.wiki/Raising_Weapon_Skills", color=self.color))
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['lucihl', 'buncle'])
-    @commands.cooldown(2, 4, commands.BucketType.user)
-    async def lucilius(self, ctx, page : int = 0):
-        """Lucilius HL Guide - Buncle guide"""
-        # lucilius guide
-        if len(self.lucilius_guide) == 0:
-            self.lucilius_guide = [
-                "**Table of Content**\nPlease use this command with the section number:\n**#1** ▫️ What you need?\n**#2** ▫️ What the group needs?\n**#3** ▫️ Before Starting\n**#4** ▫️ Phase 1 ▫️ Dark Wings 100% - 50%\n**#5** ▫️ Phase 2 ▫️ Dark Wings 50% (Labors)\n**#6** ▫️ Phase 2 ▫️ Dark Wings 50% - 0%\n**#7** ▫️ Phase 3 ▫️ Lucilius 100% - 25%\n**#8** ▫️ Phase 4 ▫️ Lucilius 25% - 0%\n\n**#9** ▫️ All\n\n**Bonus**\n**#10** to **#15** ▫️ Team Building (Fire, Water, Earth, Wind, Light, Dark)\n\n*The Bot must be capable of sending you a direct message*",
-                "**What you need?**\n\n▫️ 30,000 {}\n▫️ 2 or 3 carbuncles of your weak element (fire if you are wind) or same element (for dark and light)\n▫️ If you use an elemental switch (Athena, Europa...), you might want to change your carbuncles accordingly\n▫️ 2 or 3 dispels (the more the better)\n▫️ If possible: Substitute {} (Spartan gets a 50% cut from it)\n▫️ If possible: Delays {}\n▫️ If possible: A way of surviving a Skyfall-like ougi\n▫️ No characters of the same race (**even on the backline**)".format(self.bot.getEmote('hp'), self.bot.getEmote('sub'), self.bot.getEmote('delay')),
-                "**What the group needs?**\n\n▫️ A player with Yurius {}\n▫️ A player with Gravity {} (usually the wind player)\n▫️ A player capable of Overchain **(OC)** {}\n▫️ A player capable of tanking Paradise Lost **(PL)**\n▫️ A player capable of 30 hits in one turn\n▫️ A way of having 10 debuffs on the foes\n▫️ **NO** plain damage above two millions\n▫️ A few clarities {}\nAs you improve, some of those can be ignored.".format(self.bot.getEmote('yurius'), self.bot.getEmote('gravity'), self.bot.getEmote('overchain'), self.bot.getEmote('clarity')),
-                "**Before Starting**\n\n▫️ If **both** foes have their charge diamonds maxed, Lucilius will cast **Paradise Lost**.\nIt ignores Non-elemental cuts (Phalanx, etc...) and you need full cut, unchallenged or high defense to survive it, so use your delay properly.\nAfter 50%, during the normal mode, he doesn't cast **PL**.\n▫️ The Blade {} stack increases after each special attack.\nIt increases the foe attack and does annoying things to you (dispel, debuff).\n**Dispel** it as much as possible.".format(self.bot.getEmote('blade')),
-                "**Phase 1 ▫️ Dark Wings 100% - 50%**\n\n▫️ You get hit by 30,000 damages right when joining, heal back and dispel\n▫️ Gravity {} should be casted on Lucilius.\n▫️ Don't move without phalanx unless you know what you are doing.\n▫️ Normal mode ougi is Phosphorus: High single target damage and dispel. Use a mirror image or substitute to get 100% cut.\n▫️ Overdrive mode ougi is Iblis: Not dangerous but cast annoying debuffs on the party. Save your clears and veils for those.\n▫️ Dark wings alternate between two ougis: The first one removes the damage cap on Lucilius and inflicts Forbidden Fruit on you (if you ougi, you take 10,000 plain damage), the second puts back the damage cap and inflicts Fruit of Life on you (heal when pressing skills), with Zombie below 50%.\n▫️ At 70%, the Dark Wings dispel all debuffs, the Yurius player must reapply them (Gravity is surely still in cooldown so don't bother).\n▫️ The **Countdown starts now** {}. If a player loses a character, it decreases. At 0, the raid is over. DoT and Suicide don't decrease the **CD**.\n▫️ The **OC** player should prepare a 5-man burst before 50%.\n▫️ The **PL** player should try to get full diamonds on both foes beforehand (optional but it helps).\n▫️ Only one player must pass 50%, or the ones following him might just die.".format(self.bot.getEmote('gravity'), self.bot.getEmote('the end')),
-                "**Phase 2 ▫️ Dark Wings 50% (Labors)**\n\nThe Twelve Labors {} are now up and they each have a different effect on the raid. The goal is to clear the annoying ones and ignore the others.\nHere, you'll find a quick overview of each one.\n▫️ Labor 1 to 6 increases his elemental damage. The corresponding element must do 10,000,000 damage in one turn to clear it. Optional.\n▫️ Labor 7 causes the damage element to be fixed to your weak element. That's what allow us to abuse carbuncles for 100% cut. It's cleared by doing 2,000,000 plain damage in one turn, so **don't do it**.\n▫️ Labor 8 is the **First one to be cleared**, it nullifies Phalanx. The **OC** player just need to overchain (Phalanx will work after, so be sure to phalanx him).\n▫️ Labor 9 heals Lucilius every turn. You need to inflict 30 hits in one turn to remove it. Kill the wings first if you can't guarantee it.\n▫️ Labor 10 puts debuffs on your party. You need 10 debuffs at the end of the turn to clear it. This one is skippable but it can be nice to clear it.\n▫️ Labor 11 **dispels two buffs** on your party every turn. It makes this phase very dangerous until the overdrive, because the **PL** player must do his job here, and **PL** doesn't happen until the overdrive now.\n▫️ Labor 12 inflicts plain damage every turns and you gotta clear all labors to remove it. But we don't in buncle runs (**Labor 7 must not be removed**).".format(self.bot.getEmote('labor')),
-                "**Phase 2 ▫️ Dark Wings 50% - 0%**\n\nDuring this phase, Lucilius can use the following ougi:\n▫️ Axion Apocalypse, 3-hits damage, increase the Blade {} stack by 1.\n\n▫️ First, debuffs (don't gravity unless the **PL** player is ok with it) and phalanx. The **OC** player must now Overchain to remove Labor **8**.\n▫️ You can use carbuncles now but Labor **11** will remove your last two buffs. Use a buncle before receiving phalanx is a good trick.\n▫️ Clear Labor **10** if you can.\n▫️ Push him to Overdrive as soon as possible (Dark Wings and Lucilius share the same mode bar) so the **PL** player can clear Labor **11**. If he hasn't aligned the diamonds beforehand, he must do it as soon as possible.\n▫️ Once done, you can breath and relax. Clear Labor **9** whenever you can and focus on killing the Dark Wings.\n▫️ Don't forget to dispel the Blade {} stack. It goes up way faster because of his ougis in this phase.\n▫️ Care for Lucilius' HP. At 95%, he casts Phosphorus.".format(self.bot.getEmote('blade'), self.bot.getEmote('blade')),
-                "**Phase 3 ▫️ Lucilius 100% - 25%**\n\nIf you are all alive at this point, it should be now fairly easy:\n▫️ 95%: Phosphorus, use Substitute {} with Phalanx, or a Carbuncle with Phalanx, or Mirror image.\n▫️ 85%: Axion, 3-hits damage. Same strategy as Phosphorus. Don't die to this because, if you do, he will then inflicts 30,000 plain damage.\n▫️ 70%: Diamonds fill. Don't waste your delay {} just before.\n▫️ 60%: Axion again but to all ally. **Substitute doesn't work here**.\n▫️ 55%: Diamonds fill, again.\nNever forget to dispel him.\nThose triggers expire after a certain point.\nUse your summons, if needed, before 25%.".format(self.bot.getEmote('sub'), self.bot.getEmote('delay')),
-                "**Phase 4 ▫️ Lucilius 25% - 0%**\n\nLucilius dispels all debuffs at 25% and 10%. He now has Heaven's Floodgates, a Turn up field effect similar to Akasha HL's.\nYou are also inflicted with summonless, now.\n\n▫️ 25%: Gopherwood Ark, the Race check. If you have two or more characters sharing the same race, the 2nd and more will die, **even on the backline**. Don't pass this trigger if you'll lose an important character or cause the **CD** {} to reaches 0.\n▫️ 20% & 15%: Axion Apocalypse, 3-hits damage, increase the Blade {} stack by 1. You can use Substitute {}.\n▫️ 10% & 3%: Paradise Lost (Special). 999,999 damage. You need full cut or unchallenged to pass this. If you use Dark Zooey's Conjunction, uses a blue pot because Labor **12** now does 5,000 plain damage. All-ally substitute (Light Vira for example) and Centurion II lets you tank those trigger without damage (it doesn't work that way, normally).".format(self.bot.getEmote('countdown'), self.bot.getEmote('blade'), self.bot.getEmote('sub')),
-                "{} **Fire**\n**Defense** ▫️ Athena, Alanaan, Anila\n**Attack** ▫️ Shiva, Esser, Anila\n**Dispel** ▫️ Grea, Tabina, Clarisse, Rackam\n**Delay** ▫️ Anila, Sturm\n**Debuff** ▫️ Anila, Shiva, Tabina, Fraux\n**Heal** ▫️ Fraux, Alanaan, Yuel, Anila\n**30 Hits** ▫️ Tabina, The Sun".format(self.bot.getEmote('fire')),
-                "{} **Water**\n**Defense** ▫️ Anne, Uno, Europa, Haaselia, Katalina, Lily, Romeo\n**Attack** ▫️ Altair, Haaselia, Katalina, Lily, Maria Theresa\n**Dispel** ▫️ Aqours, Chat Noir, Maria Theresa, Quatre\n**Delay** ▫️ Chat Noir, Drang, Quatre, Haaselia, Macula, Societte\n**Debuff** ▫️ Cucouroux, Drang, Haaselia, Lancelot, Lily, Maria Theresa\n**Heal** ▫️ Diantha, Europa, Katalina, Lily, Lilele, Maria Theresa, Societte\n**PL** ▫️ Europa & Lily\n**OC** ▫️ Vajra\n**30 Hits** ▫️ Quatre, Katapillar\n**Gravity** ▫️ Quatre, Macula".format(self.bot.getEmote('water')),
-                "{} **Earth**\n**Defense** ▫️ Alexiel, Alexiel(S), Caim, Last Sahrivar (& Okto), Magisa, Sara\n**Attack** ▫️ Caim, Lobelia, Okto, De La Fille, Magisa\n**Dispel** ▫️ Baal, Clarisse, Magisa, Alexiel, Vira\n**Delay** ▫️ Medusa, Vira\n**Debuff** ▫️ Baal, Clarisse\n**Heal** ▫️ Aqours, Baal, Cagliostro, De La Fille, Jessica, Vira, Yggdrasil, The Hanged Man\n**PL** ▫️ Alexiel, Alexiel(S)\n**OC** ▫️ Okto\n**Gravity** ▫️ Alexiel(S)".format(self.bot.getEmote('earth')),
-                "{} **Wind**\n**Defense** ▫️ Andira, Grimnir, Katzelia, Lecia, Monika(A), Monika(G), Morrigna, Nio\n**Attack** ▫️ Grimnir, Siete\n**Dispel** ▫️ Andira, Estarriola, Lecia, Morrigna, Yurius\n**Delay** ▫️ Grimnir, Metera, Yurius\n**Debuff** ▫️ Andira, Monika(G), Yurius\n**Heal** ▫️ Andira, Estarriola, Aqours, Kokkoro, Lennah, Monika(G), Selfira, Societte, Yuel\n**PL** ▫️ Katzelia\n**30 Hits** ▫️ Melisabelle, Nio\n**Gravity** ▫️ Carmelina".format(self.bot.getEmote('wind')),
-                "{} **Light**\n**Defense** ▫️ Baotorda, De La Fille(S), Geisenborger, Melisabelle, Pecorine, Sara, Vira, Zooey\n**Attack** ▫️ Albert, Song, Zooey\n**Dispel** ▫️ Clarisse\n**Delay** ▫️ Albert, Mary\n**Debuff** ▫️ Metera, Song\n**Heal** ▫️ Charlotta(H), De La Fille(S), Funf, Io, Levin Sisters, Sarunan, Zooey, Sophia\n**PL** ▫️ Vira, Zooey\n**OC** ▫️ Dorothy and Claudia, Mirin, Shitori\n**30 Hits** ▫️ Albert, Geisenborger, Song, Vira\n**Gravity** ▫️ Dorothy and Claudia".format(self.bot.getEmote('light')),
-                "{} **Dark**\n**Defense** ▫️ Anthuria, Black Knight, Kolulu, Nicholas, Nier, Rosetta\n**Attack** ▫️ Ferry, Kolulu, Nier, Seox, Vanya\n**Dispel** ▫️ Black Knight, Ferry, Aqours, Vanya\n**Delay** ▫️ Black Knight, Olivia\n**Debuff** ▫️ Black Knight, Tanya\n**Heal** ▫️ Anthuria, Cagliostro, Ferry, Lady Grey(H), Marquiares, Nier, Rosetta, Zooey\n**PL** ▫️ Zooey\n**OC** ▫️ Nier".format(self.bot.getEmote('dark'))
-            ]
-        title = "{} Dark Rapture (Hard) ▫️ Buncle Guide".format(self.bot.getEmote('lucilius'))
-        footer = "version 1.2.1"
-
-        queue = []
-        if page < 1 or page > 15:
-            await ctx.send(embed=self.bot.buildEmbed(title=title, description=self.lucilius_guide[0], footer=footer, color=self.color))
-            return
-        elif page == 9:
-            for i in range(1, 9):
-                queue.append(self.lucilius_guide[i])
-        elif page >= 10 and page <= 15:
-            queue.append(self.lucilius_guide[page-1]+"\n\n*Exhaustive list, focus on defense, dispel and heal if you aren't certain of what to pick*")
-        else:
-            queue.append(self.lucilius_guide[page])
-
-        for description in queue:
-            try:
-                await ctx.author.send(embed=self.bot.buildEmbed(title=title, description=description, footer=footer, color=self.color))
-                await ctx.message.add_reaction('✅') # white check mark
-            except:
-                await ctx.author.send(embed=self.bot.buildEmbed(title="Error", description="I can't send you a direct message", color=self.color))
-                return

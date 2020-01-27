@@ -405,7 +405,7 @@ class GBF_Game(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="{} {} is a bad boy".format(self.bot.getEmote('gw'), ctx.author.display_name), description="Your account is **restricted.**", thumbnail=ctx.author.avatar_url, color=self.color))
             return
 
-        h = random.randint(300, 2000)
+        h = random.randint(200, 1500)
         m = random.randint(50, 150)
         c = random.randint(1, 100)
 

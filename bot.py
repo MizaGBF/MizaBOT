@@ -213,6 +213,20 @@ class MizabotDrive():
         s.SetContentString(data)
         s.Upload()
 
+    def dlFile(self, name, folder): # load a file from a folder
+        drive = self.login()
+        if not drive:
+            print("Can't login into Google Drive")
+            return False
+        try:
+            file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
+            for s in file_list:
+                if s['title'] == name: s.GetContentFile(s['title']) # iterate until we find the file and download it
+            return True
+        except Exception as e:
+            print(e)
+            return False
+
 # #####################################################################################
 # Bot
 class Mizabot(commands.Bot):
@@ -267,9 +281,9 @@ class Mizabot(commands.Bot):
                 exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.43
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.44
 Source code: https://github.com/MizaGBF/MizaBOT.
-Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), owner=self.ids['owner'])
+Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), owner=self.ids['owner'], max_messages=100)
 
     def loadCog(self, *cog_classes):
         for c in cog_classes:
