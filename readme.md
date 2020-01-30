@@ -22,7 +22,7 @@ Example files might be a bit outdated. I'll do my best to update them as much as
 * [asyncio](https://docs.python.org/3/library/asyncio.html) is used by [discord.py](https://github.com/Rapptz/discord.py), there is no multithreading involved in this bot as a result. Which means a function must not hog all the cpu time.  
 * Data (from the config or save file) is centralized on the Bot instance and accessible by the Cogs at any time.  
 * The bot checks the `savePending` variable every 20 minutes in the `statustask()` function and save to the drive if True.  
-* The `GracefulExit` is needed for a proper use on [Heroku](https://www.heroku.com). A `SIGTERM` signal is sent when a restart happens on the [Heroku](https://www.heroku.com) side (usually every 24 hours, when you push a change or in some other cases). The bott also checks the `savePending` variable when this happens.  
+* The `GracefulExit` is needed for a proper use on [Heroku](https://www.heroku.com). A `SIGTERM` signal is sent when a restart happens on the [Heroku](https://www.heroku.com) side (usually every 24 hours, when you push a change or in some other cases). The bot also checks the `savePending` variable when this happens.  
 * You can change which cog is loaded at the end of `bot.py`, at the `loadCog()` line.  
 * `baguette.py` is my personal cog and won't ever be on this github, you can safely remove it from the `loadCog()` call.  
 * The debug channel refers to a channel, in my test server, where the bot send debug and error messages while running. Useful when I can't check the logs on Heroku.  
