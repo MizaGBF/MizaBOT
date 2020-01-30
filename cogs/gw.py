@@ -539,7 +539,7 @@ class GW(commands.Cog):
 
         fields = []
         for i in range(0, x):
-            fields.append({'name':"{}▫️{}".format(result[i][2], result[i][1]), 'value':''})
+            fields.append({'name':"{}".format(result[i][2]), 'value':''})
             if result[i][0] is not None: fields[-1]['value'] += "**#{}**\n".format(result[i][0])
             if result[i][3] is not None: fields[-1]['value'] += "**P.** ▫️{:,}\n".format(result[i][3])
             if result[i][4] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('1'), result[i][4])
@@ -547,6 +547,7 @@ class GW(commands.Cog):
             if result[i][8] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('3'), result[i][8])
             if result[i][10] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('4'), result[i][10])
             if fields[-1]['value'] == "": fields[-1]['value'] = "No data"
+            fields[-1]['value'] = "[{}](http://game.granbluefantasy.jp/#profile/{})▫️{}".format(result[i][1], result[i][1], fields[-1]['value'])
             if all:
                 try:
                     await ctx.author.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), fields=fields, inline=True, color=self.color))

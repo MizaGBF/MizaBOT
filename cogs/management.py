@@ -58,8 +58,7 @@ class Management(commands.Cog):
         await ctx.send(embed=self.bot.buildEmbed(title=ctx.guild.name, description="Joined at {0.joined_at}".format(member), thumbnail=member.avatar_url, color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['source'])
-    @isAuthorized()
-    @commands.cooldown(1, 10, commands.BucketType.guild)
+    @commands.cooldown(1, 20, commands.BucketType.guild)
     async def github(self, ctx):
         """Post the bot.py file running right now"""
         await ctx.send(embed=self.bot.buildEmbed(title=self.bot.description.splitlines()[0], description="Code source at https://github.com/MizaGBF/MizaBOT", thumbnail=ctx.guild.me.avatar_url, color=self.color))

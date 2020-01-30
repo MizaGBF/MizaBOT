@@ -168,7 +168,10 @@ class GBF_Utility(commands.Cog):
 
     def checkMaintenance(self):
         msg = self.maintenanceUpdate()
-        return (msg != "")
+        return (msg != "" and "Maintenance starts" not in msg)
+
+    def escape(self, s): # escape markdown string
+        return s.replace('\\', '\\\\').replace('`', '\\`').replace('*', '\\*').replace('_', '\\_').replace('{', '\\{').replace('}', '\\}').replace('[', '').replace(']', '').replace('(', '\\(').replace(')', '\\)').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('.', '\\.').replace('!', '\\!').replace('|', '\\|')
 
     # function to fix the case (for $wiki)
     def fixCase(self, term): # term is a string
@@ -564,7 +567,7 @@ class GBF_Utility(commands.Cog):
         for uid in keys:
             u = self.bot.summons[name][uid]
             if u[1] >= level:
-                msg += "**{}**▫️[{}](http://game.granbluefantasy.jp/#profile/{})▫️*{}*\n".format(str(u[1]).capitalize(), u[0], uid, uid)
+                msg += "**{}**▫️[{}](http://game.granbluefantasy.jp/#profile/{})▫️*{}*\n".format(str(u[1]).capitalize(), self.escape(u[0]), uid, uid)
                 count += 1
                 if count >= 14:
                     fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':msg, 'inline':True})
@@ -812,8 +815,8 @@ class GBF_Utility(commands.Cog):
                 for p in crew['player']:
                     if i % 10 == 0: fields.append({'name':'Page {}'.format(self.bot.getEmote(str((i // 10) + 1))), 'value':''})
                     i += 1
-                    if p['is_leader']: fields[-1]['value'] += "**[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ {}**\n".format(p['name'], p['id'], p['level'])
-                    else: fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ {}\n".format(p['name'], p['id'], p['level'])
+                    if p['is_leader']: fields[-1]['value'] += "**[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ {}**\n".format(self.escape(p['name']), p['id'], p['level'])
+                    else: fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ {}\n".format(self.escape(p['name']), p['id'], p['level'])
 
             # send
             await ctx.send(embed=self.bot.buildEmbed(title=title, description=description, fields=fields, inline=True, thumbnail=crew['ship'], url="http://game.granbluefantasy.jp/#guild/detail/{}".format(id), footer=crew['footer'], timestamp=crew['timestamp'], color=self.color))

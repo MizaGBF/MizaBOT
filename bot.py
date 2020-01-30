@@ -281,7 +281,7 @@ class Mizabot(commands.Bot):
                 exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.44
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.45
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), owner=self.ids['owner'], max_messages=100)
 
@@ -685,6 +685,10 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
         except Exception as e:
             self.errn += 1
             print("Channel {} error: {}".format(channel_name, e))
+
+    async def sendMulti(self, channel_names : list, msg : str = "", embed : discord.Embed = None, file : discord.File = None): # send to multiple channel at the same time
+        for c in channel_names:
+            await self.send(c, msg, embed, file)
 
     async def sendError(self, func_name : str, msg : str, id = None): # send an error to the debug channel
         if msg.startswith("403 FORBIDDEN"): return # I'm tired of those errors because people didn't set their channel permissions right
