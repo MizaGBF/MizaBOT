@@ -1,11 +1,12 @@
 @ Example file
-@ Enable dev mode and right click on what you need to get IDs. For custom emote IDs, write \ followed by the emote.
-@ Fill it properly and then delete those three lines
+@ Enable dev mode in discord and right click on what you need to get IDs. For custom emote IDs, write \ followed by the emote.
+@ Fill it properly and then delete those three lines, + all the < comments >
 {
     "tokens" : {
         "discord" : "discord bot token here. between quotes",
         "drive" : "drive folder id (found in the folder url), not your drive access token. between quotes"
-        "upload" : "currently unused."
+        "upload" : "currently unused. drive folder id in which the bot can save files",
+        "files" : "drive folder id from which the bot can retrieve files"
     },
     "baguette" : {
     },
@@ -116,6 +117,20 @@
         "foace" : 0,
         "crystal" : 0,
         "crown" : 0,
-        "cooldown" : 0
+        "cooldown" : 0,
+        "lucilius" : 0,
+        "sub" : 0,
+        "delay" : 0,
+        "yurius" : 0,
+        "gravity" : 0,
+        "overchain" : 0,
+        "clarity" : 0,
+        "blade" : 0,
+        "the end" : 0,
+        "labor" : 0,
+        "misc" : 0
+    },
+    "granblue": {
+        "gbfgcrew" : {}
     }
 }
