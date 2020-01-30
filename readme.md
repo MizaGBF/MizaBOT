@@ -1,7 +1,7 @@
 # MizaBOT  
 * [Granblue Fantasy](http://game.granbluefantasy.jp) Discord Bot used by the /gbfg/ server.  
 #### Requirements  
-* Python 3.7.  
+* Python 3.8.  
 * [discord.py](https://github.com/Rapptz/discord.py) (formerly the rewrite branch).  
 * [PyDrive](https://pythonhosted.org/PyDrive/) to access the google drive where the save file is stored.  
 * [psutil](https://psutil.readthedocs.io/en/latest/).  
