@@ -12,9 +12,9 @@ class GW(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.color = 0xf4426e
-        self.sql = None
-        self.conn = None
-        self.cursor = None
+        self.sql = [None, None]
+        self.conn = [None, None]
+        self.cursor = [None, None]
 
     def startTasks(self):
         self.bot.runTask('check_ranking', self.checkGWRanking)
@@ -26,8 +26,9 @@ class GW(commands.Cog):
         cog = self.bot.get_cog('Baguette')
         if cog is None:
             return
-        crews = [2000, 5500, 9000, 14000, 18000, 30000]
-        players = [2000, 50000, 100000, 160000, 250000, 350000]
+        crewsA = [300, 1000, 2000, 8000, 19000, 30000]
+        crewsB = [2000, 5500, 9000, 14000, 18000, 30000]
+        players = [2000, 70000, 120000, 160000, 250000, 350000]
 
         days = ["End", "Day 5", "Day 4", "Day 3", "Day 2", "Day 1", "Interlude", "Preliminaries"]
         minute_update = [5, 25, 45]
@@ -61,6 +62,10 @@ class GW(commands.Cog):
                         if skip:
                             await asyncio.sleep(600)
                         elif m in minute_update:
+                            if d.startswith("Day "):
+                                crews = crewsB
+                            else:
+                                crews = crewsA
                             try:
                                 data = [{}, {}, {}, {}, current_time - timedelta(seconds=60 * (current_time.minute % 20))]
                                 if self.bot.gw['ranking'] is not None:
@@ -390,7 +395,6 @@ class GW(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="The seach couldn't be completed", footer=str(e), color=self.color))
             await self.bot.sendError("searchid", str(e))
 
-
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rankings', 'cutoff', 'cutoffs'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def ranking(self, ctx):
@@ -401,7 +405,12 @@ class GW(commands.Cog):
             else:
                 fields = [{'name':'**Crew Ranking**', 'value':''}, {'name':'**Player Ranking**', 'value':''}]
                 for c in self.bot.gw['ranking'][0]:
-                    fields[0]['value'] += "**#{:,}K** \▫️ {:,}".format(int(c)//1000, self.bot.gw['ranking'][0][c])
+                    if int(c) < 1000:
+                        fields[0]['value'] += "**#{:}** \▫️ {:,}".format(c, self.bot.gw['ranking'][0][c])
+                    elif int(c) % 1000 != 0:
+                        fields[0]['value'] += "**#{:,}.{:,}K** \▫️ {:,}".format(int(c)//1000, (int(c)%1000)//100, self.bot.gw['ranking'][0][c])
+                    else:
+                        fields[0]['value'] += "**#{:,}K** \▫️ {:,}".format(int(c)//1000, self.bot.gw['ranking'][0][c])
                     if c in self.bot.gw['ranking'][2]:
                         if self.bot.gw['ranking'][2][c] > 1000000000:
                             fields[0]['value'] += " \▫️  {:,.1f}B/min".format(self.bot.gw['ranking'][2][c]/1000000000)
@@ -415,7 +424,12 @@ class GW(commands.Cog):
                 if fields[0]['value'] == '': fields[0]['value'] = 'Unaivalable'
 
                 for c in self.bot.gw['ranking'][1]:
-                    fields[1]['value'] += "**#{:,}K** \▫️ {:,}".format(int(c)//1000, self.bot.gw['ranking'][1][c])
+                    if int(c) < 1000:
+                        fields[1]['value'] += "**#{:}** \▫️ {:,}".format(c, self.bot.gw['ranking'][1][c])
+                    elif int(c) % 1000 != 0:
+                        fields[1]['value'] += "**#{:,}.{:,}K** \▫️ {:,}".format(int(c)//1000, (int(c)%1000)//100, self.bot.gw['ranking'][1][c])
+                    else:
+                        fields[1]['value'] += "**#{:,}K** \▫️ {:,}".format(int(c)//1000, self.bot.gw['ranking'][1][c])
                     if c in self.bot.gw['ranking'][3]:
                         if self.bot.gw['ranking'][3][c] > 1000000000:
                             fields[1]['value'] += " \▫️  {:,.1f}B/min".format(self.bot.gw['ranking'][3][c]/1000000000)
@@ -434,48 +448,60 @@ class GW(commands.Cog):
 
     async def loadGWDB(self):
         try:
-            if self.bot.drive.dlFile("GW.sql", self.bot.tokens['files']):
-                self.conn = sqlite3.connect("GW.sql")
-                self.cursor = self.conn.cursor()
-                self.sql = True
+            if self.bot.drive.dlFile("GWA.sql", self.bot.tokens['files']):
+                self.conn[0] = sqlite3.connect("GWA.sql")
+                self.cursor[0] = self.conn[0].cursor()
+                self.sql[0] = True
             else:
-                self.sql = False
+                self.sql[0] = False
         except Exception as e:
-            self.sql = None
-            await self.bot.sendError('loadGWDB', str(e))
+            self.sql[0] = None
+            await self.bot.sendError('loadGWDB A', str(e))
+        try:
+            if self.bot.drive.dlFile("GWB.sql", self.bot.tokens['files']):
+                self.conn[1] = sqlite3.connect("GWB.sql")
+                self.cursor[1] = self.conn[1].cursor()
+                self.sql[1] = True
+            else:
+                self.sql[1] = False
+        except Exception as e:
+            self.sql[1] = None
+            await self.bot.sendError('loadGWDB B', str(e))
         return self.sql
 
     async def searchGWDB(self, ctx, terms, mode):
-        if self.sql is None:
+        if self.sql[0] is None or self.sql[1] is None:
             await self.bot.react(ctx, 'time')
             await self.loadGWDB()
             await self.bot.unreact(ctx, 'time')
 
-        if self.sql is None or self.sql == False:
-            return None
+        data = [None, None]
 
-        data = {}
-        try:
-            self.cursor.execute("SELECT id FROM GW")
-            for row in self.cursor:
-                data['gw'] = int(row[0])
-                break
-        except:
-            pass
+        for n in range(0, 2):
+            if self.sql[n] is not None and self.sql[n] == True:
+                data[n] = {}
+                try:
+                    self.cursor[n].execute("SELECT id FROM GW")
+                    for row in self.cursor[n]:
+                        data[n]['gw'] = int(row[0])
+                        break
+                except:
+                    pass
 
-        try:
-            if mode == 0:
-                self.cursor.execute("SELECT * FROM crews WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\%")))
-            elif mode == 1:
-                self.cursor.execute("SELECT * FROM crews WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\%")))
-            elif mode == 2:
-                self.cursor.execute("SELECT * FROM crews WHERE id = {}".format(terms))
-            data['result'] = self.cursor.fetchall()
-            random.shuffle(data['result'])
-            return data
-        except Exception as e:
-            await self.bot.sendError('searchGWDB', str(e))
-            return {}
+                try:
+                    if mode == 0:
+                        self.cursor[n].execute("SELECT * FROM crews WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\%")))
+                    elif mode == 1:
+                        self.cursor[n].execute("SELECT * FROM crews WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\%")))
+                    elif mode == 2:
+                        self.cursor[n].execute("SELECT * FROM crews WHERE id = {}".format(terms))
+                    data[n]['result'] = self.cursor[n].fetchall()
+                    random.shuffle(data[n]['result'])
+                except Exception as e:
+                    await self.bot.sendError('searchGWDB {}'.format(n), str(e))
+                    data[n] = None
+
+        return data
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
@@ -484,18 +510,19 @@ class GW(commands.Cog):
         await self.bot.react(ctx, 'time')
         await self.loadGWDB()
         await self.bot.unreact(ctx, 'time')
-        if self.sql is None or self.sql == False:
+        if False in self.sql or None in self.sql:
             await ctx.message.add_reaction('❎') # white negative mark
         else:
             await ctx.message.add_reaction('✅') # white check mark
 
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwcrew'])
-    @commands.cooldown(1, 10, commands.BucketType.user)
+    @commands.cooldown(2, 15, commands.BucketType.user)
     async def findcrew(self, ctx, *, terms : str = ""):
         """Search a crew GW score in the bot data
         add %id to search by id or %eq to get an exact match
-        add %all to receive by dm all results"""
+        add %all to receive by dm all results
+        add %past to get past GW results"""
         if terms == "":
             await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="**Usage**\n`findcrew [crewname]` to search a crew by name\n`findcrew %eq [crewname]` or `findcrew %== [crewname]` for an exact match\n`findcrew %id [crewid]` for an id search\n`findcrew %all ...` to receive all the results by direct message".format(terms), color=self.color))
             return
@@ -506,6 +533,13 @@ class GW(commands.Cog):
             all = True
         else:
             all = False
+
+        index = terms.find("%past ")
+        if index != -1 and index + 6 < len(terms):
+            terms = terms.replace("%past ", "")
+            past = True
+        else:
+            past = False
 
         if terms.startswith("%== ") or terms.startswith("%eq "):
             terms = terms[4:]
@@ -523,16 +557,25 @@ class GW(commands.Cog):
         if data is None:
             await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Database unavailable", color=self.color))
             return
-        gwnum = data.get('gw', '')
-        result = data.get('result', [])
+
+        try:
+            if data[1] is None or past:
+                gwnum = data[0].get('gw', '')
+                result = data[0].get('result', [])
+            else:
+                gwnum = data[1].get('gw', '')
+                result = data[1].get('result', [])
+        except:
+            await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Database unavailable", color=self.color))
+            return
 
         if len(result) == 0:
-            await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="`{}` not found".format(terms), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="`{}` not found".format(terms), footer="help findcrew for details", color=self.color))
             return
         elif all:
             x = len(result)
             if x > 20: x = 20
-            await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Sending your {}/{} result(s)".format(x, len(result)), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Sending your {}/{} result(s)".format(x, len(result)), footer="help findcrew for details", color=self.color))
         elif len(result) > 3: x = 3
         elif len(result) > 1: x = len(result)
         else: x = 1
@@ -540,17 +583,18 @@ class GW(commands.Cog):
         fields = []
         for i in range(0, x):
             fields.append({'name':"{}".format(result[i][2]), 'value':''})
-            if result[i][0] is not None: fields[-1]['value'] += "**#{}**\n".format(result[i][0])
+            if result[i][0] is not None: fields[-1]['value'] += "▫️**#{}**\n".format(result[i][0])
+            else: fields[-1]['value'] += "\n"
             if result[i][3] is not None: fields[-1]['value'] += "**P.** ▫️{:,}\n".format(result[i][3])
             if result[i][4] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('1'), result[i][4])
             if result[i][6] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('2'), result[i][6])
             if result[i][8] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('3'), result[i][8])
             if result[i][10] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('4'), result[i][10])
             if fields[-1]['value'] == "": fields[-1]['value'] = "No data"
-            fields[-1]['value'] = "[{}](http://game.granbluefantasy.jp/#profile/{})▫️{}".format(result[i][1], result[i][1], fields[-1]['value'])
+            fields[-1]['value'] = "[{}](http://game.granbluefantasy.jp/#guild/detail/{}){}".format(result[i][1], result[i][1], fields[-1]['value'])
             if all:
                 try:
-                    await ctx.author.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), fields=fields, inline=True, color=self.color))
+                    await ctx.author.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), fields=fields, inline=True, footer="help findcrew for details", color=self.color))
                 except:
                     await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="I can't send you the full list by private messages", color=self.color))
                     return
@@ -562,4 +606,4 @@ class GW(commands.Cog):
         elif len(result) > 3: desc = "3/{} random result(s) shown".format(len(result))
         else: desc = ""
 
-        await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), description=desc, fields=fields, inline=True, color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), description=desc, fields=fields, inline=True, footer="help findcrew for details", color=self.color))

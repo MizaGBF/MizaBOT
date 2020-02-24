@@ -94,7 +94,7 @@ class GBF_Utility(commands.Cog):
             id = self.bot.gbfids[sid]
             data = await cog.getProfileData(id)
             if data is None:
-                return
+                continue
             soup = BeautifulSoup(data, 'html.parser')
             try: name = soup.find_all("span", class_="txt-other-name")[0].string
             except: name = None
@@ -425,10 +425,10 @@ class GBF_Utility(commands.Cog):
     async def clearProfile(self, ctx, gbf_id : int):
         """Unlink a GBF id (Owner only)"""
         for discord_id in self.bot.gbfids:
-            if self.bot.gbfids[discord_id] == id:
+            if self.bot.gbfids[discord_id] == gbf_id:
                 for sn in list(self.bot.summons.keys()):
                     for key in list(self.bot.summons[sn].keys()):
-                        if key == str(id):
+                        if key == str(gbf_id):
                             del self.bot.summons[sn][key]
                     if len(self.bot.summons[sn]) == 0:
                         del self.bot.summons[sn]
@@ -801,9 +801,19 @@ class GBF_Utility(commands.Cog):
             cog = self.bot.get_cog('GW')
             if cog is not None:
                 data = await cog.searchGWDB(ctx, id, 2)
-                if data is not None and 'result' in data and len(data['result']) == 1:
-                    if data['result'][0][0] is not None:
-                        description += "\n{} GW**{}** ▫️ #**{}**  ▫️ **{:,}** honors ".format(self.bot.getEmote('gw'), data.get('gw', ''), data['result'][0][0], data['result'][0][11])
+                if data is not None:
+                    for n in range(0, 2):
+                        if data[n] is not None and 'result' in data[n] and len(data[n]['result']) == 1:
+                            if data[n]['result'][0][0] is not None:
+                                description += "\n{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors ".format(self.bot.getEmote('gw'), data[n].get('gw', ''), data[n]['result'][0][0], data[n]['result'][0][11])
+                            elif data[n]['result'][0][9] is not None:
+                                description += "\n{} GW**{}** ▫️ Total 3 ▫️ **{:,}** honors".format(self.bot.getEmote('gw'), data[n].get('gw', ''), data[n]['result'][0][9])
+                            elif data[n]['result'][0][7] is not None:
+                                description += "\n{} GW**{}** ▫️ Total 2 ▫️ **{:,}** honors".format(self.bot.getEmote('gw'), data[n].get('gw', ''), data[n]['result'][0][7])
+                            elif data[n]['result'][0][5] is not None:
+                                description += "\n{} GW**{}** ▫️ Total 1 ▫️ **{:,}** honors".format(self.bot.getEmote('gw'), data[n].get('gw', ''), data[n]['result'][0][5])
+                            elif data[n]['result'][0][3] is not None:
+                                description += "\n{} GW**{}** ▫️ Prelim. ▫️ **{:,}** honors".format(self.bot.getEmote('gw'), data[n].get('gw', ''), data[n]['result'][0][3])
 
             # prepare the member list
             fields = []
@@ -961,7 +971,7 @@ class GBF_Utility(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tokens', 'box'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def token(self, ctx, box : int):
-        """Calculate how many tokens you need"""
+        """Calculate how many GW tokens you need"""
         try:
             if box < 1 or box > 999: raise Exception()
             t = 0
@@ -985,6 +995,20 @@ class GBF_Utility(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator".format(self.bot.getEmote('gw')), description="**{:,}** token(s) needed for **{:,}** box(s)\n\n**{:,}** EX host and MVP (**{:,}** AP)\n**{:,}** EX+ host and MVP (**{:,}** AP)\n**{:,}** NM90 host and MVP (**{:,}** AP, **{:,}** meats)\n**{:,}** NM95 host and MVP (**{:,}** AP, **{:,}** meats)\n**{:,}** NM100 host and MVP (**{:,}** AP, **{:,}** meats)\n**{:,}** NM150 host and MVP (**{:,}** AP, **{:,}** meats)\n**{:,}** NM100 wanpan (**{:}** BP)".format(t, b, ex, ex*30, explus, explus*30, n90, n90*30, n90*5, n95, n95*40, n95*10, n100, n100*50, n100*20, n150, n150*50, n150*20, wanpan, wanpan*3), color=self.color))
         except:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid box number", color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(2, 10, commands.BucketType.guild)
+    async def meat(self, ctx, meat : int):
+        """Calculate how many GW honors you get"""
+        try:
+            if meat < 5 or meat > 100000: raise Exception()
+            nm90 = meat // 5
+            nm95 = meat // 10
+            nm100 = meat // 20
+            nm150 = meat // 20
+            await ctx.send(embed=self.bot.buildEmbed(title="{} Meat Calculator".format(self.bot.getEmote('gw')), description="**{:,}** meats amount for\n**{:,}** NM90 or **{:,}** honor(s)\n**{:,}** NM95 or **{:,}** honor(s)\n**{:,}** NM100 or **{:,}** honor(s)\n**{:,}** NM150 or **{:,}** honor(s)\n".format(meat, nm90, nm90*260000, nm95, nm95*910000, nm100, nm100*2650000, nm150, nm150*3600000), color=self.color))
+        except:
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid meat number", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['friday'])
     @commands.cooldown(1, 10, commands.BucketType.guild)

@@ -79,8 +79,11 @@ class MizabotHelp(commands.DefaultHelpCommand):
         # final words
         await ctx.author.send(embed=bot.buildEmbed(title="{} Need more help?".format(bot.getEmote('question')), description="Use help <command name>\nOr help <category name>"))
 
-        await ctx.message.remove_reaction('📬', ctx.guild.me)
-        await ctx.message.add_reaction('✅') # white check mark
+        try:
+            await ctx.message.remove_reaction('📬', ctx.guild.me)
+            await ctx.message.add_reaction('✅') # white check mark
+        except:
+            await ctx.send(embed=bot.buildEmbed(title="Help Error", description="Did {} delete its message?".format(ctx.author)))
 
     async def send_command_help(self, command): # same thing, but for a command ($help <command>)
         ctx = self.context
@@ -221,8 +224,10 @@ class MizabotDrive():
         try:
             file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
             for s in file_list:
-                if s['title'] == name: s.GetContentFile(s['title']) # iterate until we find the file and download it
-            return True
+                if s['title'] == name:
+                    s.GetContentFile(s['title']) # iterate until we find the file and download it
+                    return True
+            return False
         except Exception as e:
             print(e)
             return False
@@ -281,7 +286,7 @@ class Mizabot(commands.Bot):
                 exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.45
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.46
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), owner=self.ids['owner'], max_messages=100)
 
@@ -472,7 +477,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 await self.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=random.choice(self.games)))
                 # check if it's time for the bot maintenance for me (every 2 weeks or so)
                 c = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-                if self.bot_maintenance and c > self.bot_maintenance and (c.day == 1 or c.day == 17):
+                if self.bot_maintenance and c > self.bot_maintenance and c.day == 1:
                     await self.send('debug', self.get_user(self.ids['owner']).mention + " ▫️ Time for maintenance!")
                     self.bot_maintenance = c
                     self.savePending = True
@@ -754,7 +759,7 @@ class GracefulExit: # when heroku force the bot to shutdown
             print('Autosave Success')
         else:
             print('Autosave Failed')
-    exit(0) # not graceful at all
+    exit(0)
 
 # #####################################################################################
 # Start
