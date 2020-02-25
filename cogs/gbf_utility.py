@@ -675,6 +675,19 @@ class GBF_Utility(commands.Cog):
                 except:
                     crew = None
 
+                # get the last gw score
+                cog = self.bot.get_cog('GW')
+                scores = ['', '']
+                if cog is not None:
+                    pdata = await cog.searchGWDBPlayer(ctx, id, 2)
+                    if pdata is not None:
+                        for n in range(0, 2):
+                            if pdata[n] is not None and 'result' in pdata[n] and len(pdata[n]['result']) == 1:
+                                try:
+                                    scores[n] = "{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors ".format(self.bot.getEmote('gw'), pdata[n].get('gw', ''), pdata[n]['result'][0][0], pdata[n]['result'][0][3])
+                                except:
+                                    pass
+
                 fields = []
 
                 try:
@@ -720,7 +733,7 @@ class GBF_Utility(commands.Cog):
                 if trophy == "No Trophy Displayed": title = "{} **{}**".format(self.bot.getEmote(rarity), name)
                 else: title = "{} **{}** ▫️ {}".format(self.bot.getEmote(rarity), name, trophy)
 
-                await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}**{}** {}\n{} **{}** ▫️ {} **{}**\n💬 ``{}``\n{} Crew ▫️ {}".format(rank, job, job_lvl, self.bot.getEmote('hp'), hp, self.bot.getEmote('atk'), atk, comment, self.bot.getEmote('gw'), crew), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}**{}** {}\n{} **{}** ▫️ {} **{}**\n💬 ``{}``\n{} Crew ▫️ {}\n{}\n{}".format(rank, job, job_lvl, self.bot.getEmote('hp'), hp, self.bot.getEmote('atk'), atk, comment, self.bot.getEmote('gw'), crew, scores[0], scores[1]), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             else:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile is private", url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
                 return
@@ -800,7 +813,7 @@ class GBF_Utility(commands.Cog):
             # get the last gw score
             cog = self.bot.get_cog('GW')
             if cog is not None:
-                data = await cog.searchGWDB(ctx, id, 2)
+                data = await cog.searchGWDBCrew(ctx, id, 2)
                 if data is not None:
                     for n in range(0, 2):
                         if data[n] is not None and 'result' in data[n] and len(data[n]['result']) == 1:

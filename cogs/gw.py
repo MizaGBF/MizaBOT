@@ -180,6 +180,9 @@ class GW(commands.Cog):
             ["{} Final Rally".format(self.bot.getEmote('red')), "Day 5", "End"]
         ]
 
+    def escape(self, s): # escape markdown string
+        return s.replace('\\', '\\\\').replace('`', '\\`').replace('*', '\\*').replace('_', '\\_').replace('{', '\\{').replace('}', '\\}').replace('[', '').replace(']', '').replace('(', '\\(').replace(')', '\\)').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('.', '\\.').replace('!', '\\!').replace('|', '\\|')
+
     def isAuthorized(): # for decorators
         async def predicate(ctx):
             return ctx.bot.isAuthorized(ctx)
@@ -469,7 +472,7 @@ class GW(commands.Cog):
             await self.bot.sendError('loadGWDB B', str(e))
         return self.sql
 
-    async def searchGWDB(self, ctx, terms, mode):
+    async def searchGWDBCrew(self, ctx, terms, mode):
         if self.sql[0] is None or self.sql[1] is None:
             await self.bot.react(ctx, 'time')
             await self.loadGWDB()
@@ -498,7 +501,41 @@ class GW(commands.Cog):
                     data[n]['result'] = self.cursor[n].fetchall()
                     random.shuffle(data[n]['result'])
                 except Exception as e:
-                    await self.bot.sendError('searchGWDB {}'.format(n), str(e))
+                    await self.bot.sendError('searchGWDBCrew {}'.format(n), str(e))
+                    data[n] = None
+
+        return data
+
+    async def searchGWDBPlayer(self, ctx, terms, mode):
+        if self.sql[0] is None or self.sql[1] is None:
+            await self.bot.react(ctx, 'time')
+            await self.loadGWDB()
+            await self.bot.unreact(ctx, 'time')
+
+        data = [None, None]
+
+        for n in range(0, 2):
+            if self.sql[n] is not None and self.sql[n] == True:
+                data[n] = {}
+                try:
+                    self.cursor[n].execute("SELECT id FROM GW")
+                    for row in self.cursor[n]:
+                        data[n]['gw'] = int(row[0])
+                        break
+                except:
+                    pass
+
+                try:
+                    if mode == 0:
+                        self.cursor[n].execute("SELECT * FROM players WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\%")))
+                    elif mode == 1:
+                        self.cursor[n].execute("SELECT * FROM players WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\%")))
+                    elif mode == 2:
+                        self.cursor[n].execute("SELECT * FROM players WHERE id = {}".format(terms))
+                    data[n]['result'] = self.cursor[n].fetchall()
+                    random.shuffle(data[n]['result'])
+                except Exception as e:
+                    await self.bot.sendError('searchGWDBPlayer {}'.format(n), str(e))
                     data[n] = None
 
         return data
@@ -521,7 +558,7 @@ class GW(commands.Cog):
     async def findcrew(self, ctx, *, terms : str = ""):
         """Search a crew GW score in the bot data
         add %id to search by id or %eq to get an exact match
-        add %all to receive by dm all results
+        add %all to receive by dm all results (up to 30)
         add %past to get past GW results"""
         if terms == "":
             await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="**Usage**\n`findcrew [crewname]` to search a crew by name\n`findcrew %eq [crewname]` or `findcrew %== [crewname]` for an exact match\n`findcrew %id [crewid]` for an id search\n`findcrew %all ...` to receive all the results by direct message".format(terms), color=self.color))
@@ -553,7 +590,7 @@ class GW(commands.Cog):
                 return
         else:
             mode = 0
-        data = await self.searchGWDB(ctx, terms, mode)
+        data = await self.searchGWDBCrew(ctx, terms, mode)
         if data is None:
             await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Database unavailable", color=self.color))
             return
@@ -607,3 +644,88 @@ class GW(commands.Cog):
         else: desc = ""
 
         await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), description=desc, fields=fields, inline=True, footer="help findcrew for details", color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwplayer'])
+    @commands.cooldown(2, 15, commands.BucketType.user)
+    async def findplayer(self, ctx, *, terms : str = ""):
+        """Search a player GW score in the bot data
+        add %id to search by id or %eq to get an exact match
+        add %all to receive by dm all results (up to 30)
+        add %past to get past GW results"""
+        if terms == "":
+            await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="**Usage**\n`findplayer [crewname]` to search a crew by name\n`findplayer %eq [crewname]` or `findplayer %== [crewname]` for an exact match\n`findplayer %id [crewid]` for an id search\n`findplayer %all ...` to receive all the results by direct message".format(terms), color=self.color))
+            return
+
+        index = terms.find("%all ")
+        if index != -1 and index + 5 < len(terms):
+            terms = terms.replace("%all ", "")
+            all = True
+        else:
+            all = False
+
+        index = terms.find("%past ")
+        if index != -1 and index + 6 < len(terms):
+            terms = terms.replace("%past ", "")
+            past = True
+        else:
+            past = False
+
+        if terms.startswith("%== ") or terms.startswith("%eq "):
+            terms = terms[4:]
+            mode = 1
+        elif terms.startswith("%id "):
+            try:
+                terms = int(terms[4:])
+                mode = 2
+            except:
+                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="`{}` isn't a valid syntax".format(terms), color=self.color))
+                return
+        else:
+            mode = 0
+        data = await self.searchGWDBPlayer(ctx, terms, mode)
+        if data is None:
+            await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Database unavailable", color=self.color))
+            return
+
+        try:
+            if data[1] is None or past:
+                gwnum = data[0].get('gw', '')
+                result = data[0].get('result', [])
+            else:
+                gwnum = data[1].get('gw', '')
+                result = data[1].get('result', [])
+        except:
+            await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Database unavailable", color=self.color))
+            return
+
+        if len(result) == 0:
+            await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="`{}` not found".format(terms), footer="help findplayer for details", color=self.color))
+            return
+        elif all:
+            x = len(result)
+            if x > 30: x = 30
+            await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Sending your {}/{} result(s)".format(x, len(result)), footer="help findplayer for details", color=self.color))
+        elif len(result) > 15: x = 15
+        elif len(result) > 1: x = len(result)
+        else: x = 1
+
+        fields = []
+        for i in range(0, x):
+            if (i % 5) == 0:
+                fields.append({'name':'Page {}'.format(self.bot.getEmote(str((i // 10) + 1))), 'value':''})
+            fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ **#{}**\n".format(self.escape(result[i][2]), result[i][1], result[i][0])
+            fields[-1]['value'] += "{:,}\n".format(result[i][3])
+            if all:
+                try:
+                    await ctx.author.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), fields=fields, inline=True, footer="help findplayer for details", color=self.color))
+                except:
+                    await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="I can't send you the full list by private messages", color=self.color))
+                    return
+
+        if all:
+            await ctx.message.add_reaction('✅') # white check mark
+            return
+        elif len(result) > 30: desc = "30/{} random result(s) shown".format(len(result))
+        else: desc = ""
+
+        await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), description=desc, fields=fields, inline=True, footer="help findplayer for details", color=self.color))
