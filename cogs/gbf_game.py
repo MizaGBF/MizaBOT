@@ -176,22 +176,26 @@ class GBF_Game(commands.Cog):
         # loot table
         loot = [
             ['Siero Ticket', 'Sunlight Stone', 'Gold Brick', 'Damascus Ingot'],
-            ['Agni', 'Varuna', 'Titan', 'Zephyrus', 'Zeus', 'Hades', 'Shiva', 'Europa', 'Godsworn Alexiel', 'Grimnir', 'Lucifer', 'Bahamut', 'Michael', 'Gabriel', 'Uriel', 'Raphael', 'Metatron', 'Sariel', 'Murgleis', 'Benedia', 'Gambanteinn', 'Love Eternal', 'AK-4A', 'Reunion', 'Ichigo-Hitofuri', 'Taisai Spirit Bow', 'Unheil', 'Sky Ace', 'Ivory Ark', 'Blutgang', 'Eden', 'Parazonium', 'Ixaba', 'Blue Sphere', 'Certificus', 'Fallen Sword', 'Mirror-Blade Shard', 'Galilei\'s Insight', 'Purifying Thunderbolt', 'Vortex of the Void', 'Sacred Standard', 'Bab-el-Mandeb', 'Cute Ribbon'],
-            ['Crystals x3000', 'Intricacy Ring', 'Lineage Ring x2', 'Gold Spellbook', 'Moonlight Stone', 'Gold Moon x2', 'Ultima Unit x3', 'Silver Centrum x5', 'Primeval Horn x3', 'Horn of Bahamut x4'],
-            ['Coronation Ring x3', 'Legendary Merit x5', 'Steel Brick', 'Silver Moon x5', 'Bronze Moon x10', 'Half Elixir x100', 'Soul Berry x300']
+            ['Murgleis', 'Benedia', 'Gambanteinn', 'Love Eternal', 'AK-4A', 'Reunion', 'Ichigo-Hitofuri', 'Taisai Spirit Bow', 'Unheil', 'Sky Ace', 'Ivory Ark', 'Blutgang', 'Eden', 'Parazonium', 'Ixaba', 'Blue Sphere', 'Certificus', 'Fallen Sword', 'Mirror-Blade Shard', 'Galilei\'s Insight', 'Purifying Thunderbolt', 'Vortex of the Void', 'Sacred Standard', 'Bab-el-Mandeb', 'Cute Ribbon'],
+            ['Agni', 'Varuna', 'Titan', 'Zephyrus', 'Zeus', 'Hades', 'Shiva', 'Europa', 'Godsworn Alexiel', 'Grimnir', 'Lucifer', 'Bahamut', 'Michael', 'Gabriel', 'Uriel', 'Raphael', 'Metatron', 'Sariel'],
+            ['Crystals x3000'],
+            ['Intricacy Ring', 'Gold Spellbook', 'Moonlight Stone', 'Gold Moon x2', 'Ultima Unit x3', 'Silver Centrum x5', 'Primeval Horn x3', 'Horn of Bahamut x4', 'Legendary Merit x5', 'Steel Brick'],
+            ['Lineage Ring x2', 'Coronation Ring x3', 'Silver Moon x5', 'Bronze Moon x10', 'Half Elixir x100', 'Soul Berry x300']
         ]
         message = None
         # select the loot
         n = random.randint(4, 6)
         selected = {}
-        selected[random.choice(loot[3])] = 0
-        selected[random.choice(loot[0]+loot[1]+loot[2])] = 0
+        selected[random.choice(loot[1]+loot[2]+loot[3])] = 0
+        selected[random.choice(loot[4]+loot[5])] = 0
         for i in range(2, n):
             r = random.randint(1, 100)
             if r == 1: table = loot[0]
-            elif r <= 4: table = loot[1]
-            elif r <= 20: table = loot[2]
-            else: table = loot[3]
+            elif r <= 3: table = loot[1]
+            elif r <= 7: table = loot[2]
+            elif r <= 14: table = loot[3]
+            elif r <= 40: table = loot[4]
+            else: table = loot[5]
             while True:
                 x = random.choice(table)
                 if x not in selected:
