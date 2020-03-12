@@ -227,8 +227,8 @@ class GBF_Game(commands.Cog):
                 if grid[i][1] == False: fields[i%3]['value'] += "{}\n".format(hidden)
                 else:
                     c = pulled[grid[i][0]]
-                    if c == 3: fields[i%3]['value'] += "***{}***\n".format(grid[i][0])
-                    elif c == 2: fields[i%3]['value'] += "**{}**\n".format(grid[i][0])
+                    if c == 3: fields[i%3]['value'] += "**{}**\n".format(grid[i][0])
+                    elif c == 2: fields[i%3]['value'] += "__{}__\n".format(grid[i][0])
                     else: fields[i%3]['value'] += "{}\n".format(grid[i][0])
             # send the message
             if message is None:
