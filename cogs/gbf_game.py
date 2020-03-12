@@ -239,6 +239,11 @@ class GBF_Game(commands.Cog):
             # win sequence
             if win_flag:
                 if reveal_count == 9:
+                    keys = list(pulled.keys())
+                    while win == "":
+                        i = random.choice(keys)
+                        if pulled[i] == 2:
+                            win = i
                     msg += "*The Final scratch...*\n"
                     await message.edit(embed=self.bot.buildEmbed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
                     await asyncio.sleep(2)
