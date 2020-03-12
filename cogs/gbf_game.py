@@ -173,72 +173,95 @@ class GBF_Game(commands.Cog):
     @commands.cooldown(1, 300, commands.BucketType.user)
     async def scratch(self, ctx):
         """Imitate the GBF scratch game"""
-        SSR = ['Siero Ticket', 'Sunlight Stone', 'Gold Brick', 'Damascus Ingot']
-        SR = ['Agni', 'Varuna', 'Titan', 'Zephyrus', 'Zeus', 'Hades', 'Shiva', 'Europa', 'Godsworn Alexiel', 'Grimnir', 'Lucifer', 'Bahamut', 'Michael', 'Gabriel', 'Uriel', 'Raphael', 'Metatron', 'Sariel', 'Murgleis', 'Benedia', 'Gambanteinn', 'Love Eternal', 'AK-4A', 'Reunion', 'Ichigo-Hitofuri', 'Taisai Spirit Bow', 'Unheil', 'Sky Ace', 'Ivory Ark', 'Blutgang', 'Eden', 'Parazonium', 'Ixaba', 'Blue Sphere', 'Certificus', 'Fallen Sword', 'Mirror-Blade Shard', 'Galilei\'s Insight', 'Purifying Thunderbolt', 'Vortex of the Void', 'Sacred Standard', 'Bab-el-Mandeb', 'Cute Ribbon']
-        R = ['Crystals x3000', 'Intricacy Ring', 'Lineage Ring x2', 'Coronation Ring x3', 'Gold Spellbook', 'Moonlight Stone', 'Steel Brick', 'Ultima Unit x3', 'Silver Centrum x5', 'Primeval Horn x3', 'Horn of Bahamut x4', 'Legendary Merit x5', 'Gold Moon x2', 'Silver Moon x5', 'Bronze Moon x10', 'Half Elixir x100', 'Soul Berry x300']
+        # loot table
+        loot = [
+            ['Siero Ticket', 'Sunlight Stone', 'Gold Brick', 'Damascus Ingot'],
+            ['Agni', 'Varuna', 'Titan', 'Zephyrus', 'Zeus', 'Hades', 'Shiva', 'Europa', 'Godsworn Alexiel', 'Grimnir', 'Lucifer', 'Bahamut', 'Michael', 'Gabriel', 'Uriel', 'Raphael', 'Metatron', 'Sariel', 'Murgleis', 'Benedia', 'Gambanteinn', 'Love Eternal', 'AK-4A', 'Reunion', 'Ichigo-Hitofuri', 'Taisai Spirit Bow', 'Unheil', 'Sky Ace', 'Ivory Ark', 'Blutgang', 'Eden', 'Parazonium', 'Ixaba', 'Blue Sphere', 'Certificus', 'Fallen Sword', 'Mirror-Blade Shard', 'Galilei\'s Insight', 'Purifying Thunderbolt', 'Vortex of the Void', 'Sacred Standard', 'Bab-el-Mandeb', 'Cute Ribbon'],
+            ['Crystals x3000', 'Intricacy Ring', 'Lineage Ring x2', 'Gold Spellbook', 'Moonlight Stone', 'Gold Moon x2', 'Ultima Unit x3', 'Silver Centrum x5', 'Primeval Horn x3', 'Horn of Bahamut x4'],
+            ['Coronation Ring x3', 'Legendary Merit x5', 'Steel Brick', 'Silver Moon x5', 'Bronze Moon x10', 'Half Elixir x100', 'Soul Berry x300']
+        ]
+        message = None
+        # select the loot
         n = random.randint(4, 6)
         selected = {}
-        selected[random.choice(R)] = 0
-        selected[random.choice(SSR+SR)] = 0
-        for i in range(1, n):
+        selected[random.choice(loot[3])] = 0
+        selected[random.choice(loot[0]+loot[1]+loot[2])] = 0
+        for i in range(2, n):
             r = random.randint(1, 100)
-            if r <= 4: table = SSR
-            elif r <= 12: table = SR
-            else: table = R
+            if r == 1: table = loot[0]
+            elif r <= 4: table = loot[1]
+            elif r <= 20: table = loot[2]
+            else: table = loot[3]
             while True:
                 x = random.choice(table)
                 if x not in selected:
                     selected[x] = 0
                     break
 
-        msg = ""
-        fields = [{'name': "{}".format(self.bot.getEmote('1')), 'value':'???????????\n???????????\n???????????'}, {'name': "{}".format(self.bot.getEmote('2')), 'value':'???????????\n???????????\n???????????'}, {'name': "{}".format(self.bot.getEmote('3')), 'value':'???????????\n???????????\n???????????'}]
-        message = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
-        await asyncio.sleep(1)
-        grid = ['', '', '', '', '', '', '', '', '']
+        # build the scratch grid
+        hidden = "???????????????"
+        grid = []
+        win = ""
         keys = list(selected.keys())
-        win = False
-        for i in range(0, 9):
+        while len(grid) < 9:
             x = random.choice(keys)
-            buf = ""
-            if selected[x] == 2:
-                buf = "***{}***\n".format(x)
-                msg += ":confetti_ball: :tada: **{}** :tada: :confetti_ball:".format(x)
-                win = True
-            elif selected[x] == 1:
+            if selected[x] < 2:
                 selected[x] += 1
-                buf = "**{}**\n".format(x)
+                grid.append([x, False])
+            elif selected[x] == 2:
+                if win == "":
+                    win = x
+                    selected[x] += 1
+                    grid.append([x, False])
+
+        # print the game
+        win_flag = False
+        reveal_count = 0
+        fields = [{'name': "{}".format(self.bot.getEmote('1')), 'value':''}, {'name': "{}".format(self.bot.getEmote('2')), 'value':''}, {'name': "{}".format(self.bot.getEmote('3')), 'value':''}]
+        pulled = {}
+        msg = ""
+        while True:
+            # print the grid
+            for i in range(0, 9):
+                if i < 3: fields[i]['value'] = ''
+                if grid[i][1] == False: fields[i%3]['value'] += "{}\n".format(hidden)
+                else:
+                    c = pulled[grid[i][0]]
+                    if c == 3: fields[i%3]['value'] += "***{}***\n".format(grid[i][0])
+                    elif c == 2: fields[i%3]['value'] += "**{}**\n".format(grid[i][0])
+                    else: fields[i%3]['value'] += "{}\n".format(grid[i][0])
+            # send the message
+            if message is None:
+                message = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, inline=True, fields=fields, color=self.color))
             else:
-                selected[x] += 1
-                buf = "{}\n".format(x)
-            x = random.randint(0, 8)
-            while grid[x] != '':
-                x = random.randint(0, 8)
-            grid[x] = buf
-            for x in range(0, 9):
-                if x < 3:
-                    fields[x]['value'] = ''
-                if grid[x] == '': fields[x%3]['value'] += '???????????\n'
-                else: fields[x%3]['value'] += '{}'.format(grid[x])
-            if not win:
+                await message.edit(embed=self.bot.buildEmbed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, inline=True, fields=fields, color=self.color))
+            await asyncio.sleep(1)
+            # win sequence
+            if win_flag:
+                if reveal_count == 9:
+                    msg += "*The Final scratch...*\n"
+                    await message.edit(embed=self.bot.buildEmbed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
+                    await asyncio.sleep(2)
+                msg += ":confetti_ball: :tada: **{}** :tada: :confetti_ball:".format(win)
+                for i in range(0, 9):
+                    if i < 3: fields[i%3]['value'] = ''
+                    c = pulled.get(grid[i][0], 0)
+                    if grid[i][1] == False: fields[i%3]['value'] += "~~{}~~\n".format(grid[i][0])
+                    elif c == 3: fields[i%3]['value'] += "***{}***\n".format(grid[i][0])
+                    elif c == 2: fields[i%3]['value'] += "**{}**\n".format(grid[i][0])
+                    else: fields[i%3]['value'] += "{}\n".format(grid[i][0])
                 await message.edit(embed=self.bot.buildEmbed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
-                await asyncio.sleep(1)
-            else:
                 break
-
-        if not win:
-            msg += "\n*The Final scratch...*\n"
-            await message.edit(embed=self.bot.buildEmbed(author={'name':"{} scratched".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, fields=fields, color=self.color))
-            await asyncio.sleep(2)
-
-            while True:
-                x = random.choice(keys)
-                if selected[x] == 2:
-                    msg += ":confetti_ball: :tada: **{}** :tada: :confetti_ball:".format(x)
-                    await message.edit(embed=self.bot.buildEmbed(author={'name':"{} scratched".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
-                    return
-        else:
-            await message.edit(embed=self.bot.buildEmbed(author={'name':"{} scratched".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
+            # next pull
+            i = random.randint(0, 8)
+            while grid[i][1] == True:
+                i = random.randint(0, 8)
+            grid[i][1] = True
+            reveal_count += 1
+            selected[grid[i][0]] -= 1
+            pulled[grid[i][0]] = pulled.get(grid[i][0], 0) + 1
+            if reveal_count == 9 or (selected[grid[i][0]] == 0 and grid[i][0] == win):
+                win_flag = True
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 180, commands.BucketType.user)
