@@ -238,7 +238,7 @@ class GBF_Game(commands.Cog):
             await asyncio.sleep(1)
             # win sequence
             if win_flag:
-                if reveal_count == 9:
+                if win == "":
                     keys = list(pulled.keys())
                     while win == "":
                         i = random.choice(keys)
