@@ -170,7 +170,77 @@ class GBF_Game(commands.Cog):
         await ctx.send(embed=self.bot.buildEmbed(title="{} rolled the Mukku".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isAuthorized()
+    @commands.cooldown(1, 300, commands.BucketType.user)
+    async def scratch(self, ctx):
+        """Imitate the GBF scratch game"""
+        SSR = ['Siero Ticket', 'Sunlight Stone', 'Gold Brick', 'Damascus Ingot']
+        SR = ['Agni', 'Varuna', 'Titan', 'Zephyrus', 'Zeus', 'Hades', 'Shiva', 'Europa', 'Godsworn Alexiel', 'Grimnir', 'Lucifer', 'Bahamut', 'Michael', 'Gabriel', 'Uriel', 'Raphael', 'Metatron', 'Sariel', 'Murgleis', 'Benedia', 'Gambanteinn', 'Love Eternal', 'AK-4A', 'Reunion', 'Ichigo-Hitofuri', 'Taisai Spirit Bow', 'Unheil', 'Sky Ace', 'Ivory Ark', 'Blutgang', 'Eden', 'Parazonium', 'Ixaba', 'Blue Sphere', 'Certificus', 'Fallen Sword', 'Mirror-Blade Shard', 'Galilei\'s Insight', 'Purifying Thunderbolt', 'Vortex of the Void', 'Sacred Standard', 'Bab-el-Mandeb', 'Cute Ribbon']
+        R = ['Crystals x3000', 'Intricacy Ring', 'Lineage Ring x2', 'Coronation Ring x3', 'Gold Spellbook', 'Moonlight Stone', 'Steel Brick', 'Ultima Unit x3', 'Silver Centrum x5', 'Primeval Horn x3', 'Horn of Bahamut x4', 'Legendary Merit x5', 'Gold Moon x2', 'Silver Moon x5', 'Bronze Moon x10', 'Half Elixir x100', 'Soul Berry x300']
+        n = random.randint(4, 6)
+        selected = {}
+        selected[random.choice(R)] = 0
+        selected[random.choice(SSR+SR)] = 0
+        for i in range(1, n):
+            r = random.randint(1, 100)
+            if r <= 4: table = SSR
+            elif r <= 12: table = SR
+            else: table = R
+            while True:
+                x = random.choice(table)
+                if x not in selected:
+                    selected[x] = 0
+                    break
+
+        msg = ""
+        fields = [{'name': "{}".format(self.bot.getEmote('1')), 'value':'???????????\n???????????\n???????????'}, {'name': "{}".format(self.bot.getEmote('2')), 'value':'???????????\n???????????\n???????????'}, {'name': "{}".format(self.bot.getEmote('3')), 'value':'???????????\n???????????\n???????????'}]
+        message = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
+        await asyncio.sleep(1)
+        grid = ['', '', '', '', '', '', '', '', '']
+        keys = list(selected.keys())
+        win = False
+        for i in range(0, 9):
+            x = random.choice(keys)
+            buf = ""
+            if selected[x] == 2:
+                buf = "***{}***\n".format(x)
+                msg += ":confetti_ball: :tada: **{}** :tada: :confetti_ball:".format(x)
+                win = True
+            elif selected[x] == 1:
+                selected[x] += 1
+                buf = "**{}**\n".format(x)
+            else:
+                selected[x] += 1
+                buf = "{}\n".format(x)
+            x = random.randint(0, 8)
+            while grid[x] != '':
+                x = random.randint(0, 8)
+            grid[x] = buf
+            for x in range(0, 9):
+                if x < 3:
+                    fields[x]['value'] = ''
+                if grid[x] == '': fields[x%3]['value'] += '???????????\n'
+                else: fields[x%3]['value'] += '{}'.format(grid[x])
+            if not win:
+                await message.edit(embed=self.bot.buildEmbed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
+                await asyncio.sleep(1)
+            else:
+                break
+
+        if not win:
+            msg += "\n*The Final scratch...*\n"
+            await message.edit(embed=self.bot.buildEmbed(author={'name':"{} scratched".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, fields=fields, color=self.color))
+            await asyncio.sleep(2)
+
+            while True:
+                x = random.choice(keys)
+                if selected[x] == 2:
+                    msg += ":confetti_ball: :tada: **{}** :tada: :confetti_ball:".format(x)
+                    await message.edit(embed=self.bot.buildEmbed(author={'name':"{} scratched".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
+                    return
+        else:
+            await message.edit(embed=self.bot.buildEmbed(author={'name':"{} scratched".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 180, commands.BucketType.user)
     async def roulette(self, ctx, double : str = ""):
         """Imitate the GBF roulette
@@ -183,11 +253,11 @@ class GBF_Game(commands.Cog):
         rps = ['rock', 'paper', 'scissor']
         d = random.randint(1, 36000)
         ct = self.bot.getJST()
-        fix200S = ct.replace(year=2020, month=1, day=3, hour=18, minute=0, second=0, microsecond=0)
-        fix200E = fix200S.replace(day=5, hour=5)
+        fix200S = ct.replace(year=2020, month=3, day=29, hour=18, minute=0, second=0, microsecond=0)
+        fix200E = fix200S.replace(day=31, hour=5)
         if ct >= fix200S and ct < fix200E:
-            msg = "{} {} :confetti_ball: :tada: Guaranteed **2 0 0 R O L L S** :tada: :confetti_ball: {} {}".format(self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'))
-            roll = 20
+            msg = "{} {} :confetti_ball: :tada: Guaranteed **1 0 0 R O L L S** :tada: :confetti_ball: {} {}".format(self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'))
+            roll = 10
             d = 0
             if l == 2: footer = "3% SSR rate ▪️ You won't get legfest rates, you fool"
             else: footer = "3% SSR rate"
@@ -212,7 +282,7 @@ class GBF_Game(commands.Cog):
             msg = "**10** rolls :pensive:"
             roll = 1
         # janken
-        if d >= 2000 and random.randint(0, 2) > 0:
+        """if d >= 2000 and random.randint(0, 2) > 0:
             a = 0
             b = 0
             while a == b:
@@ -224,6 +294,7 @@ class GBF_Game(commands.Cog):
                 roll = roll * 2
             else:
                 msg += " :pensive:"
+        """
         # rolls
         if mode == 0 or mode == 3:
             result = self.tenDraws(300*l, roll)

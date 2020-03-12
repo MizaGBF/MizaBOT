@@ -567,7 +567,7 @@ class GBF_Utility(commands.Cog):
         for uid in keys:
             u = self.bot.summons[name][uid]
             if u[1] >= level:
-                msg += "**{}**▫️[{}](http://game.granbluefantasy.jp/#profile/{})▫️*{}*\n".format(str(u[1]).capitalize(), self.escape(u[0]), uid, uid)
+                msg += "**{}**▫️[{}](http://game.granbluefantasy.jp/#profile/{})\n".format(str(u[1]).capitalize(), self.escape(u[0]), uid)
                 count += 1
                 if count >= 14:
                     fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':msg, 'inline':True})
@@ -653,12 +653,15 @@ class GBF_Utility(commands.Cog):
                         rarity = h[1]
                     except:
                         pass
-                if header is not None: rank = "**{}** ▫️ ".format(self.rankre.search(str(header)).group(0))
+                if header is not None: rank = "**{}**".format(self.rankre.search(str(header)).group(0))
                 else:
                     await self.bot.send('debug', 'profile: debug this profile: {}'.format(id))
                     rank = ""
                 trophy = soup.find_all("div", class_="prt-title-name")[0].string
                 comment = su.unescape(soup.find_all("div", class_="prt-other-comment")[0].string).replace('\t', '').replace('\n', '')
+                if comment == "": pass
+                elif rank == "": comment = "💬 ``{}``".format(comment)
+                else: comment = " ▫️ 💬 ``{}``".format(comment)
                 mc_url = soup.find_all("img", class_="img-pc")[0]['src'].replace("/po/", "/talk/").replace("/img_low/", "/img/")
                 stats = soup.find_all("div", class_="num")
                 hp = int(stats[0].string)
@@ -731,9 +734,9 @@ class GBF_Utility(commands.Cog):
                 except:
                     pass
                 if trophy == "No Trophy Displayed": title = "{} **{}**".format(self.bot.getEmote(rarity), name)
-                else: title = "{} **{}** ▫️ {}".format(self.bot.getEmote(rarity), name, trophy)
+                else: title = "{} **{}**▫️{}".format(self.bot.getEmote(rarity), name, trophy)
 
-                await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}**{}** {}\n{} **{}** ▫️ {} **{}**\n💬 ``{}``\n{} Crew ▫️ {}\n{}\n{}".format(rank, job, job_lvl, self.bot.getEmote('hp'), hp, self.bot.getEmote('atk'), atk, comment, self.bot.getEmote('gw'), crew, scores[0], scores[1]), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}{}\n{} Crew ▫️ {}\n{}\n{}".format(rank, comment, self.bot.getEmote('gw'), crew, scores[0], scores[1]), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             else:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile is private", url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
                 return
