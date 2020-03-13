@@ -1000,3 +1000,4 @@ bot.loadCog("general", "gbf_game.GBF_Game", "gbf_utility.GBF_Utility", "gw.GW", 
 
 # start the loop
 bot.mainLoop()
+exit(0)

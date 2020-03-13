@@ -193,7 +193,7 @@ class GBF_Game(commands.Cog):
             if r == 1: table = loot[0]
             elif r <= 3: table = loot[1]
             elif r <= 7: table = loot[2]
-            elif r <= 14: table = loot[3]
+            elif r <= 14 and 'Crystals x3000' not in selected: table = loot[3]
             elif r <= 40: table = loot[4]
             else: table = loot[5]
             while True:
