@@ -259,7 +259,7 @@ class GBF_Game(commands.Cog):
                     elif c == 3: fields[i%3]['value'] += "**{}**\n".format(grid[i][0])
                     elif c == 2: fields[i%3]['value'] += "__{}__\n".format(grid[i][0])
                     else: fields[i%3]['value'] += "{}\n".format(grid[i][0])
-                await message.edit(embed=self.bot.buildEmbed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
+                await message.edit(embed=self.bot.buildEmbed(author={'name':"{} scratched".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
                 break
             # next pull
             i = random.randint(0, 8)
