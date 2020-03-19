@@ -201,9 +201,9 @@ class GBF_Utility(commands.Cog):
                         up = True
                     else: # we have
                         fixed += term[i] # save
-                else: # error case
+                else: # other characters
                     fixed += term[i] # we just save
-            elif term[i] == "/" or term[i] == ":" or term[i] == "#": # we reset the uppercase detection if we encounter those
+            elif term[i] == "/" or term[i] == ":" or term[i] == "#" or term[i] == "-": # we reset the uppercase detection if we encounter those
                 up = False
                 fixed += term[i]
             else: # everything else,
@@ -213,33 +213,25 @@ class GBF_Utility(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gbfwiki'])
     @commands.cooldown(3, 4, commands.BucketType.guild)
     async def wiki(self, ctx, *terms : str):
-        """Search the GBF wiki
-        add embed at the end to show the discord preview"""
+        """Search the GBF wiki"""
         if len(terms) == 0:
-            await ctx.send(embed=self.bot.buildEmbed(title="Tell me what to search on the wiki", footer="wiki [search] [embed]", color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Tell me what to search on the wiki", footer="wiki [search terms]", color=self.color))
         else:
             try:
                 arr = []
                 for s in terms:
                     arr.append(self.fixCase(s))
-                if len(terms) >= 2 and terms[-1] == "embed":
-                    sch = "_".join(arr[:-1])
-                    terms = terms[:-1]
-                    full = True
-                else:
-                    sch = "_".join(arr)
-                    full = False
+                sch = "_".join(arr)
                 url = "https://gbf.wiki/" + sch
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url) as r:
                         if r.status != 200:
                             raise Exception("HTTP Error 404: Not Found")
-                if full: await ctx.send("Click here :point_right: {}".format(url))
-                else: await ctx.send(embed=self.bot.buildEmbed(title="{} search result".format(" ".join(terms)), description="Click here :point_right: {}".format(url), color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="{} search result".format(" ".join(terms)), description="Click here :point_right: {}".format(url), color=self.color))
             except Exception as e:
                 if str(e) != "HTTP Error 404: Not Found":
                     await self.bot.sendError("wiki", str(e))
-                await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Click here to refine the search\nhttps://gbf.wiki/index.php?title=Special:Search&search={}".format(" ".join(terms)), color=self.color, footer=str(e)))
+                await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Click here to refine the search\nhttps://gbf.wiki/index.php?title=Special:Search&search={}".format(sch), color=self.color, footer=str(e)))
 
 
     wiki_options = {'en':0, 'english':0, 'noel':1, 'radio':1, 'channel':1, 'tv':1, 'wawi':2, 'raidpic':3, 'pic':3, 'kmr':4, 'fkhr':5, 'kakage':6,

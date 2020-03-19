@@ -286,7 +286,7 @@ class Mizabot(commands.Bot):
                 exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.49
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.50
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), owner=self.ids['owner'], max_messages=100)
 
@@ -477,7 +477,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 await self.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=random.choice(self.games)))
                 # check if it's time for the bot maintenance for me (every 2 weeks or so)
                 c = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-                if self.bot_maintenance and c > self.bot_maintenance and c.day == 1:
+                if self.bot_maintenance and c > self.bot_maintenance and c.day == 16:
                     await self.send('debug', self.get_user(self.ids['owner']).mention + " ▫️ Time for maintenance!")
                     self.bot_maintenance = c
                     self.savePending = True
