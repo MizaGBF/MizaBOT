@@ -170,60 +170,85 @@ class GBF_Game(commands.Cog):
         await ctx.send(embed=self.bot.buildEmbed(title="{} rolled the Mukku".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isAuthorized()
     @commands.cooldown(1, 300, commands.BucketType.user)
     async def scratch(self, ctx):
         """Imitate the GBF scratch game"""
-        # loot table
-        loot = [
-            ['Siero Ticket', 'Sunlight Stone', 'Gold Brick', 'Damascus Ingot'],
-            ['Murgleis', 'Benedia', 'Gambanteinn', 'Love Eternal', 'AK-4A', 'Reunion', 'Ichigo-Hitofuri', 'Taisai Spirit Bow', 'Unheil', 'Sky Ace', 'Ivory Ark', 'Blutgang', 'Eden', 'Parazonium', 'Ixaba', 'Blue Sphere', 'Certificus', 'Fallen Sword', 'Mirror-Blade Shard', 'Galilei\'s Insight', 'Purifying Thunderbolt', 'Vortex of the Void', 'Sacred Standard', 'Bab-el-Mandeb', 'Cute Ribbon'],
-            ['Agni', 'Varuna', 'Titan', 'Zephyrus', 'Zeus', 'Hades', 'Shiva', 'Europa', 'Godsworn Alexiel', 'Grimnir', 'Lucifer', 'Bahamut', 'Michael', 'Gabriel', 'Uriel', 'Raphael', 'Metatron', 'Sariel'],
-            ['Crystals x3000'],
-            ['Intricacy Ring', 'Gold Spellbook', 'Moonlight Stone', 'Gold Moon x2', 'Ultima Unit x3', 'Silver Centrum x5', 'Primeval Horn x3', 'Horn of Bahamut x4', 'Legendary Merit x5', 'Steel Brick'],
-            ['Lineage Ring x2', 'Coronation Ring x3', 'Silver Moon x5', 'Bronze Moon x10', 'Half Elixir x100', 'Soul Berry x300']
-        ]
-        message = None
+        # loot table (in 1 / 10000)
+        loot = {
+            'Siero Ticket':19,
+            'Sunlight Stone':19,
+            'Gold Brick':37,
+            'Damascus Ingot':37,
+            'Agni':27, 'Varuna':27, 'Titan':27, 'Zephyrus':27, 'Zeus':27, 'Hades':27,
+            'Shiva':55, 'Europa':55, 'Godsworn Alexiel':55, 'Grimnir':55,
+            'Lucifer':55, 'Bahamut':55,
+            'Michael':21, 'Gabriel':21, 'Uriel':21, 'Raphael':21, 'Metatron':21, 'Sariel':21,
+            'Murgleis':17, 'Benedia':17, 'Gambanteinn':17, 'Love Eternal':17, 'AK-4A':17, 'Reunion':17, 'Ichigo-Hitofuri':17, 'Taisai Spirit Bow':17, 'Unheil':17, 'Sky Ace':17, 'Ivory Ark':17, 'Blutgang':17, 'Eden':17, 'Parazonium':17, 'Ixaba':17, 'Blue Sphere':17, 'Certificus':17, 'Fallen Sword':17, 'Mirror-Blade Shard':17, 'Galilei\'s Insight':17, 'Purifying Thunderbolt':17, 'Vortex of the Void':17, 'Sacred Standard':17, 'Bab-el-Mandeb':17, 'Cute Ribbon':17,
+            'Crystals x3000':853,
+            'Intricacy Ring':297, 'Gold Spellbook':519, 'Moonlight Stone':297, 'Gold Moon x2':371, 'Ultima Unit x3':223, 'Silver Centrum x5':353, 'Primeval Horn x3':186, 'Horn of Bahamut x4':167, 'Legendary Merit x5':315, 'Steel Brick':148,
+            'Lineage Ring x2':315, 'Coronation Ring x3':315, 'Silver Moon x5':592, 'Bronze Moon x10':612, 'Half Elixir x100':1577, 'Soul Berry x300':1688
+        }
+        message = None # store the message to edit
+        mm = 0 # maximum random loot value
+        for x in loot:
+            mm += loot[x] # calculated here
+
         # select the loot
-        n = random.randint(4, 6)
         selected = {}
-        selected[random.choice(loot[1]+loot[2]+loot[3])] = 0
-        selected[random.choice(loot[4]+loot[5])] = 0
-        for i in range(2, n):
-            r = random.randint(1, 100)
-            if r == 1: table = loot[0]
-            elif r <= 3: table = loot[1]
-            elif r <= 7: table = loot[2]
-            elif r <= 14 and 'Crystals x3000' not in selected: table = loot[3]
-            elif r <= 40: table = loot[4]
-            else: table = loot[5]
-            while True:
-                x = random.choice(table)
-                if x not in selected:
-                    selected[x] = 0
+        sm = random.randint(4, 6) # number of loots, 4 to 6 max
+        i = 0
+        while i < sm:
+            n = random.randint(0, mm-1) # roll a dice
+            c = 0
+            check = "" # check which loot match in this loop
+            for x in loot:
+                if n < c + loot[x]:
+                    check = x
                     break
+                else:
+                    c += loot[x]
+            if check != "" and check not in selected: # add to the list if correct
+                selected[check] = 0
+                i += 1
 
         # build the scratch grid
         hidden = "[???????????????]"
         grid = []
         win = ""
         keys = list(selected.keys())
-        while len(grid) < 9:
-            x = random.choice(keys)
-            if selected[x] < 2:
-                selected[x] += 1
-                grid.append([x, False])
-            elif selected[x] == 2:
-                if win == "":
-                    win = x
-                    selected[x] += 1
-                    grid.append([x, False])
+        for x in keys: # add all our loots once
+            grid.append([x, False])
+            selected[x] = 1
+        # add the first one twice (it's the winning one)
+        grid.append([keys[0], False])
+        grid.append([keys[0], False])
+        selected[keys[0]] = 3
+        win = keys[0]
+        nofinal = False
+        while len(grid) < 10: # fill the grid up to TEN times
+            n = random.randint(1, len(keys)-1)
+            if selected[keys[n]] < 2:
+                grid.append([keys[n], False])
+                selected[keys[n]] += 1
+            elif len(grid) == 9: # 10 means final scratch so we stop at 9 and raise a flag if the chance arises
+                grid.append(['', False])
+                nofinal = True
+                break
+        while True: # shuffle the grid until we get a valid one
+            random.shuffle(grid)
+            if nofinal and grid[-1][0] == "": break
+            elif not nofinal and grid[-1][0] == keys[0]:
+                win = ""
+                break
 
-        # print the game
+        # play the game
         win_flag = False
         reveal_count = 0
         fields = [{'name': "{}".format(self.bot.getEmote('1')), 'value':''}, {'name': "{}".format(self.bot.getEmote('2')), 'value':''}, {'name': "{}".format(self.bot.getEmote('3')), 'value':''}]
         pulled = {}
         msg = ""
+        # main loop
         while True:
             # print the grid
             for i in range(0, 9):
@@ -242,17 +267,13 @@ class GBF_Game(commands.Cog):
             await asyncio.sleep(1)
             # win sequence
             if win_flag:
-                if win == "":
-                    keys = list(pulled.keys())
-                    while win == "":
-                        i = random.choice(keys)
-                        if pulled[i] == 2:
-                            win = i
+                if win == "": # final scratch must happens
+                    win = grid[-1][0]
                     msg += "*The Final scratch...*\n"
                     await message.edit(embed=self.bot.buildEmbed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
                     await asyncio.sleep(2)
                 msg += ":confetti_ball: :tada: **{}** :tada: :confetti_ball:".format(win)
-                for i in range(0, 9):
+                for i in range(0, 9): # update the grid
                     if i < 3: fields[i%3]['value'] = ''
                     c = pulled.get(grid[i][0], 0)
                     if grid[i][1] == False: fields[i%3]['value'] += "~~{}~~\n".format(grid[i][0])
@@ -273,6 +294,7 @@ class GBF_Game(commands.Cog):
                 win_flag = True
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isAuthorized()
     @commands.cooldown(1, 180, commands.BucketType.user)
     async def roulette(self, ctx, double : str = ""):
         """Imitate the GBF roulette
@@ -285,17 +307,22 @@ class GBF_Game(commands.Cog):
         rps = ['rock', 'paper', 'scissor']
         d = random.randint(1, 36000)
         ct = self.bot.getJST()
+        # customization settings
         fix200S = ct.replace(year=2020, month=3, day=29, hour=18, minute=0, second=0, microsecond=0)
         fix200E = fix200S.replace(day=31, hour=5)
+        forced3pc = False
+        forcedRollCount = 100
+        enable200 = False
+        enableJanken = False
         if ct >= fix200S and ct < fix200E:
-            msg = "{} {} :confetti_ball: :tada: Guaranteed **1 0 0 R O L L S** :tada: :confetti_ball: {} {}".format(self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'))
-            roll = 10
+            msg = "{} {} :confetti_ball: :tada: Guaranteed **{} 0 0** R O L L S :tada: :confetti_ball: {} {}".format(self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), forcedRollCount//100, self.bot.getEmote('crystal'), self.bot.getEmote('crystal'))
+            roll = forcedRollCount // 10
             d = 0
-            if l == 2: footer = "3% SSR rate ▪️ You won't get legfest rates, you fool"
-            else: footer = "3% SSR rate"
-            l = 1
+            if l == 2 and forced3pc:
+                footer = "3% SSR rate ▪️ You won't get legfest rates, you fool"
+                l = 1
             mode = 3
-        elif d < 300:
+        elif enable200 and d < 300:
             msg = "{} {} :confetti_ball: :tada: **2 0 0 R O L L S** :tada: :confetti_ball: {} {}".format(self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'))
             roll = 20
         elif d < 1500:
@@ -314,7 +341,7 @@ class GBF_Game(commands.Cog):
             msg = "**10** rolls :pensive:"
             roll = 1
         # janken
-        """if d >= 2000 and random.randint(0, 2) > 0:
+        if enableJanken and d >= 2000 and random.randint(0, 2) > 0:
             a = 0
             b = 0
             while a == b:
@@ -326,7 +353,6 @@ class GBF_Game(commands.Cog):
                 roll = roll * 2
             else:
                 msg += " :pensive:"
-        """
         # rolls
         if mode == 0 or mode == 3:
             result = self.tenDraws(300*l, roll)
@@ -350,7 +376,6 @@ class GBF_Game(commands.Cog):
             msg += "\n:confetti_ball: :confetti_ball: **Super Mukku** stopped after **{}** rolls :confetti_ball: :confetti_ball:\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
 
         await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        #await ctx.send(embed=self.bot.buildEmbed(title="{} spun the Roulette".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setcrystal', 'setspark'])
     @isAuthorized()
