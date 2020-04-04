@@ -216,6 +216,12 @@ class MizabotDrive():
         s.SetContentString(data)
         s.Upload()
 
+    def saveDiskFile(self, target, mime, name, folder): # write a file from the local storage to a drive folder
+        drive = self.login()
+        s = drive.CreateFile({'title':name, 'mimeType':mime, "parents": [{"kind": "drive#file", "id": folder}]})
+        s.SetContentFile(target)
+        s.Upload()
+
     def dlFile(self, name, folder): # load a file from a folder
         drive = self.login()
         if not drive:
@@ -228,6 +234,21 @@ class MizabotDrive():
                     s.GetContentFile(s['title']) # iterate until we find the file and download it
                     return True
             return False
+        except Exception as e:
+            print(e)
+            return False
+
+    def delFiles(self, names, folder): # delete matching files from a folder
+        drive = self.login()
+        if not drive:
+            print("Can't login into Google Drive")
+            return False
+        try:
+            file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
+            for s in file_list:
+                if s['title'] in names:
+                    s.Delete()
+            return True
         except Exception as e:
             print(e)
             return False
@@ -264,7 +285,6 @@ class Mizabot(commands.Bot):
         self.baguette_save = {} # secret, save
         self.ids = {} # discord ids used by the bot
         self.gbfids = {} # gbf profile ids linked to discord ids
-        self.summons = {} # support summon database
         self.summonlast = None # support summon database last update
         self.permitted = {} # guild permitted channels
         self.news = {} # guild news channels
@@ -286,7 +306,7 @@ class Mizabot(commands.Bot):
                 exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.51
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.52
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), owner=self.ids['owner'], max_messages=100)
 
@@ -413,8 +433,6 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 else: self.extra = {}
                 if 'gbfids' in data: self.gbfids = data['gbfids']
                 else: self.gbfids = {}
-                if 'summons' in data: self.summons = data['summons']
-                else: self.summons = {}
                 if 'summonlast' in data: self.summonlast = data['summonlast']
                 else: self.summonlast = None
                 return True
@@ -442,7 +460,6 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 data['permitted'] = self.permitted
                 data['extra'] = self.extra
                 data['gbfids'] = self.gbfids
-                data['summons'] = self.summons
                 data['summonlast'] = self.summonlast
                 json.dump(data, outfile, default=self.json_serial) # locally first
                 if not self.drive.save(json.dumps(data, default=self.json_serial)): # sending to the google drive
@@ -456,10 +473,15 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
     async def autosave(self, discordDump = False): # called when savePending is true by statustask()
         if self.autosaving: return
         self.autosaving = True
-        if self.save():
-            self.savePending = False
-        else:
-            await self.send('debug', embed=self.buildEmbed(title="Autosave Failed", timestamp=datetime.utcnow()))
+        result = False
+        for i in range(0, 3):
+            if self.save():
+                self.savePending = False
+                result = True
+                break
+            await asyncio.sleep(0.001)
+        if not result:
+            await self.send('debug', embed=self.buildEmbed(title="Failed Save", timestamp=datetime.utcnow()))
             discordDump = True
         if discordDump:
             try:

@@ -200,6 +200,7 @@ class GBF_Game(commands.Cog):
         i = 0
         while i < sm:
             n = random.randint(0, mm-1) # roll a dice
+            if len(selected) == 1: n = random.randint(0, mm//4) # add one rarer loot
             c = 0
             check = "" # check which loot match in this loop
             for x in loot:
@@ -592,7 +593,7 @@ class GBF_Game(commands.Cog):
 
         await ctx.send(embed=self.bot.buildEmbed(title="{} {}'s daily quota".format(self.bot.getEmote('gw'), ctx.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.avatar_url ,color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['quarantine', 'coofroulette'])
     @isGBFGgeneralAndMod()
     @commands.cooldown(1, 180, commands.BucketType.user)
     async def pitroulette(self, ctx, max : int = 1):
@@ -606,9 +607,9 @@ class GBF_Game(commands.Cog):
             self.pitroulettemax = max
             self.pitroulettevictim = []
             self.pitroulettelist = []
-            await ctx.send(embed=self.bot.buildEmbed(title="Pit Roulette enabled", description=random.choice(["Who will fall in?", "Are you brave enough?", "Do you dare?"]) , thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/584813271643586560/Activate_it.png", footer="expecting " + str(max) + " victim(s)", color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Quarantine Roulette enabled", description=random.choice(["Wash your hands", "Social Distancing", "Coof in your elbow"]) , thumbnail="https://cdn.discordapp.com/attachments/339155308767215618/694497177984303170/unknown.png", footer="expecting " + str(max) + " victim(s)", color=self.color))
         else:
-            await ctx.send(embed=self.bot.buildEmbed(title="Pit Roulette already on" ,color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Quarantine Roulette already on" ,color=self.color))
 
     async def pitroulette_callback(self, message):
         try:
@@ -629,9 +630,9 @@ class GBF_Game(commands.Cog):
         try:
             message = self.pitroulettevictim.pop()
             self.pitroulettelist.append([message.author.display_name, self.pitroulettecount, message.content, "[**Link**](https://discordapp.com/channels/{}/{}/{})".format(message.guild.id, message.channel.id, message.id)])
-            description = "After **{}** message(s)".format(self.pitroulettecount)
-            title = random.choice(["{} has fallen into the pit...", "{} tripped and fell...", "{} jumped into the pit willingly...", "{} got pushed in the back..."]).format(message.author.display_name)
-            footer = random.choice(["Will {} manage to climb up?".format(message.author.display_name), "Stay down here where you belong", "Straight into the hellish pit", "{} has met with a terrible fate".format(message.author.display_name)])
+            description = "After **{}** day(s)".format(self.pitroulettecount)
+            title = random.choice(["{} has fallen ill...", "{} started coofing...", "{} injected itself with the virus...", "{} got coofed on the face...", "{} went outside..."]).format(message.author.display_name)
+            footer = random.choice(["Will {} find a cure?".format(message.author.display_name), "Will {} manage to come back alive?".format(message.author.display_name), "Don't forget your mask next time", "You should have washed your hands", "{} forgot to lock its door".format(message.author.display_name)])
             if self.pitroulettemax > 0:
                 description += "\nI'm expecting **{}** more victim(s)".format(self.pitroulettemax)
             else:
@@ -640,9 +641,9 @@ class GBF_Game(commands.Cog):
             if self.pitroulettemax == 0 and len(self.pitroulettelist) > 1:
                 fields = []
                 for a in self.pitroulettelist:
-                    if len(a[2]) == 0: fields.append({'name': "{} ▫️ after {} message(s)".format(a[0], a[1]), 'value':a[3]})
-                    else: fields.append({'name': "{} ▫️ after {} message(s)".format(a[0], a[1]), 'value':'{}\n{}'.format(a[2], a[3])})
-                await message.channel.send(embed=self.bot.buildEmbed(title="Pit Roulette results", fields=fields, inline=False, thumbnail=message.author.avatar_url))
+                    if len(a[2]) == 0 or len(a[2]) > 380: fields.append({'name': "{} ▫️ after {} day(s)".format(a[0], a[1]), 'value':a[3]})
+                    else: fields.append({'name': "{} ▫️ after {} day(s)".format(a[0], a[1]), 'value':'{}\n{}'.format(a[2], a[3])})
+                await message.channel.send(embed=self.bot.buildEmbed(title="Quarantine Roulette results", fields=fields, inline=False, thumbnail=message.author.avatar_url))
             g = self.bot.get_guild(self.bot.ids['gbfg'])
             await message.author.add_roles(g.get_role(self.bot.ids['pit']))
             await asyncio.sleep(60)

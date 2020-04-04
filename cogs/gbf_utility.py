@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 import random
 import math
 import re
+import sqlite3
+import os
 from bs4 import BeautifulSoup
 from xml.sax import saxutils as su
 
@@ -27,6 +29,9 @@ class GBF_Utility(commands.Cog):
         self.crewcache = {}
         self.possiblesum = {'10':'fire', '20':'water', '30':'earth', '40':'wind', '50':'light', '60':'dark', '00':'misc', '01':'misc'}
         self.subsum = {'chev':'luminiera omega', 'chevalier':'luminiera omega', 'lumi':'luminiera omega', 'luminiera':'luminiera omega', 'colossus':'colossus omega', 'colo':'colossus omega', 'leviathan':'leviathan omega', 'levi':'leviathan omega', 'yggdrasil':'yggdrasil omega', 'yugu':'yggdrasil omega', 'tiamat':'tiamat omega', 'tia':'tiamat omega', 'celeste':'celeste omega', 'boat':'celeste omega', 'alex':'godsworn alexiel', 'alexiel':'godsworn alexiel', 'zeph':'zephyrus', 'longdong':'huanglong', 'dong':'huanglong', 'long':'huanglong', 'bunny':'white rabbit', 'kirin':'qilin', 'sylph gacha':'sylph, flutterspirit of purity', 'poseidon gacha':'poseidon, the tide father', 'anat gacha':'anat, for love and war', 'cerberus gacha':'cerberus, hellhound trifecta', 'marduck gacha':'marduk, battlefield reaper'}
+        self.conn = None
+        self.cursor = None
+        self.sqllock = False
 
     def startTasks(self):
         self.bot.runTask('maintenance', self.maintenancetask)
@@ -69,7 +74,7 @@ class GBF_Utility(commands.Cog):
                 uptime = self.bot.uptime(False)
                 if self.bot.summonlast is None: delta = None
                 else: delta = self.bot.getJST() - self.bot.summonlast
-                if uptime.seconds > 3600 and uptime.seconds < 30000 and (delta is None or delta.days >= 7):
+                if uptime.seconds > 3600 and uptime.seconds < 30000 and (delta is None or delta.days >= 4):
                     await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="summontask()", description="auto update started", timestamp=datetime.utcnow()))
                     await self.updateSummon()
                     await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="summontask()", description="auto update ended", timestamp=datetime.utcnow()))
@@ -83,13 +88,39 @@ class GBF_Utility(commands.Cog):
             except Exception as e:
                 await self.bot.sendError('summontask', str(e))
 
+    async def loadSumDB(self):
+        try:
+            if self.sqllock:
+                self.conn = None
+            elif self.bot.drive.dlFile("summon.sql", self.bot.tokens['files']):
+                self.conn = sqlite3.connect("summon.sql")
+                self.cursor = self.conn.cursor()
+            else:
+                self.conn = None
+        except Exception as e:
+            self.conn = None
+            await self.bot.sendError('loadSumDB', str(e))
+        return (self.conn is not None)
+
+    async def checkSumDB(self, ctx):
+        if self.conn:
+            return True
+        else:
+            await self.bot.react(ctx, 'time')
+            r = await self.loadSumDB()
+            await self.bot.unreact(ctx, 'time')
+            return r
+
     async def updateSummon(self):
+        self.bot.drive.delFiles(["summon.sql"], self.bot.tokens['files'])
         cog = self.bot.get_cog('Baguette')
         if cog is None: return
-        if self.checkMaintenance():
-            await asyncio.sleep(3600)
-            return
-        temp = {}
+        try: os.remove('summon.sql')
+        except: pass
+        self.sqllock = True
+        conn = sqlite3.connect('summon.sql')
+        c = conn.cursor()
+        c.execute('CREATE TABLE players (id int, name text, level int, summon text)')
         for sid in list(self.bot.gbfids.keys()):
             id = self.bot.gbfids[sid]
             data = await cog.getProfileData(id)
@@ -104,14 +135,16 @@ class GBF_Utility(commands.Cog):
                     for s in summons_res:
                         sp = s[1].lower().split() # Lvl 000 Name1 Name2 ... NameN
                         sn = " ".join(sp[2:])
-                        if sn not in temp:
-                            temp[sn] = {str(id):[name, int(sp[1])]}
-                        else:
-                            temp[sn][str(id)] = [name, int(sp[1])]
+                        c.execute("INSERT INTO players VALUES ({},'{}',{},'{}')".format(id, name.replace("'", "''").replace("%", "\%"), sp[1], sn.replace("'", "''").replace("%", "\%")))
                 except:
                     pass
             await asyncio.sleep(0.1)
-        self.bot.summons = temp
+        conn.commit()
+        conn.close()
+        self.sqllock = False
+        if self.bot.drive.saveDiskFile("summon.sql", "application/sql", "summon.sql", self.bot.tokens['files']):
+            self.conn = sqlite3.connect("summon.sql")
+            self.cursor = self.conn.cursor()
         self.bot.summonlast = self.bot.getJST()
         self.bot.savePending = True
 
@@ -418,12 +451,6 @@ class GBF_Utility(commands.Cog):
         """Unlink a GBF id (Owner only)"""
         for discord_id in self.bot.gbfids:
             if self.bot.gbfids[discord_id] == gbf_id:
-                for sn in list(self.bot.summons.keys()):
-                    for key in list(self.bot.summons[sn].keys()):
-                        if key == str(gbf_id):
-                            del self.bot.summons[sn][key]
-                    if len(self.bot.summons[sn]) == 0:
-                        del self.bot.summons[sn]
                 del self.bot.gbfids[discord_id]
                 self.bot.savePending = True
                 await self.bot.send('debug', 'User `{}` has been removed'.format(discord_id))
@@ -446,7 +473,11 @@ class GBF_Utility(commands.Cog):
     @isOwner()
     async def profileStat(self, ctx):
         """Linked GBF id statistics (Owner only)"""
-        await ctx.send(embed=self.bot.buildEmbed(title="{} Summon statistics".format(self.bot.getEmote('summon')), description="**{}** Registered Users\n**{}** Summons available".format(len(self.bot.gbfids), len(self.bot.summons)), color=self.color))
+        if self.conn is not None: msg = "Database loaded"
+        else:
+            if self.sqllock: msg = "Database is locked"
+            else: msg = "Database isn't loaded"
+        await ctx.send(embed=self.bot.buildEmbed(title="{} Summon statistics".format(self.bot.getEmote('summon')), description="**{}** Registered Users\n{}".format(len(self.bot.gbfids), msg), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['unsetid'])
     @commands.cooldown(1, 60, commands.BucketType.user)
@@ -455,13 +486,6 @@ class GBF_Utility(commands.Cog):
         if str(ctx.author.id) not in self.bot.gbfids:
             await ctx.send(embed=self.bot.buildEmbed(title="Unset Profile Error", description="You didn't set your GBF profile ID", color=self.color))
             return
-        search = self.bot.gbfids[str(ctx.author.id)]
-        for sn in list(self.bot.summons.keys()):
-            for key in list(self.bot.summons[sn].keys()):
-                if key == str(search):
-                    del self.bot.summons[sn][key]
-            if len(self.bot.summons[sn]) == 0:
-                del self.bot.summons[sn]
         del self.bot.gbfids[str(ctx.author.id)]
         self.bot.savePending = True
         await ctx.message.add_reaction('✅') # white check mark
@@ -484,31 +508,6 @@ class GBF_Utility(commands.Cog):
                 if self.bot.gbfids[u] == id:
                     await ctx.send(embed=self.bot.buildEmbed(title="Set Profile Error", description="This id is already in use", footer="use the bug_report command if it's a case of griefing", color=self.color))
                     return
-            # delete previous entries
-            if str(ctx.author.id) in self.bot.gbfids:
-                search = self.bot.gbfids[str(ctx.author.id)]
-                for sn in list(self.bot.summons.keys()):
-                    for key in list(self.bot.summons[sn].keys()):
-                        if key == str(search):
-                            del self.bot.summons[sn][key]
-                    if len(self.bot.summons[sn]) == 0:
-                        del self.bot.summons[sn]
-            # get current summons
-            soup = BeautifulSoup(data, 'html.parser')
-            try: name = soup.find_all("span", class_="txt-other-name")[0].string
-            except: name = None
-            if name is not None: # private
-                try:
-                    summons_res = self.sumre.findall(data)
-                    for s in summons_res:
-                        sp = s[1].lower().split() # Lvl 000 Name1 Name2 ... NameN
-                        sn = " ".join(sp[2:])
-                        if sn not in self.bot.summons:
-                            self.bot.summons[sn] = {str(id):[name, int(sp[1])]}
-                        else:
-                            self.bot.summons[sn][str(id)] = [name, int(sp[1])]
-                except:
-                    pass
             # register
             self.bot.gbfids[str(ctx.author.id)] = id
             self.bot.savePending = True
@@ -522,23 +521,27 @@ class GBF_Utility(commands.Cog):
         """Search a summon
         <summon name> or <level min> <summon name>
          or <summon name> <level min>"""
+        if not await self.checkSumDB(ctx):
+            await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="Currently unavailable".format(name), color=self.color))
+            return
         try:
             level = int(search[0])
-            name = " ".join(search[1:]).lower()
+            name = " ".join(search[1:])
         except:
             try:
                 level = int(search[-1])
-                name = " ".join(search[:-1]).lower()
+                name = " ".join(search[:-1])
             except:
                 level = 0
-                name = " ".join(search).lower()
-        name = self.subsum.get(name, name)
-        if name == "" or name not in self.bot.summons:
+                name = " ".join(search)
+        name = self.subsum.get(name.lower(), name.lower())
+        self.cursor.execute("SELECT * FROM players WHERE lower(summon) LIKE '{}'".format(name.lower().replace("'", "''").replace("%", "\%")))
+        data = self.cursor.fetchall()
+        random.shuffle(data)
+        if len(data) == 0:
             await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="`{}` ▫️ No one has this summon".format(name), footer="Be sure to type the full name", color=self.color))
             return
         msg = ""
-        keys = list(self.bot.summons[name].keys())
-        random.shuffle(keys)
         count = 0
         fields = []
 
@@ -556,32 +559,26 @@ class GBF_Utility(commands.Cog):
         except:
             thumbnail = ""
 
-        for uid in keys:
-            u = self.bot.summons[name][uid]
-            if u[1] >= level:
-                msg += "**{}**▫️[{}](http://game.granbluefantasy.jp/#profile/{})\n".format(str(u[1]).capitalize(), self.escape(u[0]), uid)
+        history = []
+        for u in data:
+            if u[2] >= level and u[1] not in history:
+                history.append(u[1])
+                if count < 3:
+                    fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':'', 'inline':True})
+                fields[count%3]['value'] += "**{}**▫️[{}](http://game.granbluefantasy.jp/#profile/{})\n".format(u[2], self.escape(u[1]), u[0])
                 count += 1
-                if count >= 14:
-                    fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':msg, 'inline':True})
-                    if level > 0:
-                        msg = "*Only {} random results shown*.".format(count)
-                    else:
-                        msg = "*Only {} random results shown, specify a minimum level to affine the result*.".format(count)
+                if count >= 30:
+                    if level > 0: msg = "*Only {} random results shown*.".format(count)
+                    else: msg = "*Only {} random results shown, specify a minimum level to affine the result*.".format(count)
                     break
-                elif count > 0 and count % 7 == 0:
-                    fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':msg, 'inline':True})
-                    msg = ""
 
         if count == 0:
             await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="`{}` ▫️ No one has this summon above level {}".format(name, level), footer="Be sure to type the full name", thumbnail=thumbnail, color=self.color))
         else:
-            if count < 14 and msg != "":
-                fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':msg, 'inline':True})
-                msg = ""
             if level > 0:
-                await ctx.send(embed=self.bot.buildEmbed(title="{} {} ▫️ Lvl {} and more".format(self.bot.getEmote('summon'), name.capitalize(), level), description=msg, fields=fields, footer="Auto updated once per week", thumbnail=thumbnail, color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} ▫️ Lvl {} and more".format(name.capitalize(), level), 'icon_url':thumbnail}, description=msg, fields=fields, footer="Auto updated once per week", color=self.color))
             else:
-                await ctx.send(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('summon'), name.capitalize()), description=msg, fields=fields, footer="Auto updated once per week", thumbnail=thumbnail, color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(author={'name':"{}".format(name.capitalize()), 'icon_url':thumbnail}, description=msg, fields=fields, footer="Auto updated once per week", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['id'])
     @commands.cooldown(5, 30, commands.BucketType.guild)
@@ -833,7 +830,7 @@ class GBF_Utility(commands.Cog):
                 for p in crew['player']:
                     if i % 10 == 0: fields.append({'name':'Page {}'.format(self.bot.getEmote(str((i // 10) + 1))), 'value':''})
                     i += 1
-                    if p['is_leader']: fields[-1]['value'] += "**[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ {}**\n".format(self.escape(p['name']), p['id'], p['level'])
+                    if p['is_leader']: fields[-1]['value'] += "**[{}](http://game.granbluefantasy.jp/#profile/{})▫️{}**\n".format(self.escape(p['name']), p['id'], p['level'])
                     else: fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ {}\n".format(self.escape(p['name']), p['id'], p['level'])
 
             # send
@@ -988,9 +985,12 @@ class GBF_Utility(commands.Cog):
             if box >= 2: t += 2400
             if box >= 3: t += 2400
             if box >= 4: t += 2400
-            if box > 44:
-                t += (box - 44) * 6000
-                box = 44
+            if box > 80:
+                t += (box - 80) * 15000
+                box = 80
+            if box > 45:
+                t += (box - 45) * 10000
+                box = 45
             if box > 4:
                 t += (box - 4) * 2000
             ex = math.ceil(t / 56.0)
@@ -1000,7 +1000,7 @@ class GBF_Utility(commands.Cog):
             n100 = math.ceil(t / 168.0)
             n150 = math.ceil(t / 220.0)
             wanpan = math.ceil(t / 48.0)
-            await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator".format(self.bot.getEmote('gw')), description="**{:,}** token(s) needed for **{:,}** box(s)\n\n**{:,}** EX host and MVP (**{:,}** AP)\n**{:,}** EX+ host and MVP (**{:,}** AP)\n**{:,}** NM90 host and MVP (**{:,}** AP, **{:,}** meats)\n**{:,}** NM95 host and MVP (**{:,}** AP, **{:,}** meats)\n**{:,}** NM100 host and MVP (**{:,}** AP, **{:,}** meats)\n**{:,}** NM150 host and MVP (**{:,}** AP, **{:,}** meats)\n**{:,}** NM100 wanpan (**{:}** BP)".format(t, b, ex, ex*30, explus, explus*30, n90, n90*30, n90*5, n95, n95*40, n95*10, n100, n100*50, n100*20, n150, n150*50, n150*20, wanpan, wanpan*3), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator".format(self.bot.getEmote('gw')), description="**{:,}** token(s) needed for **{:,}** box(s)\n\n**{:,}** EX host and MVP (**{:,}** pots)\n**{:,}** EX+ host and MVP (**{:,}** pots)\n**{:,}** NM90 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 wanpan (**{:}** BP)".format(t, b, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
         except:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid box number", color=self.color))
 
