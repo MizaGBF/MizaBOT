@@ -349,8 +349,9 @@ class GBF_Utility(commands.Cog):
 
         try:
             cog = self.bot.get_cog('Baguette')
-            buf = await cog.getGachatime()
-            if len(buf) > 0: description += "\n" + buf
+            if cog is not None:
+                buf = await cog.getGachatime()
+                if len(buf) > 0: description += "\n" + buf
         except Exception as e:
             await self.bot.sendError("getgachatime", str(e))
 
@@ -386,6 +387,7 @@ class GBF_Utility(commands.Cog):
         """Post when the current gacha end"""
         try:
             cog = self.bot.get_cog('Baguette')
+            if cog is None: return
             description = await cog.getGachatime()
             if len(description) > 0:
                 await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
@@ -399,6 +401,7 @@ class GBF_Utility(commands.Cog):
         add 'jp' for the japanese image"""
         try:
             cog = self.bot.get_cog('Baguette')
+            if cog is None: return
             buf = await cog.getGachabanner(jp)
             if len(buf) > 0:
                 image_index = buf.find("\nhttp")
@@ -845,6 +848,7 @@ class GBF_Utility(commands.Cog):
         """Post the upcoming gacha(s)"""
         try:
             cog = self.bot.get_cog('Baguette')
+            if cog is None: return
             tickets = cog.getLatestTicket()
             l = len(tickets)
             if l > 0:
@@ -859,7 +863,7 @@ class GBF_Utility(commands.Cog):
     async def gdrive(self, ctx):
         """Post the (You) google drive
         (You) server only"""
-        if ctx.message.author.guild.id == self.bot.ids['you_server']:
+        if ctx.message.author.guild.id == self.bot.ids.get('you_server', -1):
             try:
                 image = self.bot.get_guild(self.bot.ids['you_server']).icon_url
             except:

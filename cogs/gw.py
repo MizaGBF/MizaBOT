@@ -112,13 +112,13 @@ class GW(commands.Cog):
         await asyncio.sleep(3)
         await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwbuff() started", timestamp=datetime.utcnow()))
         try:
-            guild = self.bot.get_guild(self.bot.ids['you_server'])
+            guild = self.bot.get_guild(self.bot.ids.get('you_server', 0))
             if guild is None:
                 await self.bot.sendError('checkgwbuff', 'cancelled, no guild found')
-            channel = self.bot.get_channel(self.bot.ids['you_announcement'])
-            gl_role = guild.get_role(self.bot.ids['gl'])
-            fo_role = guild.get_role(self.bot.ids['fo'])
-            buff_role = [[guild.get_role(self.bot.ids['atkace']), 'atkace'], [guild.get_role(self.bot.ids['deface']), 'deface']]
+            channel = self.bot.get_channel(self.bot.ids.get('you_announcement', 0))
+            gl_role = guild.get_role(self.bot.ids.get('gl', 0))
+            fo_role = guild.get_role(self.bot.ids.get('fo', 0))
+            buff_role = [[guild.get_role(self.bot.ids.get('atkace', 0)), 'atkace'], [guild.get_role(self.bot.ids.get('deface', 0)), 'deface']]
             msg = ""
             while self.bot.gw['state'] and (len(self.bot.gw['buffs']) > 0 or len(msg) != 0):
                 current_time = self.bot.getJST() + timedelta(seconds=32)
@@ -170,7 +170,7 @@ class GW(commands.Cog):
 
     def buildDayList(self): # used by the gw schedule command
         return [
-            ["{} Ban Wave".format(self.bot.getEmote('kmr')), "BW", ""],
+            ["{} Automatic BAN Execution".format(self.bot.getEmote('kmr')), "BW", ""],
             ["{} Preliminaries".format(self.bot.getEmote('gold')), "Preliminaries", "Interlude"],
             ["{} Interlude".format(self.bot.getEmote('wood')), "Interlude", "Day 1"],
             ["{} Day 1".format(self.bot.getEmote('1')), "Day 1", "Day 2"],
@@ -247,7 +247,7 @@ class GW(commands.Cog):
             return ""
 
     def getNextBuff(self, ctx): # for the (you) crew, get the next set of buffs to be called
-        if self.bot.gw['state'] == True and ctx.guild.id == self.bot.ids['you_server']:
+        if self.bot.gw['state'] == True and ctx.guild.id == self.bot.ids.get('you_server', 0):
             current_time = self.bot.getJST()
             if current_time < self.bot.gw['dates']["Preliminaries"]:
                 return ""
@@ -424,7 +424,7 @@ class GW(commands.Cog):
                         elif self.bot.gw['ranking'][2][c] > 0:
                             fields[0]['value'] += " \▫️  {:,.1f}/min".format(self.bot.gw['ranking'][2][c])
                     fields[0]['value'] += "\n"
-                if fields[0]['value'] == '': fields[0]['value'] = 'Unaivalable'
+                if fields[0]['value'] == '': fields[0]['value'] = 'Unavailable'
 
                 for c in self.bot.gw['ranking'][1]:
                     if int(c) < 1000:
@@ -443,7 +443,7 @@ class GW(commands.Cog):
                         elif self.bot.gw['ranking'][3][c] > 0:
                             fields[1]['value'] += " \▫️  {:,.1f}/min".format(self.bot.gw['ranking'][3][c])
                     fields[1]['value'] += "\n"
-                if fields[1]['value'] == '': fields[1]['value'] = 'Unaivalable'
+                if fields[1]['value'] == '': fields[1]['value'] = 'Unavailable'
 
                 await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), self.bot.gw['id']), fields=fields, footer="Last Update ▫️ {:%a. %m/%d %H:%M} JST ▫️ Update on minute 5, 25 and 45".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
         except Exception as e:
@@ -708,13 +708,18 @@ class GW(commands.Cog):
         elif len(result) > 15: x = 15
         elif len(result) > 1: x = len(result)
         else: x = 1
-
         fields = []
         for i in range(0, x):
             if (i % 5) == 0:
                 fields.append({'name':'Page {}'.format(self.bot.getEmote(str((i // 10) + 1))), 'value':''})
-            fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ **#{}**\n".format(self.escape(result[i][2]), result[i][1], result[i][0])
-            fields[-1]['value'] += "{:,}\n".format(result[i][3])
+            if result[i][0] is None:
+                fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{})\n".format(self.escape(result[i][2]), result[i][1])
+            else:
+                fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ **#{}**\n".format(self.escape(result[i][2]), result[i][1], result[i][0])
+            if result[i][3] is not None:
+                fields[-1]['value'] += "{:,}\n".format(result[i][3])
+            else:
+                fields[-1]['value'] += "Error\n"
             if all:
                 try:
                     await ctx.author.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), fields=fields, inline=True, footer="help findplayer for details", color=self.color))

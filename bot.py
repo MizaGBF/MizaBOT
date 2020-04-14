@@ -306,7 +306,7 @@ class Mizabot(commands.Bot):
                 exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.52
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.53
 Source code: https://github.com/MizaGBF/MizaBOT.
 Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), owner=self.ids['owner'], max_messages=100)
 
@@ -392,7 +392,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 self.emotes = data.get('emotes', {})
                 self.granblue = data.get('granblue', {"gbfgcrew":{}})
         except Exception as e:
-            print('loadConfig(): {}'.format(e))
+            print('loadConfig(): {}\nCheck your \'config.json\' for the above error.'.format(e))
             exit(1) # instant quit if error
 
     def load(self): # same thing but for save.json
@@ -400,41 +400,27 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
             with open('save.json') as f:
                 data = json.load(f, object_pairs_hook=self.json_deserial_dict) # deserializer here
                 # more check to avoid issues when reloading the file during runtime, if new data was added
-                if 'newserver' in data: self.newserver = data['newserver']
-                else: self.newserver = {'servers':[], 'owners':[], 'pending':{}}
-                if 'prefixes' in data: self.prefixes = data['prefixes']
-                else: self.prefixes = {}
-                if 'baguette_save' in data: self.baguette_save = data['baguette_save']
-                else: self.baguette_save = {}
-                if 'bot_maintenance' in data: self.bot_maintenance = data['bot_maintenance']
-                else: self.bot_maintenance = None
+                self.newserver = data.get('newserver', {'servers':[], 'owners':[], 'pending':{}})
+                self.prefixes = data.get('prefixes', {})
+                self.baguette_save = data.get('baguette_save', {})
+                self.bot_maintenance = data.get('bot_maintenance', None)
                 if 'maintenance' in data:
-                    if data['maintenance']['state'] == True:
+                    if data['maintenance'].get('state', False) == True:
                         self.maintenance = data['maintenance']
                     else:
                         self.maintenance = {"state" : False, "time" : None, "duration" : 0}
-                if 'stream' in data: self.stream = data['stream']
-                else: self.stream = {'time':None, 'content':[]}
-                if 'schedule' in data: self.schedule = data['schedule']
-                else: self.schedule = []
-                if 'st' in data: self.st = data['st']
-                else: self.st = {}
-                if 'spark' in data: self.spark = data['spark']
-                else: self.spark = [{}, []]
-                if 'gw' in data: self.gw = data['gw']
-                else: self.gw = {}
-                if 'reminders' in data: self.reminders = data['reminders']
-                else: self.reminders = {}
-                if 'permitted' in data: self.permitted = data['permitted']
-                else: self.permitted = {}
-                if 'news' in data: self.news = data['news']
-                else: self.news = {}
-                if 'extra' in data: self.extra = data['extra']
-                else: self.extra = {}
-                if 'gbfids' in data: self.gbfids = data['gbfids']
-                else: self.gbfids = {}
-                if 'summonlast' in data: self.summonlast = data['summonlast']
-                else: self.summonlast = None
+                else: self.maintenance = {"state" : False, "time" : None, "duration" : 0}
+                self.stream = data.get('stream', {'time':None, 'content':[]})
+                self.schedule = data.get('schedule', [])
+                self.st = data.get('st', {})
+                self.spark = data.get('spark', [{}, []])
+                self.gw = data.get('gw', {})
+                self.reminders = data.get('reminders'], {})
+                self.permitted = data.get('permitted', {})
+                self.news = data.get('news', {})
+                self.extra = data.get('extra', {})
+                self.gbfids = data.get('gbfids', {})
+                self.summonlast = data.get('summonlast', None)
                 return True
         except Exception as e:
             self.errn += 1
@@ -513,6 +499,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 await self.sendError('statustask', str(e))
 
     async def invitetracker(self): # background task to track the invites of the (You) server
+        if 'you_server' not in self.ids or 'gbfg' not in self.ids: return
         await asyncio.sleep(2)
         await self.send('debug', embed=self.buildEmbed(title="invitetracker() started", timestamp=datetime.utcnow()))
         guilds = [self.get_guild(self.ids['you_server']), self.get_guild(self.ids['gbfg'])]
@@ -578,22 +565,22 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
         return True
 
     def isYouServer(self, ctx): # check if the context is in the (You) guild
-        if ctx.message.author.guild.id == self.ids['you_server']:
+        if ctx.message.author.guild.id == self.ids.get('you_server', -1):
             return True
         return False
 
     def isDebugServer(self, ctx): # check if the context is in the debug guild
-        if ctx.message.author.guild.id == self.ids['debug_server']:
+        if ctx.message.author.guild.id == self.ids.get('debug_server', -1):
             return True
         return False
 
     def isMod(self, ctx): # check if the member has the manage_message permission
-        if ctx.author.guild_permissions.manage_messages or ctx.author.id == self.ids['owner']:
+        if ctx.author.guild_permissions.manage_messages or ctx.author.id == self.ids.get('owner', -1):
             return True
         return False
 
     def isOwner(self, ctx):
-        if ctx.message.author.id == self.ids['owner']:
+        if ctx.message.author.id == self.ids.get('owner', -1):
             return True
         return False
 
@@ -854,7 +841,7 @@ async def on_command_error(ctx, error):
 @bot.event
 async def on_raw_reaction_add(payload):
     try:
-        if payload.channel_id != bot.ids['you_general']:
+        if payload.channel_id != bot.ids.get('you_general', -1):
             return
         message = await bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
         reactions = message.reactions
@@ -862,7 +849,7 @@ async def on_raw_reaction_add(payload):
         await bot.sendError('raw_react', str(e))
         return
     me = message.guild.me
-    role = message.guild.get_role(bot.ids['you_member'])
+    role = message.guild.get_role(bot.ids.get('you_member', 0))
     if role is None: return
     for reaction in reactions:
         if reaction.emoji == '📌':
@@ -911,6 +898,7 @@ async def on_raw_reaction_add(payload):
 # used by /gbfg/ and (You)
 @bot.event
 async def on_member_update(before, after):
+    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if before.guild.id in guilds:
         channel = guilds[before.guild.id]
@@ -929,12 +917,14 @@ async def on_member_update(before, after):
 
 @bot.event
 async def on_member_remove(member):
+    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if member.guild.id in guilds:
         await bot.send(guilds[member.guild.id], embed=bot.buildEmbed(author={'name':"{} ▫️ Left the server".format(member.name), 'icon_url':member.avatar_url}, footer="User ID: {}".format(member.id), timestamp=datetime.utcnow(), color=0xff0000))
 
 @bot.event
 async def on_member_join(member):
+    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if member.guild.id in guilds:
         channel = guilds[member.guild.id]
@@ -942,18 +932,21 @@ async def on_member_join(member):
 
 @bot.event
 async def on_member_ban(guild, user):
+    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if guild.id in guilds:
         await bot.send(guilds[guild.id], embed=bot.buildEmbed(author={'name':"{} ▫️ Banned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=datetime.utcnow(), color=0xff0000))
 
 @bot.event
 async def on_member_unban(guild, user):
+    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if guild.id in guilds:
         await bot.send(guilds[guild.id], embed=bot.buildEmbed(author={'name':"{} ▫️ Unbanned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=datetime.utcnow(), color=0x00ff3c))
 
 @bot.event
 async def on_guild_emojis_update(guild, before, after):
+    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if guild.id in guilds:
         channel = guilds[guild.id]
@@ -970,6 +963,7 @@ async def on_guild_emojis_update(guild, before, after):
 
 @bot.event
 async def on_guild_role_create(role):
+    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if role.guild.id in guilds:
         channel = guilds[role.guild.id]
@@ -977,6 +971,7 @@ async def on_guild_role_create(role):
 
 @bot.event
 async def on_guild_role_delete(role):
+    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if role.guild.id in guilds:
         channel = guilds[role.guild.id]
@@ -984,6 +979,7 @@ async def on_guild_role_delete(role):
 
 @bot.event
 async def on_guild_role_update(before, after):
+    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if before.guild.id in guilds:
         channel = guilds[before.guild.id]
@@ -1004,12 +1000,14 @@ async def on_guild_role_update(before, after):
 
 @bot.event
 async def on_guild_channel_create(channel):
+    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if channel.guild.id in guilds:
         await bot.send(guilds[channel.guild.id], embed=bot.buildEmbed(title="Channel created ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=datetime.utcnow(), color=0xebe007))
 
 @bot.event
 async def on_guild_channel_delete(channel):
+    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
     guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
     if channel.guild.id in guilds:
         await bot.send(guilds[channel.guild.id], embed=bot.buildEmbed(title="Channel deleted ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=datetime.utcnow(), color=0x8a8306))

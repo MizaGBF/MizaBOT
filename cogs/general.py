@@ -389,7 +389,7 @@ class General(commands.Cog):
         id = str(ctx.author.id)
         if id not in self.bot.reminders:
             self.bot.reminders[id] = []
-        if len(self.bot.reminders[id]) >= 5 and ctx.author.id != self.bot.ids['owner']:
+        if len(self.bot.reminders[id]) >= 5 and ctx.author.id != self.bot.ids.get('owner', -1):
             await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="Sorry, I'm limited to 5 reminders per user 🙇", color=self.color))
             return
         try:

@@ -538,7 +538,7 @@ class GBF_Game(commands.Cog):
         m = random.randint(70, 180)
         c = random.randint(1, 100)
 
-        if ctx.author.id == self.bot.ids['wawi']:
+        if ctx.author.id == self.bot.ids.get('wawi', -1):
             c = 7
 
         if c <= 2:
@@ -577,7 +577,7 @@ class GBF_Game(commands.Cog):
         h = h * 100000
         m = m * 10
 
-        if ctx.author.id == self.bot.ids['chen']:
+        if ctx.author.id == self.bot.ids.get('chen', -1):
             c = random.randint(3, 8)
             if c == 3: h = 666
             elif c == 4: h = 6666
@@ -613,7 +613,7 @@ class GBF_Game(commands.Cog):
 
     async def pitroulette_callback(self, message):
         try:
-            if self.pitroulettestate and self.pitroulettemax > 0 and message.channel.id == self.bot.ids['gbfg_general'] and message.author.id != self.bot.ids['owner'] and not message.author.bot:
+            if self.pitroulettestate and self.pitroulettemax > 0 and message.channel.id == self.bot.ids.get('gbfg_general', -1) and message.author.id != self.bot.ids.get('owner', -1) and not message.author.bot:
                 self.pitroulettecount += 1
                 proba = 3 * (self.pitroulettemax + 1)
                 if random.randint(1, 100) <= proba:
@@ -644,13 +644,13 @@ class GBF_Game(commands.Cog):
                     if len(a[2]) == 0 or len(a[2]) > 380: fields.append({'name': "{} ▫️ after {} day(s)".format(a[0], a[1]), 'value':a[3]})
                     else: fields.append({'name': "{} ▫️ after {} day(s)".format(a[0], a[1]), 'value':'{}\n{}'.format(a[2], a[3])})
                 await message.channel.send(embed=self.bot.buildEmbed(title="Quarantine Roulette results", fields=fields, inline=False, thumbnail=message.author.avatar_url))
-            g = self.bot.get_guild(self.bot.ids['gbfg'])
-            await message.author.add_roles(g.get_role(self.bot.ids['pit']))
+            g = self.bot.get_guild(self.bot.ids.get('gbfg', 0))
+            await message.author.add_roles(g.get_role(self.bot.ids.get('pit', 0)))
             await asyncio.sleep(60)
-            await message.author.remove_roles(g.get_role(self.bot.ids['pit']))
+            await message.author.remove_roles(g.get_role(self.bot.ids.get('pit', 0)))
         except asyncio.CancelledError:
             try:
-                await message.author.remove_roles(g.get_role(self.bot.ids['pit']))
+                await message.author.remove_roles(g.get_role(self.bot.ids.get('pit', 0)))
             except:
                 pass
             return
