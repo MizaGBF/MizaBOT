@@ -415,7 +415,7 @@ Default command prefix is '$', use $setPrefix to change it on your server.''', h
                 self.st = data.get('st', {})
                 self.spark = data.get('spark', [{}, []])
                 self.gw = data.get('gw', {})
-                self.reminders = data.get('reminders'], {})
+                self.reminders = data.get('reminders', {})
                 self.permitted = data.get('permitted', {})
                 self.news = data.get('news', {})
                 self.extra = data.get('extra', {})
