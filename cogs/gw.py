@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import random
 import json
 import sqlite3
+from xml.sax import saxutils as su
 
 class GW(commands.Cog):
     """GW related commands."""
@@ -15,6 +16,7 @@ class GW(commands.Cog):
         self.sql = [None, None]
         self.conn = [None, None]
         self.cursor = [None, None]
+        self.loadingdb = False
 
     def startTasks(self):
         self.bot.runTask('check_ranking', self.checkGWRanking)
@@ -232,7 +234,7 @@ class GW(commands.Cog):
                         if d < timedelta(seconds=25200): msg = "{} {} ended".format(self.bot.getEmote('mark_a'), it[i])
                         else: msg = "{} {} is on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.gw['dates'][it[i]] + timedelta(seconds=61200) - current_time))
                         if i == 1: return "{}\n{} {} starts in **{}**".format(msg, self.bot.getEmote('time'), it[i-1].replace('Day 5', 'Final Rally'), self.bot.getTimedeltaStr(d))
-                        else: return "{}\n{} {} starts in **{}**".format(msg,self.bot.getEmote('time'), it[i-1], self.bot.getTimedeltaStr(d) )
+                        else: return "{}\n{} {} starts in **{}**".format(msg, self.bot.getEmote('time'), it[i-1], self.bot.getTimedeltaStr(d))
             elif current_time > self.bot.gw['dates']["Interlude"]:
                 d = self.bot.gw['dates']["Day 1"] - current_time
                 return "{} Interlude is on going\n{} Day 1 starts in **{}**".format(self.bot.getEmote('mark_a'), self.bot.getEmote('time'), self.bot.getTimedeltaStr(d))
@@ -245,6 +247,22 @@ class GW(commands.Cog):
                 return ""
         else:
             return ""
+
+    def isGWRunning(self): # return True if a guild war is on going
+        if self.bot.gw['state'] == True:
+            current_time = self.bot.getJST()
+            if current_time < self.bot.gw['dates']["Preliminaries"]:
+                return False
+            elif current_time >= self.bot.gw['dates']["End"]:
+                self.bot.gw['state'] = False
+                self.bot.gw['dates'] = {}
+                self.bot.cancelTask('gwtask')
+                self.bot.savePending = True
+                return False
+            else:
+                return True
+        else:
+            return False
 
     def getNextBuff(self, ctx): # for the (you) crew, get the next set of buffs to be called
         if self.bot.gw['state'] == True and ctx.guild.id == self.bot.ids.get('you_server', 0):
@@ -450,9 +468,10 @@ class GW(commands.Cog):
             await self.bot.sendError("ranking", str(e))
 
     async def loadGWDB(self):
+        self.loadingdb = True
         try:
-            if self.bot.drive.dlFile("GWA.sql", self.bot.tokens['files']):
-                self.conn[0] = sqlite3.connect("GWA.sql")
+            if self.bot.drive.dlFile("GW_old.sql", self.bot.tokens['files']):
+                self.conn[0] = sqlite3.connect("GW_old.sql")
                 self.cursor[0] = self.conn[0].cursor()
                 self.sql[0] = True
             else:
@@ -461,8 +480,8 @@ class GW(commands.Cog):
             self.sql[0] = None
             await self.bot.sendError('loadGWDB A', str(e))
         try:
-            if self.bot.drive.dlFile("GWB.sql", self.bot.tokens['files']):
-                self.conn[1] = sqlite3.connect("GWB.sql")
+            if self.bot.drive.dlFile("GW.sql", self.bot.tokens['files']):
+                self.conn[1] = sqlite3.connect("GW.sql")
                 self.cursor[1] = self.conn[1].cursor()
                 self.sql[1] = True
             else:
@@ -470,9 +489,11 @@ class GW(commands.Cog):
         except Exception as e:
             self.sql[1] = None
             await self.bot.sendError('loadGWDB B', str(e))
+        self.loadingdb = False
         return self.sql
 
     async def searchGWDBCrew(self, ctx, terms, mode):
+        while self.loadingdb: await asyncio.sleep(0.001)
         if self.sql[0] is None or self.sql[1] is None:
             await self.bot.react(ctx, 'time')
             await self.loadGWDB()
@@ -507,6 +528,7 @@ class GW(commands.Cog):
         return data
 
     async def searchGWDBPlayer(self, ctx, terms, mode):
+        while self.loadingdb: await asyncio.sleep(0.001)
         if self.sql[0] is None or self.sql[1] is None:
             await self.bot.react(ctx, 'time')
             await self.loadGWDB()
@@ -544,6 +566,7 @@ class GW(commands.Cog):
     @isOwner()
     async def reloadDB(self, ctx):
         """Download GW.sql (Owner only)"""
+        while self.loadingdb: await asyncio.sleep(0.001)
         await self.bot.react(ctx, 'time')
         await self.loadGWDB()
         await self.bot.unreact(ctx, 'time')
@@ -718,8 +741,6 @@ class GW(commands.Cog):
                 fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ **#{}**\n".format(self.escape(result[i][2]), result[i][1], result[i][0])
             if result[i][3] is not None:
                 fields[-1]['value'] += "{:,}\n".format(result[i][3])
-            else:
-                fields[-1]['value'] += "Error\n"
             if all:
                 try:
                     await ctx.author.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), fields=fields, inline=True, footer="help findplayer for details", color=self.color))

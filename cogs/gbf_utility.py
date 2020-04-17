@@ -111,6 +111,169 @@ class GBF_Utility(commands.Cog):
             await self.bot.unreact(ctx, 'time')
             return r
 
+    async def getCrewData(self, ctx, target):
+        cog = self.bot.get_cog('Baguette') # secret sauce to access the game
+        if cog is None: {'error':''}
+
+        if self.checkMaintenance(): # check for maintenance
+            return {'error':'Game is in maintenance'}
+        id = " ".join(target)
+        id = self.bot.granblue['gbfgcrew'].get(id.lower(), id) # check if the id is a gbfgcrew
+        # check id validityy
+        try:
+            id = int(id)
+        except:
+            return {'error':"Invalid name `{}`\nOnly /gbfg/ crews are registered, please input an id instead".format(id)}
+        if id < 0 or id >= 10000000:
+            return {'error':'Out of range ID'}
+        if id in self.badcrewcache: # if already searched (to limit bad requests)
+            return {'error':'Crew not found'}
+
+        crew = {'scores':[], 'id':id}
+        if id in self.crewcache: # public crews are stored until next reboot (to limit the request amount)
+            return self.crewcache[id]
+        else:
+            for i in range(0, 4): # for each page (page 0 being the crew page, 1 to 3 being the crew page
+                get = cog.requestCrew(id, i)
+                if get is None:
+                    if i == 0: # if error on page 0, the crew doesn't exist
+                        self.badcrewcache.append(id)
+                        return {'error':'Crew not found'}
+                    elif i == 1: # if error on page 1, the crew is private
+                        crew['private'] = True
+                    break
+                else:
+                    # store the data
+                    if i == 0:
+                        crew['timestamp'] = datetime.utcnow()
+                        crew['footer'] = ""
+                        crew['private'] = False # in preparation
+                        crew['name'] = su.unescape(get['guild_name'])
+                        crew['rank'] = get['guild_rank']
+                        crew['ship'] = "http://game-a.granbluefantasy.jp/assets_en/img/sp/guild/thumb/top/{}.png".format(get['ship_img'])
+                        crew['ship_element'] = {"10001":"wind", "20001":"fire", "30001":"water", "40001":"earth"}.get(get['ship_img'].split('_')[0], 'gw')
+                        crew['leader'] = su.unescape(get['leader_name'])
+                        crew['leader_id'] = get['leader_user_id']
+                        crew['donator'] = su.unescape(get['most_donated_name'])
+                        crew['donator_id'] = get['most_donated_id']
+                        crew['donator_amount'] = get['most_donated_lupi']
+                        crew['message'] = su.unescape(get['introduction'])
+                        crew['total_rank'] = 0
+                    else:
+                        if 'player' not in crew: crew['player'] = []
+                        for p in get['list']:
+                            crew['total_rank'] += int(p['level'])
+                            crew['player'].append({'id':p['id'], 'name':su.unescape(p['name']), 'level':p['level'], 'is_leader':p['is_leader'], 'member_position':p['member_position'], 'honor':None}) # honor is a placeholder
+
+        # get the last gw score
+        cog = self.bot.get_cog('GW')
+        if cog is not None:
+            data = await cog.searchGWDBCrew(ctx, id, 2)
+            if data is not None:
+                for n in range(0, 2):
+                    if data[n] is not None and 'result' in data[n] and len(data[n]['result']) == 1:
+                        possible = {11:"Total Day 4", 9:"Total Day 3", 7:"Total Day 2", 5:"Total Day 1", 3:"Total Prelim."}
+                        for ps in possible:
+                            if data[n]['result'][0][ps] is not None:
+                                if ps == 11 and data[n]['result'][0][0] is not None:
+                                    crew['scores'].append("{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors ".format(self.bot.getEmote('gw'), data[n].get('gw', ''), data[n]['result'][0][0], data[n]['result'][0][ps]))
+                                    break
+                                else:
+                                    crew['scores'].append("{} GW**{}** ▫️ {} ▫️ **{:,}** honors ".format(self.bot.getEmote('gw'), data[n].get('gw', ''), possible[ps], data[n]['result'][0][ps]))
+                                    break
+
+        # prepare the member list
+        fields = []
+        if not crew['private']:
+            crew['average'] = round(crew['total_rank'] / (len(crew['player']) * 1.0))
+
+        if not crew['private']: self.crewcache[id] = crew # only cache public crews
+        return crew
+
+    def honor(self, h): # convert honor number to a shorter string version
+        if h is None: return "n/a"
+        elif h >= 1000000000: return "{:.1f}B".format(h/1000000000)
+        elif h >= 1000000: return "{:.1f}M".format(h/1000000)
+        elif h >= 1000: return "{:.1f}K".format(h/1000)
+        return h
+
+    async def postCrewData(self, ctx, id, mode = 0): # mode 0 = auto, 1 = gw mode disabled, 2 = gw mode enabled
+        cog = self.bot.get_cog('GW')
+        if cog is None: mode = 1 # requires GW cog
+        try:
+            # retrieve formatted crew data
+            crew = await self.getCrewData(ctx, id)
+
+            if 'error' in crew: # print the error if any
+                if len(crew['error']) > 0:
+                    await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description=crew['error'], color=self.color))
+                return
+
+            # embed initialization
+            title = "{} **{}**".format(self.bot.getEmote(crew['ship_element']), crew['name'])
+            description = "💬 ``{}``".format(crew['message'])
+            footer = ""
+            fields = []
+
+            # append GW scores if any
+            for s in crew['scores']:
+                description += "\n{}".format(s)
+
+            if crew['private']:
+                description += '\n{} [{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ *Crew is private*'.format(self.bot.getEmote('captain'), crew['leader'], crew['leader_id'])
+            else:
+                # set title and footer
+                title += " ▫️ {}/30 ▫️ Rank {}".format(len(crew['player']), crew['average'])
+                footer = "Public crews are updated once per day"
+                # get GW data
+                if mode == 2: gwstate = True
+                elif mode == 1: gwstate = False
+                else: gwstate = cog.isGWRunning()
+                players = crew['player'].copy()
+                gwid = None
+                if gwstate:
+                    for i in range(0, len(players)):
+                        # retrieve player honors
+                        honor = await cog.searchGWDBPlayer(ctx, players[i]['id'], 2)
+                        if honor[1] is None or len(honor[1]) == 0 or len(honor[1]['result']) == 0:
+                            players[i]['honor'] = None
+                        else:
+                            res = honor[1].get('result', [None, None, None, None])
+                            if gwid is None: gwid = honor[1].get('gw', None)
+                            if res is not None and len(res[0]) != 0 and res[0][3] is not None:
+                                players[i]['honor'] = res[0][3]
+                            else:
+                                players[i]['honor'] = None
+                        if i > 0 and players[i]['honor'] is not None:
+                            # sorting
+                            for j in range(0, i):
+                                if players[j]['honor'] is None or players[i]['honor'] > players[j]['honor']:
+                                    tmp = players[j]
+                                    players[j] = players[i]
+                                    players[i] = tmp
+                    if gwid is not None:
+                        description += "\n*Player contributions are for GW{}*".format(gwid)
+                # create the fields
+                i = 0
+                for p in players:
+                    if i % 10 == 0: fields.append({'name':'Page {}'.format(self.bot.getEmote('{}'.format(len(fields)+1))), 'value':''})
+                    i += 1
+                    if p['member_position'] == "1": r = "captain"
+                    elif p['member_position'] == "2": r = "foace"
+                    elif p['member_position'] == "3": r = "atkace"
+                    elif p['member_position'] == "4": r = "deface"
+                    else: r = "ensign"
+                    entry = '{} [{}](http://game.granbluefantasy.jp/#profile/{})'.format(self.bot.getEmote(r), self.escape(p['name']), p['id'])
+                    if gwstate:  entry += " \▫️ {}".format(self.honor(p['honor']))
+                    else: entry += " \▫️ r**{}**".format(p['level'])
+                    entry += "\n"
+                    fields[-1]['value'] += entry
+
+            await ctx.send(embed=self.bot.buildEmbed(title=title, description=description, fields=fields, inline=True, url="http://game.granbluefantasy.jp/#guild/detail/{}".format(crew['id']), footer=footer, timestamp=crew['timestamp'], color=self.color))
+
+        except Exception as e:
+            await self.bot.sendError("postCrewData", str(e))
+
     async def updateSummon(self):
         self.bot.drive.delFiles(["summon.sql"], self.bot.tokens['files'])
         cog = self.bot.get_cog('Baguette')
@@ -737,110 +900,16 @@ class GBF_Utility(commands.Cog):
             await self.bot.sendError("profile", str(e))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(5, 30, commands.BucketType.guild)
+    @commands.cooldown(3, 30, commands.BucketType.guild)
     async def crew(self, ctx, *id : str):
         """Get a crew profile"""
-        try:
-            cog = self.bot.get_cog('Baguette') # secret sauce to access the game
-            if cog is None: return
+        await self.postCrewData(ctx, id)
 
-            if self.checkMaintenance(): # check for maintenance
-                await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Game is in maintenance", color=self.color))
-                return
-            id = " ".join(id)
-            id = self.bot.granblue['gbfgcrew'].get(id.lower(), id) # check if the id is a gbfgcrew
-            # check id validityy
-            try:
-                id = int(id)
-            except:
-                await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Invalid name `{}`\nOnly /gbfg/ crews are registered, please input an id".format(id), color=self.color))
-                return
-            if id < 0 or id >= 10000000:
-                await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Out of range ID", color=self.color))
-                return
-            if id in self.badcrewcache: # if already searched (to limit bad requests)
-                await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Crew not found", color=self.color))
-                return
-
-            crew = {}
-            if id in self.crewcache: # public crews are stored until next reboot (to limit the request amount)
-                crew = self.crewcache[id]
-            else:
-                for i in range(0, 4): # for each page (page 0 being the crew page, 1 to 3 being the crew page
-                    get = cog.requestCrew(id, i)
-                    if get is None:
-                        if i == 0: # if error on page 0, the crew doesn't exist
-                            self.badcrewcache.append(id)
-                            await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description="Crew not found", color=self.color))
-                            return
-                        elif i == 1: # if error on page 1, the crew is private
-                            crew['private'] = True
-                        break
-                    else:
-                        # store the data
-                        if i == 0:
-                            crew['timestamp'] = datetime.utcnow()
-                            crew['footer'] = ""
-                            crew['private'] = False # in preparation
-                            crew['name'] = su.unescape(get['guild_name'])
-                            crew['rank'] = get['guild_rank']
-                            crew['ship'] = "http://game-a.granbluefantasy.jp/assets_en/img/sp/guild/thumb/top/{}.png".format(get['ship_img'])
-                            crew['leader'] = su.unescape(get['leader_name'])
-                            crew['leader_id'] = get['leader_user_id']
-                            crew['donator'] = su.unescape(get['most_donated_name'])
-                            crew['donator_id'] = get['most_donated_id']
-                            crew['donator_amount'] = get['most_donated_lupi']
-                            crew['message'] = su.unescape(get['introduction'])
-                            crew['total_rank'] = 0
-                        else:
-                            if 'player' not in crew: crew['player'] = []
-                            for p in get['list']:
-                                crew['total_rank'] += int(p['level'])
-                                crew['player'].append({'id':p['id'], 'name':su.unescape(p['name']), 'level':p['level'], 'is_leader':p['is_leader']})
-                if not crew['private']:
-                    crew['footer'] = "Public crews are updated once per day"
-                    self.crewcache[id] = crew # only cache public crews
-
-            # prepare the message
-            title = "{} **{}** ▫️ Rank {}".format(self.bot.getEmote('gw'), crew['name'], crew['rank'])
-            description = "{} **Captain** ▫️ [{}](http://game.granbluefantasy.jp/#profile/{})\n{} **Top Donator** ▫️ [{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ {} rupies\n💬 ``{}``".format(self.bot.getEmote('crown'), crew['leader'], crew['leader_id'], self.bot.getEmote('gold'), crew['donator'], crew['donator_id'], crew['donator_amount'], crew['message'])
-
-            # get the last gw score
-            cog = self.bot.get_cog('GW')
-            if cog is not None:
-                data = await cog.searchGWDBCrew(ctx, id, 2)
-                if data is not None:
-                    for n in range(0, 2):
-                        if data[n] is not None and 'result' in data[n] and len(data[n]['result']) == 1:
-                            if data[n]['result'][0][0] is not None:
-                                description += "\n{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors ".format(self.bot.getEmote('gw'), data[n].get('gw', ''), data[n]['result'][0][0], data[n]['result'][0][11])
-                            elif data[n]['result'][0][9] is not None:
-                                description += "\n{} GW**{}** ▫️ Total 3 ▫️ **{:,}** honors".format(self.bot.getEmote('gw'), data[n].get('gw', ''), data[n]['result'][0][9])
-                            elif data[n]['result'][0][7] is not None:
-                                description += "\n{} GW**{}** ▫️ Total 2 ▫️ **{:,}** honors".format(self.bot.getEmote('gw'), data[n].get('gw', ''), data[n]['result'][0][7])
-                            elif data[n]['result'][0][5] is not None:
-                                description += "\n{} GW**{}** ▫️ Total 1 ▫️ **{:,}** honors".format(self.bot.getEmote('gw'), data[n].get('gw', ''), data[n]['result'][0][5])
-                            elif data[n]['result'][0][3] is not None:
-                                description += "\n{} GW**{}** ▫️ Prelim. ▫️ **{:,}** honors".format(self.bot.getEmote('gw'), data[n].get('gw', ''), data[n]['result'][0][3])
-
-            # prepare the member list
-            fields = []
-            if crew['private']:
-                description += '\n*Crew is private*'
-            else:
-                description += "\n**{}** Members ▫️ Average Rank **{}**\n".format(len(crew['player']), round(crew['total_rank'] / (len(crew['player']) * 1.0)))
-                i = 0
-                for p in crew['player']:
-                    if i % 10 == 0: fields.append({'name':'Page {}'.format(self.bot.getEmote(str((i // 10) + 1))), 'value':''})
-                    i += 1
-                    if p['is_leader']: fields[-1]['value'] += "**[{}](http://game.granbluefantasy.jp/#profile/{})▫️{}**\n".format(self.escape(p['name']), p['id'], p['level'])
-                    else: fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ {}\n".format(self.escape(p['name']), p['id'], p['level'])
-
-            # send
-            await ctx.send(embed=self.bot.buildEmbed(title=title, description=description, fields=fields, inline=True, thumbnail=crew['ship'], url="http://game.granbluefantasy.jp/#guild/detail/{}".format(id), footer=crew['footer'], timestamp=crew['timestamp'], color=self.color))
-
-        except Exception as e:
-            await self.bot.sendError("crew", str(e))
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['contrib', 'contri', 'leeches', 'contribs', 'contris', 'contributions'])
+    @commands.cooldown(3, 30, commands.BucketType.guild)
+    async def contribution(self, ctx, *id : str):
+        """Get a crew profile (GW scores are force-enabled)"""
+        await self.postCrewData(ctx, id, 2)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['ticket'])
     @commands.cooldown(1, 30, commands.BucketType.guild)
@@ -977,9 +1046,43 @@ class GBF_Utility(commands.Cog):
             if raw == 'raw': msg += "`"
             await ctx.send(embed=self.bot.buildEmbed(title="🗓 Event Schedule {} {:%Y/%m/%d %H:%M} JST".format(self.bot.getEmote('clock'), self.bot.getJST()), url="https://twitter.com/granblue_en", color=self.color, description=msg))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tokens', 'box'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tokens'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
-    async def token(self, ctx, box : int):
+    async def token(self, ctx, tok : int):
+        """Calculate how many GW box you get from X tokens"""
+        try:
+            if tok < 1 or tok > 9999999999: raise Exception()
+            b = 0
+            t = tok
+            if tok >= 1600:
+                tok -= 1600
+                b += 1
+            while b < 4 and tok >= 2400:
+                tok -= 2400
+                b += 1
+            while b < 46 and tok >= 2000:
+                tok -= 2000
+                b += 1
+            while b < 81 and tok >= 10000:
+                tok -= 10000
+                b += 1
+            while tok >= 15000:
+                tok -= 15000
+                b += 1
+            ex = math.ceil(t / 56.0)
+            explus = math.ceil(t / 66.0)
+            n90 = math.ceil(t / 83.0)
+            n95 = math.ceil(t / 111.0)
+            n100 = math.ceil(t / 168.0)
+            n150 = math.ceil(t / 220.0)
+            wanpan = math.ceil(t / 48.0)
+            await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator".format(self.bot.getEmote('gw')), description="**{:,}** token(s) equal to **{:,}** box(s)\nand **{:,}** leftover token(s)\n\n**{:,}** EX host and MVP (**{:,}** pots)\n**{:,}** EX+ host and MVP (**{:,}** pots)\n**{:,}** NM90 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 wanpan (**{:}** BP)".format(t, b, tok, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
+        except:
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid token number", color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(2, 10, commands.BucketType.guild)
+    async def box(self, ctx, box : int):
         """Calculate how many GW tokens you need"""
         try:
             if box < 1 or box > 999: raise Exception()
