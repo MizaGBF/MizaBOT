@@ -210,7 +210,7 @@ class GBF_Utility(commands.Cog):
                 return
 
             # embed initialization
-            title = "\u200d{} **{}**".format(self.bot.getEmote(crew['ship_element']), crew['name'])
+            title = "\u202d{} **{}**".format(self.bot.getEmote(crew['ship_element']), crew['name'])
             description = "💬 ``{}``".format(self.escape(crew['message']))
             footer = ""
             fields = []
@@ -824,8 +824,8 @@ class GBF_Utility(commands.Cog):
                 trophy = soup.find_all("div", class_="prt-title-name")[0].string
                 comment = su.unescape(soup.find_all("div", class_="prt-other-comment")[0].string).replace('\t', '').replace('\n', '')
                 if comment == "": pass
-                elif rank == "": comment = "\u200d💬 ``{}``".format(comment)
-                else: comment = "\u200d ▫️ 💬 ``{}``".format(comment)
+                elif rank == "": comment = "💬 ``{}``".format(comment)
+                else: comment = " ▫️ 💬 ``{}``".format(comment)
                 mc_url = soup.find_all("img", class_="img-pc")[0]['src'].replace("/po/", "/talk/").replace("/img_low/", "/img/")
                 stats = soup.find_all("div", class_="num")
                 hp = int(stats[0].string)
@@ -896,12 +896,12 @@ class GBF_Utility(commands.Cog):
                     try: msg += " ▫️ **{}** EMP".format(self.empre.findall(star_section)[0]) # emp
                     except: pass
                     starcom = self.starcomre.findall(star_section)
-                    if starcom is not None and starcom[0] != "(Blank)": msg += "\n\u200d💬 ``{}``".format(su.unescape(starcom[0]))
+                    if starcom is not None and starcom[0] != "(Blank)": msg += "\n\u202d💬 ``{}``".format(su.unescape(starcom[0]))
                     fields.append({'name':'{} Star Character'.format(self.bot.getEmote('skill2')), 'value':msg})
                 except:
                     pass
-                if trophy == "No Trophy Displayed": title = "\u200d{} **{}**".format(self.bot.getEmote(rarity), name)
-                else: title = "\u200d{} **{}**▫️{}".format(self.bot.getEmote(rarity), name, trophy)
+                if trophy == "No Trophy Displayed": title = "\u202d{} **{}**".format(self.bot.getEmote(rarity), name)
+                else: title = "\u202d{} **{}**▫️{}".format(self.bot.getEmote(rarity), name, trophy)
 
                 await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}{}\n{} Crew ▫️ {}\n{}\n{}".format(rank, comment, self.bot.getEmote('gw'), crew, scores[0], scores[1]), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             else:
