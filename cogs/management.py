@@ -103,7 +103,7 @@ class Management(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isAuthorizedSpecial()
-    async def setGW(self, ctx, id : int, day : int, month : int, year : int):
+    async def setGW(self, ctx, id : int, element : str, day : int, month : int, year : int):
         """Set the GW date ((You) Mod only)"""
         try:
             # stop the task
@@ -111,6 +111,7 @@ class Management(commands.Cog):
             self.bot.gw['state'] = False
             self.bot.gw['id'] = id
             self.bot.gw['ranking'] = ""
+            self.bot.gw['element'] = element.lower()
             # build the calendar
             self.bot.gw['dates'] = {}
             self.bot.gw['dates']["Preliminaries"] = datetime.utcnow().replace(year=year, month=month, day=day, hour=19, minute=0, second=0, microsecond=0)

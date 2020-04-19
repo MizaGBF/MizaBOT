@@ -302,7 +302,9 @@ class GW(commands.Cog):
         if self.bot.gw['state'] == True:
             try:
                 current_time = self.bot.getJST()
-                title = "{} **Guild War {}** :white_small_square: Time: **{:%a. %m/%d %H:%M}**\n".format(self.bot.getEmote('gw'), self.bot.gw['id'], current_time)
+                em = self.bot.getEmote(self.bot.gw.get('element', ''))
+                if em is None: em = ":white_small_square:"
+                title = "{} **Guild War {}** {} Time: **{:%a. %m/%d %H:%M}**\n".format(self.bot.getEmote('gw'), self.bot.gw['id'], em, current_time)
                 description = ""
                 day_list = self.buildDayList()
                 if current_time < self.bot.gw['dates']["End"]:
@@ -345,7 +347,9 @@ class GW(commands.Cog):
         try:
             d = self.getGWState()
             if d != "":
-                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** :white_small_square: status".format(self.bot.getEmote('gw'), self.bot.gw['id']), description=d, color=self.color))
+                em = self.bot.getEmote(self.bot.gw.get('element', ''))
+                if em is None: em = ":white_small_square:"
+                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {} status".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description=d, color=self.color))
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
             await self.bot.sendError("fugdidgwstart", str(e))
@@ -476,7 +480,9 @@ class GW(commands.Cog):
                     fields[1]['value'] += "\n"
                 if fields[1]['value'] == '': fields[1]['value'] = 'Unavailable'
 
-                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), self.bot.gw['id']), fields=fields, footer="Last Update ▫️ {:%a. %m/%d %H:%M} JST ▫️ Update on minute 5, 25 and 45".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
+                em = self.bot.getEmote(self.bot.gw.get('element', ''))
+                if em is None: em = ""
+                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), fields=fields, footer="Last Update ▫️ {:%a. %m/%d %H:%M} JST ▫️ Update on minute 5, 25 and 45".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
         except Exception as e:
             await self.bot.sendError("ranking", str(e))
 
