@@ -210,8 +210,8 @@ class GBF_Utility(commands.Cog):
                 return
 
             # embed initialization
-            title = "{} **{}**".format(self.bot.getEmote(crew['ship_element']), crew['name'])
-            description = "💬 ``{}``".format(crew['message'])
+            title = "\u200d{} **{}**".format(self.bot.getEmote(crew['ship_element']), crew['name'])
+            description = "💬 ``{}``".format(self.escape(crew['message']))
             footer = ""
             fields = []
 
@@ -232,18 +232,23 @@ class GBF_Utility(commands.Cog):
                 players = crew['player'].copy()
                 gwid = None
                 if gwstate:
+                    total = 0
+                    unranked = 0
                     for i in range(0, len(players)):
                         # retrieve player honors
                         honor = await cog.searchGWDBPlayer(ctx, players[i]['id'], 2)
                         if honor[1] is None or len(honor[1]) == 0 or len(honor[1]['result']) == 0:
                             players[i]['honor'] = None
+                            unranked += 1
                         else:
                             res = honor[1].get('result', [None, None, None, None])
                             if gwid is None: gwid = honor[1].get('gw', None)
                             if res is not None and len(res[0]) != 0 and res[0][3] is not None:
                                 players[i]['honor'] = res[0][3]
+                                total += res[0][3]
                             else:
                                 players[i]['honor'] = None
+                                unranked += 1
                         if i > 0 and players[i]['honor'] is not None:
                             # sorting
                             for j in range(0, i):
@@ -251,8 +256,11 @@ class GBF_Utility(commands.Cog):
                                     tmp = players[j]
                                     players[j] = players[i]
                                     players[i] = tmp
-                    if gwid is not None:
-                        description += "\n*Player contributions are for GW{}*".format(gwid)
+                    if gwid and len(players) - unranked > 0:
+                        description += "\n{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.getEmote('question'), gwid, self.honor(total), self.honor(total // (len(players) - unranked)))
+                        if unranked > 0:
+                            description += " ▫️ {} Unranked".format(unranked)
+                            if unranked > 1: description += "s"
                 # create the fields
                 i = 0
                 for p in players:
@@ -367,7 +375,8 @@ class GBF_Utility(commands.Cog):
         return (msg != "" and "Maintenance starts" not in msg)
 
     def escape(self, s): # escape markdown string
-        return s.replace('\\', '\\\\').replace('`', '\\`').replace('*', '\\*').replace('_', '\\_').replace('{', '\\{').replace('}', '\\}').replace('[', '').replace(']', '').replace('(', '\\(').replace(')', '\\)').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('.', '\\.').replace('!', '\\!').replace('|', '\\|')
+        # add the RLO character before
+        return '\u202d' + s.replace('\\', '\\\\').replace('`', '\\`').replace('*', '\\*').replace('_', '\\_').replace('{', '\\{').replace('}', '\\}').replace('[', '').replace(']', '').replace('(', '\\(').replace(')', '\\)').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('.', '\\.').replace('!', '\\!').replace('|', '\\|')
 
     # function to fix the case (for $wiki)
     def fixCase(self, term): # term is a string
@@ -815,8 +824,8 @@ class GBF_Utility(commands.Cog):
                 trophy = soup.find_all("div", class_="prt-title-name")[0].string
                 comment = su.unescape(soup.find_all("div", class_="prt-other-comment")[0].string).replace('\t', '').replace('\n', '')
                 if comment == "": pass
-                elif rank == "": comment = "💬 ``{}``".format(comment)
-                else: comment = " ▫️ 💬 ``{}``".format(comment)
+                elif rank == "": comment = "\u200d💬 ``{}``".format(comment)
+                else: comment = "\u200d ▫️ 💬 ``{}``".format(comment)
                 mc_url = soup.find_all("img", class_="img-pc")[0]['src'].replace("/po/", "/talk/").replace("/img_low/", "/img/")
                 stats = soup.find_all("div", class_="num")
                 hp = int(stats[0].string)
@@ -842,7 +851,10 @@ class GBF_Utility(commands.Cog):
                         for n in range(0, 2):
                             if pdata[n] is not None and 'result' in pdata[n] and len(pdata[n]['result']) == 1:
                                 try:
-                                    scores[n] = "{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors ".format(self.bot.getEmote('gw'), pdata[n].get('gw', ''), pdata[n]['result'][0][0], pdata[n]['result'][0][3])
+                                    if pdata[n]['result'][0][0] is None:
+                                        scores[n] = "{} GW**{}** ▫️ **{:,}** honors ".format(self.bot.getEmote('gw'), pdata[n].get('gw', ''), pdata[n]['result'][0][3])
+                                    else:
+                                        scores[n] = "{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors ".format(self.bot.getEmote('gw'), pdata[n].get('gw', ''), pdata[n]['result'][0][0], pdata[n]['result'][0][3])
                                 except:
                                     pass
 
@@ -884,12 +896,12 @@ class GBF_Utility(commands.Cog):
                     try: msg += " ▫️ **{}** EMP".format(self.empre.findall(star_section)[0]) # emp
                     except: pass
                     starcom = self.starcomre.findall(star_section)
-                    if starcom is not None and starcom[0] != "(Blank)": msg += "\n💬 ``{}``".format(su.unescape(starcom[0]))
+                    if starcom is not None and starcom[0] != "(Blank)": msg += "\n\u200d💬 ``{}``".format(su.unescape(starcom[0]))
                     fields.append({'name':'{} Star Character'.format(self.bot.getEmote('skill2')), 'value':msg})
                 except:
                     pass
-                if trophy == "No Trophy Displayed": title = "{} **{}**".format(self.bot.getEmote(rarity), name)
-                else: title = "{} **{}**▫️{}".format(self.bot.getEmote(rarity), name, trophy)
+                if trophy == "No Trophy Displayed": title = "\u200d{} **{}**".format(self.bot.getEmote(rarity), name)
+                else: title = "\u200d{} **{}**▫️{}".format(self.bot.getEmote(rarity), name, trophy)
 
                 await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}{}\n{} Crew ▫️ {}\n{}\n{}".format(rank, comment, self.bot.getEmote('gw'), crew, scores[0], scores[1]), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             else:
@@ -1074,7 +1086,7 @@ class GBF_Utility(commands.Cog):
             n90 = math.ceil(t / 83.0)
             n95 = math.ceil(t / 111.0)
             n100 = math.ceil(t / 168.0)
-            n150 = math.ceil(t / 220.0)
+            n150 = math.ceil(t / 257.0)
             wanpan = math.ceil(t / 48.0)
             await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator".format(self.bot.getEmote('gw')), description="**{:,}** token(s) equal to **{:,}** box(s)\nand **{:,}** leftover token(s)\n\n**{:,}** EX host and MVP (**{:,}** pots)\n**{:,}** EX+ host and MVP (**{:,}** pots)\n**{:,}** NM90 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 wanpan (**{:}** BP)".format(t, b, tok, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
         except:
@@ -1105,7 +1117,7 @@ class GBF_Utility(commands.Cog):
             n90 = math.ceil(t / 83.0)
             n95 = math.ceil(t / 111.0)
             n100 = math.ceil(t / 168.0)
-            n150 = math.ceil(t / 220.0)
+            n150 = math.ceil(t / 257.0)
             wanpan = math.ceil(t / 48.0)
             await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator".format(self.bot.getEmote('gw')), description="**{:,}** token(s) needed for **{:,}** box(s)\n\n**{:,}** EX host and MVP (**{:,}** pots)\n**{:,}** EX+ host and MVP (**{:,}** pots)\n**{:,}** NM90 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 wanpan (**{:}** BP)".format(t, b, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
         except:
@@ -1121,7 +1133,7 @@ class GBF_Utility(commands.Cog):
             nm95 = meat // 10
             nm100 = meat // 20
             nm150 = meat // 20
-            await ctx.send(embed=self.bot.buildEmbed(title="{} Meat Calculator".format(self.bot.getEmote('gw')), description="**{:,}** meats amount for\n**{:,}** NM90 or **{:,}** honor(s)\n**{:,}** NM95 or **{:,}** honor(s)\n**{:,}** NM100 or **{:,}** honor(s)\n**{:,}** NM150 or **{:,}** honor(s)\n".format(meat, nm90, nm90*260000, nm95, nm95*910000, nm100, nm100*2650000, nm150, nm150*3600000), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} Meat Calculator".format(self.bot.getEmote('gw')), description="**{:,}** meats amount for\n**{:,}** NM90 or **{:,}** honor(s)\n**{:,}** NM95 or **{:,}** honor(s)\n**{:,}** NM100 or **{:,}** honor(s)\n**{:,}** NM150 or **{:,}** honor(s)\n".format(meat, nm90, nm90*260000, nm95, nm95*910000, nm100, nm100*2650000, nm150, nm150*4100000), color=self.color))
         except:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid meat number", color=self.color))
 

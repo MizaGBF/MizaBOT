@@ -33,7 +33,7 @@ class GW(commands.Cog):
         players = [2000, 70000, 120000, 160000, 250000, 350000]
 
         days = ["End", "Day 5", "Day 4", "Day 3", "Day 2", "Day 1", "Interlude", "Preliminaries"]
-        minute_update = [5, 25, 45]
+        minute_update = [4, 24, 44]
 
         while True:
             self.getGWState()
@@ -129,19 +129,19 @@ class GW(commands.Cog):
                     if (current_time - self.bot.gw['buffs'][0][0]) < timedelta(seconds=200):
                         if self.bot.gw['buffs'][0][1]:
                             for r in buff_role:
-                                msg += "{} {} ".format(self.bot.getEmote(r[1]), r[0].mention)
+                                msg += "{} {}\n".format(self.bot.getEmote(r[1]), r[0].mention)
                         if self.bot.gw['buffs'][0][2]:
-                            msg += "{} {} ".format(self.bot.getEmote('foace'), fo_role.mention)
+                            msg += "{} {}\n".format(self.bot.getEmote('foace'), fo_role.mention)
                         if self.bot.gw['buffs'][0][4]:
                             if self.bot.gw['buffs'][0][3]:
-                                msg += 'buffs in 5 minutes **(Please use both this time only !)**'
+                                msg += '*Buffs in 5 minutes* **(Double use this time only !)**'
                             else:
-                                msg += 'buffs now! **(Please use both this time only !)**'
+                                msg += 'Buffs now! **(Double use this time only !)**'
                         else:
                             if self.bot.gw['buffs'][0][3]:
-                                msg += 'buffs in 5 minutes'
+                                msg += '*Buffs in 5 minutes*'
                             else:
-                                msg += 'buffs now!'
+                                msg += 'Buffs now!'
                         if self.bot.gw['skip']:
                             msg = ""
                         if not self.bot.gw['buffs'][0][3]:
@@ -150,7 +150,7 @@ class GW(commands.Cog):
                     self.bot.savePending = True
                 else:
                     if msg != "":
-                        await channel.send("{} {}".format(gl_role.mention, msg))
+                        await channel.send("{} {}\n{}".format(self.bot.getEmote('captain'), gl_role.mention, msg))
                         msg = ""
                     if len(self.bot.gw['buffs']) > 0:
                         d = self.bot.gw['buffs'][0][0] - current_time
@@ -183,7 +183,8 @@ class GW(commands.Cog):
         ]
 
     def escape(self, s): # escape markdown string
-        return s.replace('\\', '\\\\').replace('`', '\\`').replace('*', '\\*').replace('_', '\\_').replace('{', '\\{').replace('}', '\\}').replace('[', '').replace(']', '').replace('(', '\\(').replace(')', '\\)').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('.', '\\.').replace('!', '\\!').replace('|', '\\|')
+        # add the RLO character before
+        return '\u202d' + s.replace('\\', '\\\\').replace('`', '\\`').replace('*', '\\*').replace('_', '\\_').replace('{', '\\{').replace('}', '\\}').replace('[', '').replace(']', '').replace('(', '\\(').replace(')', '\\)').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('.', '\\.').replace('!', '\\!').replace('|', '\\|')
 
     def isAuthorized(): # for decorators
         async def predicate(ctx):
@@ -204,6 +205,18 @@ class GW(commands.Cog):
         async def predicate(ctx):
             return (ctx.bot.isYouServer(ctx) or ctx.bot.isAuthorized(ctx))
         return commands.check(predicate)
+
+    def honor(self, h): # convert honor number to a shorter string version
+        if h is None: return "n/a"
+        else:
+            try:
+                h = int(h)
+            except:
+                return h
+            if h >= 1000000000: return "{:.1f}B".format(h/1000000000)
+            elif h >= 1000000: return "{:.1f}M".format(h/1000000)
+            elif h >= 1000: return "{:.1f}K".format(h/1000)
+        return h
 
     def dayCheck(self, current, day, final_day=False):
         d = day - current
@@ -575,6 +588,50 @@ class GW(commands.Cog):
         else:
             await ctx.message.add_reaction('✅') # white check mark
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True, aliases=['gwranking'])
+    @commands.cooldown(1, 60, commands.BucketType.guild)
+    async def gbfgranking(self, ctx):
+        """Post and sort all /gbfg/ crew per contribution"""
+        crews = []
+        blacklist = ["677159"]
+        for e in self.bot.granblue['gbfgcrew']:
+            if self.bot.granblue['gbfgcrew'][e] in crews or self.bot.granblue['gbfgcrew'][e] in blacklist: continue
+            crews.append(self.bot.granblue['gbfgcrew'][e])
+        tosort = {}
+        possible = {11:"Total Day 4", 9:"Total Day 3", 7:"Total Day 2", 5:"Total Day 1", 3:"Total Prelim."}
+        gwid = None
+        for c in crews:
+            data = await self.searchGWDBCrew(ctx, int(c), 2)
+            if data is None or data[1] is None or 'result' not in data[1] or len(data[1]['result']) == 0:
+                continue
+            result = data[1]['result'][0]
+            if gwid is None: gwid = data[1].get('gw', None)
+            for ps in possible:
+                if result[ps] is not None:
+                    if ps == 11 and result[0] is not None:
+                        tosort[c] = [c, result[2], int(result[ps]), str(result[0])] # id, name, honor, rank
+                        break
+                    else:
+                        tosort[c] = [c, result[2], int(result[ps]), possible[ps]] # id, name, honor, day
+                        break
+        sorted = []
+        for c in tosort:
+            inserted = False
+            for i in range(0, len(sorted)):
+                if tosort[c][2] > sorted[i][2]:
+                    inserted = True
+                    sorted.insert(i, tosort[c])
+                    break
+            if not inserted: sorted.append(tosort[c])
+        fields = []
+        if gwid is None: gwid = ""
+        for i in range(0, len(sorted)):
+            if i % 15 == 0: fields.append({'name':'{}'.format(self.bot.getEmote(str(len(fields)+1))), 'value':''})
+            if sorted[i][3].startswith('Total'):
+                fields[-1]['value'] += "{} \▫️ {} \▫️ **{}**\n".format(i+1, sorted[i][1], self.honor(sorted[i][2]))
+            else:
+                fields[-1]['value'] += "#**{}** \▫️ {} \▫️ **{}**\n".format(self.honor(sorted[i][3]), sorted[i][1], self.honor(sorted[i][2]))
+        await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ GW{} Ranking".format(self.bot.getEmote('gw'), gwid), fields=fields, inline=True, color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwcrew'])
     @commands.cooldown(2, 15, commands.BucketType.user)
@@ -733,17 +790,18 @@ class GW(commands.Cog):
         else: x = 1
         fields = []
         for i in range(0, x):
-            if (i % 5) == 0:
+            if (not all and (i % 5) == 0) or (all and i == 0):
                 fields.append({'name':'Page {}'.format(self.bot.getEmote(str((i // 10) + 1))), 'value':''})
             if result[i][0] is None:
                 fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{})\n".format(self.escape(result[i][2]), result[i][1])
             else:
                 fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ **#{}**\n".format(self.escape(result[i][2]), result[i][1], result[i][0])
-            if result[i][3] is not None:
-                fields[-1]['value'] += "{:,}\n".format(result[i][3])
-            if all:
+            if result[i][3] is not None: fields[-1]['value'] += "{:,}\n".format(result[i][3])
+            else: fields[-1]['value'] += "n/a\n"
+            if all and ((i % 5) == 4 or i == x - 1):
                 try:
                     await ctx.author.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), fields=fields, inline=True, footer="help findplayer for details", color=self.color))
+                    fields[-1]['value'] = ''
                 except:
                     await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="I can't send you the full list by private messages", color=self.color))
                     return
