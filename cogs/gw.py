@@ -50,7 +50,7 @@ class GW(commands.Cog):
                 elif self.bot.getJST() > self.bot.gw['dates']["Day 5"] - timedelta(seconds=21600):
                     await asyncio.sleep(3600)
                 else:
-                    if not self.checkMaintenance():
+                    if not await self.checkMaintenance():
                         current_time = self.bot.getJST()
                         m = current_time.minute
                         h = current_time.hour
@@ -164,11 +164,11 @@ class GW(commands.Cog):
             await self.bot.sendError('checkgwbuff', str(e))
         await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="checkgwbuff() ended", timestamp=datetime.utcnow()))
 
-    def checkMaintenance(self):
+    async def checkMaintenance(self):
         try:
-            return self.bot.get_cog('GBF_Utility').checkMaintenance()
+            return not await self.bot.get_cog('GBF_Utility').isGBFAvailable()
         except:
-            return False
+            return True
 
     def buildDayList(self): # used by the gw schedule command
         return [

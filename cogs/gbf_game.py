@@ -174,20 +174,20 @@ class GBF_Game(commands.Cog):
     @commands.cooldown(1, 300, commands.BucketType.user)
     async def scratch(self, ctx):
         """Imitate the GBF scratch game"""
-        # loot table (in 1 / 10000)
+        # loot table (based on real one)
         loot = {
-            'Siero Ticket':19,
-            'Sunlight Stone':19,
-            'Gold Brick':37,
-            'Damascus Ingot':37,
-            'Agni':27, 'Varuna':27, 'Titan':27, 'Zephyrus':27, 'Zeus':27, 'Hades':27,
-            'Shiva':55, 'Europa':55, 'Godsworn Alexiel':55, 'Grimnir':55,
-            'Lucifer':55, 'Bahamut':55,
-            'Michael':21, 'Gabriel':21, 'Uriel':21, 'Raphael':21, 'Metatron':21, 'Sariel':21,
-            'Murgleis':17, 'Benedia':17, 'Gambanteinn':17, 'Love Eternal':17, 'AK-4A':17, 'Reunion':17, 'Ichigo-Hitofuri':17, 'Taisai Spirit Bow':17, 'Unheil':17, 'Sky Ace':17, 'Ivory Ark':17, 'Blutgang':17, 'Eden':17, 'Parazonium':17, 'Ixaba':17, 'Blue Sphere':17, 'Certificus':17, 'Fallen Sword':17, 'Mirror-Blade Shard':17, 'Galilei\'s Insight':17, 'Purifying Thunderbolt':17, 'Vortex of the Void':17, 'Sacred Standard':17, 'Bab-el-Mandeb':17, 'Cute Ribbon':17,
-            'Crystals x3000':853,
-            'Intricacy Ring':297, 'Gold Spellbook':519, 'Moonlight Stone':297, 'Gold Moon x2':371, 'Ultima Unit x3':223, 'Silver Centrum x5':353, 'Primeval Horn x3':186, 'Horn of Bahamut x4':167, 'Legendary Merit x5':315, 'Steel Brick':148,
-            'Lineage Ring x2':315, 'Coronation Ring x3':315, 'Silver Moon x5':592, 'Bronze Moon x10':612, 'Half Elixir x100':1577, 'Soul Berry x300':1688
+            'Siero Ticket':10,
+            'Sunlight Stone':300,
+            'Gold Brick':200,
+            'Damascus Ingot':450,
+            'Agni':1375, 'Varuna':1375, 'Titan':1375, 'Zephyrus':1375, 'Zeus':1375, 'Hades':1375,
+            'Shiva':1375, 'Europa':1375, 'Godsworn Alexiel':1375, 'Grimnir':1375,
+            'Lucifer':1375, 'Bahamut':1375,
+            'Michael':1375, 'Gabriel':1375, 'Uriel':1375, 'Raphael':1375, 'Metatron':1375, 'Sariel':1375,
+            'Murgleis':1000, 'Benedia':1000, 'Gambanteinn':1000, 'Love Eternal':1000, 'AK-4A':1000, 'Reunion':1000, 'Ichigo-Hitofuri':1000, 'Taisai Spirit Bow':1000, 'Unheil':1000, 'Sky Ace':1000, 'Ivory Ark':1000, 'Blutgang':1000, 'Eden':1000, 'Parazonium':1000, 'Ixaba':1000, 'Blue Sphere':1000, 'Certificus':1000, 'Fallen Sword':1000, 'Mirror-Blade Shard':1000, 'Galilei\'s Insight':1000, 'Purifying Thunderbolt':1000, 'Vortex of the Void':1000, 'Sacred Standard':1000, 'Bab-el-Mandeb':1000, 'Cute Ribbon':1000,
+            'Crystals x3000':8000,
+            'Intricacy Ring':3000, 'Gold Spellbook':3000, 'Moonlight Stone':3000, 'Gold Moon x2':3000, 'Ultima Unit x3':3000, 'Silver Centrum x5':3000, 'Primeval Horn x3':3000, 'Horn of Bahamut x4':3000, 'Legendary Merit x5':3000, 'Steel Brick':3000,
+            'Lineage Ring x2':4000, 'Coronation Ring x3':4000, 'Silver Moon x5':4000, 'Bronze Moon x10':5000, 'Half Elixir x100':6000, 'Soul Berry x300':6000
         }
         message = None # store the message to edit
         mm = 0 # maximum random loot value
@@ -199,8 +199,8 @@ class GBF_Game(commands.Cog):
         sm = random.randint(4, 6) # number of loots, 4 to 6 max
         i = 0
         while i < sm:
-            n = random.randint(0, mm-1) # roll a dice
-            if len(selected) == 1: n = random.randint(0, mm//4) # add one rarer loot
+            if len(selected) == 1 and n > 20000: n = random.randint(0, mm//10) # add one rarer loot
+            else: n = random.randint(0, mm-1) # roll a dice
             c = 0
             check = "" # check which loot match in this loop
             for x in loot:
@@ -607,9 +607,9 @@ class GBF_Game(commands.Cog):
             self.pitroulettemax = max
             self.pitroulettevictim = []
             self.pitroulettelist = []
-            await ctx.send(embed=self.bot.buildEmbed(title="Quarantine Roulette enabled", description=random.choice(["Wash your hands", "Social Distancing", "Coof in your elbow"]) , thumbnail="https://cdn.discordapp.com/attachments/339155308767215618/694497177984303170/unknown.png", footer="expecting " + str(max) + " victim(s)", color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Pit Roulette enabled", description=random.choice(["Who will fall in?", "Are you brave enough?", "Do you dare?"]) , thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/584813271643586560/Activate_it.png", footer="expecting " + str(max) + " victim(s)", color=self.color))
         else:
-            await ctx.send(embed=self.bot.buildEmbed(title="Quarantine Roulette already on" ,color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Pit Roulette already on" ,color=self.color))
 
     async def pitroulette_callback(self, message):
         try:
@@ -630,9 +630,9 @@ class GBF_Game(commands.Cog):
         try:
             message = self.pitroulettevictim.pop()
             self.pitroulettelist.append([message.author.display_name, self.pitroulettecount, message.content, "[**Link**](https://discordapp.com/channels/{}/{}/{})".format(message.guild.id, message.channel.id, message.id)])
-            description = "After **{}** day(s)".format(self.pitroulettecount)
-            title = random.choice(["{} has fallen ill...", "{} started coofing...", "{} injected itself with the virus...", "{} got coofed on the face...", "{} went outside..."]).format(message.author.display_name)
-            footer = random.choice(["Will {} find a cure?".format(message.author.display_name), "Will {} manage to come back alive?".format(message.author.display_name), "Don't forget your mask next time", "You should have washed your hands", "{} forgot to lock its door".format(message.author.display_name)])
+            description = "After **{}** message(s)".format(self.pitroulettecount)
+            title = random.choice(["{} has fallen into the pit...", "{} tripped and fell...", "{} jumped into the pit willingly...", "{} got pushed in the back..."]).format(message.author.display_name)
+            footer = random.choice(["Will {} manage to climb up?".format(message.author.display_name), "Stay down here where you belong", "Straight into the hellish pit", "{} has met with a terrible fate".format(message.author.display_name)])
             if self.pitroulettemax > 0:
                 description += "\nI'm expecting **{}** more victim(s)".format(self.pitroulettemax)
             else:
@@ -643,7 +643,7 @@ class GBF_Game(commands.Cog):
                 for a in self.pitroulettelist:
                     if len(a[2]) == 0 or len(a[2]) > 380: fields.append({'name': "{} ▫️ after {} day(s)".format(a[0], a[1]), 'value':a[3]})
                     else: fields.append({'name': "{} ▫️ after {} day(s)".format(a[0], a[1]), 'value':'{}\n{}'.format(a[2], a[3])})
-                await message.channel.send(embed=self.bot.buildEmbed(title="Quarantine Roulette results", fields=fields, inline=False, thumbnail=message.author.avatar_url))
+                await message.channel.send(embed=self.bot.buildEmbed(title="Pit Roulette results", fields=fields, inline=False, thumbnail=message.author.avatar_url))
             g = self.bot.get_guild(self.bot.ids.get('gbfg', 0))
             await message.author.add_roles(g.get_role(self.bot.ids.get('pit', 0)))
             await asyncio.sleep(60)

@@ -34,39 +34,33 @@ class GBF_Utility(commands.Cog):
         self.sqllock = False
 
     def startTasks(self):
-        self.bot.runTask('maintenance', self.maintenancetask)
         self.bot.runTask('summon', self.summontask)
 
-    async def maintenancetask(self): # gbf emergency maintenance detection
-        await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="maintenancetask() started", timestamp=datetime.utcnow()))
-        while True:
-            try:
-                if self.checkMaintenance():
-                    current_time = self.bot.getJST()
-                    if current_time >= self.bot.maintenance['time'] and self.bot.maintenance['duration'] == 0: # check if infinite maintenance
-                        req = await self.requestGBF()
-                        if req[0].status == 200 and req[1].find("The app is now undergoing") == -1:
-                            await self.bot.send('debug', embed=self.bot.buildEmbed(title="Emergency maintenance ended", timestamp=datetime.utcnow(), color=self.color))
-                            c = self.bot.getJST()
-                            self.bot.maintenance = {"state" : False, "time" : None, "duration" : 0}
-                            self.bot.savePending = True
-                        await asyncio.sleep(500)
-                else:
-                    req = await self.requestGBF()
-                    if req[0].status == 200 and req[1].find("The app is now undergoing") != -1:
-                        await self.bot.send('debug', embed=self.bot.buildEmbed(title="Emergency maintenance detected", timestamp=datetime.utcnow(), color=self.color))
-                        c = self.bot.getJST()
-                        self.bot.maintenance['time'] = c
-                        self.bot.maintenance['duration'] = 0
-                        self.bot.maintenance['state'] = True
-                        self.bot.savePending = True
-                        await asyncio.sleep(100)
-            except asyncio.CancelledError:
-                await self.bot.sendError('maintenancetask', 'cancelled')
-                return
-            except Exception as e:
-                await self.bot.sendError('maintenancetask', str(e))
-            await asyncio.sleep(60)
+    async def isGBFAvailable(self):
+        current_time = self.bot.getJST()
+        req = None
+        if self.bot.maintenance['state'] and current_time < self.bot.maintenance['time']: # before maintenance
+            req = await self.requestGBF()
+            if self.bot.getJST() >= self.bot.maintenance['time']:
+                return False
+        elif self.bot.maintenance['state'] and current_time >= self.bot.maintenance['time'] and (self.bot.maintenance['duration'] == 0 or current_time < self.bot.maintenance['time'] + timedelta(seconds=self.bot.maintenance['duration']*3600+30)): # during maintenance
+            return False
+        elif self.bot.maintenance['state'] and current_time > self.bot.maintenance['time'] + timedelta(seconds=self.bot.maintenance['duration']*3600+30): # after maintenance
+            req = await self.requestGBF()
+            self.bot.maintenance = {"state" : False, "time" : None, "duration" : 0}
+            self.bot.savePending = True
+        else:
+            req = await self.requestGBF()
+
+        if req is not None and req[0].status == 200 and req[1].find("The app is now undergoing") != -1:
+            await self.bot.send('debug', embed=self.bot.buildEmbed(title="Emergency maintenance detected", timestamp=datetime.utcnow(), color=self.color))
+            self.bot.maintenance['time'] = current_time
+            self.bot.maintenance['duration'] = 0
+            self.bot.maintenance['state'] = True
+            self.bot.savePending = True
+            return False
+            
+        return True
 
     async def summontask(self): # summon update task
         while True:
@@ -115,7 +109,7 @@ class GBF_Utility(commands.Cog):
         cog = self.bot.get_cog('Baguette') # secret sauce to access the game
         if cog is None: {'error':''}
 
-        if self.checkMaintenance(): # check for maintenance
+        if not await self.isGBFAvailable(): # check for maintenance
             return {'error':'Game is in maintenance'}
         id = " ".join(target)
         id = self.bot.granblue['gbfgcrew'].get(id.lower(), id) # check if the id is a gbfgcrew
@@ -369,10 +363,6 @@ class GBF_Utility(commands.Cog):
                     d = e - current_time
                     msg = "{} Maintenance ends in **{}**".format(self.bot.getEmote('cog'), self.bot.getTimedeltaStr(d, True))
         return msg
-
-    def checkMaintenance(self):
-        msg = self.maintenanceUpdate()
-        return (msg != "" and "Maintenance starts" not in msg)
 
     def escape(self, s): # escape markdown string
         # add the RLO character before
