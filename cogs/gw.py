@@ -599,7 +599,7 @@ class GW(commands.Cog):
     async def gbfgranking(self, ctx):
         """Post and sort all /gbfg/ crew per contribution"""
         crews = []
-        blacklist = ["677159"]
+        blacklist = ["677159", "147448"]
         for e in self.bot.granblue['gbfgcrew']:
             if self.bot.granblue['gbfgcrew'][e] in crews or self.bot.granblue['gbfgcrew'][e] in blacklist: continue
             crews.append(self.bot.granblue['gbfgcrew'][e])

@@ -117,7 +117,7 @@ class GBF_Utility(commands.Cog):
         try:
             id = int(id)
         except:
-            return {'error':"Invalid name `{}`\nOnly /gbfg/ crews are registered, please input an id instead".format(id)}
+            return {'error':"Invalid name `{}`\nOnly some crews are registered, please input an id instead".format(id)}
         if id < 0 or id >= 10000000:
             return {'error':'Out of range ID'}
         if id in self.badcrewcache: # if already searched (to limit bad requests)
@@ -285,7 +285,8 @@ class GBF_Utility(commands.Cog):
         self.sqllock = True
         conn = sqlite3.connect('summon.sql')
         c = conn.cursor()
-        c.execute('CREATE TABLE players (id int, name text, level int, summon text)')
+        c.execute('CREATE TABLE players (id int, name text)')
+        summonnames = []
         for sid in list(self.bot.gbfids.keys()):
             id = self.bot.gbfids[sid]
             data = await cog.getProfileData(id)
@@ -296,11 +297,15 @@ class GBF_Utility(commands.Cog):
             except: name = None
             if name is not None: # private
                 try:
+                    c.execute("INSERT INTO players VALUES ({},'{}')".format(id, name.replace("'", "''").replace("%", "\%")))
                     summons_res = self.sumre.findall(data)
                     for s in summons_res:
                         sp = s[1].lower().split() # Lvl 000 Name1 Name2 ... NameN
                         sn = " ".join(sp[2:])
-                        c.execute("INSERT INTO players VALUES ({},'{}',{},'{}')".format(id, name.replace("'", "''").replace("%", "\%"), sp[1], sn.replace("'", "''").replace("%", "\%")))
+                        if sn not in summonnames:
+                            summonnames.append(sn)
+                            c.execute('CREATE TABLE `{}` (id int, level int)'.format(sn))
+                        c.execute("INSERT INTO `{}` VALUES ({},{})".format(sn, id, sp[1]))
                 except:
                     pass
             await asyncio.sleep(0.1)
@@ -700,7 +705,7 @@ class GBF_Utility(commands.Cog):
                 level = 0
                 name = " ".join(search)
         name = self.subsum.get(name.lower(), name.lower())
-        self.cursor.execute("SELECT * FROM players WHERE lower(summon) LIKE '{}'".format(name.lower().replace("'", "''").replace("%", "\%")))
+        self.cursor.execute("SELECT * FROM `{}` WHERE level >= {}".format(name.lower(), level))
         data = self.cursor.fetchall()
         random.shuffle(data)
         if len(data) == 0:
@@ -726,11 +731,14 @@ class GBF_Utility(commands.Cog):
 
         history = []
         for u in data:
-            if u[2] >= level and u[1] not in history:
-                history.append(u[1])
+            if u[0] not in history:
+                history.append(u[0])
+                self.cursor.execute("SELECT * FROM players WHERE id == {}".format(u[0]))
+                pname = self.cursor.fetchall()
+                if len(pname) == 0: continue
                 if count < 3:
                     fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':'', 'inline':True})
-                fields[count%3]['value'] += "**{}**▫️[{}](http://game.granbluefantasy.jp/#profile/{})\n".format(u[2], self.escape(u[1]), u[0])
+                fields[count%3]['value'] += "**{}**▫️[{}](http://game.granbluefantasy.jp/#profile/{})\n".format(u[1], self.escape(pname[0][1]), u[0])
                 count += 1
                 if count >= 30:
                     if level > 0: msg = "*Only {} random results shown*.".format(count)
