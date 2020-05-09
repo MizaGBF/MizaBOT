@@ -230,6 +230,7 @@ class General(commands.Cog):
                 return
             except Exception as e:
                 await self.bot.sendError('remindertask', str(e))
+                await asyncio.sleep(200)
             await asyncio.sleep(40)
 
     def isDisabled(): # for decorators

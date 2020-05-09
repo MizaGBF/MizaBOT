@@ -476,20 +476,26 @@ class GBF_Utility(commands.Cog):
         """Post a link to /gbfg/ leechlist collection"""
         await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ Leechlist", description=self.bot.strings["leechlist()"], thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/582191446182985734/unknown.png", color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, name='time', aliases=['st', 'reset'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['time', 'st', 'reset', 'gbf'])
     @commands.cooldown(2, 2, commands.BucketType.guild)
-    async def _time(self, ctx):
-        """Post remaining time to next reset and strike times (if set)
-        Also maintenance and gw times if set"""
+    async def granblue(self, ctx):
+        """Post various Granblue Fantasy informations"""
         current_time = self.bot.getJST()
+        description = "{:} Current Time is **{:02d}:{:02d} JST**".format(self.bot.getEmote('clock'), current_time.hour, current_time.minute)
 
-        title = "{} Current Time: {:02d}:{:02d}".format(self.bot.getEmote('clock'), current_time.hour, current_time.minute)
+        try:
+            cog = self.bot.get_cog('Baguette')
+            v = cog.getCurrentGameversion()
+            if v is not None:
+                description += "\n{} Version is `{}` (`{}`)".format(self.bot.getEmote('cog'), v, cog.versionToDateStr(v))
+        except Exception as e:
+            await self.bot.sendError("getgwstate", str(e))
 
         reset = current_time.replace(hour=5, minute=0, second=0, microsecond=0)
         if current_time.hour >= reset.hour:
             reset += timedelta(days=1)
         d = reset - current_time
-        description = "{} Reset in **{}**".format(self.bot.getEmote('mark'), self.bot.getTimedeltaStr(d))
+        description += "\n{} Reset in **{}**".format(self.bot.getEmote('mark'), self.bot.getTimedeltaStr(d))
 
         id = str(ctx.message.author.guild.id)
         if id in self.bot.st:
@@ -534,7 +540,7 @@ class GBF_Utility(commands.Cog):
         except Exception as e:
             await self.bot.sendError("getnextbuff", str(e))
 
-        await ctx.send(embed=self.bot.buildEmbed(title=title, url="http://game.granbluefantasy.jp/", description=description, color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['maint'])
     @commands.cooldown(2, 2, commands.BucketType.guild)
