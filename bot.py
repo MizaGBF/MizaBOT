@@ -257,6 +257,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
+        self.botversion = "5.58"
         self.running = True
         self.boot_flag = False
         self.starttime = datetime.utcnow() # used to check the uptime
@@ -297,6 +298,7 @@ class Mizabot(commands.Bot):
         self.extra = {} # extra data storage for plug'n'play cogs
         self.on_message_high = {} # on message callback (high priority)
         self.on_message_low = {} # on message callback
+        self.memmonitor = {0, None} # for monitoring the memory
         # load
         self.loadConfig()
         for i in range(0, 100): # try multiple times in case google drive is unresponsive
@@ -306,9 +308,7 @@ class Mizabot(commands.Bot):
                 exit(3)
             time.sleep(20)
         if not self.load(): exit(2) # first loading must success
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description='''MizaBOT version 5.58
-Source code: https://github.com/MizaGBF/MizaBOT.
-Default command prefix is '$', use $setPrefix to change it on your server.''', help_command=MizabotHelp(), owner=self.ids['owner'], max_messages=100)
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\nSource code: https://github.com/MizaGBF/MizaBOT.\nDefault command prefix is '$', use $setPrefix to change it on your server.".format(self.botversion), help_command=MizabotHelp(), owner=self.ids['owner'], max_messages=None)
 
     def loadCog(self, *cog_classes):
         for c in cog_classes:
@@ -786,7 +786,7 @@ async def on_ready(): # when the bot starts or reconnects
         bot.setChannel('gbfglog', 'gbfg_log') # set /gbfg/ lucilius log channel
         bot.setChannel('youlog', 'you_log') # set (you) log channel
         bot.startTasks() # start the tasks
-        await bot.send('debug', embed=bot.buildEmbed(title="{} is Ready".format(bot.user.display_name), description="**Server Count**: {}\n**Servers Pending**: {}\n**Tasks Count**: {}\n**Cogs Loaded**: {}/{}".format(len(bot.guilds), len(bot.newserver['pending']), len(asyncio.all_tasks()), len(bot.cogs), bot.cogn), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
+        await bot.send('debug', embed=bot.buildEmbed(title="{} is Ready".format(bot.user.display_name), description="**Version** {}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}".format(bot.botversion, bot.process.cpu_percent(), bot.process.memory_full_info().uss >> 20, len(asyncio.all_tasks()), len(bot.guilds), len(bot.newserver['pending']), len(bot.cogs), bot.cogn), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
         bot.boot_flag = True
 
 @bot.event

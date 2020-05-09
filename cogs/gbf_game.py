@@ -402,7 +402,6 @@ class GBF_Game(commands.Cog):
                 await self.bot.sendError('setRoll', str(e), 'B')
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color, footer="setRoll <crystal> [single] [ten]"))
-            await self.bot.sendError('setRoll', str(e), 'A')
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['seecrystal', 'seespark'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
