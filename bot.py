@@ -257,7 +257,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "5.58"
+        self.botversion = "5.59"
         self.running = True
         self.boot_flag = False
         self.starttime = datetime.utcnow() # used to check the uptime
@@ -284,6 +284,7 @@ class Mizabot(commands.Bot):
         self.tokens = {} # bot tokens
         self.baguette = {} # secret, config
         self.baguette_save = {} # secret, save
+        self.gbfaccount = {} # gbf bot account
         self.ids = {} # discord ids used by the bot
         self.gbfids = {} # gbf profile ids linked to discord ids
         self.summonlast = None # support summon database last update
@@ -403,6 +404,7 @@ class Mizabot(commands.Bot):
                 self.newserver = data.get('newserver', {'servers':[], 'owners':[], 'pending':{}})
                 self.prefixes = data.get('prefixes', {})
                 self.baguette_save = data.get('baguette_save', {})
+                self.gbfaccount = data.get('gbfaccount', {})
                 self.bot_maintenance = data.get('bot_maintenance', None)
                 if 'maintenance' in data:
                     if data['maintenance'].get('state', False) == True:

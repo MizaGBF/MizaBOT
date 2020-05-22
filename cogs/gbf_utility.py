@@ -16,7 +16,6 @@ class GBF_Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.color = 0x46fc46
-        self.lucilius_guide = []
         self.rankre = re.compile("Rank ([0-9])+")
         self.sumre = re.compile("<div id=\"js-fix-summon([0-9]{2})-name\" class=\"prt-fix-name\" name=\"[A-Za-z'-. ]+\">(Lvl [0-9]+ [A-Za-z'-. ]+)<\/div>")
         self.starre = re.compile("<span class=\"prt-current-npc-name\">\s*(Lvl [0-9]+ [A-Za-z'-.μ ]+)\s*<\/span>")
@@ -711,12 +710,13 @@ class GBF_Utility(commands.Cog):
                 level = 0
                 name = " ".join(search)
         name = self.subsum.get(name.lower(), name.lower())
-        self.cursor.execute("SELECT * FROM `{}` WHERE level >= {}".format(name.lower(), level))
-        data = self.cursor.fetchall()
-        random.shuffle(data)
-        if len(data) == 0:
+        try:
+            self.cursor.execute("SELECT * FROM `{}` WHERE level >= {}".format(name.lower(), level))
+            data = self.cursor.fetchall()
+        except:
             await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="`{}` ▫️ No one has this summon".format(name), footer="Be sure to type the full name", color=self.color))
             return
+        random.shuffle(data)
         msg = ""
         count = 0
         fields = []
@@ -1188,51 +1188,122 @@ class GBF_Utility(commands.Cog):
         delta = target - c
         await ctx.send(embed=self.bot.buildEmbed(title="{} Kore Kara".format(self.bot.getEmote('clock')), description="Release approximately in **{}**".format(self.bot.getTimedeltaStr(delta, True)),  url="https://granbluefantasy.jp/news/index.php", thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
 
+    def getSkillUpValue(self, type, sl): # calculate what's needed to raise a weapon skill level from a given skill level. return a list containing two dicts: first one contains the summary, second contains the details
+        use = {}
+        total = {}
+        if type == 0:
+            if sl >= 5: use['{}'.format(self.bot.getEmote('SR'))] = sl
+            else: use['{}'.format(self.bot.getEmote('R'))] = sl*4
+            total = use
+        elif type == 1:
+            if sl >= 15:
+                use['{} **SL3**'.format(self.bot.getEmote('SSR'))] = sl // 3
+                total['{}'.format(self.bot.getEmote('SSR'))] = use['{} **SL3**'.format(self.bot.getEmote('SSR'))]
+                total['{}'.format(self.bot.getEmote('SR'))] = total['{}'.format(self.bot.getEmote('SSR'))] * 6
+                if sl % 3 == 2:
+                    use['{} **SL2**'.format(self.bot.getEmote('SSR'))] = 1
+                    total['{}'.format(self.bot.getEmote('SR'))] += 2
+                else:
+                    use['{}'.format(self.bot.getEmote('SSR'))] = 1
+                total['{}'.format(self.bot.getEmote('SSR'))] += 1
+            elif sl >= 12:
+                use['{} **SL3**'.format(self.bot.getEmote('SSR'))] = 1
+                total['{}'.format(self.bot.getEmote('SSR'))] = 1
+                total['{}'.format(self.bot.getEmote('SR'))] = 6
+            elif sl == 11:
+                use['{} **SL2**'.format(self.bot.getEmote('SSR'))] = 1
+                use['{}'.format(self.bot.getEmote('SR'))] = 2
+                total['{}'.format(self.bot.getEmote('SSR'))] = 1
+                total['{}'.format(self.bot.getEmote('SR'))] = 4
+            elif sl >= 6:
+                use['{} **SL2**'.format(self.bot.getEmote('SSR'))] = 1
+                total['{}'.format(self.bot.getEmote('SSR'))] = 1
+                total['{}'.format(self.bot.getEmote('SR'))] = 2
+            elif sl == 5:
+                use['{}'.format(self.bot.getEmote('SSR'))] = 1
+                total = use
+            else:
+                use['{}'.format(self.bot.getEmote('SR'))] = sl * 2
+                total = use
+        elif type == 2:
+            if sl == 19:
+                use['{} **SL3**'.format(self.bot.getEmote('SSR'))] = 10
+                use['{} **SL2**'.format(self.bot.getEmote('SSR'))] = 1
+                total['{}'.format(self.bot.getEmote('SSR'))] = 11
+                total['{}'.format(self.bot.getEmote('SR'))] = 62
+            elif sl == 18:
+                use['{} **SL3**'.format(self.bot.getEmote('SSR'))] = 10
+                total['{}'.format(self.bot.getEmote('SSR'))] = 10
+                total['{}'.format(self.bot.getEmote('SR'))] = 60
+            elif sl == 17:
+                use['{} **SL3**'.format(self.bot.getEmote('SSR'))] = 9
+                use['{} **SL2**'.format(self.bot.getEmote('SSR'))] = 1
+                total['{}'.format(self.bot.getEmote('SSR'))] = 10
+                total['{}'.format(self.bot.getEmote('SR'))] = 54
+            elif sl == 16:
+                use['{} **SL3**'.format(self.bot.getEmote('SSR'))] = 9
+                total['{}'.format(self.bot.getEmote('SSR'))] = 9
+                total['{}'.format(self.bot.getEmote('SR'))] = 54
+            elif sl == 15:
+                use['{} **SL3**'.format(self.bot.getEmote('SSR'))] = 8
+                use['{} **SL2**'.format(self.bot.getEmote('SSR'))] = 1
+                total['{}'.format(self.bot.getEmote('SSR'))] = 9
+                total['{}'.format(self.bot.getEmote('SR'))] = 48
+            else:
+                sl3 = sl // 3
+                total['{}'.format(self.bot.getEmote('SSR'))] = 1
+                if sl3 > 0:
+                    use['{} **SL3**'.format(self.bot.getEmote('SSR'))] = sl3
+                    total['{}'.format(self.bot.getEmote('SSR'))] += sl3
+                    total['{}'.format(self.bot.getEmote('SR'))] = sl3 * 6
+                if sl % 3 == 2:
+                    use['{} **SL2**'.format(self.bot.getEmote('SSR'))] = 1
+                    total['{}'.format(self.bot.getEmote('SR'))] = 2 + total.get('{}'.format(self.bot.getEmote('SR')), 0)
+                else:
+                    use['{}'.format(self.bot.getEmote('SSR'))] = 1
+        return [use, total]
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['sl', 'skillup'])
     @commands.cooldown(2, 5, commands.BucketType.user)
-    async def skillLevel(self, ctx, type : str, level : int):
+    async def skillLevel(self, ctx, type : str, current : int, next : int = -1):
         """Calculate what you need for skill up
-        type: sr, ssr, magna, omega, bahamut, baha, ultima, serap, seraphic, opus
-        level: your weapon current level"""
+        type: sr, ssr, magna, omega, astral, ex, xeno, bahamut, baha, ultima, serap, seraphic, draconic, draco, opus
+        current: your weapon current skill level
+        next: your targeted skill level"""
+        types = {'sr':0, 'ssr':1, 'magna':1, 'omega':1, 'astral':1, 'ex':1, 'xeno':1, 'bahamut':2, 'baha':2, 'ultima':2, 'seraph':2, 'seraphic':2, 'draconic':2, 'draco':2, 'opus':2}
         type = type.lower()
-        try:
-            if level < 1: raise Exception("Current level can't be negative")
-            if type == "sr":
-                if level >= 15: raise Exception("Can't skill up a {} weapon **SL{}**".format(self.bot.getEmote('SR'), level))
-                if level >= 5:
-                    msg = "**{}** {} to reach **SL{}**".format(level, self.bot.getEmote('SR'), level+1)
-                else:
-                    msg = "**{}** {} or **{}** {} to reach **SL{}**".format(level, self.bot.getEmote('SR'), level*4, self.bot.getEmote('R'), level+1)
-            elif type in ["ssr", "magna", "omega"]:
-                if level >= 20: raise Exception("Can't skill up a {} weapon **SL{}**".format(self.bot.getEmote('SSR'), level))
-                if level >= 15: 
-                    msg = "**{}** {} to reach **SL{}**".format(level, self.bot.getEmote('SSR'), level+1)
-                elif level > 10: 
-                    msg = "**2** {} and **{}** {} to reach **SL{}**".format(self.bot.getEmote('SSR'), (level-10)*2, self.bot.getEmote('SR'), level+1)
-                elif level == 10: 
-                    msg = "**2** {} to reach **SL{}**".format(self.bot.getEmote('SSR'), level+1)
-                elif level > 5: 
-                    msg = "**1** {} and **{}** {} to reach **SL{}**".format(self.bot.getEmote('SSR'), (level-5)*2, self.bot.getEmote('SR'), level+1)
-                elif level == 5: 
-                    msg = "**1** {} to reach **SL{}**".format(self.bot.getEmote('SSR'), level+1)
-                else:
-                    msg = "**{}** {} to reach **SL{}**".format(level*2, self.bot.getEmote('SR'), level+1)
-            elif type in ["bahamut", "baha", "ultima", "seraph", "seraphic", "opus"]:
-                if level >= 20: raise Exception("Can't skill up a {} weapon **SL{}**".format(self.bot.getEmote('SSR'), level))
-                if level == 19: 
-                    msg = "**32** {} or **8** {} SL4 to reach **SL{}**".format(self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), level+1)
-                elif level == 18: 
-                    msg = "**30** {} or **6** {} SL4 and **2** {} SL3 to reach **SL{}**".format(self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), level+1)
-                elif level == 17: 
-                    msg = "**29** {} or **5** {} SL4 and **3** {} SL3 to reach **SL{}**".format(self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), level+1)
-                elif level == 16: 
-                    msg = "**27** {} or **6** {} SL4 and **1** {} SL3 to reach **SL{}**".format(self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), level+1)
-                elif level == 15: 
-                    msg = "**25** {} or **4** {} SL4 and **3** {} SL3 to reach **SL{}**".format(self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), self.bot.getEmote('SSR'), level+1)
-                else:
-                    msg = "**{}** {} to reach **SL{}**".format(level, self.bot.getEmote('SSR'), level+1)
-            else:
-                raise Exception("Unknown type `{}`".format(type))
-            await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg,  url="https://gbf.wiki/Raising_Weapon_Skills", color=self.color))
-        except Exception as e:
-            await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=str(e),  url="https://gbf.wiki/Raising_Weapon_Skills", color=self.color))
+        value = types.get(type, -1)
+        if value == -1:
+            value = 1
+            type = 'ssr ({} was invalid)'.format(type)
+        if next < current: next = current + 1
+        if current < 1:
+            await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description="Current level can't be lesser than 1", url="https://gbf.wiki/Raising_Weapon_Skills", color=self.color))
+            return
+        if current >= 20 or (current >= 15 and value == 0):
+            await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description="Current level is too high", url="https://gbf.wiki/Raising_Weapon_Skills", color=self.color))
+            return
+        while next > 20 or (next > 15 and value == 0):
+            next -= 1
+        msg = ""
+        total = {}
+        while current < next:
+            res = self.getSkillUpValue(value, current)
+            current += 1
+            msg += "To **SL{}**▫️".format(current)
+            first = True
+            for k in res[0]:
+                if first: first = False
+                else: msg += ", "
+                msg += "{} {}".format(res[0][k], k)
+            msg += "\n"
+            # add total
+            for k in res[1]:
+                total[k] = total.get(k, 0) + res[1][k]
+        msg += "\n**Total**▫️"
+        first = True
+        for k in total:
+            if first: first = False
+            else: msg += ", "
+            msg += "{} {}".format(total[k], k)
+        await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg, url="https://gbf.wiki/Raising_Weapon_Skills", footer="type: {}".format(type), color=self.color))

@@ -85,7 +85,7 @@ class GBF_Game(commands.Cog):
             x += 1
         return result
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['1'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isAuthorized()
     @commands.cooldown(60, 60, commands.BucketType.guild)
     async def single(self, ctx, double : str = ""):
@@ -102,7 +102,7 @@ class GBF_Game(commands.Cog):
 
         await ctx.send(embed=self.bot.buildEmbed(title="{} did a single roll".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['10'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isAuthorized()
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def ten(self, ctx, double : str = ""):
@@ -123,7 +123,7 @@ class GBF_Game(commands.Cog):
 
         await ctx.send(embed=self.bot.buildEmbed(title="{} did ten rolls".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['300'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isAuthorized()
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def spark(self, ctx, double : str = ""):
