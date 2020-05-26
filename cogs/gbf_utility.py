@@ -1202,10 +1202,11 @@ class GBF_Utility(commands.Cog):
                 total['{}'.format(self.bot.getEmote('SR'))] = total['{}'.format(self.bot.getEmote('SSR'))] * 6
                 if sl % 3 == 2:
                     use['{} **SL2**'.format(self.bot.getEmote('SSR'))] = 1
+                    total['{}'.format(self.bot.getEmote('SSR'))] += 1
                     total['{}'.format(self.bot.getEmote('SR'))] += 2
-                else:
+                elif sl % 3 == 1:
                     use['{}'.format(self.bot.getEmote('SSR'))] = 1
-                total['{}'.format(self.bot.getEmote('SSR'))] += 1
+                    total['{}'.format(self.bot.getEmote('SSR'))] += 1
             elif sl >= 12:
                 use['{} **SL3**'.format(self.bot.getEmote('SSR'))] = 1
                 total['{}'.format(self.bot.getEmote('SSR'))] = 1
@@ -1251,16 +1252,18 @@ class GBF_Utility(commands.Cog):
                 total['{}'.format(self.bot.getEmote('SR'))] = 48
             else:
                 sl3 = sl // 3
-                total['{}'.format(self.bot.getEmote('SSR'))] = 1
+                total['{}'.format(self.bot.getEmote('SSR'))] = 0
                 if sl3 > 0:
                     use['{} **SL3**'.format(self.bot.getEmote('SSR'))] = sl3
                     total['{}'.format(self.bot.getEmote('SSR'))] += sl3
                     total['{}'.format(self.bot.getEmote('SR'))] = sl3 * 6
                 if sl % 3 == 2:
                     use['{} **SL2**'.format(self.bot.getEmote('SSR'))] = 1
+                    total['{}'.format(self.bot.getEmote('SSR'))] += 2
                     total['{}'.format(self.bot.getEmote('SR'))] = 2 + total.get('{}'.format(self.bot.getEmote('SR')), 0)
-                else:
+                elif sl % 3 == 1:
                     use['{}'.format(self.bot.getEmote('SSR'))] = 1
+                    total['{}'.format(self.bot.getEmote('SSR'))] += 1
         return [use, total]
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['sl', 'skillup'])
