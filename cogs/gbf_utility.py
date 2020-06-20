@@ -773,7 +773,7 @@ class GBF_Utility(commands.Cog):
                     await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(ctx.author.display_name), footer="setProfile <id>", color=self.color))
                     return
                 id = self.bot.gbfids[str(ctx.author.id)]
-            elif target.startswith('<@') or  and target.endswith('>'):
+            elif target.startswith('<@') and target.endswith('>'):
                 try:
                     if target[2] == "!": target = int(target[3:-1])
                     else: target = int(target[2:-1])
