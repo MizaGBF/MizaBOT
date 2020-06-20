@@ -67,7 +67,7 @@ class GBF_Utility(commands.Cog):
                 uptime = self.bot.uptime(False)
                 if self.bot.summonlast is None: delta = None
                 else: delta = self.bot.getJST() - self.bot.summonlast
-                if uptime.seconds > 3600 and uptime.seconds < 30000 and (delta is None or delta.days >= 4):
+                if uptime.seconds > 3600 and uptime.seconds < 30000 and (delta is None or delta.days >= 5):
                     await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="summontask()", description="auto update started", timestamp=datetime.utcnow()))
                     await self.updateSummon()
                     await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="summontask()", description="auto update ended", timestamp=datetime.utcnow()))
@@ -116,6 +116,7 @@ class GBF_Utility(commands.Cog):
         try:
             id = int(id)
         except:
+            if id == "": return {'error':"Please input the id or the name of the crew\nOnly some crews are registered, please input an id instead"}
             return {'error':"Invalid name `{}`\nOnly some crews are registered, please input an id instead".format(id)}
         if id < 0 or id >= 10000000:
             return {'error':'Out of range ID'}
@@ -772,9 +773,10 @@ class GBF_Utility(commands.Cog):
                     await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(ctx.author.display_name), footer="setProfile <id>", color=self.color))
                     return
                 id = self.bot.gbfids[str(ctx.author.id)]
-            elif target.startswith('<@!') and target.endswith('>'):
+            elif target.startswith('<@') or  and target.endswith('>'):
                 try:
-                    target = int(target[3:-1])
+                    if target[2] == "!": target = int(target[3:-1])
+                    else: target = int(target[2:-1])
                     member = ctx.guild.get_member(target)
                     if str(member.id) not in self.bot.gbfids:
                         await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), footer="setProfile <id>", color=self.color))
@@ -848,7 +850,7 @@ class GBF_Utility(commands.Cog):
 
                 # get the last gw score
                 cog = self.bot.get_cog('GW')
-                scores = ['', '']
+                scores = ""
                 if cog is not None:
                     pdata = await cog.searchGWDBPlayer(ctx, id, 2)
                     if pdata is not None:
@@ -856,9 +858,9 @@ class GBF_Utility(commands.Cog):
                             if pdata[n] is not None and 'result' in pdata[n] and len(pdata[n]['result']) == 1:
                                 try:
                                     if pdata[n]['result'][0][0] is None:
-                                        scores[n] = "{} GW**{}** ▫️ **{:,}** honors ".format(self.bot.getEmote('gw'), pdata[n].get('gw', ''), pdata[n]['result'][0][3])
+                                        scores += "{} GW**{}** ▫️ **{:,}** honors\n".format(self.bot.getEmote('gw'), pdata[n].get('gw', ''), pdata[n]['result'][0][3])
                                     else:
-                                        scores[n] = "{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors ".format(self.bot.getEmote('gw'), pdata[n].get('gw', ''), pdata[n]['result'][0][0], pdata[n]['result'][0][3])
+                                        scores += "{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors\n".format(self.bot.getEmote('gw'), pdata[n].get('gw', ''), pdata[n]['result'][0][0], pdata[n]['result'][0][3])
                                 except:
                                     pass
 
@@ -907,7 +909,7 @@ class GBF_Utility(commands.Cog):
                 if trophy == "No Trophy Displayed": title = "\u202d{} **{}**".format(self.bot.getEmote(rarity), name)
                 else: title = "\u202d{} **{}**▫️{}".format(self.bot.getEmote(rarity), name, trophy)
 
-                await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}{}\n{} Crew ▫️ {}\n{}\n{}".format(rank, comment, self.bot.getEmote('gw'), crew, scores[0], scores[1]), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}{}\n{} Crew ▫️ {}\n{}".format(rank, comment, self.bot.getEmote('gw'), crew, scores), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             else:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile is private", url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
                 return
@@ -1288,25 +1290,31 @@ class GBF_Utility(commands.Cog):
             return
         while next > 20 or (next > 15 and value == 0):
             next -= 1
-        msg = ""
         total = {}
-        while current < next:
+        count = 0
+        divide = next - current + 1
+        if divide < 6: divide = 6
+        else: divide = divide // 2
+        fields = []
+        while current < next: 
+            if count % divide == 0: fields.append({'name':'Page {}'.format(self.bot.getEmote('{}'.format(len(fields)+1))), 'value':''})
+            count += 1
             res = self.getSkillUpValue(value, current)
             current += 1
-            msg += "To **SL{}**▫️".format(current)
+            fields[-1]['value'] += "To **SL{}**▫️".format(current)
             first = True
             for k in res[0]:
                 if first: first = False
-                else: msg += ", "
-                msg += "{} {}".format(res[0][k], k)
-            msg += "\n"
+                else: fields[-1]['value'] += ", "
+                fields[-1]['value'] += "{} {}".format(res[0][k], k)
+            fields[-1]['value'] += "\n"
             # add total
             for k in res[1]:
                 total[k] = total.get(k, 0) + res[1][k]
-        msg += "\n**Total**▫️"
+        msg = "**Total**▫️"
         first = True
         for k in total:
             if first: first = False
             else: msg += ", "
             msg += "{} {}".format(total[k], k)
-        await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg, url="https://gbf.wiki/Raising_Weapon_Skills", footer="type: {}".format(type), color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg, url="https://gbf.wiki/Raising_Weapon_Skills", fields=fields, inline=True, footer="type: {}".format(type), color=self.color))

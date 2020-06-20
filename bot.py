@@ -257,7 +257,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "5.59"
+        self.botversion = "5.60"
         self.running = True
         self.boot_flag = False
         self.starttime = datetime.utcnow() # used to check the uptime
