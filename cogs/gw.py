@@ -271,13 +271,13 @@ class GW(commands.Cog):
             it = ['Day 5', 'Day 4', 'Day 3', 'Day 2', 'Day 1']
             for i in range(1, len(it)): # loop to not copy paste this 5 more times
                 if current_time > self.bot.gw['dates'][it[i]]:
-                    d = self.bot.gw['dates'][it[i-1]] - current_time
-                    if d < timedelta(seconds=25200): return None
+                    if self.bot.gw['dates'][it[i-1]] - current_time < timedelta(seconds=25200): return None
                     return self.bot.gw['dates'][it[i]] + timedelta(seconds=61200) - current_time
             return None
         elif current_time > self.bot.gw['dates']["Interlude"]:
             return self.bot.gw['dates']["Day 1"] - current_time
         elif current_time > self.bot.gw['dates']["Preliminaries"]:
+            if self.bot.gw['dates']["Interlude"] - current_time < timedelta(seconds=25200): return None
             return self.bot.gw['dates']["Preliminaries"] + timedelta(seconds=104400) - current_time
         return None
 
@@ -500,11 +500,11 @@ class GW(commands.Cog):
                 if em is None: em = ""
                 current_time_left = self.getGWTimeLeft()
                 if current_time_left is None:
-                    await ctx.send(embed=self.bot.buildEmbed(title="Estimation unavailable", color=self.color))
+                    await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Estimations are currently unavailable in {}", inline=True, color=self.color))
                     return
                 elif current_time_left.days > 0 or current_time_left.seconds > 21900:
                     current_time_left += timedelta(seconds=21900)
-                    await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Estimations available in {}".format(self.bot.getTimedeltaStr(current_time_left)), inline=True, color=self.color))
+                    await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Estimations available in **{}**".format(self.bot.getTimedeltaStr(current_time_left)), inline=True, color=self.color))
                     return
                 time_left = self.getGWTimeLeft(self.bot.gw['ranking'][4])
                 time_modifier = (1.1 + 1.2 * (time_left.seconds // 3600) / 10)
