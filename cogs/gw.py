@@ -503,7 +503,7 @@ class GW(commands.Cog):
                     await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Estimations are currently unavailable", inline=True, color=self.color))
                     return
                 elif current_time_left.days > 0 or current_time_left.seconds > 21900:
-                    current_time_left += timedelta(seconds=21900)
+                    current_time_left -= timedelta(seconds=21900)
                     await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Estimations available in **{}**".format(self.bot.getTimedeltaStr(current_time_left)), inline=True, color=self.color))
                     return
                 time_left = self.getGWTimeLeft(self.bot.gw['ranking'][4])
