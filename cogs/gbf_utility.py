@@ -427,7 +427,7 @@ class GBF_Utility(commands.Cog):
                     async with session.get(url) as r:
                         if r.status != 200:
                             raise Exception("HTTP Error 404: Not Found")
-                await ctx.send(embed=self.bot.buildEmbed(title="{} search result".format(" ".join(terms)), description="Click here :point_right: {}".format(url), color=self.color))
+                await ctx.send(url)
             except Exception as e:
                 if str(e) != "HTTP Error 404: Not Found":
                     await self.bot.sendError("wiki", str(e))
