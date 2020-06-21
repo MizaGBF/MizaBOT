@@ -496,6 +496,8 @@ class GW(commands.Cog):
             if self.bot.gw['state'] == False or self.bot.getJST() < self.bot.gw['dates']["Preliminaries"] or self.bot.gw['ranking'] is None:
                 await ctx.send(embed=self.bot.buildEmbed(title="Estimation unavailable", color=self.color))
             else:
+                em = self.bot.getEmote(self.bot.gw.get('element', ''))
+                if em is None: em = ""
                 current_time_left = self.getGWTimeLeft()
                 if current_time_left is None:
                     await ctx.send(embed=self.bot.buildEmbed(title="Estimation unavailable", color=self.color))
@@ -546,8 +548,6 @@ class GW(commands.Cog):
                                 fields[x]['value'] += "**#{}K** \▫️ {} to {}".format(int(c)//1000, mini, maxi)
                             fields[x]['value'] += '\n'
                         
-                em = self.bot.getEmote(self.bot.gw.get('element', ''))
-                if em is None: em = ""
                 await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Time left: **{}**\nThis is a simple estimation, take it with a grain of salt.".format(self.bot.getTimedeltaStr(current_time_left)), fields=fields, footer="Last Update ▫️ {:%a. %m/%d %H:%M} JST ▫️ Update on minute 5, 25 and 45".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
         except Exception as e:
             await self.bot.sendError("estimation", str(e))
