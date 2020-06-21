@@ -1,5 +1,5 @@
 # MizaBOT  
-* [Granblue Fantasy](http://game.granbluefantasy.jp) Discord Bot used by the /gbfg/ server.  
+* [Granblue Fantasy](http://game.granbluefantasy.jp) Discord Bot.  
 #### Requirements  
 * Python 3.8.  
 * [discord.py](https://github.com/Rapptz/discord.py) (formerly the rewrite branch).  
