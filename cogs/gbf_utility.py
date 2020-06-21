@@ -125,7 +125,7 @@ class GBF_Utility(commands.Cog):
 
         crew = {'scores':[], 'id':id}
         if id in self.crewcache: # public crews are stored until next reboot (to limit the request amount)
-            return self.crewcache[id]
+            crew = self.crewcache[id]
         else:
             for i in range(0, 4): # for each page (page 0 being the crew page, 1 to 3 being the crew page
                 get = cog.requestCrew(id, i)
@@ -159,6 +159,12 @@ class GBF_Utility(commands.Cog):
                             crew['total_rank'] += int(p['level'])
                             crew['player'].append({'id':p['id'], 'name':su.unescape(p['name']), 'level':p['level'], 'is_leader':p['is_leader'], 'member_position':p['member_position'], 'honor':None}) # honor is a placeholder
 
+            # prepare the member list
+            fields = []
+            if not crew['private']:
+                crew['average'] = round(crew['total_rank'] / (len(crew['player']) * 1.0))
+            if not crew['private']: self.crewcache[id] = crew # only cache public crews
+
         # get the last gw score
         cog = self.bot.get_cog('GW')
         if cog is not None:
@@ -176,12 +182,6 @@ class GBF_Utility(commands.Cog):
                                     crew['scores'].append("{} GW**{}** ▫️ {} ▫️ **{:,}** honors ".format(self.bot.getEmote('gw'), data[n].get('gw', ''), possible[ps], data[n]['result'][0][ps]))
                                     break
 
-        # prepare the member list
-        fields = []
-        if not crew['private']:
-            crew['average'] = round(crew['total_rank'] / (len(crew['player']) * 1.0))
-
-        if not crew['private']: self.crewcache[id] = crew # only cache public crews
         return crew
 
     def honor(self, h): # convert honor number to a shorter string version

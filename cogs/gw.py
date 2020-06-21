@@ -261,6 +261,26 @@ class GW(commands.Cog):
         else:
             return ""
 
+    def getGWTimeLeft(self, current_time = None):
+        if self.bot.gw['state'] == False:
+            return None
+        if current_time is None: current_time = self.bot.getJST()
+        if current_time < self.bot.gw['dates']["Preliminaries"] or current_time >= self.bot.gw['dates']["Day 5"]:
+            return None
+        elif current_time > self.bot.gw['dates']["Day 1"]:
+            it = ['Day 5', 'Day 4', 'Day 3', 'Day 2', 'Day 1']
+            for i in range(1, len(it)): # loop to not copy paste this 5 more times
+                if current_time > self.bot.gw['dates'][it[i]]:
+                    d = self.bot.gw['dates'][it[i-1]] - current_time
+                    if d < timedelta(seconds=25200): return None
+                    return self.bot.gw['dates'][it[i]] + timedelta(seconds=61200) - current_time
+            return None
+        elif current_time > self.bot.gw['dates']["Interlude"]:
+            return self.bot.gw['dates']["Day 1"] - current_time
+        elif current_time > self.bot.gw['dates']["Preliminaries"]:
+            return self.bot.gw['dates']["Preliminaries"] + timedelta(seconds=104400) - current_time
+        return None
+
     def isGWRunning(self): # return True if a guild war is on going
         if self.bot.gw['state'] == True:
             current_time = self.bot.getJST()
@@ -442,49 +462,95 @@ class GW(commands.Cog):
                 await ctx.send(embed=self.bot.buildEmbed(title="Ranking unavailable", color=self.color))
             else:
                 fields = [{'name':'**Crew Ranking**', 'value':''}, {'name':'**Player Ranking**', 'value':''}]
-                for c in self.bot.gw['ranking'][0]:
-                    if int(c) < 1000:
-                        fields[0]['value'] += "**#{:}** \▫️ {:,}".format(c, self.bot.gw['ranking'][0][c])
-                    elif int(c) % 1000 != 0:
-                        fields[0]['value'] += "**#{:,}.{:,}K** \▫️ {:,}".format(int(c)//1000, (int(c)%1000)//100, self.bot.gw['ranking'][0][c])
-                    else:
-                        fields[0]['value'] += "**#{:,}K** \▫️ {:,}".format(int(c)//1000, self.bot.gw['ranking'][0][c])
-                    if c in self.bot.gw['ranking'][2]:
-                        if self.bot.gw['ranking'][2][c] > 1000000000:
-                            fields[0]['value'] += " \▫️  {:,.1f}B/min".format(self.bot.gw['ranking'][2][c]/1000000000)
-                        elif self.bot.gw['ranking'][2][c] > 1000000:
-                            fields[0]['value'] += " \▫️  {:,.1f}M/min".format(self.bot.gw['ranking'][2][c]/1000000)
-                        elif self.bot.gw['ranking'][2][c] > 1000:
-                            fields[0]['value'] += " \▫️  {:,.1f}K/min".format(self.bot.gw['ranking'][2][c]/1000)
-                        elif self.bot.gw['ranking'][2][c] > 0:
-                            fields[0]['value'] += " \▫️  {:,.1f}/min".format(self.bot.gw['ranking'][2][c])
-                    fields[0]['value'] += "\n"
-                if fields[0]['value'] == '': fields[0]['value'] = 'Unavailable'
-
-                for c in self.bot.gw['ranking'][1]:
-                    if int(c) < 1000:
-                        fields[1]['value'] += "**#{:}** \▫️ {:,}".format(c, self.bot.gw['ranking'][1][c])
-                    elif int(c) % 1000 != 0:
-                        fields[1]['value'] += "**#{:,}.{:,}K** \▫️ {:,}".format(int(c)//1000, (int(c)%1000)//100, self.bot.gw['ranking'][1][c])
-                    else:
-                        fields[1]['value'] += "**#{:,}K** \▫️ {:,}".format(int(c)//1000, self.bot.gw['ranking'][1][c])
-                    if c in self.bot.gw['ranking'][3]:
-                        if self.bot.gw['ranking'][3][c] > 1000000000:
-                            fields[1]['value'] += " \▫️  {:,.1f}B/min".format(self.bot.gw['ranking'][3][c]/1000000000)
-                        elif self.bot.gw['ranking'][3][c] > 1000000:
-                            fields[1]['value'] += " \▫️  {:,.1f}M/min".format(self.bot.gw['ranking'][3][c]/1000000)
-                        elif self.bot.gw['ranking'][3][c] > 1000:
-                            fields[1]['value'] += " \▫️  {:,.1f}K/min".format(self.bot.gw['ranking'][3][c]/1000)
-                        elif self.bot.gw['ranking'][3][c] > 0:
-                            fields[1]['value'] += " \▫️  {:,.1f}/min".format(self.bot.gw['ranking'][3][c])
-                    fields[1]['value'] += "\n"
-                if fields[1]['value'] == '': fields[1]['value'] = 'Unavailable'
+                for x in [0, 1]:
+                    for c in self.bot.gw['ranking'][x]:
+                        if int(c) < 1000:
+                            fields[x]['value'] += "**#{:}** \▫️ {:,}".format(c, self.bot.gw['ranking'][x][c])
+                        elif int(c) % 1000 != 0:
+                            fields[x]['value'] += "**#{:,}.{:,}K** \▫️ {:,}".format(int(c)//1000, (int(c)%1000)//100, self.bot.gw['ranking'][x][c])
+                        else:
+                            fields[x]['value'] += "**#{:,}K** \▫️ {:,}".format(int(c)//1000, self.bot.gw['ranking'][x][c])
+                        if c in self.bot.gw['ranking'][2+x]:
+                            if self.bot.gw['ranking'][2+x][c] > 1000000000:
+                                fields[x]['value'] += " \▫️  {:,.1f}B/min".format(self.bot.gw['ranking'][2+x][c]/1000000000)
+                            elif self.bot.gw['ranking'][2+x][c] > 1000000:
+                                fields[x]['value'] += " \▫️  {:,.1f}M/min".format(self.bot.gw['ranking'][2+x][c]/1000000)
+                            elif self.bot.gw['ranking'][2+x][c] > 1000:
+                                fields[x]['value'] += " \▫️  {:,.1f}K/min".format(self.bot.gw['ranking'][2+x][c]/1000)
+                            elif self.bot.gw['ranking'][2+x][c] > 0:
+                                fields[x]['value'] += " \▫️  {:,.1f}/min".format(self.bot.gw['ranking'][2+x][c])
+                        fields[x]['value'] += "\n"
+                    if fields[x]['value'] == '': fields[0]['value'] = 'Unavailable'
 
                 em = self.bot.getEmote(self.bot.gw.get('element', ''))
                 if em is None: em = ""
                 await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), fields=fields, footer="Last Update ▫️ {:%a. %m/%d %H:%M} JST ▫️ Update on minute 5, 25 and 45".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
         except Exception as e:
             await self.bot.sendError("ranking", str(e))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['estimate', 'estim'])
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def estimation(self, ctx):
+        """Estimate the GW ranking at the end of current day"""
+        try:
+            if self.bot.gw['state'] == False or self.bot.getJST() < self.bot.gw['dates']["Preliminaries"] or self.bot.gw['ranking'] is None:
+                await ctx.send(embed=self.bot.buildEmbed(title="Estimation unavailable", color=self.color))
+            else:
+                current_time_left = self.getGWTimeLeft()
+                if current_time_left is None:
+                    await ctx.send(embed=self.bot.buildEmbed(title="Estimation unavailable", color=self.color))
+                    return
+                elif current_time_left.days > 0 or current_time_left.seconds > 21900:
+                    current_time_left += timedelta(seconds=21900)
+                    await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Estimations available in {}".format(self.bot.getTimedeltaStr(current_time_left)), inline=True, color=self.color))
+                    return
+                time_left = self.getGWTimeLeft(self.bot.gw['ranking'][4])
+                time_modifier = (1.1 + 1.2 * (time_left.seconds // 3600) / 10)
+                fields = [{'name':'**Crew Ranking**', 'value':''}, {'name':'**Player Ranking**', 'value':''}]
+                for x in [0, 1]:
+                    for c in self.bot.gw['ranking'][x]:
+                        if c in self.bot.gw['ranking'][2+x]:
+                            mini = self.bot.gw['ranking'][x][c] + self.bot.gw['ranking'][2+x][c] * time_left.seconds / 60
+                            if mini > 1000000000: 
+                                mini = mini / 1000000000
+                                if mini < 10: mini = "{:,.3f}B".format(mini)
+                                else: mini = "{:,.2f}B".format(mini)
+                            elif mini > 1000000:
+                                mini = mini / 1000000
+                                if mini < 10: mini = "{:,.2f}M".format(mini)
+                                else: mini = "{:,.1f}M".format(mini)
+                            elif mini > 1000:
+                                mini = mini / 1000
+                                if mini < 10: mini = "{:,.2f}K".format(mini)
+                                else: mini = "{:,.1f}K".format(mini)
+
+                            maxi = self.bot.gw['ranking'][x][c] + time_modifier * self.bot.gw['ranking'][2+x][c] * time_left.seconds / 60
+                            if maxi > 1000000000: 
+                                maxi = maxi / 1000000000
+                                if maxi < 10: maxi = "{:,.3f}B".format(maxi)
+                                else: maxi = "{:,.2f}B".format(maxi)
+                            elif maxi > 1000000:
+                                maxi = maxi / 1000000
+                                if maxi < 10: maxi = "{:,.2f}M".format(maxi)
+                                else: maxi = "{:,.1f}M".format(maxi)
+                            elif maxi > 1000:
+                                maxi = maxi / 1000
+                                if maxi < 10: maxi = "{:,.2f}K".format(maxi)
+                                else: maxi = "{:,.1f}K".format(maxi)
+
+                            if int(c) < 1000:
+                                fields[x]['value'] += "**#{}** \▫️ {} to {}".format(c, mini, maxi)
+                            elif int(c) % 1000 != 0:
+                                fields[x]['value'] += "**#{}.{}K** \▫️ {} to {}".format(int(c)//1000, (int(c)%1000)//100, mini, maxi)
+                            else:
+                                fields[x]['value'] += "**#{}K** \▫️ {} to {}".format(int(c)//1000, mini, maxi)
+                            fields[x]['value'] += '\n'
+                        
+                em = self.bot.getEmote(self.bot.gw.get('element', ''))
+                if em is None: em = ""
+                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Time left: **{}**\nThis is a simple estimation, take it with a grain of salt.".format(self.bot.getTimedeltaStr(current_time_left)), fields=fields, footer="Last Update ▫️ {:%a. %m/%d %H:%M} JST ▫️ Update on minute 5, 25 and 45".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
+        except Exception as e:
+            await self.bot.sendError("estimation", str(e))
 
     async def loadGWDB(self):
         self.loadingdb = True
