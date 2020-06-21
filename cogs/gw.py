@@ -479,7 +479,7 @@ class GW(commands.Cog):
                                 fields[x]['value'] += " \▫️  {:,.1f}K/min".format(self.bot.gw['ranking'][2+x][c]/1000)
                             elif self.bot.gw['ranking'][2+x][c] > 0:
                                 fields[x]['value'] += " \▫️  {:,.1f}/min".format(self.bot.gw['ranking'][2+x][c])
-                        fields[x]['value'] += "\n"
+                            fields[x]['value'] += "\n"
                     if fields[x]['value'] == '': fields[0]['value'] = 'Unavailable'
 
                 em = self.bot.getEmote(self.bot.gw.get('element', ''))
@@ -511,7 +511,7 @@ class GW(commands.Cog):
                 fields = [{'name':'**Crew Ranking**', 'value':''}, {'name':'**Player Ranking**', 'value':''}]
                 for x in [0, 1]:
                     for c in self.bot.gw['ranking'][x]:
-                        if c in self.bot.gw['ranking'][2+x]:
+                        if c in self.bot.gw['ranking'][2+x] and self.bot.gw['ranking'][2+x][c] > 0:
                             mini = self.bot.gw['ranking'][x][c] + self.bot.gw['ranking'][2+x][c] * time_left.seconds / 60
                             if mini > 1000000000: 
                                 mini = mini / 1000000000
