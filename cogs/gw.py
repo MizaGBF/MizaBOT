@@ -500,7 +500,7 @@ class GW(commands.Cog):
                 if em is None: em = ""
                 current_time_left = self.getGWTimeLeft()
                 if current_time_left is None:
-                    await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Estimations are currently unavailable in {}", inline=True, color=self.color))
+                    await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Estimations are currently unavailable", inline=True, color=self.color))
                     return
                 elif current_time_left.days > 0 or current_time_left.seconds > 21900:
                     current_time_left += timedelta(seconds=21900)
