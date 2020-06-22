@@ -488,7 +488,7 @@ class GW(commands.Cog):
         except Exception as e:
             await self.bot.sendError("ranking", str(e))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['estimate', 'estim'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['estimate', 'estim', 'predict', 'prediction'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def estimation(self, ctx):
         """Estimate the GW ranking at the end of current day"""
@@ -547,6 +547,7 @@ class GW(commands.Cog):
                             else:
                                 fields[x]['value'] += "**#{}K** \▫️ {} to {}".format(int(c)//1000, mini, maxi)
                             fields[x]['value'] += '\n'
+                    if fields[x]['value'] == '': fields[0]['value'] = 'Unavailable'
                         
                 await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Time left: **{}**\nThis is a simple estimation, take it with a grain of salt.".format(self.bot.getTimedeltaStr(current_time_left)), fields=fields, footer="Last Update ▫️ {:%a. %m/%d %H:%M} JST ▫️ Update on minute 5, 25 and 45".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
         except Exception as e:
