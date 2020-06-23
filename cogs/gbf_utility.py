@@ -168,6 +168,7 @@ class GBF_Utility(commands.Cog):
         # get the last gw score
         cog = self.bot.get_cog('GW')
         if cog is not None:
+            crew['scores'] = []
             data = await cog.searchGWDBCrew(ctx, id, 2)
             if data is not None:
                 for n in range(0, 2):
