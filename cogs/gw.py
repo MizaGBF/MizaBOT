@@ -535,12 +535,21 @@ class GW(commands.Cog):
                                     if predi[y] < 10: predi[y] = "{:,.2f}K".format(predi[y])
                                     else: predi[y] = "{:,.1f}K".format(predi[y])
 
-                            if int(c) < 1000:
-                                fields[x]['value'] += "**#{}** \▫️ {} to {}".format(c, predi[0], predi[1])
-                            elif int(c) % 1000 != 0:
-                                fields[x]['value'] += "**#{}.{}K** \▫️ {} to {}".format(int(c)//1000, (int(c)%1000)//100, predi[0], predi[1])
+                            # display
+                            if predi[0] == predi[1]: # if min and max equal
+                                if int(c) < 1000:
+                                    fields[x]['value'] += "**#{}** \▫️ {}".format(c, predi[0])
+                                elif int(c) % 1000 != 0:
+                                    fields[x]['value'] += "**#{}.{}K** \▫️ {}".format(int(c)//1000, (int(c)%1000)//100, predi[0])
+                                else:
+                                    fields[x]['value'] += "**#{}K** \▫️ {}".format(int(c)//1000, predi[0])
                             else:
-                                fields[x]['value'] += "**#{}K** \▫️ {} to {}".format(int(c)//1000, predi[0], predi[1])
+                                if int(c) < 1000:
+                                    fields[x]['value'] += "**#{}** \▫️ {} to {}".format(c, predi[0], predi[1])
+                                elif int(c) % 1000 != 0:
+                                    fields[x]['value'] += "**#{}.{}K** \▫️ {} to {}".format(int(c)//1000, (int(c)%1000)//100, predi[0], predi[1])
+                                else:
+                                    fields[x]['value'] += "**#{}K** \▫️ {} to {}".format(int(c)//1000, predi[0], predi[1])
                             fields[x]['value'] += '\n'
                         else:
                             if int(c) < 1000:

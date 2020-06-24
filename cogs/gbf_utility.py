@@ -185,7 +185,7 @@ class GBF_Utility(commands.Cog):
 
         return crew
 
-    def honor(self, h): # convert honor number to a shorter string version
+    def honorFormat(self, h): # convert honor number to a shorter string version
         if h is None: return "n/a"
         elif h >= 1000000000: return "{:.1f}B".format(h/1000000000)
         elif h >= 1000000: return "{:.1f}M".format(h/1000000)
@@ -252,7 +252,7 @@ class GBF_Utility(commands.Cog):
                                     players[j] = players[i]
                                     players[i] = tmp
                     if gwid and len(players) - unranked > 0:
-                        description += "\n{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.getEmote('question'), gwid, self.honor(total), self.honor(total // (len(players) - unranked)))
+                        description += "\n{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.getEmote('question'), gwid, self.honorFormat(total), self.honorFormat(total // (len(players) - unranked)))
                         if unranked > 0:
                             description += " ▫️ {} Unranked".format(unranked)
                             if unranked > 1: description += "s"
@@ -267,7 +267,7 @@ class GBF_Utility(commands.Cog):
                     elif p['member_position'] == "4": r = "deface"
                     else: r = "ensign"
                     entry = '{} [{}](http://game.granbluefantasy.jp/#profile/{})'.format(self.bot.getEmote(r), self.escape(p['name']), p['id'])
-                    if gwstate:  entry += " \▫️ {}".format(self.honor(p['honor']))
+                    if gwstate:  entry += " \▫️ {}".format(self.honorFormat(p['honor']))
                     else: entry += " \▫️ r**{}**".format(p['level'])
                     entry += "\n"
                     fields[-1]['value'] += entry
@@ -1095,7 +1095,7 @@ class GBF_Utility(commands.Cog):
             n100 = math.ceil(t / 168.0)
             n150 = math.ceil(t / 257.0)
             wanpan = math.ceil(t / 48.0)
-            await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator".format(self.bot.getEmote('gw')), description="**{:,}** token(s) equal to **{:,}** box(s)\nand **{:,}** leftover token(s)\n\n**{:,}** EX host and MVP (**{:,}** pots)\n**{:,}** EX+ host and MVP (**{:,}** pots)\n**{:,}** NM90 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 wanpan (**{:}** BP)".format(t, b, tok, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator ▫️ {}".format(self.bot.getEmote('gw'), t), description="**{:,}** box(s) and **{:,}** leftover tokens\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(b, tok, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
         except:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid token number", color=self.color))
 
@@ -1126,7 +1126,7 @@ class GBF_Utility(commands.Cog):
             n100 = math.ceil(t / 168.0)
             n150 = math.ceil(t / 257.0)
             wanpan = math.ceil(t / 48.0)
-            await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator".format(self.bot.getEmote('gw')), description="**{:,}** token(s) needed for **{:,}** box(s)\n\n**{:,}** EX host and MVP (**{:,}** pots)\n**{:,}** EX+ host and MVP (**{:,}** pots)\n**{:,}** NM90 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 host and MVP (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 wanpan (**{:}** BP)".format(t, b, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator ▫️ {}".format(self.bot.getEmote('gw'), b), description="**{:,}** tokens needed\n\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(t, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
         except:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid box number", color=self.color))
 
@@ -1140,9 +1140,44 @@ class GBF_Utility(commands.Cog):
             nm95 = meat // 10
             nm100 = meat // 20
             nm150 = meat // 20
-            await ctx.send(embed=self.bot.buildEmbed(title="{} Meat Calculator".format(self.bot.getEmote('gw')), description="**{:,}** meats amount for\n**{:,}** NM90 or **{:,}** honor(s)\n**{:,}** NM95 or **{:,}** honor(s)\n**{:,}** NM100 or **{:,}** honor(s)\n**{:,}** NM150 or **{:,}** honor(s)\n".format(meat, nm90, nm90*260000, nm95, nm95*910000, nm100, nm100*2650000, nm150, nm150*4100000), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} Meat Calculator ▫️ {}".format(self.bot.getEmote('gw'), meat), description="**{:,}** NM90 or **{:}** honors\n**{:,}** NM95 or **{:}** honors\n**{:}** NM100 or **{:}** honors\n**{:,}** NM150 or **{:}** honors\n".format(nm90, self.honorFormat(nm90*260000), nm95, self.honorFormat(nm95*910000), nm100, self.honorFormat(nm100*2650000), nm150, self.honorFormat(nm150*4100000)), color=self.color))
         except:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid meat number", color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(2, 10, commands.BucketType.guild)
+    async def honor(self, ctx, target : int):
+        """Calculate how many NM95 and 150 you need for your targeted honor"""
+        try:
+            if target < 10000: raise Exception()
+            honor = [0, 0, 0]
+            ex = 0
+            meat_per_ex_average = 2
+            meat = 0
+            total_meat = 0
+            nm = [0, 0]
+            day_target = [target * 0.15, target * 0.35]
+            meat_use = [5, 20]
+            honor_per_nm = [910000, 4100000]
+
+            for i in [1, 0]:
+                daily = 0
+                while daily < day_target[i]:
+                    if meat < meat_use[i]:
+                        meat += meat_per_ex_average
+                        total_meat += meat_per_ex_average
+                        ex += 1
+                        daily += 75000
+                        honor[0] += 75000
+                    else:
+                        meat -= meat_use[i]
+                        nm[i] += 1
+                        daily += honor_per_nm[i]
+                        honor[i+1] += honor_per_nm[i]
+
+            await ctx.send(embed=self.bot.buildEmbed(title="{} Honor Planning ▫️ {} honors".format(self.bot.getEmote('gw'), self.honorFormat(target)), description="Preliminaries & Interlude ▫️ **{:,}** meats (around **{:,}** EX+ and **{:}** honors)\nDay 1 and 2 each ▫️ **{:,}** NM95 (**{:}** honors)\nDay 3 and 4 each ▫️ **{:,}** NM150 (**{:}** honors)".format(math.ceil(total_meat*2), ex*2, self.honorFormat(honor[0]*2), nm[0]*2, self.honorFormat(honor[1]*2), nm[1]*2, self.honorFormat(honor[2]*2)), footer="Assuming {} meats / EX+ on average".format(meat_per_ex_average), color=self.color))
+        except Exception:
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid honor number", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['friday'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
