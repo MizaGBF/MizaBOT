@@ -1152,12 +1152,12 @@ class GBF_Utility(commands.Cog):
             if target < 10000: raise Exception()
             honor = [0, 0, 0]
             ex = 0
-            meat_per_ex_average = 2
+            meat_per_ex_average = 3
             meat = 0
             total_meat = 0
             nm = [0, 0]
             day_target = [target * 0.15, target * 0.35]
-            meat_use = [5, 20]
+            meat_use = [10, 20]
             honor_per_nm = [910000, 4100000]
 
             for i in [1, 0]:
@@ -1175,7 +1175,7 @@ class GBF_Utility(commands.Cog):
                         daily += honor_per_nm[i]
                         honor[i+1] += honor_per_nm[i]
 
-            await ctx.send(embed=self.bot.buildEmbed(title="{} Honor Planning ▫️ {} honors".format(self.bot.getEmote('gw'), self.honorFormat(target)), description="Preliminaries & Interlude ▫️ **{:,}** meats (around **{:,}** EX+ and **{:}** honors)\nDay 1 and 2 each ▫️ **{:,}** NM95 (**{:}** honors)\nDay 3 and 4 each ▫️ **{:,}** NM150 (**{:}** honors)".format(math.ceil(total_meat*2), ex*2, self.honorFormat(honor[0]*2), nm[0]*2, self.honorFormat(honor[1]*2), nm[1]*2, self.honorFormat(honor[2]*2)), footer="Assuming {} meats / EX+ on average".format(meat_per_ex_average), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} Honor Planning ▫️ {} honors".format(self.bot.getEmote('gw'), self.honorFormat(target)), description="Preliminaries & Interlude ▫️ **{:,}** meats (around **{:,}** EX+ and **{:}** honors)\nDay 1 and 2 total ▫️ **{:,}** NM95 (**{:}** honors)\nDay 3 and 4 total ▫️ **{:,}** NM150 (**{:}** honors)".format(math.ceil(total_meat*2), ex*2, self.honorFormat(honor[0]*2), nm[0]*2, self.honorFormat(honor[1]*2), nm[1]*2, self.honorFormat(honor[2]*2)), footer="Assuming {} meats / EX+ on average".format(meat_per_ex_average), color=self.color))
         except Exception:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid honor number", color=self.color))
 
