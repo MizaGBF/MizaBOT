@@ -542,6 +542,13 @@ class GW(commands.Cog):
                             else:
                                 fields[x]['value'] += "**#{}K** \▫️ {} to {}".format(int(c)//1000, predi[0], predi[1])
                             fields[x]['value'] += '\n'
+                        else:
+                            if int(c) < 1000:
+                                fields[x]['value'] += "**#{}** \▫️ Unavailable".format(c)
+                            elif int(c) % 1000 != 0:
+                                fields[x]['value'] += "**#{}.{}K** \▫️ Unavailable".format(int(c)//1000, (int(c)%1000)//100)
+                            else:
+                                fields[x]['value'] += "**#{}K** \▫️ Unavailable".format(int(c)//1000)
                     if fields[x]['value'] == '': fields[x]['value'] = 'Unavailable'
                         
                 await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Time left: **{}**\nThis is a simple estimation, take it with a grain of salt.".format(self.bot.getTimedeltaStr(current_time_left)), fields=fields, footer="Last Update ▫️ {:%a. %m/%d %H:%M} JST ▫️ Update on minute 5, 25 and 45".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
