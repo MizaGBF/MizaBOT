@@ -162,7 +162,7 @@ class Owner(commands.Cog):
                 await self.bot.send('debug', embed=self.bot.buildEmbed(title=ctx.guild.me.name, description="Failed to retrieve save.json on the Google Drive", color=self.color))
         if self.bot.load():
             self.bot.savePending = False
-            self.bot.runTask('check_buff', self.bot.get_cog('GW').checkGWBuff)
+            self.bot.runTask('check_buff', self.bot.get_cog('GuildWar').checkGWBuff)
             await self.bot.send('debug', embed=self.bot.buildEmbed(title=ctx.guild.me.name, description="save.json reloaded", color=self.color))
         else:
             await self.bot.send('debug', embed=self.bot.buildEmbed(title=ctx.guild.me.name, description="save.json loading failed", color=self.color))
@@ -322,11 +322,11 @@ class Owner(commands.Cog):
     @isOwner()
     async def resetGacha(self, ctx):
         """Reset the gacha settings"""
-        try:
-            self.bot.get_cog('Baguette').resetGacha()
-            await ctx.message.add_reaction('✅') # white check mark
-        except Exception as e:
-            await self.bot.sendError("resetgacha", str(e))
+        self.bot.gbfdata['gachabanner'] = None
+        self.bot.gbfdata['gachatime'] = None
+        self.bot.gbfdata['gachaid'] = None
+        self.bot.savePending = True
+        await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -379,12 +379,11 @@ class Owner(commands.Cog):
                     self.bot.sendError('broadcast', str(e))
         await ctx.message.add_reaction('✅') # white check mark
 
-
     @commands.command(no_pm=True)
     @isOwner()
     async def newgwtask(self, ctx):
         """Start a new checkGWBuff() task (Owner only)"""
-        self.bot.runTask('check_buff', self.bot.get_cog('GW').checkGWBuff)
+        self.bot.runTask('check_buff', self.bot.get_cog('GuildWar').checkGWBuff)
         await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True)

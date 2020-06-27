@@ -2,14 +2,19 @@
 from discord.ext import commands
 import asyncio
 import signal
+import zlib
 import json
 import random
 from datetime import datetime, timedelta
+from urllib.request import urlopen
+from urllib import request, parse
+from urllib.parse import unquote
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import itertools
 import psutil
 import time
+import re
 import cogs # our cogs folder
 import logging
 
@@ -172,8 +177,17 @@ class MizabotDrive():
             return False
         try:
             file_list = drive.ListFile({'q': "'" + self.bot.tokens['drive'] + "' in parents and trashed=false"}).GetList() # get the file list in our folder
+            # search the save file
             for s in file_list:
-                if s['title'] == "save.json": s.GetContentFile(s['title']) # iterate until we find save.json and download it
+                if s['title'] == "save.json":
+                    s.GetContentFile(s['title']) # iterate until we find save.json and download it
+                    return True
+            #if no save file on google drive, make an empty one
+            with open('save.json', 'w') as outfile:
+                data = {}
+                json.dump(data, outfile, default=self.bot.json_serial)
+                self.bot.savePending = True
+                print("Created an empty save file")
             return True
         except Exception as e:
             print(e)
@@ -257,9 +271,9 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "5.60"
-        self.running = True
-        self.boot_flag = False
+        self.botversion = "6.0" # version number
+        self.running = True # if True, the bot is running
+        self.boot_flag = False # if True, the bot has booted
         self.starttime = datetime.utcnow() # used to check the uptime
         self.process = psutil.Process() # script process
         self.process.cpu_percent() # called once to initialize
@@ -284,7 +298,11 @@ class Mizabot(commands.Bot):
         self.tokens = {} # bot tokens
         self.baguette = {} # secret, config
         self.baguette_save = {} # secret, save
-        self.gbfaccount = {} # gbf bot account
+        self.gbfaccounts = [] # gbf bot accounts
+        self.gbfcurrent = 0  # gbf current bot account
+        self.gbfversion = None  # gbf version
+        self.gbfwatch = {}  # gbf special data
+        self.pastebin = {}  # pastebin data
         self.ids = {} # discord ids used by the bot
         self.gbfids = {} # gbf profile ids linked to discord ids
         self.summonlast = None # support summon database last update
@@ -300,27 +318,20 @@ class Mizabot(commands.Bot):
         self.on_message_high = {} # on message callback (high priority)
         self.on_message_low = {} # on message callback
         self.memmonitor = {0, None} # for monitoring the memory
+        self.vregex = re.compile("Game\.version = \"(\d+)\";") # for the gbf version check
         # load
-        self.loadConfig()
+        self.loadConfig() # load the config
         for i in range(0, 100): # try multiple times in case google drive is unresponsive
             if self.drive.load(): break
             elif i == 99:
                 print("Google Drive might be unavailable")
                 exit(3)
-            time.sleep(20)
-        if not self.load(): exit(2) # first loading must success
+            time.sleep(20) # wait 20 sec
+        if not self.load(): exit(2) # first loading of the save file must succeed, if not we exit
+        # init bot
         super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\nSource code: https://github.com/MizaGBF/MizaBOT.\nDefault command prefix is '$', use $setPrefix to change it on your server.".format(self.botversion), help_command=MizabotHelp(), owner=self.ids['owner'], max_messages=None)
 
-    def loadCog(self, *cog_classes):
-        for c in cog_classes:
-            try:
-                self.add_cog(cogs.cog_get(c, self))
-            except Exception as e:
-                print("import " + c + ": " + str(e))
-                self.errn += 1
-            self.cogn += 1
-
-    def mainLoop(self): # main loop
+    def mainLoop(self): # main loop of the bot
         while self.running:
             try:
                 self.loop.run_until_complete(self.start(self.tokens['discord']))
@@ -336,12 +347,9 @@ class Mizabot(commands.Bot):
 
     def prefix(self, client, message): # command prefix check
         try:
-            id = str(message.guild.id)
-            if id in self.prefixes:
-                return self.prefixes[id] # retrieve the prefix used by the server
+            return self.prefixes.get(str(message.guild.id), '$') # get the guild prefix if it exists
         except:
-            pass
-        return '$' # else, return default prefix is $
+            return '$' # else, return the default prefix $
 
     def json_deserial_array(self, array): # deserialize a list from a json
         a = []
@@ -380,7 +388,7 @@ class Mizabot(commands.Bot):
             return obj.replace(microsecond=0).isoformat()
         raise TypeError ("Type %s not serializable" % type(obj))
 
-    def loadConfig(self): # pretty simple
+    def loadConfig(self): # pretty simple, load the config file
         try:
             with open('config.json') as f:
                 data = json.load(f, object_pairs_hook=self.json_deserial_dict) # deserializer here
@@ -392,6 +400,8 @@ class Mizabot(commands.Bot):
                 self.specialstrings = data.get('specialstrings', {})
                 self.emotes = data.get('emotes', {})
                 self.granblue = data.get('granblue', {"gbfgcrew":{}})
+                self.gbfwatch = data.get('gbfwatch', {})
+                self.pastebin = data.get('pastebin', {})
         except Exception as e:
             print('loadConfig(): {}\nCheck your \'config.json\' for the above error.'.format(e))
             exit(1) # instant quit if error
@@ -404,7 +414,10 @@ class Mizabot(commands.Bot):
                 self.newserver = data.get('newserver', {'servers':[], 'owners':[], 'pending':{}})
                 self.prefixes = data.get('prefixes', {})
                 self.baguette_save = data.get('baguette_save', {})
-                self.gbfaccount = data.get('gbfaccount', {})
+                self.gbfaccounts = data.get('gbfaccounts', [])
+                self.gbfcurrent = data.get('gbfcurrent', 0)
+                self.gbfversion = data.get('gbfversion', None)
+                self.gbfdata = data.get('gbfdata', {})
                 self.bot_maintenance = data.get('bot_maintenance', None)
                 if 'maintenance' in data:
                     if data['maintenance'].get('state', False) == True:
@@ -436,6 +449,10 @@ class Mizabot(commands.Bot):
                 data['newserver'] = self.newserver
                 data['prefixes'] = self.prefixes
                 data['baguette_save'] = self.baguette_save
+                data['gbfaccounts'] = self.gbfaccounts
+                data['gbfcurrent'] = self.gbfcurrent
+                data['gbfversion'] = self.gbfversion
+                data['gbfdata'] = self.gbfdata
                 data['bot_maintenance'] = self.bot_maintenance
                 data['maintenance'] = self.maintenance
                 data['stream'] = self.stream
@@ -480,7 +497,6 @@ class Mizabot(commands.Bot):
         self.autosaving = False
 
     async def statustask(self): # background task changing the bot status and calling autosave()
-        await self.send('debug', embed=self.buildEmbed(title="statustask() started", timestamp=datetime.utcnow()))
         while True:
             try:
                 await asyncio.sleep(1200)
@@ -500,10 +516,9 @@ class Mizabot(commands.Bot):
             except Exception as e:
                 await self.sendError('statustask', str(e))
 
-    async def invitetracker(self): # background task to track the invites of the (You) server
+    async def invitetracker(self): # background task to track the invites of the (You) and /gbfg/ servers
         if 'you_server' not in self.ids or 'gbfg' not in self.ids: return
-        await asyncio.sleep(2)
-        await self.send('debug', embed=self.buildEmbed(title="invitetracker() started", timestamp=datetime.utcnow()))
+
         guilds = [self.get_guild(self.ids['you_server']), self.get_guild(self.ids['gbfg'])]
         log_channels = {self.ids['you_server']:'youlog', self.ids['gbfg']:'gbfglog'}
         
@@ -558,13 +573,13 @@ class Mizabot(commands.Bot):
                 if str(e).startswith('500 INTERNAL SERVER ERROR'): # assume discord server issues and sleep
                     await asyncio.sleep(1000)
 
-    def isAuthorized(self, ctx): # check if the command is authorized
+    def isAuthorized(self, ctx): # check if the command is authorized in the channel
         id = str(ctx.guild.id)
-        if id in self.permitted:
+        if id in self.permitted: # if id is found, it means the check is enabled
             if ctx.channel.id in self.permitted[id]:
-                return True
-            return False
-        return True
+                return True # permitted
+            return False # not permitted
+        return True # default
 
     def isYouServer(self, ctx): # check if the context is in the (You) guild
         if ctx.message.author.guild.id == self.ids.get('you_server', -1):
@@ -635,6 +650,150 @@ class Mizabot(commands.Bot):
             embed.set_author(name=options['author'].pop('name', ""), url=options['author'].pop('url', ""), icon_url=options['author'].pop('icon_url', ""))
         return embed
 
+    async def sendRequest(self, url, **options): # to send a request over the internet
+        try:
+            data = None
+            headers = {}
+            if not options.get('no_base_headers', False):
+                if 'Accept' not in headers: headers['Accept'] = 'application/json, text/javascript, */*; q=0.01'
+                if 'Accept-Encoding' not in headers: headers['Accept-Encoding'] = 'gzip, deflate'
+                if 'Accept-Language' not in headers: headers['Accept-Language'] = 'en'
+                if 'Connection' not in headers: headers['Connection'] = 'keep-alive'
+                if 'Host' not in headers: headers['Host'] = 'game.granbluefantasy.jp'
+                if 'Origin' not in headers: headers['Origin'] = 'http://game.granbluefantasy.jp'
+                if 'Referer' not in headers: headers['Referer'] = 'http://game.granbluefantasy.jp/'
+            if "headers" in options:
+                headers = {**headers, **options["headers"]}
+            id = options.get('account', None)
+            if id is not None: acc = self.getGBFAccount(id)
+            if options.get('check', False):
+                ver = await self.getGameversion()
+            else:
+                ver = self.gbfversion
+            if ver == "Maintenance": return "Maintenance"
+            elif ver is not None:
+                url = url.replace("VER", "{}".format(ver))
+            ts = int(datetime.utcnow().timestamp() * 1000)
+            url = url.replace("TS1", "{}".format(ts))
+            url = url.replace("TS2", "{}".format(ts+300))
+            if id is not None:
+                if ver is None or acc is None:
+                    return None
+                url = url.replace("ID", "{}".format(acc[0]))
+                if 'Cookie' not in headers: headers['Cookie'] = acc[1]
+                if 'User-Agent' not in headers: headers['User-Agent'] = acc[2]
+                if 'X-Requested-With' not in headers: headers['X-Requested-With'] = 'XMLHttpRequest'
+                if 'X-VERSION' not in headers: headers['X-VERSION'] = ver
+            payload = options.get('payload', None)
+            if payload is None: req = request.Request(url, headers=headers)
+            else: req = request.Request(url, headers=headers, data=str(json.dumps(payload)).encode('utf-8'))
+            url_handle = request.urlopen(req)
+            if id is not None:
+                self.refreshGBFAccount(id, url_handle.info()['Set-Cookie'])
+            if options.get('decompress', False): data = zlib.decompress(url_handle.read(), 16+zlib.MAX_WBITS)
+            else: data = url_handle.read()
+            if options.get('load_json', False): data = json.loads(data)
+            return data
+        except Exception as e:
+            if options.get('error', False):
+                await self.sendError('request', 'Request failed for url `{}`\nCause \▫️ {}'.format(url, e))
+            try:
+                self.gbfaccounts[id][3] = 0
+                self.savePending = True
+            except: pass
+            return None
+
+    def getGBFAccount(self, id : int = 0): # retrive one of our gbf account
+        if id < 0 or id >= len(self.gbfaccounts):
+            return None
+        return self.gbfaccounts[id]
+
+    def addGBFAccount(self, uid : int, ck : str, ua : str): # add a gbf account
+        self.gbfaccounts.append([uid, ck, ua, 0, 0, None])
+        self.savePending = True
+        return True
+
+    def updateGBFAccount(self, id : int, **options): # update a part of a gbf account
+        if id < 0 or id >= len(self.gbfaccounts):
+            return False
+        uid = options.pop('uid', None)
+        ck = options.pop('ck', None)
+        ua = options.pop('ua', None)
+        if uid is not None:
+            self.gbfaccounts[id][0] = uid
+            self.gbfaccounts[id][4] = 0
+        if ck is not None:
+            self.gbfaccounts[id][1] = ck
+            self.gbfaccounts[id][5] = None
+        if ua is not None:
+            self.gbfaccounts[id][2] = ua
+        self.gbfaccounts[id][3] = 0
+        self.savePending = True
+        return True
+
+    def delGBFAccount(self, id : int): # del a gbf account
+        if id < 0 or id >= len(self.gbfaccounts):
+            return False
+        self.gbfaccounts.pop(id)
+        if self.gbfcurrent >= id and self.gbfcurrent >= 0: self.gbfcurrent -= 1
+        self.savePending = True
+        return True
+
+    def refreshGBFAccount(self, id : int, ck : str): # refresh a valid gbf account
+        if id < 0 or id >= len(self.gbfaccounts):
+            return False
+        A = self.gbfaccounts[id][1].split(';')
+        B = ck.split(';')
+        for c in B:
+            tA = c.split('=')
+            if tA[0][0] == " ": tA[0] = tA[0][1:]
+            f = False
+            for i in range(0, len(A)):
+                tB = A[i].split('=')
+                if tB[0][0] == " ": tB[0] = tB[0][1:]
+                if tA[0] == tB[0]:
+                    A[i] = c
+                    f = True
+                    break
+        self.gbfaccounts[id][1] = ";".join(A)
+        self.gbfaccounts[id][3] = 1
+        self.gbfaccounts[id][5] = self.getJST()
+        self.savePending = True
+        return True
+
+    def versionToDateStr(self, version_number): # convert gbf version number to its timestamp
+        try: return "{0:%Y/%m/%d %H:%M} JST".format(datetime.fromtimestamp(int(version_number)) + timedelta(seconds=32400)) # JST
+        except: return ""
+
+    async def getGameversion(self): # retrieve the game version
+        res = await self.sendRequest('http://game.granbluefantasy.jp/', headers={'User-Agent':'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36', 'Accept-Language':'en', 'Accept-Encoding':'gzip, deflate', 'Host':'game.granbluefantasy.jp', 'Connection':'keep-alive'}, decompress=True, no_base_headers=True)
+        if res is None: return None
+        try:
+            return int(self.vregex.findall(str(res))[0])
+        except:
+            return "Maintenance" # if not found on the page, return "Maintenance"
+
+    async def isGameAvailable(self): # use the above to check if the game is up
+        v = await self.getGameversion()
+        return ((v is not None) and (v != "Maintenance"))
+
+    def updateGameversion(self, v): # update self.gbfversion and return a value depending on what happened
+        try:
+            i = int(v)
+            if v is None:
+                return 1 # unchanged because of invalid parameter
+            elif self.gbfversion is None:
+                self.gbfversion = v
+                self.savePending = True
+                return 2 # value is set
+            elif self.gbfversion != v:
+                self.gbfversion = v
+                self.savePending = True
+                return 3 # update happened
+            return 0 # unchanged
+        except:
+            return -1 # v isn't an integer
+
     def runTask(self, name, func): # start a task (cancel a previous one with the same name)
         self.cancelTask(name)
         self.tasks[name] = self.loop.create_task(func())
@@ -643,7 +802,7 @@ class Mizabot(commands.Bot):
         if name in self.tasks:
             self.tasks[name].cancel()
 
-    def startTasks(self): # start our tasks
+    async def startTasks(self): # start our tasks
         self.runTask('status', self.statustask)
         self.runTask('invitetracker', self.invitetracker)
         for c in self.cogs:
@@ -651,6 +810,11 @@ class Mizabot(commands.Bot):
                 self.get_cog(c).startTasks()
             except:
                 pass
+        msg = ""
+        for t in self.tasks:
+            msg += "\▫️ {}\n".format(t)
+        if msg != "":
+            await bot.send('debug', embed=bot.buildEmbed(title="{} user tasks started".format(len(self.tasks)), description=msg, timestamp=datetime.utcnow()))
 
     def setOnMessageCallback(self, name, callback, high_prio=False): # register a function to be called by on_message (high prio ones will be called first). Must return True (or False to interrupt on_message) and take message as parameter
         if high_prio:
@@ -704,7 +868,10 @@ class Mizabot(commands.Bot):
 
     async def sendMulti(self, channel_names : list, msg : str = "", embed : discord.Embed = None, file : discord.File = None): # send to multiple channel at the same time
         for c in channel_names:
-            await self.send(c, msg, embed, file)
+            try:
+                await self.send(c, msg, embed, file)
+            except:
+                await self.sendError('sendMulti', 'Failed to send a message to channel `{}`'.format(c))
 
     async def sendError(self, func_name : str, msg : str, id = None): # send an error to the debug channel
         if msg.startswith("403 FORBIDDEN"): return # I'm tired of those errors because people didn't set their channel permissions right
@@ -773,10 +940,10 @@ class GracefulExit: # when heroku force the bot to shutdown
     exit(0)
 
 # #####################################################################################
-# Start
-# make the bot instance
+# Prepare the bot
 bot = Mizabot()
 
+# #####################################################################################
 # bot events
 @bot.event
 async def on_ready(): # when the bot starts or reconnects
@@ -787,8 +954,8 @@ async def on_ready(): # when the bot starts or reconnects
         bot.setChannel('pinned', 'you_pinned') # set (you) pinned channel
         bot.setChannel('gbfglog', 'gbfg_log') # set /gbfg/ lucilius log channel
         bot.setChannel('youlog', 'you_log') # set (you) log channel
-        bot.startTasks() # start the tasks
         await bot.send('debug', embed=bot.buildEmbed(title="{} is Ready".format(bot.user.display_name), description="**Version** {}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}".format(bot.botversion, bot.process.cpu_percent(), bot.process.memory_full_info().uss >> 20, len(asyncio.all_tasks()), len(bot.guilds), len(bot.newserver['pending']), len(bot.cogs), bot.cogn), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
+        await bot.startTasks() # start the tasks
         bot.boot_flag = True
 
 @bot.event
@@ -1014,11 +1181,9 @@ async def on_guild_channel_delete(channel):
     if channel.guild.id in guilds:
         await bot.send(guilds[channel.guild.id], embed=bot.buildEmbed(title="Channel deleted ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=datetime.utcnow(), color=0x8a8306))
 
-# create the graceful exit
+# #####################################################################################
+# Start the bot
+# load cogs
 grace = GracefulExit(bot)
-
-# load cogs from the cogs folder
-bot.loadCog("general", "gbf_game.GBF_Game", "gbf_utility.GBF_Utility", "gw.GW", "management", "owner", "baguette")
-
-# start the loop
+bot.cogn = cogs.load(bot)
 bot.mainLoop()

@@ -6,7 +6,7 @@ import psutil
 
 # Bot related commands
 class Management(commands.Cog):
-    """Bot related commands. Might require some mod powers"""
+    """Bot related commands. Might require some mod powers in your server"""
     def __init__(self, bot):
         self.bot = bot
         self.color = 0xf49242
@@ -171,7 +171,7 @@ class Management(commands.Cog):
             # set the gw state to true
             self.bot.gw['state'] = True
             self.bot.savePending = True
-            self.bot.runTask('check_buff', self.bot.get_cog('GW').checkGWBuff)
+            self.bot.runTask('check_buff', self.bot.get_cog('GuildWar').checkGWBuff)
             await ctx.send(embed=self.bot.buildEmbed(title="{} Guild War Mode".format(self.bot.getEmote('gw')), description="Set to : **{:%m/%d %H:%M}**".format(self.bot.gw['dates']["Preliminaries"]), color=self.color))
         except Exception as e:
             self.bot.cancelTask('check_buff')
@@ -200,7 +200,7 @@ class Management(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="{} Guild War Mode".format(self.bot.getEmote('gw')), description="Already enabled", color=self.color))
         elif len(self.bot.gw['dates']) == 8:
             self.bot.gw['state'] = True
-            self.bot.runTask('check_buff', self.bot.get_cog('GW').checkGWBuff)
+            self.bot.runTask('check_buff', self.bot.get_cog('GuildWar').checkGWBuff)
             self.bot.savePending = True
             await ctx.message.add_reaction('✅') # white check mark
         else:

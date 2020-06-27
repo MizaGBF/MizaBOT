@@ -7,19 +7,12 @@ import math
 from operator import itemgetter
 
 class GBF_Game(commands.Cog):
-    """GBF related commands."""
+    """GBF-themed Game commands."""
     def __init__(self, bot):
         self.bot = bot
         self.color = 0xfce746
-        # /gbfg/ game
-        self.pitroulettestate = False
-        self.pitroulettevictim = []
-        self.pitroulettelist = []
-        self.pitroulettecount = 0
-        self.pitroulettemax = 0
 
     def startTasks(self):
-        self.bot.setOnMessageCallback('pitroulette', self.pitroulette_callback, True)
         self.bot.runTask('cleanroll', self.cleanrolltask)
 
     async def cleanrolltask(self): # silent task
@@ -592,70 +585,6 @@ class GBF_Game(commands.Cog):
 
         await ctx.send(embed=self.bot.buildEmbed(title="{} {}'s daily quota".format(self.bot.getEmote('gw'), ctx.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.avatar_url ,color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['quarantine', 'coofroulette'])
-    @isGBFGgeneralAndMod()
-    @commands.cooldown(1, 180, commands.BucketType.user)
-    async def pitroulette(self, ctx, max : int = 1):
-        """Game for /gbfg/ (Mod only)"""
-        if not self.pitroulettestate:
-            if max < 1 or max > 5:
-                await ctx.send(embed=self.bot.buildEmbed(title="Value must be in the 1-5 range" ,color=self.color))
-                return
-            self.pitroulettestate = True
-            self.pitroulettecount = 0
-            self.pitroulettemax = max
-            self.pitroulettevictim = []
-            self.pitroulettelist = []
-            await ctx.send(embed=self.bot.buildEmbed(title="Pit Roulette enabled", description=random.choice(["Who will fall in?", "Are you brave enough?", "Do you dare?"]) , thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/584813271643586560/Activate_it.png", footer="expecting " + str(max) + " victim(s)", color=self.color))
-        else:
-            await ctx.send(embed=self.bot.buildEmbed(title="Pit Roulette already on" ,color=self.color))
-
-    async def pitroulette_callback(self, message):
-        try:
-            if self.pitroulettestate and self.pitroulettemax > 0 and message.channel.id == self.bot.ids.get('gbfg_general', -1) and message.author.id != self.bot.ids.get('owner', -1) and not message.author.bot:
-                self.pitroulettecount += 1
-                proba = 3 * (self.pitroulettemax + 1)
-                if random.randint(1, 100) <= proba:
-                    self.pitroulettevictim.append(message)
-                    self.bot.runTask('pitroulette', self.pitroulettetask)
-                    self.pitroulettemax -= 1
-                    return False
-        except Exception as e:
-            await self.bot.sendError('pitroulette callback', str(e))
-        return True
-
-    # TO REWRITE
-    async def pitroulettetask(self):
-        try:
-            message = self.pitroulettevictim.pop()
-            self.pitroulettelist.append([message.author.display_name, self.pitroulettecount, message.content, "[**Link**](https://discordapp.com/channels/{}/{}/{})".format(message.guild.id, message.channel.id, message.id)])
-            description = "After **{}** message(s)".format(self.pitroulettecount)
-            title = random.choice(["{} has fallen into the pit...", "{} tripped and fell...", "{} jumped into the pit willingly...", "{} got pushed in the back..."]).format(message.author.display_name)
-            footer = random.choice(["Will {} manage to climb up?".format(message.author.display_name), "Stay down here where you belong", "Straight into the hellish pit", "{} has met with a terrible fate".format(message.author.display_name)])
-            if self.pitroulettemax > 0:
-                description += "\nI'm expecting **{}** more victim(s)".format(self.pitroulettemax)
-            else:
-                self.pitroulettestate = False # disable
-            await message.channel.send(embed=self.bot.buildEmbed(title=title, description=description, thumbnail=message.author.avatar_url, footer=footer))
-            if self.pitroulettemax == 0 and len(self.pitroulettelist) > 1:
-                fields = []
-                for a in self.pitroulettelist:
-                    if len(a[2]) == 0 or len(a[2]) > 380: fields.append({'name': "{} ▫️ after {} day(s)".format(a[0], a[1]), 'value':a[3]})
-                    else: fields.append({'name': "{} ▫️ after {} day(s)".format(a[0], a[1]), 'value':'{}\n{}'.format(a[2], a[3])})
-                await message.channel.send(embed=self.bot.buildEmbed(title="Pit Roulette results", fields=fields, inline=False, thumbnail=message.author.avatar_url))
-            g = self.bot.get_guild(self.bot.ids.get('gbfg', 0))
-            await message.author.add_roles(g.get_role(self.bot.ids.get('pit', 0)))
-            await asyncio.sleep(60)
-            await message.author.remove_roles(g.get_role(self.bot.ids.get('pit', 0)))
-        except asyncio.CancelledError:
-            try:
-                await message.author.remove_roles(g.get_role(self.bot.ids.get('pit', 0)))
-            except:
-                pass
-            return
-        except Exception as e:
-            await self.bot.sendError('pitroulette', str(e))
-
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isAuthorized()
     @commands.cooldown(2, 7, commands.BucketType.user)
@@ -667,7 +596,6 @@ class GBF_Game(commands.Cog):
         element = ['fire', 'water', 'earth', 'wind', 'light', 'dark']
 
         await ctx.send(embed=self.bot.buildEmbed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="**Rarity** ▫️ {}\n**Race** ▫️ {}\n**Element** ▫️ {}\n**Rating** ▫️ {:.1f}".format(self.bot.getEmote(rarity[seed % 3]), race[(seed - 1) % 6], self.bot.getEmote(element[(seed - 3) % 6]), ((seed % 41) * 0.1) + 6.0 - (seed % 3) * 1.5), inline=True, color=self.color))
-
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 30, commands.BucketType.guild)

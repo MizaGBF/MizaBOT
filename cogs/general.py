@@ -203,7 +203,6 @@ class General(commands.Cog):
         self.bot.runTask('reminder', self.remindertask)
 
     async def remindertask(self):
-        await self.bot.send('debug', embed=self.bot.buildEmbed(title="remindertask() started", timestamp=datetime.utcnow()))
         while True:
             if self.bot.exit_flag: return
             try:

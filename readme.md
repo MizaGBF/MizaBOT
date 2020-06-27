@@ -15,7 +15,7 @@ Here are a few instructions to set it up in its current state:
 * Finally, you also need your [Discord token](https://discordapp.com/developers/applications/).  
 * Other files in the [example folder](https://github.com/MizaGBF/MizaBOT/tree/master/example) are:  
 * `config.json` must be edited with a notepad (follow the instructions inside) and placed with the bot code (your discord token must be inserted inside).  
-* `save.json` can be used as it is and must be placed in the [Google Drive](https://www.google.com/drive/) folder used to save the bot data. The bot can't start without a valid save file.  
+* `save.json` can be used as it is and must be placed in the [Google Drive](https://www.google.com/drive/) folder used to save the bot data. The bot can't start without a valid save file, it will create one if needed.  
 This [issue](https://github.com/MizaGBF/MizaBOT/issues/1) might help if you encounter a problem.  
 Example files might be a bit outdated. I'll do my best to update them as much as possible.  
 ### Code Overview  
@@ -23,8 +23,7 @@ Example files might be a bit outdated. I'll do my best to update them as much as
 * Data (from the config or save file) is centralized on the Bot instance and accessible by the Cogs at any time.  
 * The bot checks the `savePending` variable every 20 minutes in the `statustask()` function and save to the drive if True.  
 * The `GracefulExit` is needed for a proper use on [Heroku](https://www.heroku.com). A `SIGTERM` signal is sent when a restart happens on the [Heroku](https://www.heroku.com) side (usually every 24 hours, when you push a change or in some other cases). The bot also checks the `savePending` variable when this happens.  
-* You can change which cog is loaded at the end of `bot.py`, at the `loadCog()` line.  
-* `baguette.py` is my personal cog and won't ever be on this github, you can safely remove it from the `loadCog()` call.  
+* During the boot, all the .py files in the cogs folder are tested to find valid cogs.  
 * The debug channel refers to a channel, in my test server, where the bot send debug and error messages while running. Useful when I can't check the logs on Heroku.  
 * Cogs are found in the [cogs folder](https://github.com/MizaGBF/MizaBOT/tree/master/cogs) and sort functions by their purpose.  
 ### User Overview  
