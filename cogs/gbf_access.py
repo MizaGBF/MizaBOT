@@ -22,7 +22,7 @@ class GBF_Access(commands.Cog):
     """GBF advanced commands."""
     def __init__(self, bot):
         self.bot = bot
-        self.color = 0xecf542
+        self.color = 0xde8633
         self.rankre = re.compile("Rank ([0-9])+")
         self.sumre = re.compile("<div id=\"js-fix-summon([0-9]{2})-name\" class=\"prt-fix-name\" name=\"[A-Za-z'-. ]+\">(Lvl [0-9]+ [A-Za-z'-. ]+)<\/div>")
         self.starre = re.compile("<span class=\"prt-current-npc-name\">\s*(Lvl [0-9]+ [A-Za-z'-.μ ]+)\s*<\/span>")
@@ -773,7 +773,7 @@ class GBF_Access(commands.Cog):
                             await ctx.send(url)
                         except:
                             pass
-                        self.bot.baguette_save['ticket_id'] = id
+                        self.bot.gbfdata['ticket_id'] = id
                         self.bot.savePending = True
                         if not silent: news.append(url)
                         errc = 0

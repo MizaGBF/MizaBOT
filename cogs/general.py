@@ -441,3 +441,86 @@ class General(commands.Cog):
                     self.bot.reminders.pop(id)
                 self.bot.savePending = True
                 await ctx.message.add_reaction('✅') # white check mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isAuthorized()
+    @commands.cooldown(1, 1, commands.BucketType.user)
+    async def iam(self, ctx, *, role_name : str):
+        """Add a role to you that you choose. Role must be on a list of self-assignable roles."""
+        g = str(ctx.guild.id)
+        roles = self.bot.assignablerole.get(g, {})
+        if role_name.lower() not in roles:
+            await ctx.message.add_reaction('❎') # negative check mark
+        else:
+            id = roles[role_name.lower()]
+            r = ctx.guild.get_role(id)
+            if r is None: # role doesn't exist anymore
+                await ctx.message.add_reaction('❎') # negative check mark
+                self.bot.assignablerole[g].pop(role_name.lower())
+                if len(self.bot.assignablerole[g]) == 0:
+                    self.bot.assignablerole.pop(g)
+                self.bot.savePending = True
+            else:
+                try:
+                    await ctx.author.add_roles(r)
+                except:
+                    pass
+                await ctx.message.add_reaction('✅') # white check mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['iamn'])
+    @isAuthorized()
+    @commands.cooldown(1, 1, commands.BucketType.user)
+    async def iamnot(self, ctx, *, role_name : str):
+        """Remove a role to you that you choose. Role must be on a list of self-assignable roles."""
+        g = str(ctx.guild.id)
+        roles = self.bot.assignablerole.get(g, {})
+        if role_name.lower() not in roles:
+            await ctx.message.add_reaction('❎') # negative check mark
+        else:
+            id = roles[role_name.lower()]
+            r = ctx.guild.get_role(id)
+            if r is None: # role doesn't exist anymore
+                await ctx.message.add_reaction('❎') # negative check mark
+                self.bot.assignablerole[g].pop(role_name.lower())
+                if len(self.bot.assignablerole[g]) == 0:
+                    self.bot.assignablerole.pop(g)
+                self.bot.savePending = True
+            else:
+                try:
+                    await ctx.author.remove_roles(r)
+                except:
+                    pass
+                await ctx.message.add_reaction('✅') # white check mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isAuthorized()
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def lsar(self, ctx, page : int = 1):
+        """List the self-assignable roles available in this server"""
+        g = str(ctx.guild.id)
+        if page < 1: page = 1
+        roles = self.bot.assignablerole.get(str(ctx.guild.id), {})
+        if len(roles) == 0:
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="No self assignable roles available on this server", color=self.color))
+            return
+        if (page -1) >= len(roles) // 20:
+            page = ((len(roles) - 1) // 20) + 1
+        fields = []
+        count = 0
+        for k in roles:
+            if count < (page - 1) * 20:
+                count += 1
+                continue
+            if count >= page * 20:
+                break
+            if count % 10 == 0:
+                fields.append({'name':'{} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':'', 'inline':True})
+            r = ctx.guild.get_role(roles[k])
+            if r is not None:
+                fields[-1]['value'] += '{}\n'.format(k)
+            else:
+                self.bot.assignablerole[str(ctx.guild.id)].pop(k)
+                self.bot.savePending = True
+            count += 1
+
+        await ctx.send(embed=self.bot.buildEmbed(title="Self Assignable Roles", fields=fields, footer="Page {}/{}".format(page, 1+len(roles)//20), color=self.color))

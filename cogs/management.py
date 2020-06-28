@@ -334,3 +334,53 @@ class Management(commands.Cog):
     async def status(self, ctx):
         """Post the bot status"""
         await ctx.send(embed=self.bot.buildEmbed(title="{} ▫️ v{}".format(ctx.guild.me.display_name, self.bot.botversion), description="**Uptime**▫️{}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Save Pending**▫️{}\n**Errors since boot**▫️{}\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}".format(self.bot.uptime(), self.bot.process.cpu_percent(), self.bot.process.memory_full_info().uss >> 20, self.bot.savePending, self.bot.errn, len(asyncio.all_tasks()), len(self.bot.guilds), len(self.bot.newserver['pending']), len(self.bot.cogs), self.bot.cogn), thumbnail=ctx.guild.me.avatar_url, color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isMod()
+    async def asar(self, ctx, *, role_name : str = ""):
+        """Add a role to the list of self-assignable roles (Mod Only)"""
+        if role_name == "":
+            await ctx.message.add_reaction('❎') # negative check mark
+            return
+        role = None
+        for r in ctx.guild.roles:
+            if role_name.lower() == r.name.lower():
+                role = r
+                break
+        if role is None:
+            await ctx.message.add_reaction('❎') # negative check mark
+            return
+        id = str(ctx.guild.id)
+        if id not in self.bot.assignablerole:
+            self.bot.assignablerole[id] = {}
+        if role.name.lower() in self.bot.assignablerole[id]:
+            await ctx.message.add_reaction('❎') # negative check mark
+            return
+        self.bot.assignablerole[id][role.name.lower()] = role.id
+        self.bot.savePending = True
+        await ctx.message.add_reaction('✅') # white check mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isMod()
+    async def rsar(self, ctx, *, role_name : str = ""):
+        """Remove a role from the list of self-assignable roles (Mod Only)"""
+        if role_name == "":
+            await ctx.message.add_reaction('❎') # negative check mark
+            return
+        role = None
+        for r in ctx.guild.roles:
+            if role_name.lower() == r.name.lower():
+                role = r
+                break
+        if role is None:
+            await ctx.message.add_reaction('❎') # negative check mark
+            return
+        id = str(ctx.guild.id)
+        if id not in self.bot.assignablerole:
+            self.bot.assignablerole[id] = {}
+        if role.name.lower() not in self.bot.assignablerole[id]:
+            await ctx.message.add_reaction('❎') # negative check mark
+            return
+        self.bot.assignablerole[id].pop(role.name.lower())
+        self.bot.savePending = True
+        await ctx.message.add_reaction('✅') # white check mark

@@ -187,7 +187,7 @@ class MizabotDrive():
                 data = {}
                 json.dump(data, outfile, default=self.bot.json_serial)
                 self.bot.savePending = True
-                print("Created an empty save file")
+                self.bot.boot_msg += "Created an empty save file\n"
             return True
         except Exception as e:
             print(e)
@@ -271,9 +271,10 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.0" # version number
+        self.botversion = "6.1" # version number
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
+        self.boot_msg = "" # msg to be displayed on the debug channel after boot
         self.starttime = datetime.utcnow() # used to check the uptime
         self.process = psutil.Process() # script process
         self.process.cpu_percent() # called once to initialize
@@ -296,8 +297,6 @@ class Mizabot(commands.Bot):
         self.bot_maintenance = None # bot maintenance day
         self.reminders = {} # user reminders
         self.tokens = {} # bot tokens
-        self.baguette = {} # secret, config
-        self.baguette_save = {} # secret, save
         self.gbfaccounts = [] # gbf bot accounts
         self.gbfcurrent = 0  # gbf current bot account
         self.gbfversion = None  # gbf version
@@ -314,6 +313,7 @@ class Mizabot(commands.Bot):
         self.emotes = {} # bot custom emote ids
         self.emote_cache = {} # store used emotes
         self.granblue = {} # store player/crew ids
+        self.assignablerole = {} # self assignable role
         self.extra = {} # extra data storage for plug'n'play cogs
         self.on_message_high = {} # on message callback (high priority)
         self.on_message_low = {} # on message callback
@@ -393,7 +393,6 @@ class Mizabot(commands.Bot):
             with open('config.json') as f:
                 data = json.load(f, object_pairs_hook=self.json_deserial_dict) # deserializer here
                 self.tokens = data['tokens']
-                self.baguette = data.get('baguette', {})
                 self.ids = data.get('ids', {})
                 self.games = data.get('games', ['Granblue Fantasy'])
                 self.strings = data.get('strings', {})
@@ -413,7 +412,6 @@ class Mizabot(commands.Bot):
                 # more check to avoid issues when reloading the file during runtime, if new data was added
                 self.newserver = data.get('newserver', {'servers':[], 'owners':[], 'pending':{}})
                 self.prefixes = data.get('prefixes', {})
-                self.baguette_save = data.get('baguette_save', {})
                 self.gbfaccounts = data.get('gbfaccounts', [])
                 self.gbfcurrent = data.get('gbfcurrent', 0)
                 self.gbfversion = data.get('gbfversion', None)
@@ -436,6 +434,7 @@ class Mizabot(commands.Bot):
                 self.extra = data.get('extra', {})
                 self.gbfids = data.get('gbfids', {})
                 self.summonlast = data.get('summonlast', None)
+                self.assignablerole = data.get('assignablerole', {})
                 return True
         except Exception as e:
             self.errn += 1
@@ -448,7 +447,6 @@ class Mizabot(commands.Bot):
                 data = {}
                 data['newserver'] = self.newserver
                 data['prefixes'] = self.prefixes
-                data['baguette_save'] = self.baguette_save
                 data['gbfaccounts'] = self.gbfaccounts
                 data['gbfcurrent'] = self.gbfcurrent
                 data['gbfversion'] = self.gbfversion
@@ -466,6 +464,7 @@ class Mizabot(commands.Bot):
                 data['extra'] = self.extra
                 data['gbfids'] = self.gbfids
                 data['summonlast'] = self.summonlast
+                data['assignablerole'] = self.assignablerole
                 json.dump(data, outfile, default=self.json_serial) # locally first
                 if not self.drive.save(json.dumps(data, default=self.json_serial)): # sending to the google drive
                     raise Exception("Couldn't save to google drive")
@@ -861,17 +860,20 @@ class Mizabot(commands.Bot):
 
     async def send(self, channel_name : str, msg : str = "", embed : discord.Embed = None, file : discord.File = None): # send something to a channel
         try:
-            await self.channels[channel_name].send(msg, embed=embed, file=file)
+            return await self.channels[channel_name].send(msg, embed=embed, file=file)
         except Exception as e:
             self.errn += 1
             print("Channel {} error: {}".format(channel_name, e))
+            return None
 
     async def sendMulti(self, channel_names : list, msg : str = "", embed : discord.Embed = None, file : discord.File = None): # send to multiple channel at the same time
+        r = []
         for c in channel_names:
             try:
-                await self.send(c, msg, embed, file)
+                r.append(await self.send(c, msg, embed, file))
             except:
                 await self.sendError('sendMulti', 'Failed to send a message to channel `{}`'.format(c))
+        return r
 
     async def sendError(self, func_name : str, msg : str, id = None): # send an error to the debug channel
         if msg.startswith("403 FORBIDDEN"): return # I'm tired of those errors because people didn't set their channel permissions right
@@ -957,6 +959,9 @@ async def on_ready(): # when the bot starts or reconnects
         await bot.send('debug', embed=bot.buildEmbed(title="{} is Ready".format(bot.user.display_name), description="**Version** {}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}".format(bot.botversion, bot.process.cpu_percent(), bot.process.memory_full_info().uss >> 20, len(asyncio.all_tasks()), len(bot.guilds), len(bot.newserver['pending']), len(bot.cogs), bot.cogn), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
         await bot.startTasks() # start the tasks
         bot.boot_flag = True
+    if bot.boot_msg != "":
+        await bot.send('debug', embed=bot.buildEmbed(title="Boot message", description=bot.boot_msg, timestamp=datetime.utcnow()))
+        bot.boot_msg = ""
 
 @bot.event
 async def on_guild_join(guild): # when the bot joins a new guild
