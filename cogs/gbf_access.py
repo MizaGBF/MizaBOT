@@ -1320,7 +1320,7 @@ class GBF_Access(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))
             return
         await self.bot.react(ctx, 'time')
-        data = await self.dad(id, mode)
+        data = await self.dad(id, False, mode)
         await self.bot.unreact(ctx, 'time')
         if data[0] != "":
             # processing
