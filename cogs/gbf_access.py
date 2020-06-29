@@ -1297,17 +1297,25 @@ class GBF_Access(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['ticket'])
     @commands.cooldown(1, 30, commands.BucketType.guild)
-    async def upcoming(self, ctx, jp : str = ""):
+    async def upcoming(self, ctx):
         """Post the upcoming gacha(s)"""
         try:
             if 'new_ticket' not in self.bot.gbfdata:
                 self.bot.gbfdata['new_ticket'] = []
                 self.bot.savePending = True
-            l = len(self.bot.gbfdata['new_ticket'])
-            if l > 0:
-                await ctx.send(embed=self.bot.buildEmbed(title="Last Gacha update", description="New: {}".format(l), thumbnail=self.bot.gbfdata['new_ticket'][0], color=self.color))
-            else:
-                await ctx.send(embed=self.bot.buildEmbed(title="No new upcoming gacha", color=self.color))
+            if 'count' not in self.bot.gbfdata:
+                self.bot.gbfdata['count'] = ['?', '?', '?']
+                self.bot.savePending = True
+
+            msg = "**{}** Characters\n**{}** Summons\n**{}** Weapons\n".format(self.bot.gbfdata['count'][0], self.bot.gbfdata['count'][1], self.bot.gbfdata['count'][2])
+            if len(self.bot.gbfdata['new_ticket']) > 0:
+                thumb = self.bot.gbfdata['new_ticket'][0]
+                msg += "\n**{} new Tickets**\n".format(len(self.bot.gbfdata['new_ticket']))
+                for t in self.bot.gbfdata['new_ticket']:
+                    msg += "[{}]({}), ".format(t[73:79], t)
+                msg = msg[:-2]
+
+            await ctx.send(embed=self.bot.buildEmbed(title="Current Version", description=msg, thumbnail=thumb, footer=self.bot.versionToDateStr(self.bot.gbfversion), color=self.color))
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))
             await self.bot.sendError("getlatestticket", str(e))
