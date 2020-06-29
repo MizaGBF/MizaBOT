@@ -166,13 +166,17 @@ class GBF_Access(commands.Cog):
         if indent == 0: res += '\n'
         return res
 
-    async def dad(self, id, mode = 0): # black magic
+    async def dad(self, id, silent, mode = 0): # black magic
         if id[0] == '3': type = 0
         elif id[0] == '2': type = 1
         else: return ["", {}]
         try:
             files = self.bot.gbfwatch["files"]
-            flags = self.bot.gbfwatch["flags"].copy()
+            flags = {}
+            for t in self.bot.gbfwatch["flags"]:
+                flags[t] = {}
+                for k in self.bot.gbfwatch["flags"][t]:
+                    flags[t][k] = False
         except:
             return ["", {}]
 
@@ -238,21 +242,28 @@ class GBF_Access(commands.Cog):
             counter+=1
 
         if len(paste) > 0:
-            return [str(self.postPastebin(id, paste)), flags]
+            if silent:
+                return ["Not posted to pastebin", flags]
+            else:
+                return [str(self.postPastebin(id, paste)), flags]
         else:
             return ["", {}]
 
     async def cc(self): # black magic
         found = {}
+        silent = False
 
         if 'c' not in self.bot.gbfdata:
             self.bot.gbfdata['c'] = [282, 280, 371]
+            silent = True
             self.bot.savePending = True
         if 'w' not in self.bot.gbfdata:
             self.bot.gbfdata['w'] = {"0": [[82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92], [74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84], [64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74], [42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52], [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61], [49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59], [69, 70, 80, 81, 82, 83, 84], [34, 35, 36, 37, 38, 39, 40, 41, 42, 44, 45], [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42], [25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35]], "1": [[191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201], [119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129], [138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148], [117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127], [161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171], [123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133], [120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130], [89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99], [118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128], [112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122]]}
             self.bot.savePending = True
 
         try:
+            num = self.bot.gbfwatch['num']
+            ns = self.bot.gbfwatch['ns']
             crt = self.bot.gbfwatch['crt']
             cl = self.bot.gbfwatch['cl']
             wl = self.bot.gbfwatch['wl']
@@ -261,12 +272,20 @@ class GBF_Access(commands.Cog):
         except:
             return found
 
+        nc = await self.bot.sendRequest(self.bot.gbfwatch['num'], account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
+        if nc is not None:
+            if 'count' not in self.bot.gbfdata:
+                self.bot.gbfdata['count'] = ['?', '?', '?']
+                self.bot.savePending = True
+            if self.bot.gbfdata['count'][0] != nc['archive']['npc_num']['max']: found[ns[0].format(self.bot.gbfdata['count'][0], nc['archive']['npc_num']['max'])] = ""
+            if self.bot.gbfdata['count'][1] != nc['archive']['summon_num']['max']: found[ns[1].format(self.bot.gbfdata['count'][1], nc['archive']['summon_num']['max'])] = ""
+
         for i in range(0, len(self.bot.gbfdata['c'])):
             cid = crt[i][1]
             id = self.bot.gbfdata['c'][i] + 1
             errc = 0
             while errc < 4:
-                data = await self.dad(str(cid + id * 1000))
+                data = await self.dad(str(cid + id * 1000), silent)
 
                 if data[0] == "":
                     errc += 1
@@ -279,22 +298,28 @@ class GBF_Access(commands.Cog):
                         found[crt[i][0]] += 1
                     errc = 0
 
-                    title = "{} : {}".format(crt[i][0], cid + id * 1000)
+                    if not silent:
+                        title = "{} : {}".format(crt[i][0], cid + id * 1000)
 
-                    # processing
-                    fields = []
+                        # processing
+                        fields = []
 
-                    for k in data[1]:
-                        tmp = ""
-                        for t in data[1][k]:
-                            if data[1][k][t]:
-                                tmp += t + ', '
-                        if len(tmp) > 0:
-                            fields.append({'name':k, 'value':tmp[:-2]})
+                        for k in data[1]:
+                            tmp = ""
+                            for t in data[1][k]:
+                                if data[1][k][t]:
+                                    tmp += t + ', '
+                            if len(tmp) > 0:
+                                fields.append({'name':k, 'value':tmp[:-2]})
 
-                    await self.bot.send('debug', embed=self.bot.buildEmbed(title=crt[i][0], description=cl[i].format(self.bot.gbfversion, str(cid + id * 1000)), fields=fields, color=self.color))
+                        await self.bot.send('debug', embed=self.bot.buildEmbed(title=crt[i][0], description=data[0], fields=fields, color=self.color))
                 id += 1
                 await asyncio.sleep(0.001)
+
+        if nc is not None:
+            if self.bot.gbfdata['count'][2] != nc['archive']['weapon_num']['max']: found[ns[2].format(self.bot.gbfdata['count'][2], nc['archive']['weapon_num']['max'])] = ""
+            self.bot.gbfdata['count'] = [nc['archive']['npc_num']['max'], nc['archive']['summon_num']['max'], nc['archive']['weapon_num']['max']]
+            self.bot.savePending = True
 
         for k in self.bot.gbfdata['w']:
             try:
@@ -318,11 +343,11 @@ class GBF_Access(commands.Cog):
                     await asyncio.sleep(0.001)
 
                     id = (103 + x) * 10000000 + i * 100000 + stid * 100
-                    data = self.bot.sendRequest(wl[0].format(id), no_base_headers=True)
+                    data = await self.bot.sendRequest(wl[0].format(id), no_base_headers=True)
                     if data is None:
-                        data = self.bot.sendRequest(wl[1].format(id), no_base_headers=True)
+                        data = await self.bot.sendRequest(wl[1].format(id), no_base_headers=True)
                     if data is None:
-                        data = self.bot.sendRequest(wl[2].format(id), no_base_headers=True)
+                        data = await self.bot.sendRequest(wl[2].format(id), no_base_headers=True)
                     if data is None:
                         errc += 1
                         stid += 1
@@ -337,7 +362,8 @@ class GBF_Access(commands.Cog):
                     else:
                         found[tt] += 1
 
-                    await self.bot.send('debug', embed=self.bot.buildEmbed(title=ws[x], description='{} ▫️ {}'.format(tt, id), thumbnail=wl[0].format(id), color=self.color))
+                    if not silent:
+                        await self.bot.send('debug', embed=self.bot.buildEmbed(title=ws[x], description='{} ▫️ {}'.format(tt, id), thumbnail=wl[0].format(id), color=self.color))
 
                     stid += 1
 
@@ -904,6 +930,7 @@ class GBF_Access(commands.Cog):
         await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 60, commands.BucketType.guild)
     async def gacha(self, ctx):
         """Post when the current gacha end"""
         try:

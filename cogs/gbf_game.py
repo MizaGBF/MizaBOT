@@ -609,6 +609,21 @@ class GBF_Game(commands.Cog):
 
         await ctx.send(embed=self.bot.buildEmbed(title="Today, Xil's main element is", description="{} **{}**".format(self.bot.getEmote(e), e.capitalize()), color=self.color))
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(2, 30, commands.BucketType.guild)
+    async def dragon(self, ctx):
+        """Generate two random dragon for today reset in GBF"""
+        possible = [
+            "{} Wilnas".format(self.bot.getEmote('fire')),
+            "{} Wamdus".format(self.bot.getEmote('water')),
+            "{} Galleon".format(self.bot.getEmote('earth')),
+            "{} Ewiyar".format(self.bot.getEmote('wind')),
+            "{} Lu Woh".format(self.bot.getEmote('light')),
+            "{} Fediel".format(self.bot.getEmote('dark'))
+        ]
+
+        await ctx.send(embed=self.bot.buildEmbed(title="{}'s daily dragons are".format(ctx.author.display_name), description="{} {}\n{} {}".format(self.bot.getEmote('1'), random.choice(possible), self.bot.getEmote('2'), random.choice(possible)), thumbnail=ctx.author.avatar_url, color=self.color))
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True, aliases=['leek', 'leaks', 'leeks'])
     @commands.cooldown(3, 30, commands.BucketType.guild)
     async def leak(self, ctx):
