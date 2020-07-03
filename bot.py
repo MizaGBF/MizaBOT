@@ -15,10 +15,8 @@ import itertools
 import psutil
 import time
 import re
+import os
 import cogs # our cogs folder
-import logging
-
-#logging.basicConfig(level=logging.INFO)
 
 # ########################################################################################
 # custom help command used by the bot
@@ -271,7 +269,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.3" # version number
+        self.botversion = "6.4" # version number
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
@@ -924,6 +922,10 @@ class Mizabot(commands.Bot):
         if tmp != 0: return None
         return timedelta(days=sum//86400, seconds=sum%86400)
 
+    def delFile(self, filename):
+        try: os.remove(filename)
+        except: pass
+
 # #####################################################################################
 # GracefulExit
 class GracefulExit: # when heroku force the bot to shutdown
@@ -1064,6 +1066,16 @@ async def on_raw_reaction_add(payload):
                         dict['image'] = {'url':file.url}
                     else:
                         dict['fields'].append({'inline': True, 'name':'Attachment', 'value':f'[{file.filename}]({file.url})'})
+            # search for image url if no attachment
+            if 'image' not in dict:
+                s = content.find("http")
+                for ext in ['.png', '.jpeg', '.jpg', '.gif', '.webp']:
+                    e = content.find(ext, s)
+                    if e != -1:
+                        e += len(ext)
+                        break
+                if content.find(' ', s, e) == -1 and s != -1:
+                    dict['image'] = {'url':content[s:e]}
             embed = discord.Embed.from_dict(dict)
             embed.timestamp=message.created_at
             await bot.send('pinned', embed=embed)

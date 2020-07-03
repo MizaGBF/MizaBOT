@@ -323,8 +323,9 @@ class Owner(commands.Cog):
     async def resetGacha(self, ctx):
         """Reset the gacha settings"""
         self.bot.gbfdata['gachabanner'] = None
+        self.bot.gbfdata['gachacontent'] = None
         self.bot.gbfdata['gachatime'] = None
-        self.bot.gbfdata['gachaid'] = None
+        self.bot.gbfdata['gachatimesub'] = None
         self.bot.savePending = True
         await ctx.message.add_reaction('✅') # white check mark
 

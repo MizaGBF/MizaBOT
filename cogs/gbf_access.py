@@ -14,9 +14,10 @@ import io
 import hashlib
 import string
 import sqlite3
-import os
 from bs4 import BeautifulSoup
 from xml.sax import saxutils as su
+
+import math
 
 class GBF_Access(commands.Cog):
     """GBF advanced commands."""
@@ -125,6 +126,7 @@ class GBF_Access(commands.Cog):
                             msg += "{} {}\n".format(news[k], k)
                     if msg != "":
                         await self.bot.sendMulti(['debug', 'private_update'], embed=self.bot.buildEmbed(title="Content Update", description=msg, thumbnail=thumb, color=self.color))
+                        await self.bot.send('debug', embed=self.bot.buildEmbed(title="Reminder", description="Keep it private", color=self.color))
                 elif s == 2:
                     await self.bot.send('debug', embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version set to `{}` (`{}`)".format(v, self.bot.versionToDateStr(v)) , color=self.color))
                 await asyncio.sleep(60)
@@ -134,7 +136,7 @@ class GBF_Access(commands.Cog):
             except Exception as e:
                 await self.bot.sendError('gbfwatch B', str(e))
 
-    def postPastebin(self, title, paste): # to send informations on a pastebin, requires dev and user keys
+    def postPastebin(self, title, paste, duration = '1D'): # to send informations on a pastebin, requires dev and user keys
         try:
             url = "http://pastebin.com/api/api_post.php"
             values = {'api_option' : 'paste',
@@ -143,7 +145,22 @@ class GBF_Access(commands.Cog):
                       'api_paste_code' : paste,
                       'api_paste_private' : '1',
                       'api_paste_name' : title,
-                      'api_paste_expire_date' : '1D'}
+                      'api_paste_expire_date' : duration}
+            req = request.Request(url, parse.urlencode(values).encode('utf-8'))
+            with request.urlopen(req) as response:
+               result = response.read()
+            return result.decode('ascii')
+        except Exception as e:
+            return "Error: " + str(e)
+
+    def delPastebin(self, link): # delete a pastebin
+        try:
+            link = link.replace('https://pastebin.com/', '')
+            url = "http://pastebin.com/api/api_post.php"
+            values = {'api_option' : 'delete',
+                      'api_dev_key' : self.bot.pastebin['dev_key'],
+                      'api_user_key' : self.bot.pastebin['user_key'],
+                      'api_paste_key' : link}
             req = request.Request(url, parse.urlencode(values).encode('utf-8'))
             with request.urlopen(req) as response:
                result = response.read()
@@ -579,8 +596,7 @@ class GBF_Access(commands.Cog):
 
     async def updateSummon(self): # update summon.sql
         self.bot.drive.delFiles(["summon.sql"], self.bot.tokens['files'])
-        try: os.remove('summon.sql')
-        except: pass
+        self.bot.delFile('summon.sql')
         self.sql['summon'][2] = True
         conn = sqlite3.connect('summon.sql')
         c = conn.cursor()
@@ -667,7 +683,7 @@ class GBF_Access(commands.Cog):
         self.bot.gbfdata['gachatime'] = None
         self.bot.gbfdata['gachatimesub'] = None
         self.bot.gbfdata['gachabanner'] = None
-        self.bot.gbfdata['gachaid'] = None
+        self.bot.gbfdata['gachacontent'] = None
         c = self.bot.getJST()
         try:
             #gacha page
@@ -683,12 +699,12 @@ class GBF_Access(commands.Cog):
             header_images = data['header_images']
             logo_image = data.get('logo_image', '')
             self.bot.gbfdata['gachabanner'] = None
-            self.bot.gbfdata['gachaid'] = data['legend']['lineup'][-1]['id']
+            gachaid = data['legend']['lineup'][-1]['id']
 
             await asyncio.sleep(0.001) # sleep to take a break
 
             # draw rate
-            data = await self.bot.sendRequest("http://game.granbluefantasy.jp/gacha/provision_ratio/{}/1?_=TS1&t=TS2&uid=ID".format(self.bot.gbfdata['gachaid']), account=self.bot.gbfcurrent, decompress=True, load_json=True, check_update=True)
+            data = await self.bot.sendRequest("http://game.granbluefantasy.jp/gacha/provision_ratio/{}/1?_=TS1&t=TS2&uid=ID".format(gachaid), account=self.bot.gbfcurrent, decompress=True, load_json=True, check_update=True)
             # build list
             banner_msg = "{} **{}** SSR Rate".format(self.bot.getEmote('SSR'), data['ratio'][0]['ratio'])
             if not data['ratio'][0]['ratio'].startswith('3'):
@@ -734,14 +750,14 @@ class GBF_Access(commands.Cog):
                                 count += 1
                                 banner_msg += i
                         banner_msg += "\n"
+            self.bot.gbfdata['gachacontent'] = banner_msg
             # add image
             gachas = ['{}/tips/description_gacha.jpg'.format(random_key), '{}/tips/description_{}.jpg'.format(random_key, logo_image.replace('logo', 'gacha')), '{}/tips/description_{}.jpg'.format(random_key, header_images[0]), 'header/{}.png'.format(header_images[0])]
             for g in gachas:
-                data = str(self.bot.sendRequest("http://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(g)))
+                data = str(self.bot.sendRequest("http://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(g), no_base_headers=True))
                 if data is not None:
-                    self.bot.gbfdata['gachabanner'] = banner_msg + "\nhttp://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(g)
-            if self.bot.gbfdata['gachabanner'] is None:
-                self.bot.gbfdata['gachabanner'] = banner_msg
+                    self.bot.gbfdata['gachabanner'] = "http://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(g)
+                    break
 
             # save
             self.bot.savePending = True
@@ -751,32 +767,17 @@ class GBF_Access(commands.Cog):
             self.bot.gbfdata['gachatime'] = None
             self.bot.gbfdata['gachatimesub'] = None
             self.bot.gbfdata['gachabanner'] = None
-            self.bot.gbfdata['gachaid'] = None
+            self.bot.gbfdata['gachacontent'] = None
             self.bot.savePending = True # save anyway
             return False
 
-    async def getGachatime(self): # retrieve gacha change string if it exists
+    async def getCurrentGacha(self):
         c = self.bot.getJST().replace(microsecond=0) - timedelta(seconds=80)
         if ('gachatime' not in self.bot.gbfdata or self.bot.gbfdata['gachatime'] is None or c >= self.bot.gbfdata['gachatime']) and not await self.getGacha():
-            return ""
+            return None
         if self.bot.gbfdata['gachatime'] is None:
-            return ""
-        if self.bot.gbfdata['gachatime'] != self.bot.gbfdata['gachatimesub']:
-            d = self.bot.gbfdata['gachatime'] - c
-            f = self.bot.gbfdata['gachatimesub'] - c
-            return "{} Current gacha ends in **{}d{}h{}m** (Spark period ends in **{}d{}h{}m**)".format(self.bot.getEmote('SSR'), d.days, d.seconds // 3600, (d.seconds // 60) % 60, f.days, f.seconds // 3600, (f.seconds // 60) % 60)
-        else:
-            d = self.bot.gbfdata['gachatime'] - c
-            return "{} Current gacha ends in **{}d{}h{}m**".format(self.bot.getEmote('SSR'), d.days, d.seconds // 3600, (d.seconds // 60) % 60)
-
-    async def getGachabanner(self, jp): # retrieve gacha banner string and image if they exist
-        c = self.bot.getJST()
-        if ('gachatime' not in self.bot.gbfdata or self.bot.gbfdata['gachatime'] is None or c >= self.bot.gbfdata['gachatime']) and not await self.getGacha():
-            return "Unavailable at the moment"
-        if self.bot.gbfdata['gachabanner'] is None:
-            return "Unavailable at the moment"
-        if jp == 'jp': return self.bot.gbfdata['gachabanner'].replace('/assets_en/', '/assets/')
-        return self.bot.gbfdata['gachabanner']
+            return []
+        return [self.bot.gbfdata['gachatime'] - c, self.bot.gbfdata['gachatimesub'] - c, self.bot.gbfdata['gachacontent'], self.bot.gbfdata['gachabanner']]
 
     async def updateTicket(self, ctx = None): # check for new tickets
         if 'ticket_id' not in self.bot.gbfdata:
@@ -929,35 +930,20 @@ class GBF_Access(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid parameter {}".format(ua), color=self.color))
         await ctx.message.add_reaction('✅') # white check mark
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rateup', 'banner'])
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def gacha(self, ctx):
-        """Post when the current gacha end"""
+        """Post the current gacha informations"""
         try:
-            description = await self.getGachatime()
-            if len(description) > 0:
-                await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
+            content = await self.getCurrentGacha()
+            if len(content) > 0:
+                description = "{} Current gacha ends in **{}d{}h{}m**".format(self.bot.getEmote('clock'), content[0].days, content[0].seconds // 3600, (content[0].seconds // 60) % 60)
+                if content[0] != content[1]:
+                    description += " (Spark period ends in **{}d{}h{}m**)".format(content[1].days, content[1].seconds // 3600, (content[1].seconds // 60) % 60)
+                description += "\n" + content[2]
+                await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, thumbnail=content[3], color=self.color))
         except Exception as e:
-            await self.bot.sendError("getgachatime", str(e))
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rateup'])
-    @commands.cooldown(1, 60, commands.BucketType.guild)
-    async def banner(self, ctx, jp : str = ""):
-        """Post the current gacha rate up
-        add 'jp' for the japanese image"""
-        try:
-            buf = await self.getGachabanner(jp)
-            if len(buf) > 0:
-                image_index = buf.find("\nhttp")
-                if image_index != -1:
-                    image = buf.splitlines()[-1]
-                    description = buf[0:image_index]
-                else:
-                    description = buf
-                    image = ""
-                await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, image=image, color=self.color))
-        except Exception as e:
-            await self.bot.sendError("getgachabanner", str(e))
+            await self.bot.sendError("getcurrentgacha", str(e))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['badboi', 'branded', 'restricted'])
     @commands.cooldown(5, 30, commands.BucketType.guild)

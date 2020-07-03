@@ -623,11 +623,3 @@ class GBF_Game(commands.Cog):
         ]
 
         await ctx.send(embed=self.bot.buildEmbed(title="{}'s daily dragons are".format(ctx.author.display_name), description="{} {}\n{} {}".format(self.bot.getEmote('1'), random.choice(possible), self.bot.getEmote('2'), random.choice(possible)), thumbnail=ctx.author.avatar_url, color=self.color))
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True, aliases=['leek', 'leaks', 'leeks'])
-    @commands.cooldown(3, 30, commands.BucketType.guild)
-    async def leak(self, ctx):
-        """🕵"""
-        message = await ctx.send(embed=self.bot.buildEmbed(title="🕵", description="[https://pastebin.com/{}]({})".format(''.join(random.choice(string.ascii_letters + string.digits) for i in range(8)), random.choice(['https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'https://pbs.twimg.com/media/CeI2XjaW4AAvR5m?format=jpg&name=orig', 'https://www.100plumbing.com.au/wp-content/uploads/2019/01/water-leak-service-1.jpg', 'https://fudgeinsurance.com/wp-content/uploads/2017/10/Water-Leak.jpeg'])), color=self.color))
-        await asyncio.sleep(15)
-        await message.delete()

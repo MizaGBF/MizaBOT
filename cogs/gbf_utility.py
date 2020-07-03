@@ -208,8 +208,11 @@ class GBF_Utility(commands.Cog):
         try:
             cog = self.bot.get_cog('GBF_Access')
             if cog is not None:
-                buf = await cog.getGachatime()
-                if len(buf) > 0: description += "\n" + buf
+                buf = await cog.getCurrentGacha()
+                if len(buf) > 0:
+                    description += "\n{} Current gacha ends in **{}d{}h{}m**".format(self.bot.getEmote('SSR'), buf[0].days, buf[0].seconds // 3600, (buf[0].seconds // 60) % 60)
+                    if buf[0] != buf[1]:
+                        description += " (Spark period ends in **{}d{}h{}m**)".format(buf[1].days, buf[1].seconds // 3600, (buf[1].seconds // 60) % 60)
         except Exception as e:
             await self.bot.sendError("getgachatime", str(e))
 
@@ -265,6 +268,7 @@ class GBF_Utility(commands.Cog):
         await ctx.send(embed=self.bot.buildEmbed(title="{} GBF Roll Tracker".format(self.bot.getEmote('crystal')), description=self.bot.strings["rolltracker()"], color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['charlist', 'asset'])
+    @isYou()
     async def datamining(self, ctx):
         """Post a link to my autistic datamining Sheet"""
         await ctx.send(embed=self.bot.buildEmbed(title="Asset Datamining Sheet", description=self.bot.strings["datamining()"], color=self.color))

@@ -507,7 +507,7 @@ class General(commands.Cog):
             page = ((len(roles) - 1) // 20) + 1
         fields = []
         count = 0
-        for k in roles:
+        for k in list(roles.keys()):
             if count < (page - 1) * 20:
                 count += 1
                 continue
