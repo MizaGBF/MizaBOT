@@ -297,6 +297,30 @@ class Owner(commands.Cog):
 
     @commands.command(no_pm=True)
     @isOwner()
+    async def getSchedule(self, ctx):
+        """Retrieve the monthly schedule from @granble_en (Owner only / Tweepy only)
+        The tweet must be recent"""
+        tw = self.bot.getTwitterTimeline('granblue_en')
+        if tw is not None:
+            for t in tw:
+                txt = t.text
+                if txt.find(" = ") != -1 and txt.find("chedule") != -1:
+                    s = txt.find("https://t.co/")
+                    if s != -1: txt = txt[:-1]
+                    lines = txt.split('\n')
+                    msg = lines[0] + '\n`'
+                    for i in range(1, len(lines)):
+                        if lines[i] != "":
+                            msg += lines[i].replace(" = ", ";") + ";"
+                    msg = msg[:-1]
+                    msg += "`"
+                    await self.bot.send('debug', embed=self.bot.buildEmbed(title="Automatic schedule detection", description=msg, color=self.color))
+                    await ctx.message.add_reaction('✅') # white check mark
+                    return
+        await ctx.message.add_reaction('❎') # white negative mark
+
+    @commands.command(no_pm=True)
+    @isOwner()
     async def setStatus(self, ctx, *, terms : str):
         """Change the bot status (Owner only)"""
         await self.bot.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=terms))

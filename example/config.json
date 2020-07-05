@@ -8,7 +8,17 @@
         "upload" : "currently unused. drive folder id in which the bot can save files",
         "files" : "drive folder id from which the bot can retrieve files"
     },
-    "baguette" : {
+    "pastebin" : {
+        "dev_key" : "",
+        "user_key" : "",
+        "user" : "",
+        "pass" : ""
+    },
+    "twitter": {
+        "key" : "",
+        "secret" : "",
+        "access" : "",
+        "access_secret" : ""
     },
     "ids" : {
         "debug_channel" : <id of the channel where the bot will write debug infos. all ids are numbers, so no quotes>,

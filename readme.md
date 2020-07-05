@@ -6,6 +6,7 @@
 * [PyDrive](https://pythonhosted.org/PyDrive/) to access the google drive where the save file is stored.  
 * [psutil](https://psutil.readthedocs.io/en/latest/).  
 * [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/).  
+* [Tweepy](https://github.com/tweepy/tweepy) (Optional).  
 * `pip install -r requirements.txt` to install all the modules.  
 ### Setup  
 The bot is designed to be used on [Heroku](https://www.heroku.com).  
@@ -16,6 +17,7 @@ Here are a few instructions to set it up in its current state:
 * Other files in the [example folder](https://github.com/MizaGBF/MizaBOT/tree/master/example) are:  
 * `config.json` must be edited with a notepad (follow the instructions inside) and placed with the bot code (your discord token must be inserted inside).  
 * `save.json` can be used as it is and must be placed in the [Google Drive](https://www.google.com/drive/) folder used to save the bot data. The bot can't start without a valid save file, it will create one if needed.  
+* (Optional) Twitter credentials can be used to enhance some features. Requires a developper account.  
 This [issue](https://github.com/MizaGBF/MizaBOT/issues/1) might help if you encounter a problem.  
 Example files might be a bit outdated. I'll do my best to update them as much as possible.  
 ### Code Overview  
@@ -35,6 +37,6 @@ Example files might be a bit outdated. I'll do my best to update them as much as
 ![Command example](https://cdn.discordapp.com/attachments/614716155646705676/643427915526045696/read03.png)
 * `$toggleBroadcast` and `$seeBroadcast` works the same. If the bot owner needs to send a message to all servers, those channels will receive the message.  
 * Servers need to be approved before the bot can be used in it. The owner must use the `$accept <server id>` or `$refuse <server id>` commands. `$ban_server <server id>` or `$ban_owner <owner id>` can be used to forbid someone to add the bot to a server. The owner's 'debug server' registered in `config.json` can bypass those restrictions.  
-* The [Granblue Fantasy](http://game.granbluefantasy.jp) Schedule must be manually set using `$setschedule`. The syntax is the following: `$setschedule date of event 1;name of event 1; etc.... ; date of event N; name of event N`. The previous command can be retrieved using `$schedule raw`.  
+* The [Granblue Fantasy](http://game.granbluefantasy.jp) Schedule must be manually set using `$setschedule`. The syntax is the following: `$setschedule date of event 1;name of event 1; etc.... ; date of event N; name of event N`. The previous command can be retrieved using `$schedule raw`. Alternatively, if Twitter is enabled, it can be retrieved from [@granblue_en](https://twitter.com/Granblue_en) with the `$getschedule` command.  
 ![Schedule example](https://cdn.discordapp.com/attachments/614716155646705676/643427910874693642/read01.png)
 * For details on everything else, I recommend the `$help` command.  

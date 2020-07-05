@@ -1,6 +1,7 @@
 ﻿import discord
 from discord.ext import commands
 import asyncio
+import tweepy
 import signal
 import zlib
 import json
@@ -269,7 +270,8 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.5" # version number
+        self.botversion = "6.6" # version number
+        self.botchangelog = ["Added this changelog", "Added the magnafest command", "Revamped the twitter command (can now retrieve all accounts but the registered GBF ones take priority)"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
@@ -299,7 +301,9 @@ class Mizabot(commands.Bot):
         self.gbfcurrent = 0  # gbf current bot account
         self.gbfversion = None  # gbf version
         self.gbfwatch = {}  # gbf special data
-        self.pastebin = {}  # pastebin data
+        self.pastebin = {}  # pastebin credentials
+        self.twitter = {} # twitter credentials
+        self.twitter_api = None # twitter api object
         self.ids = {} # discord ids used by the bot
         self.gbfids = {} # gbf profile ids linked to discord ids
         self.summonlast = None # support summon database last update
@@ -326,6 +330,13 @@ class Mizabot(commands.Bot):
                 exit(3)
             time.sleep(20) # wait 20 sec
         if not self.load(): exit(2) # first loading of the save file must succeed, if not we exit
+        # start tweepy
+        try:
+            auth = tweepy.OAuthHandler(self.twitter['key'], self.twitter['secret'])
+            auth.set_access_token(self.twitter['access'], self.twitter['access_secret'])
+            self.twitter_api = tweepy.API(auth)
+        except:
+            self.twitter_api = None
         # init bot
         super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\nSource code: https://github.com/MizaGBF/MizaBOT.\nDefault command prefix is '$', use $setPrefix to change it on your server.".format(self.botversion), help_command=MizabotHelp(), owner=self.ids['owner'], max_messages=None)
 
@@ -398,7 +409,8 @@ class Mizabot(commands.Bot):
                 self.emotes = data.get('emotes', {})
                 self.granblue = data.get('granblue', {"gbfgcrew":{}})
                 self.gbfwatch = data.get('gbfwatch', {})
-                self.pastebin = data.get('pastebin', {})
+                self.pastebin = data.get('pastebin', {"dev_key" : "", "user_key" : "", "user" : "", "pass" : ""})
+                self.twitter = data.get('twitter', {"key" : "", "secret" : "", "access" : "", "access_secret" : ""})
         except Exception as e:
             print('loadConfig(): {}\nCheck your \'config.json\' for the above error.'.format(e))
             exit(1) # instant quit if error
@@ -646,6 +658,14 @@ class Mizabot(commands.Bot):
         if 'author' in options:
             embed.set_author(name=options['author'].pop('name', ""), url=options['author'].pop('url', ""), icon_url=options['author'].pop('icon_url', ""))
         return embed
+
+    def getTwitterUser(self, screen_name : str):
+        try: return self.twitter_api.get_user(screen_name)
+        except: return None
+
+    def getTwitterTimeline(self, screen_name : str):
+        try: return self.twitter_api.user_timeline(screen_name)
+        except: return None
 
     async def sendRequest(self, url, **options): # to send a request over the internet
         try:
@@ -958,7 +978,7 @@ async def on_ready(): # when the bot starts or reconnects
         bot.setChannel('pinned', 'you_pinned') # set (you) pinned channel
         bot.setChannel('gbfglog', 'gbfg_log') # set /gbfg/ lucilius log channel
         bot.setChannel('youlog', 'you_log') # set (you) log channel
-        await bot.send('debug', embed=bot.buildEmbed(title="{} is Ready".format(bot.user.display_name), description="**Version** {}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}".format(bot.botversion, bot.process.cpu_percent(), bot.process.memory_full_info().uss >> 20, len(asyncio.all_tasks()), len(bot.guilds), len(bot.newserver['pending']), len(bot.cogs), bot.cogn), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
+        await bot.send('debug', embed=bot.buildEmbed(title="{} is Ready".format(bot.user.display_name), description="**Version** {}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}\n**Twitter**▫️{}".format(bot.botversion, bot.process.cpu_percent(), bot.process.memory_full_info().uss >> 20, len(asyncio.all_tasks()), len(bot.guilds), len(bot.newserver['pending']), len(bot.cogs), bot.cogn, (bot.twitter_api is not None)), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
         await bot.startTasks() # start the tasks
         bot.boot_flag = True
     if bot.boot_msg != "":

@@ -123,37 +123,63 @@ class GBF_Utility(commands.Cog):
                     await self.bot.sendError("wiki", str(e))
                 await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Click here to refine the search\nhttps://gbf.wiki/index.php?title=Special:Search&search={}".format(sch), color=self.color, footer=str(e)))
 
-
-    wiki_options = {'en':0, 'english':0, 'noel':1, 'radio':1, 'channel':1, 'tv':1, 'wawi':2, 'raidpic':3, 'pic':3, 'kmr':4, 'fkhr':5, 'kakage':6,
-        'hag':6, 'jk':6, 'hecate':7, 'hecate_mk2':7, 'gbfverification':7, 'chiaking':8, 'gw':9, 'gamewith':9, 'anime':10, 'gbf':11, 'granblue':11}
-    wiki_accounts = [["Welcome EOP", "granblue_en"], ["GBF TV news and more", "noel_gbf"], ["Subscribe: https://twitter.com/Wawi3313", "WawiGbf"], ["To grab raid artworks", "twihelp_pic"], ["Give praise, for he has no equal", "kimurayuito"], ["The second in charge", "hiyopi"], ["Young JK inside", "kakage0904"], ["For nerds :nerd:", "hecate_mk2"], [":relaxed: :eggplant:", "chiaking58"], [":nine: / :keycap_ten:", "granblue_gw"], [":u5408:", "anime_gbf"], ["Official account", "granbluefantasy"]]
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tweet'])
     @commands.cooldown(1, 2, commands.BucketType.default)
     async def twitter(self, ctx, term : str = ""):
-        """Post a gbf related twitter account
-        default is the official account
-        options: en, english, noel, radio, channel, tv wawi, raidpic, pic, kmr, fkhr,
-        kakage, hag, jk, hecate, hecate_mk2, gbfverification, chiaking, gw, gamewith, anime,
+        """Post a twitter account (Tweepy enhanced)
+        If none is found and twitter is enabled, try to get the corresponding user.
+        options: granblue_en, en, noel, channel, tv wawi, raidpic, pic, kmr, fkhr,
+        kakage, hag, jk, hecate, hecate_mk2, gbfverification, gw, gamewith, anime,
         gbf, granblue"""
-        terml = term.lower()
-        url = "https://twitter.com/{}"
-        pic = "https://twitter.com/{}/profile_image?size=bigger"
-        try:
-            a = self.wiki_accounts[self.wiki_options[terml]]
-        except:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="`{}` isn't in my database".format(term), footer="Use the help for the full list", color=self.color))
-            return
+        registered = {
+            'granblue_en' : ["granblue_en", "Welcome EOP"],
+            'en' : ["granblue_en", "Welcome EOP"],
+            'noel' : ["noel_gbf", "Japanese Granblue news"],
+            'tv' : ["noel_gbf", "Japanese Granblue news"],
+            'channel' : ["noel_gbf", "Japanese Granblue news"],
+            'wawi' : ["wawigbf", "Subscribe: https://twitter.com/Wawi3313"],
+            'raidpic' : ["twihelp_pic", "To grab Granblue raid artworks"],
+            'pic' : ["twihelp_pic", "To grab Granblue raid artworks"],
+            'kmr' : ["kimurayuito", "Give praise, for he has no equal"],
+            'fkhr' : ["hiyopi", "The second in charge"],
+            'kakage' : ["kakage0904", "Young JK inside"],
+            'hag' : ["kakage0904", "Young JK inside"],
+            'jk' : ["kakage0904", "Young JK inside"],
+            'hecate' : ["hecate_mk2", "For nerds :nerd:"],
+            'hecate_mk2' : ["hecate_mk2", "For nerds :nerd:"],
+            'gbfverification' : ["hecate_mk2", "For nerds :nerd:"],
+            'gw' : ["granblue_gw", ":nine: / :keycap_ten:"],
+            'gamewith' : ["granblue_gw", ":nine: / :keycap_ten:"],
+            'anime' : ["anime_gbf", ":u5408:"],
+            'gbf' : ["granbluefantasy", "Official account"],
+            'granblue' : ["granbluefantasy", "Official account"]
+        }
 
-        # get avatar url
-        async with aiohttp.ClientSession() as session:
-            async with session.get(pic.format(a[1]), allow_redirects=False) as r:
-                if r.status == 302:
-                    pic = r.headers['location']
-                else:
-                    pic = ""
+        target = registered.get(term.lower(), None)
+        pic = None
+        user = None
+        accepted = (target is not None)
 
-        url = url.format(a[1])
-        await ctx.send(embed=self.bot.buildEmbed(title=url, url=url, description=a[0], thumbnail=pic, color=self.color))
+        if target is None:
+            user = self.bot.getTwitterUser(term.lower())
+        else:
+            user = self.bot.getTwitterUser(target[0])
+        if user is not None:
+            pic = user.profile_image_url.replace("normal", "bigger")
+        else:
+            pic = None
+        #ctx.channel.is_nsfw():
+        if accepted:
+            if user is None:
+                await ctx.send(embed=self.bot.buildEmbed(title=target[0], url="https://twitter.com/{}".format(target[0]), description=target[1], thumbnail=pic, color=self.color))
+            else:
+                await ctx.send(embed=self.bot.buildEmbed(title=user.name, url="https://twitter.com/{}".format(target[0]), description=target[1], thumbnail=pic, color=self.color))
+        elif user is None:
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="`{}` not found".format(term), color=self.color))
+        elif ctx.channel.is_nsfw():
+            await ctx.send(embed=self.bot.buildEmbed(title=user.name, url="https://twitter.com/{}".format(user.screen_name), thumbnail=pic, color=self.color))
+        else:
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Other twitter account disabled in SFW channels\nCheck at your own risk `https://twitter.com/{}`".format(user.screen_name), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     async def reddit(self, ctx):
