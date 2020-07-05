@@ -190,6 +190,28 @@ class Owner(commands.Cog):
             msg += '\n'
         await self.bot.send('debug', embed=self.bot.buildEmbed(title="{} Guild War (You) Buff debug check".format(self.bot.getEmote('gw')), description=msg, color=self.color))
 
+    @commands.command(no_pm=True, aliases=['sms'])
+    @isOwner()
+    async def setMagnafestStart(self, ctx, day : int, month : int, year : int, hour : int):
+        """Set a magnafest start date (Owner only)"""
+        try:
+            self.bot.gbfdata['magnastart'] = datetime.now().replace(year=year, month=month, day=day, hour=hour, minute=0, second=0, microsecond=0)
+            self.bot.savePending = True
+            await ctx.message.add_reaction('✅') # white check mark
+        except Exception as e:
+            await self.bot.sendError('setmagnafeststart', str(e))
+
+    @commands.command(no_pm=True, aliases=['sme'])
+    @isOwner()
+    async def setMagnafestEnd(self, ctx, day : int, month : int, year : int, hour : int):
+        """Set a magnafest end date (Owner only)"""
+        try:
+            self.bot.gbfdata['magnaend'] = datetime.now().replace(year=year, month=month, day=day, hour=hour, minute=0, second=0, microsecond=0)
+            self.bot.savePending = True
+            await ctx.message.add_reaction('✅') # white check mark
+        except Exception as e:
+            await self.bot.sendError('setmagnafestend', str(e))
+
     @commands.command(no_pm=True)
     @isOwner()
     async def setMaintenance(self, ctx, day : int, month : int, hour : int, duration : int):

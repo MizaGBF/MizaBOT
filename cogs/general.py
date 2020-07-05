@@ -310,7 +310,7 @@ class General(commands.Cog):
         """Post the current time, JST timezone"""
         await ctx.send(embed=self.bot.buildEmbed(title="{} {:%Y/%m/%d %H:%M} JST".format(self.bot.getEmote('clock'), self.bot.getJST()), color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.command(no_pm=True, cooldown_after_parsing=True, alias=['inrole', 'rolestat'])
     @isAuthorized()
     async def roleStats(self, ctx, *name : str):
         """Search how many users have a matching role

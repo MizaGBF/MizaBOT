@@ -42,6 +42,7 @@ class GBF_Access(commands.Cog):
             'gw' : [None, None, None] # conn, cursor, status
         }
         self.loadinggw = False
+        self.loadinggacha = False
 
     def startTasks(self):
         self.bot.runTask('gbfwatch', self.gbfwatch)
@@ -680,6 +681,9 @@ class GBF_Access(commands.Cog):
     async def getGacha(self): # get current gacha
         if not await self.bot.isGameAvailable():
             return False
+        if self.loadinggacha:
+            return False
+        self.loadinggacha = True
         self.bot.gbfdata['gachatime'] = None
         self.bot.gbfdata['gachatimesub'] = None
         self.bot.gbfdata['gachabanner'] = None
@@ -706,9 +710,9 @@ class GBF_Access(commands.Cog):
             # draw rate
             data = await self.bot.sendRequest("http://game.granbluefantasy.jp/gacha/provision_ratio/{}/1?_=TS1&t=TS2&uid=ID".format(gachaid), account=self.bot.gbfcurrent, decompress=True, load_json=True, check_update=True)
             # build list
-            banner_msg = "{} **{}** SSR Rate".format(self.bot.getEmote('SSR'), data['ratio'][0]['ratio'])
+            banner_msg = "{} **{}** Rate".format(self.bot.getEmote('SSR'), data['ratio'][0]['ratio'])
             if not data['ratio'][0]['ratio'].startswith('3'):
-                banner_msg += " ▫️ **Premium Gala on going!!**"
+                banner_msg += " ▫️ **Premium Gala**"
             banner_msg += "\n"
             possible_zodiac = ['Anila', 'Andira', 'Mahira', 'Vajra', 'Kumbhira', 'Vikala']
             rateuplist = {'zodiac':[]}
@@ -752,7 +756,7 @@ class GBF_Access(commands.Cog):
                         banner_msg += "\n"
             self.bot.gbfdata['gachacontent'] = banner_msg
             # add image
-            gachas = ['{}/tips/description_gacha.jpg'.format(random_key), '{}/tips/description_{}.jpg'.format(random_key, logo_image.replace('logo', 'gacha')), '{}/tips/description_{}.jpg'.format(random_key, header_images[0]), 'header/{}.png'.format(header_images[0])]
+            gachas = ['{}/tips/description_gacha.jpg'.format(random_key), '{}/tips/description_{}.jpg'.format(random_key, logo_image.replace('logo', 'gacha')), '{}/header/logo.png'.format(random_key), '{}/tips/description_{}.jpg'.format(random_key, header_images[0]), 'header/{}.png'.format(header_images[0])]
             for g in gachas:
                 data = str(self.bot.sendRequest("http://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(g), no_base_headers=True))
                 if data is not None:
@@ -761,6 +765,7 @@ class GBF_Access(commands.Cog):
 
             # save
             self.bot.savePending = True
+            self.loadinggacha = False
             return True
         except Exception as e:
             await self.bot.sendError('updategacha', str(e))
@@ -769,6 +774,7 @@ class GBF_Access(commands.Cog):
             self.bot.gbfdata['gachabanner'] = None
             self.bot.gbfdata['gachacontent'] = None
             self.bot.savePending = True # save anyway
+            self.loadinggacha = False
             return False
 
     async def getCurrentGacha(self):
@@ -937,9 +943,9 @@ class GBF_Access(commands.Cog):
         try:
             content = await self.getCurrentGacha()
             if len(content) > 0:
-                description = "{} Current gacha ends in **{}d{}h{}m**".format(self.bot.getEmote('clock'), content[0].days, content[0].seconds // 3600, (content[0].seconds // 60) % 60)
+                description = "{} Current gacha ends in **{}**".format(self.bot.getEmote('clock'), self.bot.getTimedeltaStr(content[0], True))
                 if content[0] != content[1]:
-                    description += " (Spark period ends in **{}d{}h{}m**)".format(content[1].days, content[1].seconds // 3600, (content[1].seconds // 60) % 60)
+                    description += "\n{} Spark period ends in **{}**".format(self.bot.getEmote('mark'), self.bot.getTimedeltaStr(content[1], True))
                 description += "\n" + content[2]
                 await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, thumbnail=content[3], color=self.color))
         except Exception as e:

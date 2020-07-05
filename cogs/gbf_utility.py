@@ -210,9 +210,9 @@ class GBF_Utility(commands.Cog):
             if cog is not None:
                 buf = await cog.getCurrentGacha()
                 if len(buf) > 0:
-                    description += "\n{} Current gacha ends in **{}d{}h{}m**".format(self.bot.getEmote('SSR'), buf[0].days, buf[0].seconds // 3600, (buf[0].seconds // 60) % 60)
+                    description += "\n{} Current gacha ends in **{}**".format(self.bot.getEmote('SSR'), self.bot.getTimedeltaStr(buf[0], True))
                     if buf[0] != buf[1]:
-                        description += " (Spark period ends in **{}d{}h{}m**)".format(buf[1].days, buf[1].seconds // 3600, (buf[1].seconds // 60) % 60)
+                        description += " (Spark period ends in **{}**)".format(self.bot.getTimedeltaStr(buf[1], True))
         except Exception as e:
             await self.bot.sendError("getgachatime", str(e))
 
@@ -652,3 +652,17 @@ class GBF_Utility(commands.Cog):
             else: msg += ", "
             msg += "{} {}".format(total[k], k)
         await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg, url="https://gbf.wiki/Raising_Weapon_Skills", fields=fields, inline=True, footer="type: {}".format(type), color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    async def magnafest(self, ctx):
+        """Say how much time elapsed since the last magnafest"""
+        current_time = self.bot.getJST()
+        if current_time < self.bot.gbfdata['magnastart']:
+            d = self.bot.gbfdata['magnastart'] - current_time
+            await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Magnafest starts in **{}**".format(self.bot.getTimedeltaStr(d, True)), color=self.color))
+        elif current_time < self.bot.gbfdata['magnaend']:
+            await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Magnafest is **on going**", color=self.color))
+        else:
+            d = current_time - self.bot.gbfdata['magnaend']
+            await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="**{}** since the last Magnafest".format(self.bot.getTimedeltaStr(d, True)), color=self.color))
