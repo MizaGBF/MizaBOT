@@ -168,7 +168,7 @@ class GBF_Utility(commands.Cog):
             pic = user.profile_image_url.replace("normal", "bigger")
         else:
             pic = None
-        #ctx.channel.is_nsfw():
+
         if accepted:
             if user is None:
                 await ctx.send(embed=self.bot.buildEmbed(title=target[0], url="https://twitter.com/{}".format(target[0]), description=target[1], thumbnail=pic, color=self.color))
@@ -179,7 +179,7 @@ class GBF_Utility(commands.Cog):
         elif ctx.channel.is_nsfw():
             await ctx.send(embed=self.bot.buildEmbed(title=user.name, url="https://twitter.com/{}".format(user.screen_name), thumbnail=pic, color=self.color))
         else:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Other twitter account disabled in SFW channels\nCheck at your own risk `https://twitter.com/{}`".format(user.screen_name), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="NSFW protection", description="Check at your own risk\n[{}](https://twitter.com/{})".format(user.name, user.screen_name), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     async def reddit(self, ctx):

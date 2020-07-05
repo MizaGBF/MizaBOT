@@ -740,11 +740,9 @@ class GBF_Access(commands.Cog):
                         banner_msg += "\n"
                 else:
                     if len(rateuplist[k]) > 0:
-                        if k.lower().find("weapon") != -1: banner_msg += "{} ".format(self.bot.getEmote('sword'))
-                        elif k.lower().find("summon") != -1: banner_msg += "{} ".format(self.bot.getEmote('summon'))
-                        banner_msg += "**" + k + "**\n"
                         for r in rateuplist[k]:
-                            banner_msg += "**{}%** ▫️ ".format(r)
+                            if k.lower().find("weapon") != -1: banner_msg += "{}**{}%** ▫️ ".format(self.bot.getEmote('sword'), r)
+                            elif k.lower().find("summon") != -1: banner_msg += "{}**{}%** ▫️ ".format(self.bot.getEmote('summon'), r)
                             count = 0
                             for i in rateuplist[k][r]:
                                 if count >= 15 and len(rateuplist[k][r]) - count > 1:
