@@ -18,6 +18,7 @@ Here are a few instructions to set it up in its current state:
 * `config.json` must be edited with a notepad (follow the instructions inside) and placed with the bot code (your discord token must be inserted inside).  
 * `save.json` can be used as it is and must be placed in the [Google Drive](https://www.google.com/drive/) folder used to save the bot data. The bot can't start without a valid save file, it will create one if needed.  
 * (Optional) Twitter credentials can be used to enhance some features. Requires a developper account.  
+Check the [wiki](https://github.com/MizaGBF/MizaBOT/wiki/Setup) if you have questions.  
 This [issue](https://github.com/MizaGBF/MizaBOT/issues/1) might help if you encounter a problem.  
 Example files might be a bit outdated. I'll do my best to update them as much as possible.  
 ### Code Overview  

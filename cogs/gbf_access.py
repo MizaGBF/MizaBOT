@@ -169,6 +169,24 @@ class GBF_Access(commands.Cog):
         except Exception as e:
             return "Error: " + str(e)
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True)
+    @isOwner()
+    async def getPastebinUserKey(self, ctx):
+        """No description"""
+        url = "https://pastebin.com/api/api_login.php"
+        values = {'api_dev_key' : self.bot.baguette['dev_key'],
+                  'api_user_name' : self.bot.baguette['user'],
+                  'api_user_password' : self.bot.baguette['pass']}
+
+        try:
+            await ctx.message.add_reaction('✅') # white check mark
+            req = request.Request(url, parse.urlencode(values).encode('utf-8'))
+            with request.urlopen(req) as response:
+               the_page = response.read()
+            await self.bot.send('debug', embed=self.bot.buildEmbed(title=the_page.decode('ascii'), color=self.color))
+        except Exception as e:
+            await self.bot.sendError('getpastebinuserkey', str(e))
+
     def pa(self, a, indent): # black magic
         s = ""
         if indent > 0:
