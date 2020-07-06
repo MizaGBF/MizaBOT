@@ -9,187 +9,173 @@ import json
 
 # #####################################################################################
 # math parser used by $calc
-class Parser:
-    def __init__(self, string, vars={}):
-        self.string = string
+class MathParser:
+    def __init__(self):
+        self.expression = ""
+        self.index = 0
+        self.vars = {}
+        self.funcs = ['cos', 'sin', 'tan', 'acos', 'asin', 'atan', 'cosh', 'sinh', 'tanh', 'acosh', 'asinh', 'atanh', 'exp', 'ceil', 'abs', 'factorial', 'floor', 'round', 'trunc', 'log', 'log2', 'log10', 'sqrt', 'rad', 'deg']
+
+    def evaluate(self, expression = "", vars={}):
+        self.expression = expression.replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
         self.index = 0
         self.vars = {
             'pi' : 3.141592653589793,
             'e' : 2.718281828459045
-            }
-        for var in vars.keys():
-            if self.vars.get(var) != None:
-                raise Exception("Cannot redefine the value of {}".format(var))
-            self.vars[var] = vars[var]
-    
-    def getValue(self):
-        value = self.parseExpression()
-        self.skipWhitespace()
-        if self.hasNext():
-            raise Exception("Unexpected character found: '{}' at index {}".format(self.peek(), self.index))
+        }
+        self.vars = {**self.vars, **vars}
+        for func in self.funcs:
+            if func in self.vars: raise Exception("Variable name '{}' can't be used".format(func))
+        value = float(self.parse())
+        if self.isNotDone(): raise Exception("Unexpected character '{}' found at index {}".format(self.peek(), self.index))
+        epsilon = 0.0000000001
+        if int(value) == value: return int(value)
+        elif int(value + epsilon) != int(value):
+            return int(value + epsilon)
+        elif int(value - epsilon) != int(value):
+            return int(value)
         return value
-    
+
+    def isNotDone(self):
+        return self.index < len(self.expression)
+
     def peek(self):
-        return self.string[self.index:self.index + 1]
-    
-    def hasNext(self):
-        return self.index < len(self.string)
-    
-    def skipWhitespace(self):
-        while self.hasNext():
-            if self.peek() in ' \t\n\r':
-                self.index += 1
-            else:
-                return
-    
-    def parseExpression(self):
-        return self.parseAddition()
-    
-    def parseAddition(self):
-        values = [self.parseMultiplication()]
+        return self.expression[self.index:self.index + 1]
+
+    def parse(self):
+        values = [self.multiply()]
         while True:
-            self.skipWhitespace()
-            char = self.peek()
-            if char == '+':
+            c = self.peek()
+            if c in ['+', '-']:
                 self.index += 1
-                values.append(self.parseMultiplication())
-            elif char == '-':
-                self.index += 1
-                values.append(-1 * self.parseMultiplication())
+                if c == '-': values.append(- self.multiply())
+                else: values.append(self.multiply())
             else:
                 break
         return sum(values)
-    
-    def parseMultiplication(self):
-        values = [self.parseParenthesis()]
+
+    def multiply(self):
+        values = [self.parenthesis()]
         while True:
-            self.skipWhitespace()
-            char = self.peek()
-            if char == '*' or char == 'x':
+            c = self.peek()
+            if c in ['*', 'x']:
                 self.index += 1
-                values.append(self.parseParenthesis())
-            elif char == '/':
+                values.append(self.parenthesis())
+            elif c in ['/', '%']:
                 div_index = self.index
                 self.index += 1
-                denominator = self.parseParenthesis()
+                denominator = self.parenthesis()
                 if denominator == 0:
-                    raise Exception("Division by 0 (occured at index {})".format(div_index))
-                values.append(1.0 / denominator)
-            elif char == '%': # hack
-                div_index = self.index
+                    raise Exception("Division by 0 occured at index {}".format(div_index))
+                if c == '/': values.append(1.0 / denominator)
+                else: values.append(1.0 % denominator)
+            elif c == '^':
                 self.index += 1
-                denominator = self.parseParenthesis()
-                if denominator == 0:
-                    raise Exception("Division by 0 (occured at index {})".format(div_index))
-                values[-1] = values[-1] % denominator
-            elif char == '^': # hack
-                self.index += 1
-                exponent = self.parseParenthesis()
+                exponent = self.parenthesis()
                 values[-1] = values[-1] ** exponent
-            elif char == '!': # hack
+            elif c == '!':
                 self.index += 1
                 values[-1] = math.factorial(values[-1])
             else:
                 break
         value = 1.0
-        for factor in values:
-            value *= factor
+        for factor in values: value *= factor
         return value
-    
-    def parseParenthesis(self):
-        self.skipWhitespace()
-        char = self.peek()
-        if char == '(':
+
+    def parenthesis(self):
+        if self.peek() == '(':
             self.index += 1
-            value = self.parseExpression()
-            self.skipWhitespace()
-            if self.peek() != ')':
-                raise Exception("No closing parenthesis found at character {}".format(self.index))
+            value = self.parse()
+            if self.peek() != ')': raise Exception("No closing parenthesis found at character {}".format(self.index))
             self.index += 1
             return value
         else:
-            return self.parseNegative()
-    
-    def parseNegative(self):
-        self.skipWhitespace()
-        char = self.peek()
-        if char == '-':
+            return self.negative()
+
+    def negative(self):
+        if self.peek() == '-':
             self.index += 1
-            return -1 * self.parseParenthesis()
+            return -1 * self.parenthesis()
         else:
-            return self.parseValue()
+            return self.value()
     
-    def parseValue(self):
-        self.skipWhitespace()
-        char = self.peek()
-        if char in '0123456789.':
-            return self.parseNumber()
+    def value(self):
+        if self.peek() in '0123456789.':
+            return self.number()
         else:
-            return self.parseVariable()
-    
-    def parseVariable(self):
-        self.skipWhitespace()
+            return self.variable_or_function()
+
+    def variable_or_function(self):
         var = ''
-        while self.hasNext():
-            char = self.peek()
-            if char.lower() in '_abcdefghijklmnopqrstuvwxyz0123456789':
-                var += char
+        while self.isNotDone():
+            c = self.peek()
+            if c.lower() in '_abcdefghijklmnopqrstuvwxyz0123456789':
+                var += c
                 self.index += 1
             else:
                 break
         
         value = self.vars.get(var, None)
         if value == None:
-            raise Exception("Unrecognized variable: '{}'".format(var))
+            if var not in self.funcs: raise Exception("Unrecognized variable '{}'".format(var))
+            else:
+                param = self.parenthesis()
+                if var == 'cos': value = math.cos(param)
+                elif var == 'sin': value = math.sin(param)
+                elif var == 'tan': value = math.tan(param)
+                elif var == 'acos': value = math.acos(param)
+                elif var == 'asin': value = math.asin(param)
+                elif var == 'atan': value = math.atan(param)
+                elif var == 'cosh': value = math.cosh(param)
+                elif var == 'sinh': value = math.sinh(param)
+                elif var == 'tanh': value = math.tanh(param)
+                elif var == 'acosh': value = math.acosh(param)
+                elif var == 'asinh': value = math.asinh(param)
+                elif var == 'atanh': value = math.atanh(param)
+                elif var == 'exp': value = math.exp(param)
+                elif var == 'ceil': value = math.ceil(param)
+                elif var == 'floor': value = math.floor(param)
+                elif var == 'round': value = math.floor(param)
+                elif var == 'factorial': value = math.factorial(param)
+                elif var == 'abs': value = math.fabs(param)
+                elif var == 'trunc': value = math.trunc(param)
+                elif var == 'log':
+                    if param <= 0: raise Exception("Can't evaluate the logarithm of '{}'".format(param))
+                    value = math.log(param)
+                elif var == 'log2':
+                    if param <= 0: raise Exception("Can't evaluate the logarithm of '{}'".format(param))
+                    value = math.log2(param)
+                elif var == 'log10':
+                    if param <= 0: raise Exception("Can't evaluate the logarithm of '{}'".format(param))
+                    value = math.log10(param)
+                elif var == 'sqrt': value = math.sqrt(param)
+                elif var == 'rad': value = math.radians(param)
+                elif var == 'deg': value = math.degrees(param)
+                else: raise Exception("Unrecognized function '{}'".format(var))
         return float(value)
-    
-    def parseNumber(self):
-        self.skipWhitespace()
+
+    def number(self):
         strValue = ''
         decimal_found = False
-        char = ''
+        c = ''
         
-        while self.hasNext():
-            char = self.peek()            
-            if char == '.':
+        while self.isNotDone():
+            c = self.peek()
+            if c == '.':
                 if decimal_found:
                     raise Exception("Found an extra period in a number at character {}".format(self.index))
                 decimal_found = True
                 strValue += '.'
-            elif char in '0123456789':
-                strValue += char
+            elif c in '0123456789':
+                strValue += c
             else:
                 break
             self.index += 1
         
         if len(strValue) == 0:
-            if char == '':
-                raise Exception("Unexpected end found")
-            else:
-                raise Exception("I was expecting to find a number at character {} but instead I found a '{}'".format(self.index, char))
+            if c == '': raise Exception("Unexpected end found")
+            else: raise Exception("A number was expected at character {} but instead '{}' was found".format(self.index, char))
         return float(strValue)
-        
-def evaluate(expression, vars={}):
-    try:
-        p = Parser(expression, vars)
-        value = p.getValue()
-    except Exception as ex:
-        raise Exception(ex)
-    
-    # Return an integer type if the answer is an integer 
-    if int(value) == value:
-        return int(value)
-    
-    # If Python made some silly precision error 
-    # like x.99999999999996, just return x + 1 as an integer 
-    epsilon = 0.0000000001
-    if int(value + epsilon) != int(value):
-        return int(value + epsilon)
-    elif int(value - epsilon) != int(value):
-        return int(value)
-    
-    return value
-
 
 # #####################################################################################
 # Cogs
@@ -278,21 +264,24 @@ class General(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['choice'])
     @isAuthorized()
     @commands.cooldown(2, 10, commands.BucketType.guild)
-    async def choose(self, ctx, *choices : str ):
+    async def choose(self, ctx, *, choices : str ):
         """Chooses between multiple choices.
         Use quotes if one of your choices contains spaces.
-        Example: $choose "I'm Alice" Bob"""
+        Example: $choose I'm Alice ; Bob"""
         try:
-            await ctx.send(embed=self.bot.buildEmbed(title="{}, I choose".format(ctx.message.author.display_name), description=random.choice(choices), color=self.color))
+            possible = choices.split(";")
+            if len(possible) < 2: raise Exception()
+            await ctx.send(embed=self.bot.buildEmbed(title="{}, I choose".format(ctx.message.author.display_name), description=random.choice(possible), color=self.color))
         except:
-            await ctx.send(embed=self.bot.buildEmbed(title="Give me a list of something to choose from 😔", footer="Use quotes \" if a choice contains spaces", color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Give me a list of something to choose from 😔, separated by ';'", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['math'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def calc(self, ctx, *terms : str):
         """Process a mathematical expression
         You can define a variable by separating using a comma.
-        Example: (a + b) / c, a = 1, b=2,c = 3"""
+        Some functions are also available.
+        Example: cos(a + b) / c, a = 1, b=2,c = 3"""
         try:
             m = " ".join(terms).split(",")
             d = {}
@@ -300,9 +289,14 @@ class General(commands.Cog):
                 x = m[i].replace(" ", "").split("=")
                 if len(x) == 2: d[x[0]] = float(x[1])
                 else: raise Exception('')
-            await ctx.send(embed=self.bot.buildEmbed(title="Calculator 🤓", description="{} = {}".format(m[0], evaluate(m[0], d)), color=self.color))
+            msg = "{} = **{}**".format(m[0], MathParser().evaluate(m[0], d))
+            if len(d) > 0:
+                msg += "\nwith:\n"
+                for k in d:
+                    msg += "{} = {}\n".format(k, d[k])
+            await ctx.send(embed=self.bot.buildEmbed(title="Calculator", description=msg, color=self.color))
         except Exception as e:
-            await ctx.send(embed=self.bot.buildEmbed(title="{} Error, use the help for details".format(self.bot.getEmote('kmr')), footer=str(e), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description=str(e), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 5, commands.BucketType.guild)

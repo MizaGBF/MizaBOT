@@ -472,7 +472,7 @@ class GuildWar(commands.Cog):
         except Exception as e:
             await self.bot.sendError("estimation", str(e))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True, aliases=['supercrew', 'poaching'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['supercrew', 'poaching'])
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def gwranking(self, ctx):
         """Sort and post the top 30 server membes per contribution"""
@@ -504,7 +504,7 @@ class GuildWar(commands.Cog):
         if gwid is None: gwid = ""
         await ctx.send(embed=self.bot.buildEmbed(author={'name':"Top 30 of {}".format(ctx.guild.name), 'icon_url':ctx.guild.icon_url}, description="{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.getEmote('question'), gwid, self.honorFormat(total), self.honorFormat(total // min(30, len(members)))), fields=fields, inline=True, color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True)
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def gbfgranking(self, ctx):
         """Sort and post all /gbfg/ crew per contribution"""
