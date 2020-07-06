@@ -321,6 +321,29 @@ class Owner(commands.Cog):
 
     @commands.command(no_pm=True)
     @isOwner()
+    async def cleanSchedule(self, ctx):
+        """Remove expired entries from the schedule (Owner only)"""
+        c = self.bot.getJST()
+        new_schedule = []
+        for i in range(0, len(self.bot.schedule), 2):
+            try:
+                date = self.bot.schedule[i].replace(" ", "").split("-")[-1].split("/")
+                x = c.replace(month=int(date[0]), day=int(date[1])+1, microsecond=0)
+                if c - x > timedelta(days=160):
+                    x = x.replace(year=x.year+1)
+                if c >= x:
+                    continue
+            except:
+                pass
+            new_schedule.append(self.bot.schedule[i])
+            new_schedule.append(self.bot.schedule[i+1])
+
+        self.bot.schedule = new_schedule
+        self.bot.savePending = True
+        await ctx.message.add_reaction('✅') # white check mark
+
+    @commands.command(no_pm=True)
+    @isOwner()
     async def setStatus(self, ctx, *, terms : str):
         """Change the bot status (Owner only)"""
         await self.bot.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=terms))
