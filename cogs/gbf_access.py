@@ -48,6 +48,11 @@ class GBF_Access(commands.Cog):
         self.bot.runTask('gbfwatch', self.gbfwatch)
         self.bot.runTask('summon', self.summontask)
 
+    def isOwner(): # for decorators
+        async def predicate(ctx):
+            return ctx.bot.isOwner(ctx)
+        return commands.check(predicate)
+
     async def gbfwatch(self): # watch GBF state
         self.bot.setChannel('private_update', 'you_private')
         maintenance_time = self.bot.getJST()
@@ -653,11 +658,6 @@ class GBF_Access(commands.Cog):
             self.sql['summon'][1] = self.sql['summon'][0].cursor()
         self.bot.summonlast = self.bot.getJST()
         self.bot.savePending = True
-
-    def isOwner(): # for decorators
-        async def predicate(ctx):
-            return ctx.bot.isOwner(ctx)
-        return commands.check(predicate)
 
     def honorFormat(self, h): # convert honor number to a shorter string version
         if h is None: return "n/a"
