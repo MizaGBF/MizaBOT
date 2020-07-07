@@ -125,6 +125,9 @@ class GBF_Access(commands.Cog):
                         self.bot.savePending = True
                         msg += "**Gacha update**\n{} new ticket\n\n".format(len(tickets))
                         thumb = tickets[0]
+                    else:
+                        self.bot.gbfdata['new_ticket'] = []
+                        self.bot.savePending = True
                     news = await self.cc()
                     if len(news) > 0:
                         msg += "**Content update**\n"
@@ -1302,6 +1305,83 @@ class GBF_Access(commands.Cog):
     async def contribution(self, ctx, *id : str):
         """Get a crew profile (GW scores are force-enabled)"""
         await self.postCrewData(ctx, id, 2)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['supercrew', 'poaching'])
+    @commands.cooldown(1, 60, commands.BucketType.guild)
+    async def gwranking(self, ctx):
+        """Sort and post the top 30 server membes per contribution"""
+        members = []
+        gwid = None
+        for sid in self.bot.gbfids:
+            m = ctx.guild.get_member(int(sid))
+            if m is not None:
+                pdata = await self.searchGWDBPlayer(ctx, self.bot.gbfids[sid], 2)
+                if pdata is not None and pdata[1] is not None and 'result' in pdata[1] and len(pdata[1]['result']) == 1:
+                    if gwid is None: gwid = pdata[1].get('gw', None)
+                    members.append([pdata[1]['result'][0][1], pdata[1]['result'][0][2], pdata[1]['result'][0][3]]) # id, name, honor
+        if len(members) < 1:
+            await ctx.send(embed=self.bot.buildEmbed(title="{} Top 30 of {}".format(self.bot.getEmote('gw'), ctx.guild.name), description="Unavailable", inline=True, thumbnail=ctx.guild.icon_url, color=self.color))
+            return
+        for i in range(0, len(members)-1):
+            for j in range(i, len(members)):
+                if int(members[i][2]) < int(members[j][2]):
+                    tmp = members[i]
+                    members[i] = members[j]
+                    members[j] = tmp
+        fields = []
+        total = 0
+        for i in range(0, min(30, len(members))):
+            if i % 10 == 0:
+                fields.append({'name':'{}'.format(self.bot.getEmote(str(len(fields)+1))), 'value':''})
+            fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) \▫️ **{}**\n".format(members[i][1], members[i][0], self.honorFormat(members[i][2]))
+            total += members[i][2]
+        if gwid is None: gwid = ""
+        await ctx.send(embed=self.bot.buildEmbed(author={'name':"Top 30 of {}".format(ctx.guild.name), 'icon_url':ctx.guild.icon_url}, description="{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.getEmote('question'), gwid, self.honorFormat(total), self.honorFormat(total // min(30, len(members)))), fields=fields, inline=True, color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 60, commands.BucketType.guild)
+    async def gbfgranking(self, ctx):
+        """Sort and post all /gbfg/ crew per contribution"""
+        crews = []
+        blacklist = ["677159", "147448"]
+        for e in self.bot.granblue['gbfgcrew']:
+            if self.bot.granblue['gbfgcrew'][e] in crews or self.bot.granblue['gbfgcrew'][e] in blacklist: continue
+            crews.append(self.bot.granblue['gbfgcrew'][e])
+        tosort = {}
+        possible = {11:"Total Day 4", 9:"Total Day 3", 7:"Total Day 2", 5:"Total Day 1", 3:"Total Prelim."}
+        gwid = None
+        for c in crews:
+            data = await self.searchGWDBCrew(ctx, int(c), 2)
+            if data is None or data[1] is None or 'result' not in data[1] or len(data[1]['result']) == 0:
+                continue
+            result = data[1]['result'][0]
+            if gwid is None: gwid = data[1].get('gw', None)
+            for ps in possible:
+                if result[ps] is not None:
+                    if ps == 11 and result[0] is not None:
+                        tosort[c] = [c, result[2], int(result[ps]), str(result[0])] # id, name, honor, rank
+                        break
+                    else:
+                        tosort[c] = [c, result[2], int(result[ps]), possible[ps]] # id, name, honor, day
+                        break
+        sorted = []
+        for c in tosort:
+            inserted = False
+            for i in range(0, len(sorted)):
+                if tosort[c][2] > sorted[i][2]:
+                    inserted = True
+                    sorted.insert(i, tosort[c])
+                    break
+            if not inserted: sorted.append(tosort[c])
+        fields = []
+        if gwid is None: gwid = ""
+        for i in range(0, len(sorted)):
+            if i % 15 == 0: fields.append({'name':'{}'.format(self.bot.getEmote(str(len(fields)+1))), 'value':''})
+            if sorted[i][3].startswith('Total'):
+                fields[-1]['value'] += "{} \▫️ {} \▫️ **{}**\n".format(i+1, sorted[i][1], self.honorFormat(sorted[i][2]))
+            else:
+                fields[-1]['value'] += "#**{}** \▫️ {} \▫️ **{}**\n".format(self.honorFormat(sorted[i][3]), sorted[i][1], self.honorFormat(sorted[i][2]))
+        await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ GW{} Ranking".format(self.bot.getEmote('gw'), gwid), fields=fields, inline=True, color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['ticket'])
     @commands.cooldown(1, 30, commands.BucketType.guild)
