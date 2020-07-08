@@ -679,27 +679,21 @@ class GBF_Utility(commands.Cog):
             msg += "{} {}".format(total[k], k)
         await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg, url="https://gbf.wiki/Raising_Weapon_Skills", fields=fields, inline=True, footer="type: {}".format(type), color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["doom", "doompost", "magnafest", "brick", "bar", "sunlight", "stone", "suptix", "surprise", "evolite"])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["doom", "doompost", "magnafest", "magnafes", "campaign", "brick", "bar", "sunlight", "stone", "suptix", "surprise", "evolite", "fugdidmagnafeststart"])
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def deadgame(self, ctx):
         """Give the time elapsed of various GBF related releases"""
         msg = ""
-        current_time = self.bot.getJST()
-        if current_time < self.bot.gbfdata['magnastart']:
-            msg += "Magnafest starts in **{}**\n".format(self.bot.getTimedeltaStr(self.bot.gbfdata['magnastart'] - current_time, True))
-        elif current_time < self.bot.gbfdata['magnaend']:
-            msg += "Magnafest is **on going**\n"
-        else:
-            msg += "**{}** since the last Magnafest\n".format(self.bot.getTimedeltaStr(current_time - self.bot.gbfdata['magnaend'], True))
-
-        wiki_checks = [["Surprise_Special_Draw_Set", "<td>(\d+ days)<\/td>\s*<td>Time since last ticket<\/td>"], ["Damascus_Ingot", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last brick<\/td>"], ["Gold_Brick", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last brick<\/td>"], ["Sunlight_Stone", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last stone<\/td>"], ["Sephira_Evolite", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last evolite<\/td>"]]
+        wiki_checks = [["Category:Campaign", "<td>(\d+ days)<\/td>\s*<td>Time since last campaign<\/td>"], ["Surprise_Special_Draw_Set", "<td>(\d+ days)<\/td>\s*<td>Time since last ticket<\/td>"], ["Damascus_Ingot", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last brick<\/td>"], ["Gold_Brick", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last brick<\/td>"], ["Sunlight_Stone", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last stone<\/td>"], ["Sephira_Evolite", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last evolite<\/td>"]]
         for w in wiki_checks:
             async with aiohttp.ClientSession() as session:
                 async with session.get("https://gbf.wiki/{}".format(w[0])) as r:
                     if r.status == 200:
                         m = re.search(w[1], await r.text())
                         if m:
-                            msg += "**{}** since the last {}\n".format(m.group(1), w[0].replace("_", " "))
+                            msg += "**{}** since the last {}\n".format(m.group(1), w[0].replace("_", " ").replace("Category:", ""))
 
         if msg != "":
             await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))
+        else:
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Unavailable", color=self.color))
