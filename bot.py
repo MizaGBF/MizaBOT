@@ -270,8 +270,8 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.7" # version number
-        self.botchangelog = ["Added the magnafest command", "Revamped the twitter command (can now retrieve all accounts but the registered GBF ones take priority)", "Revamped the choose command, you must separate each possible choices by `;` now", "Functions have been added to the calc command"] # bot changelog
+        self.botversion = "6.8" # version number
+        self.botchangelog = ["Added the doom command (with a bunch of aliases such as magnafest, etc...)", "Revamped the twitter command (can now retrieve all accounts but the registered GBF ones take priority)", "Revamped the choose command, you must separate each possible choices by `;` now", "Functions have been added to the calc command"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
