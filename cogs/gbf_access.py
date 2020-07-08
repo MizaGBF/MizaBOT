@@ -121,19 +121,16 @@ class GBF_Access(commands.Cog):
                     # gacha
                     tickets = await self.updateTicket()
                     if len(tickets) > 0:
-                        self.bot.gbfdata['new_ticket'] = tickets
-                        self.bot.savePending = True
                         msg += "**Gacha update**\n{} new ticket\n\n".format(len(tickets))
                         thumb = tickets[0]
-                    else:
-                        self.bot.gbfdata['new_ticket'] = []
-                        self.bot.savePending = True
                     news = await self.cc()
                     if len(news) > 0:
                         msg += "**Content update**\n"
                         for k in news:
                             msg += "{} {}\n".format(news[k], k)
                     if msg != "":
+                        self.bot.gbfdata['new_ticket'] = tickets
+                        self.bot.savePending = True
                         await self.bot.sendMulti(['debug', 'private_update'], embed=self.bot.buildEmbed(title="Content Update", description=msg, thumbnail=thumb, color=self.color))
                         await self.bot.send('debug', embed=self.bot.buildEmbed(title="Reminder", description="Keep it private", color=self.color))
                 elif s == 2:
