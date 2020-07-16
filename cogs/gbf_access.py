@@ -780,9 +780,9 @@ class GBF_Access(commands.Cog):
                         banner_msg += "\n"
             self.bot.gbfdata['gachacontent'] = banner_msg
             # add image
-            gachas = ['{}/tips/description_gacha.jpg'.format(random_key), '{}/tips/description_{}.jpg'.format(random_key, logo_image.replace('logo', 'gacha')), '{}/header/logo.png'.format(random_key), '{}/tips/description_{}.jpg'.format(random_key, header_images[0]), 'header/{}.png'.format(header_images[0])]
+            gachas = ['{}/tips/description_gacha.jpg'.format(random_key), '{}/tips/description_{}.jpg'.format(random_key, logo_image.replace('logo', 'gacha')), '{}/tips/description_{}.jpg'.format(random_key, header_images[0]), 'header/{}.png'.format(header_images[0])]
             for g in gachas:
-                data = str(self.bot.sendRequest("http://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(g), no_base_headers=True))
+                data = await self.bot.sendRequest("http://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(g), no_base_headers=True)
                 if data is not None:
                     self.bot.gbfdata['gachabanner'] = "http://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(g)
                     break
