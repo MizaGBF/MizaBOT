@@ -53,6 +53,16 @@ class Owner(commands.Cog):
 
     @commands.command(no_pm=True)
     @isOwner()
+    async def eval(self, ctx, *, expression : str):
+        """Execute code at run time (Owner only)"""
+        try:
+            eval(expression)
+            await ctx.send(embed=self.bot.buildEmbed(title="Eval", description="Ran `{}` with success".format(expression), color=self.color))
+        except Exception as e:
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Exception\n{}".format(e), footer=expression, color=self.color))
+
+    @commands.command(no_pm=True)
+    @isOwner()
     async def clear(self, ctx):
         """Clear the debug channel"""
         try:

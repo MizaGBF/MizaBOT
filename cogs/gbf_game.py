@@ -163,7 +163,7 @@ class GBF_Game(commands.Cog):
 
         await ctx.send(embed=self.bot.buildEmbed(title="{} rolled the Mukku".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['scratcher'])
     @isAuthorized()
     @commands.cooldown(1, 300, commands.BucketType.user)
     async def scratch(self, ctx):
@@ -275,7 +275,10 @@ class GBF_Game(commands.Cog):
                     elif c == 3: fields[i%3]['value'] += "**{}**\n".format(grid[i][0])
                     elif c == 2: fields[i%3]['value'] += "__{}__\n".format(grid[i][0])
                     else: fields[i%3]['value'] += "{}\n".format(grid[i][0])
-                await message.edit(embed=self.bot.buildEmbed(author={'name':"{} scratched".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
+                final_msg = await message.edit(embed=self.bot.buildEmbed(author={'name':"{} scratched".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
+                if not self.bot.isAuthorized(ctx):
+                    await asyncio.sleep(120)
+                    await final_msg.delete()
                 break
             # next pull
             i = random.randint(0, 8)
@@ -370,10 +373,12 @@ class GBF_Game(commands.Cog):
             count = result[0]+result[1]+result[2]
             msg += "\n:confetti_ball: :confetti_ball: **Super Mukku** stopped after **{}** rolls :confetti_ball: :confetti_ball:\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
 
-        await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(120)
+            await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setcrystal', 'setspark'])
-    @isAuthorized()
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def setRoll(self, ctx, crystal : int, single : int = 0, ten : int = 0):
         """Set your roll count"""
@@ -392,10 +397,16 @@ class GBF_Game(commands.Cog):
             try:
                 await self.bot.callCommand(ctx, 'seeRoll', 'GBF_Game')
             except Exception as e:
-                await ctx.send(embed=self.bot.buildEmbed(title="Summary", description="**{}** crystal(s)\n**{}** single roll ticket(s)\n**{}** ten roll ticket(s)".format(crystal, single, ten), color=self.color))
+                final_msg= await ctx.send(embed=self.bot.buildEmbed(title="Summary", description="**{}** crystal(s)\n**{}** single roll ticket(s)\n**{}** ten roll ticket(s)".format(crystal, single, ten), color=self.color))
                 await self.bot.sendError('setRoll', str(e), 'B')
         except Exception as e:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color, footer="setRoll <crystal> [single] [ten]"))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color, footer="setRoll <crystal> [single] [ten]"))
+        try:
+            if not self.bot.isAuthorized(ctx):
+                await asyncio.sleep(120)
+                await final_msg.delete()
+        except:
+            pass
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['seecrystal', 'seespark'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
@@ -465,10 +476,13 @@ class GBF_Game(commands.Cog):
             # estimation text
             footer = "Next spark between {}/{}/{} and {}/{}/{}".format(t_min.year, t_min.month, t_min.day, t_max.year, t_max.month, t_max.day)
             # sending
-            await ctx.send(embed=self.bot.buildEmbed(title=title, description=description, footer=footer, timestamp=timestamp, color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=description, footer=footer, timestamp=timestamp, color=self.color))
         except Exception as e:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I warned my owner", color=self.color, footer=str(e)))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I warned my owner", color=self.color, footer=str(e)))
             await self.bot.sendError('seeRoll', str(e))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(120)
+            await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["sparkranking", "hoarders"])
     @isAuthorized()
@@ -623,3 +637,17 @@ class GBF_Game(commands.Cog):
         ]
 
         await ctx.send(embed=self.bot.buildEmbed(title="{}'s daily dragons are".format(ctx.author.display_name), description="{} {}\n{} {}".format(self.bot.getEmote('1'), random.choice(possible), self.bot.getEmote('2'), random.choice(possible)), thumbnail=ctx.author.avatar_url, color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True, aliases=['leaks', 'leek'])
+    @commands.cooldown(1, 300, commands.BucketType.user)
+    async def leak(self, ctx):
+        r = random.randint(1, 5)
+        if not isinstance(self.bot.extra, dict): self.bot.extra = {}
+        self.bot.extra['leak'] = self.bot.extra.get('leak', 0) + r
+        self.bot.savePending = True
+        if r == 1:
+            msg = await ctx.send(embed=self.bot.buildEmbed(title="Alliah has been delayed by 1 day", footer="{} days total".format(self.bot.extra['leak']), color=self.color))
+        else:
+            msg = await ctx.send(embed=self.bot.buildEmbed(title="Alliah has been delayed by {} days".format(r), footer="{} days total".format(self.bot.extra['leak']), color=self.color))
+        await asyncio.sleep(30)
+        await msg.delete()

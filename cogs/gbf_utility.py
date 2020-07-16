@@ -679,6 +679,12 @@ class GBF_Utility(commands.Cog):
             msg += "{} {}".format(total[k], k)
         await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg, url="https://gbf.wiki/Raising_Weapon_Skills", fields=fields, inline=True, footer="type: {}".format(type), color=self.color))
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['cb'])
+    @commands.cooldown(1, 15, commands.BucketType.guild)
+    async def chainburst(self, ctx):
+        """Give the Battle 2.0 chain burst gain"""
+        await ctx.send(embed=self.bot.buildEmbed(title="v2.0 Chain Burst", description="1 ▫️ **10%**\n2 ▫️ **23%**\n3 ▫️ **36%**\n4 ▫️ **50%**\n5 ▫️ **60%**", url="https://gbf.wiki/Battle_System_2.0#Chain_Burst", footer="chain size x 10 + chain size bonus", color=self.color))
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["doom", "doompost", "magnafest", "magnafes", "campaign", "brick", "bar", "sunlight", "stone", "suptix", "surprise", "evolite", "fugdidmagnafeststart"])
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def deadgame(self, ctx):

@@ -20,8 +20,8 @@ class MathParser:
         self.expression = expression.replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
         self.index = 0
         self.vars = {
-            'pi' : 3.141592653589793,
-            'e' : 2.718281828459045
+            'pi' : math.pi,
+            'e' : math.e
         }
         self.vars = {**self.vars, **vars}
         for func in self.funcs:

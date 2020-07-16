@@ -55,6 +55,7 @@ class GBF_Access(commands.Cog):
 
     async def gbfwatch(self): # watch GBF state
         self.bot.setChannel('private_update', 'you_private')
+        self.bot.setChannel('gbfg_teasing', 'gbfg_general')
         maintenance_time = self.bot.getJST()
         while True:
             if self.bot.exit_flag: return
@@ -123,16 +124,23 @@ class GBF_Access(commands.Cog):
                     if len(tickets) > 0:
                         msg += "**Gacha update**\n{} new ticket\n\n".format(len(tickets))
                         thumb = tickets[0]
+                        self.bot.gbfdata['new_ticket'] = tickets
+                        self.bot.savePending = True
                     news = await self.cc()
                     if len(news) > 0:
                         msg += "**Content update**\n"
                         for k in news:
                             msg += "{} {}\n".format(news[k], k)
                     if msg != "":
-                        self.bot.gbfdata['new_ticket'] = tickets
-                        self.bot.savePending = True
-                        await self.bot.sendMulti(['debug', 'private_update'], embed=self.bot.buildEmbed(title="Content Update", description=msg, thumbnail=thumb, color=self.color))
+                        await self.bot.sendMulti(['debug', 'private_update'], embed=self.bot.buildEmbed(title="Latest Update", description=msg, thumbnail=thumb, color=self.color))
                         await self.bot.send('debug', embed=self.bot.buildEmbed(title="Reminder", description="Keep it private", color=self.color))
+
+                        # throw a bone at gbfg
+                        msg = msg.split("\n")
+                        gbfg_msg = ""
+                        for m in msg:
+                            if m.find(" to ") != -1: gbfg_msg += m + "\n"
+                        await self.bot.send('gbfg_teasing', embed=self.bot.buildEmbed(title="Latest Update", description=gbfg_msg, thumbnail=thumb, color=self.color))
                 elif s == 2:
                     await self.bot.send('debug', embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version set to `{}` (`{}`)".format(v, self.bot.versionToDateStr(v)) , color=self.color))
                 await asyncio.sleep(60)
@@ -763,7 +771,7 @@ class GBF_Access(commands.Cog):
                             elif k.lower().find("summon") != -1: banner_msg += "{}**{}%** ▫️ ".format(self.bot.getEmote('summon'), r)
                             count = 0
                             for i in rateuplist[k][r]:
-                                if count >= 15 and len(rateuplist[k][r]) - count > 1:
+                                if count >= 8 and len(rateuplist[k][r]) - count > 1:
                                     banner_msg += " and {} more!".format(len(rateuplist[k][r]) - count - 1)
                                     break
                                 elif count > 0: banner_msg += ", "
@@ -1393,9 +1401,10 @@ class GBF_Access(commands.Cog):
                 self.bot.savePending = True
 
             msg = "**{}** Characters\n**{}** Summons\n**{}** Weapons\n".format(self.bot.gbfdata['count'][0], self.bot.gbfdata['count'][1], self.bot.gbfdata['count'][2])
+            thumb = ""
             if len(self.bot.gbfdata['new_ticket']) > 0:
                 thumb = self.bot.gbfdata['new_ticket'][0]
-                msg += "\n**{} new Tickets**\n".format(len(self.bot.gbfdata['new_ticket']))
+                msg += "\n**{} recent Tickets**\n".format(len(self.bot.gbfdata['new_ticket']))
                 for t in self.bot.gbfdata['new_ticket']:
                     msg += "[{}]({}), ".format(t[73:79], t)
                 msg = msg[:-2]

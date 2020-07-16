@@ -293,25 +293,29 @@ class GuildWar(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 10, commands.BucketType.guild)
-    async def GW(self, ctx):
+    async def GW(self, ctx, gmt :int = 9):
         """Post the GW schedule"""
         if self.bot.gw['state'] == True:
             try:
+                if gmt < -12 or gmt > 14: gmt = 9
                 current_time = self.bot.getJST()
                 em = self.bot.getEmote(self.bot.gw.get('element', ''))
                 if em is None: em = ":white_small_square:"
-                title = "{} **Guild War {}** {} Time: **{:%a. %m/%d %H:%M}**\n".format(self.bot.getEmote('gw'), self.bot.gw['id'], em, current_time)
+                title = "{} **Guild War {}** {} **{:%a. %m/%d %H:%M} TZ**\n".format(self.bot.getEmote('gw'), self.bot.gw['id'], em, current_time + timedelta(seconds=3600*(gmt-9)))
+                if gmt == 9: title = title.replace('TZ', 'JST')
+                elif gmt == 0: title = title.replace('TZ', 'GMT')
+                else: title = title.replace('TZ', 'GMT{0:+}'.format(gmt))
                 description = ""
                 day_list = self.buildDayList()
                 if current_time < self.bot.gw['dates']["End"]:
                     for it in day_list:
                         if it[1] == "BW":
-                            d = self.bot.gw['dates']["Preliminaries"] - timedelta(days=random.randint(1, 4))
+                            d = self.bot.gw['dates']["Preliminaries"] - timedelta(days=random.randint(1, 4)) + timedelta(seconds=3600*(gmt-9))
                             if current_time < d and random.randint(1, 8) == 1:
                                 description += it[0] + " **{:%a. %m/%d %H:%M}**\n".format(d)
                         else:
                             if self.dayCheck(current_time, self.bot.gw['dates'][it[2]], it[1]=="Day 5") or (it[1] == "Interlude" and self.dayCheck(current_time, self.bot.gw['dates'][it[2]] + timedelta(seconds=25200), False)):
-                                description += it[0] + ": **{:%a. %m/%d %H:%M}**\n".format(self.bot.gw['dates'][it[1]])
+                                description += it[0] + ": **{:%a. %m/%d %H:%M}**\n".format(self.bot.gw['dates'][it[1]] + timedelta(seconds=3600*(gmt-9)))
                 else:
                     await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Not available", color=self.color))
                     self.bot.gw['state'] = False
