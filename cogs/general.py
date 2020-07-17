@@ -518,3 +518,10 @@ class General(commands.Cog):
             count += 1
 
         await ctx.send(embed=self.bot.buildEmbed(title="Self Assignable Roles", fields=fields, footer="Page {}/{}".format(page, 1+len(roles)//20), color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['nitro', 'here'])
+    @commands.cooldown(1, 30, commands.BucketType.guild)
+    async def serverinfo(self, ctx):
+        """Get informations on the current guild (Owner only)"""
+        guild = ctx.guild
+        await ctx.send(embed=self.bot.buildEmbed(title=guild.name + " status", description="**ID** ▫️ {}\n**Owner** ▫️ {}\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon_url, color=self.color))

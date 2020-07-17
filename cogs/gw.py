@@ -190,12 +190,12 @@ class GuildWar(commands.Cog):
 
     def isYouServer(): # for decorators
         async def predicate(ctx):
-            return ctx.bot.isYouServer(ctx)
+            return ctx.bot.isServer(ctx, 'you_server')
         return commands.check(predicate)
 
     def isAuthorizedSpecial(): # for decorators
         async def predicate(ctx):
-            return (ctx.bot.isYouServer(ctx) or ctx.bot.isAuthorized(ctx))
+            return (ctx.bot.isServer(ctx, 'you_server') or ctx.bot.isAuthorized(ctx))
         return commands.check(predicate)
 
     def honorFormat(self, h): # convert honor number to a shorter string version

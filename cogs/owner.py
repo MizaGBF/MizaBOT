@@ -27,29 +27,17 @@ class Owner(commands.Cog):
         return None
 
     async def guildList(self):
-        embed = discord.Embed(title=self.bot.user.name, color=self.color)
-        embed.set_thumbnail(url=self.bot.user.avatar_url)
         msg = ""
         for s in self.bot.guilds:
-            msg += "**{}:** {} owned by {} ({})\n".format(s.name, s.id, s.owner.name, s.owner.id)
-        if msg == "": msg = "None"
-        embed.add_field(name="Server List", value=msg, inline=False)
-        msg = ""
-        for s in self.bot.newserver['pending']:
-            msg += "**{}:** {}\n".format(s, self.bot.newserver['pending'][s])
-        if msg == "": msg = "None"
-        embed.add_field(name="Pending Servers", value=msg, inline=False)
-        msg = ""
-        for s in self.bot.newserver['servers']:
-            msg += "[{}] ".format(s)
-        if msg == "": msg = "None"
-        embed.add_field(name="Banned Servers", value=msg, inline=False)
-        msg = ""
-        for s in self.bot.newserver['owners']:
-            msg += "[{}] ".format(s)
-        if msg == "": msg = "None"
+            msg += "**{}** `{} `owned by **{}** `{}`\n".format(s.name, s.id, s.owner.name, s.owner.id)
+        for s in self.bot.guilddata['pending']:
+            msg += "**{}** {} is **Pending**\n".format(s, self.bot.guilddata['pending'][s])
+        if len(self.bot.guilddata['banned']) > 0:
+            msg += "Banned Guilds are `" + "` `".join(str(x) for x in self.bot.guilddata['banned']) + "`\n"
+        if len(self.bot.guilddata['owners']) > 0:
+            msg += "Banned Owners are `" + "` `".join(str(x) for x in self.bot.guilddata['owners']) + "`\n"
         embed.add_field(name="Banned owners", value=msg, inline=False)
-        await self.bot.send('debug', embed=embed)
+        await self.bot.send('debug', embed=self.bot.buildEmbed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -88,8 +76,8 @@ class Owner(commands.Cog):
         """Command to leave and ban a server (Owner only)"""
         id = str(id)
         try:
-            if id not in self.bot.newserver['servers']:
-                self.bot.newserver['servers'].append(id)
+            if id not in self.bot.guilddata['banned']:
+                self.bot.guilddata['banned'].append(id)
                 self.bot.savePending = True
             try:
                 toleave = self.bot.get_guild(id)
@@ -107,8 +95,8 @@ class Owner(commands.Cog):
         """Command to ban a server owner and leave all its servers (Owner only)"""
         id = str(id)
         try:
-            if id not in self.bot.newserver['owners']:
-                self.bot.newserver['owners'].append(id)
+            if id not in self.bot.guilddata['owners']:
+                self.bot.guilddata['owners'].append(id)
                 self.bot.savePending = True
             for g in self.bot.guilds:
                 try:
@@ -127,8 +115,8 @@ class Owner(commands.Cog):
         """Command to accept a pending server (Owner only)"""
         sid = str(id)
         try:
-            if sid in self.bot.newserver['pending']:
-                self.bot.newserver['pending'].pop(sid)
+            if sid in self.bot.guilddata['pending']:
+                self.bot.guilddata['pending'].pop(sid)
                 self.bot.savePending = True
                 guild = self.bot.get_guild(id)
                 if guild:
@@ -144,8 +132,8 @@ class Owner(commands.Cog):
         """Command to refuse a pending server (Owner only)"""
         id = str(id)
         try:
-            if id in self.bot.newserver['pending']:
-                self.bot.newserver['pending'].pop(id)
+            if id in self.bot.guilddata['pending']:
+                self.bot.guilddata['pending'].pop(id)
                 self.bot.savePending = True
                 guild = self.bot.get_guild(id)
                 if guild:
@@ -178,7 +166,7 @@ class Owner(commands.Cog):
             await self.bot.send('debug', embed=self.bot.buildEmbed(title=ctx.guild.me.name, description="save.json loading failed", color=self.color))
         await ctx.message.add_reaction('✅') # white check mark
 
-    @commands.command(no_pm=True, aliases=['server'])
+    @commands.command(no_pm=True, aliases=['guilds'])
     @isOwner()
     async def servers(self, ctx):
         """List all servers (Owner only)"""
@@ -451,13 +439,6 @@ class Owner(commands.Cog):
         """Post the invite link (Owner only)"""
         await self.bot.send('debug', embed=self.bot.buildEmbed(title="Invite Request", description="{} ▫️ {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar_url, timestamp=datetime.utcnow(), color=self.color))
         await ctx.author.send(embed=self.bot.buildEmbed(title=ctx.guild.me.name, description="{}\nYou'll have to wait for my owner approval.\nMisuses will result in a ban.".format(self.bot.strings["invite()"]), thumbnail=ctx.guild.me.avatar_url, timestamp=datetime.utcnow(), color=self.color))
-
-    @commands.command(no_pm=True)
-    @isOwner()
-    async def nitro(self, ctx):
-        """Get the nitro boost status of the guild (Owner only)"""
-        guild = ctx.guild
-        await ctx.send(embed=self.bot.buildEmbed(title=guild.name + " status", description="Premium Tier: {}\nBoosted members: {}\nIcon animated: {}".format(guild.premium_tier, guild.premium_subscription_count, guild.is_icon_animated()), thumbnail=guild.icon_url, footer=str(guild.id), color=self.color))
 
     @commands.command(no_pm=True)
     @isOwner()

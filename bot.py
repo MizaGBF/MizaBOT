@@ -270,8 +270,9 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.9" # version number
-        self.botchangelog = ["Added the gmt option to $gw", "Some commands are enabled in all channels but will auto delete in unauthorized ones after a short amount of time (experiment)"] # bot changelog
+        self.botversion = "6.10" # version number
+        self.saveversion = 0 # save version
+        self.botchangelog = ["Added the gmt option to $gw", "The permission system now authorize all commands everywhere but the command outputs will be deleted after a certain time instead", "added $serverinfo"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
@@ -286,7 +287,7 @@ class Mizabot(commands.Bot):
         self.autosaving = False # set to true during a save
         self.drive = MizabotDrive(self) # google drive instance
         self.channels = {} # store my channels
-        self.newserver = {'servers':[], 'owners':[], 'pending':{}} # banned servers, banned owners, pending servers
+        self.guilddata = {'banned':[], 'owners':[], 'pending':{}} # banned servers, banned owners, pending servers
         self.gw = {'state':False} # guild war data
         self.maintenance = {"state" : False, "time" : None, "duration" : "0"} # gbf maintenance data
         self.spark = [{}, []] # user spark data, banned users
@@ -419,8 +420,15 @@ class Mizabot(commands.Bot):
         try:
             with open('save.json') as f:
                 data = json.load(f, object_pairs_hook=self.json_deserial_dict) # deserializer here
-                # more check to avoid issues when reloading the file during runtime, if new data was added
-                self.newserver = data.get('newserver', {'servers':[], 'owners':[], 'pending':{}})
+                ver = data.get('version', None)
+                if ver is None:
+                    self.guilddata = data.get('newserver', {'servers':[], 'owners':[], 'pending':{}})
+                    self.guilddata['banned'] = self.guilddata['servers']
+                    self.guilddata.pop('servers', None)
+                elif ver > self.saveversion:
+                    raise Exception("Save file version higher than the expected version")
+                else:
+                    self.guilddata = data.get('guilds', {'banned':[], 'owners':[], 'pending':{}})
                 self.prefixes = data.get('prefixes', {})
                 self.gbfaccounts = data.get('gbfaccounts', [])
                 self.gbfcurrent = data.get('gbfcurrent', 0)
@@ -455,7 +463,8 @@ class Mizabot(commands.Bot):
         try:
             with open('save.json', 'w') as outfile:
                 data = {}
-                data['newserver'] = self.newserver
+                data['version'] = self.saveversion
+                data['guilds'] = self.guilddata
                 data['prefixes'] = self.prefixes
                 data['gbfaccounts'] = self.gbfaccounts
                 data['gbfcurrent'] = self.gbfcurrent
@@ -590,13 +599,8 @@ class Mizabot(commands.Bot):
             return False # not permitted
         return True # default
 
-    def isYouServer(self, ctx): # check if the context is in the (You) guild
-        if ctx.message.author.guild.id == self.ids.get('you_server', -1):
-            return True
-        return False
-
-    def isDebugServer(self, ctx): # check if the context is in the debug guild
-        if ctx.message.author.guild.id == self.ids.get('debug_server', -1):
+    def isServer(self, ctx, id_string : str): # check if the context is in the targeted guild (must be in config.json)
+        if ctx.message.author.guild.id == self.ids.get(id_string, -1):
             return True
         return False
 
@@ -978,7 +982,7 @@ async def on_ready(): # when the bot starts or reconnects
         bot.setChannel('pinned', 'you_pinned') # set (you) pinned channel
         bot.setChannel('gbfglog', 'gbfg_log') # set /gbfg/ lucilius log channel
         bot.setChannel('youlog', 'you_log') # set (you) log channel
-        await bot.send('debug', embed=bot.buildEmbed(title="{} is Ready".format(bot.user.display_name), description="**Version** {}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}\n**Twitter**▫️{}".format(bot.botversion, bot.process.cpu_percent(), bot.process.memory_full_info().uss >> 20, len(asyncio.all_tasks()), len(bot.guilds), len(bot.newserver['pending']), len(bot.cogs), bot.cogn, (bot.twitter_api is not None)), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
+        await bot.send('debug', embed=bot.buildEmbed(title="{} is Ready".format(bot.user.display_name), description="**Version** {}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}\n**Twitter**▫️{}".format(bot.botversion, bot.process.cpu_percent(), bot.process.memory_full_info().uss >> 20, len(asyncio.all_tasks()), len(bot.guilds), len(bot.guilddata['pending']), len(bot.cogs), bot.cogn, (bot.twitter_api is not None)), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
         await bot.startTasks() # start the tasks
         bot.boot_flag = True
     if bot.boot_msg != "":
@@ -990,14 +994,14 @@ async def on_guild_join(guild): # when the bot joins a new guild
     id = str(guild.id)
     if id == str(bot.ids['debug_server']):
         return
-    elif id in bot.newserver['servers'] or str(guild.owner.id) in bot.newserver['owners']: # leave if the server is blacklisted
+    elif id in bot.guilddata['banned'] or str(guild.owner.id) in bot.guilddata['owners']: # leave if the server is blacklisted
         try:
             await bot.send('debug', embed=bot.buildEmbed(title="Banned guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
         except Exception as e:
             await bot.send('debug', "on_guild_join(): {}".format(e))
         await guild.leave()
     else: # notify me and add to the pending servers
-        bot.newserver['pending'][id] = guild.name
+        bot.guilddata['pending'][id] = guild.name
         bot.savePending = True
         await guild.owner.send(embed=bot.buildEmbed(title="Pending guild request", description="Wait until my owner approve the new server", thumbnail=guild.icon_url))
         await bot.send('debug', embed=bot.buildEmbed(title="Pending guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
@@ -1010,10 +1014,10 @@ async def on_message(message): # to do something with a message
 @bot.check # authorize or not a command on a global scale
 async def global_check(ctx):
     id = str(ctx.guild.id)
-    if id in bot.newserver['servers'] or str(ctx.guild.owner.id) in bot.newserver['owners']: # ban check
+    if id in bot.guilddata['banned'] or str(ctx.guild.owner.id) in bot.guilddata['owners']: # ban check
         await ctx.guild.leave() # leave the server if banned
         return False
-    if id in bot.newserver['pending']: # pending check
+    if id in bot.guilddata['pending']: # pending check
         await bot.react(ctx, 'cooldown')
         return False
     return True

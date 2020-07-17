@@ -22,7 +22,7 @@ class GBF_Utility(commands.Cog):
 
     def isYou(): # for decorators
         async def predicate(ctx):
-            return ctx.bot.isYouServer(ctx)
+            return ctx.bot.isServer(ctx, 'you_server')
         return commands.check(predicate)
 
     def isOwner(): # for decorators

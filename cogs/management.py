@@ -23,7 +23,7 @@ class Management(commands.Cog):
 
     def isAuthorizedSpecial(): # for decorators
         async def predicate(ctx):
-            return (ctx.bot.isDebugServer(ctx) or (ctx.bot.isYouServer(ctx) and ctx.bot.isMod(ctx)))
+            return (ctx.bot.isServer(ctx, 'debug_server') or (ctx.bot.isServer(ctx, 'you_server') and ctx.bot.isMod(ctx)))
         return commands.check(predicate)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -333,7 +333,7 @@ class Management(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def status(self, ctx):
         """Post the bot status"""
-        await ctx.send(embed=self.bot.buildEmbed(title="{} ▫️ v{}".format(ctx.guild.me.display_name, self.bot.botversion), description="**Uptime**▫️{}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Save Pending**▫️{}\n**Errors since boot**▫️{}\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}\n**Twitter**▫️{}".format(self.bot.uptime(), self.bot.process.cpu_percent(), self.bot.process.memory_full_info().uss >> 20, self.bot.savePending, self.bot.errn, len(asyncio.all_tasks()), len(self.bot.guilds), len(self.bot.newserver['pending']), len(self.bot.cogs), self.bot.cogn, (self.bot.twitter_api is not None)), thumbnail=ctx.guild.me.avatar_url, color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="{} ▫️ v{}".format(ctx.guild.me.display_name, self.bot.botversion), description="**Uptime**▫️{}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Save Pending**▫️{}\n**Errors since boot**▫️{}\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}\n**Twitter**▫️{}".format(self.bot.uptime(), self.bot.process.cpu_percent(), self.bot.process.memory_full_info().uss >> 20, self.bot.savePending, self.bot.errn, len(asyncio.all_tasks()), len(self.bot.guilds), len(self.bot.guilddata['pending']), len(self.bot.cogs), self.bot.cogn, (self.bot.twitter_api is not None)), thumbnail=ctx.guild.me.avatar_url, color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 10, commands.BucketType.guild)
