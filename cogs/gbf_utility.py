@@ -145,12 +145,12 @@ class GBF_Utility(commands.Cog):
                             elif x == 0: # charater
                                 try: # only check all character versions
                                     versions = soup.find_all("div", class_="character__versions")[0].findChildren("table", recursive=False)[0].findChildren("tbody", recursive=False)[0].findChildren("tr", recursive=False)[2].findChildren("td", recursive=False)
+                                    title = soup.find_all("h1", id="firstHeading", class_="firstHeading")[0].text
                                     elems = []
                                     for v in versions:
                                         s = v.findChildren("a", recursive=False)[0].text
-                                        if s.lower() != ' '.join(terms).lower(): elems.append(s)
+                                        if s != title: elems.append(s)
                                     if len(elems) == 0: raise Exception()
-                                    title = soup.find_all("h1", id="firstHeading", class_="firstHeading")[0].text
                                     desc = "This character has other versions\n"
                                     for e in elems:
                                         desc += "[{}](https://gbf.wiki/{})\n".format(e, e.replace(" ", "_"))
