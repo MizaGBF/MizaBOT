@@ -270,9 +270,9 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.10" # version number
+        self.botversion = "6.11" # version number
         self.saveversion = 0 # save version
-        self.botchangelog = ["Added the gmt option to $gw", "The permission system now authorize all commands everywhere but the command outputs will be deleted after a certain time instead", "added $serverinfo"] # bot changelog
+        self.botchangelog = ["Added the gmt option to $gw", "The permission system now authorize all commands everywhere but the command outputs will be deleted after a certain time instead", "Added $serverinfo", "Revamped $ubhl and added $luci & $bubs", "$wiki has been improved for summons and weapons", "Cleaned up the command list"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
@@ -312,7 +312,6 @@ class Mizabot(commands.Bot):
         self.news = {} # guild news channels
         self.games = {} # bot status messages
         self.strings = {} # bot strings
-        self.specialstrings = {} # bot special strings
         self.emotes = {} # bot custom emote ids
         self.emote_cache = {} # store used emotes
         self.granblue = {} # store player/crew ids
@@ -348,8 +347,10 @@ class Mizabot(commands.Bot):
             except Exception as e: # handle exceptions here to avoid the bot dying
                 if self.savePending:
                     self.save()
+                    self.savePending = False
                 self.errn += 1
                 print("Main Loop Exception: " + str(e))
+                if str(e).startswith("429 Too Many Requests"): time.sleep(80)
         if self.save():
             print('Autosave Success')
         else:
@@ -406,7 +407,6 @@ class Mizabot(commands.Bot):
                 self.ids = data.get('ids', {})
                 self.games = data.get('games', ['Granblue Fantasy'])
                 self.strings = data.get('strings', {})
-                self.specialstrings = data.get('specialstrings', {})
                 self.emotes = data.get('emotes', {})
                 self.granblue = data.get('granblue', {"gbfgcrew":{}})
                 self.gbfwatch = data.get('gbfwatch', {})
@@ -620,11 +620,13 @@ class Mizabot(commands.Bot):
         elif key in self.emotes:
             try:
                 e = self.get_emoji(self.emotes[key]) # ids are defined in config.json
-                if e is not None: self.emote_cache[key] = e
-                return e
+                if e is not None:
+                    self.emote_cache[key] = e
+                    return e
+                return ""
             except:
-                return None
-        return None
+                return ""
+        return ""
 
     async def react(self, ctx, key): # add a reaction using a custom emote defined in config.json
         try:

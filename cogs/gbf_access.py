@@ -621,7 +621,10 @@ class GBF_Access(commands.Cog):
                     entry += "\n"
                     fields[-1]['value'] += entry
 
-            await ctx.send(embed=self.bot.buildEmbed(title=title, description=description, fields=fields, inline=True, url="http://game.granbluefantasy.jp/#guild/detail/{}".format(crew['id']), footer=footer, timestamp=crew['timestamp'], color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=description, fields=fields, inline=True, url="http://game.granbluefantasy.jp/#guild/detail/{}".format(crew['id']), footer=footer, timestamp=crew['timestamp'], color=self.color))
+            if not self.bot.isAuthorized(ctx):
+                await asyncio.sleep(60)
+                await final_msg.delete()
 
         except Exception as e:
             await self.bot.sendError("postCrewData", str(e))
@@ -1341,7 +1344,10 @@ class GBF_Access(commands.Cog):
             fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) \▫️ **{}**\n".format(members[i][1], members[i][0], self.honorFormat(members[i][2]))
             total += members[i][2]
         if gwid is None: gwid = ""
-        await ctx.send(embed=self.bot.buildEmbed(author={'name':"Top 30 of {}".format(ctx.guild.name), 'icon_url':ctx.guild.icon_url}, description="{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.getEmote('question'), gwid, self.honorFormat(total), self.honorFormat(total // min(30, len(members)))), fields=fields, inline=True, color=self.color))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"Top 30 of {}".format(ctx.guild.name), 'icon_url':ctx.guild.icon_url}, description="{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.getEmote('question'), gwid, self.honorFormat(total), self.honorFormat(total // min(30, len(members)))), fields=fields, inline=True, color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(60)
+            await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 60, commands.BucketType.guild)

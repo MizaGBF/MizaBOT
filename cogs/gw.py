@@ -300,7 +300,7 @@ class GuildWar(commands.Cog):
                 if gmt < -12 or gmt > 14: gmt = 9
                 current_time = self.bot.getJST()
                 em = self.bot.getEmote(self.bot.gw.get('element', ''))
-                if em is None: em = ":white_small_square:"
+                if em == "": em = ":white_small_square:"
                 title = "{} **Guild War {}** {} **{:%a. %m/%d %H:%M} TZ**\n".format(self.bot.getEmote('gw'), self.bot.gw['id'], em, current_time + timedelta(seconds=3600*(gmt-9)))
                 if gmt == 9: title = title.replace('TZ', 'JST')
                 elif gmt == 0: title = title.replace('TZ', 'GMT')
@@ -348,7 +348,7 @@ class GuildWar(commands.Cog):
             d = self.getGWState()
             if d != "":
                 em = self.bot.getEmote(self.bot.gw.get('element', ''))
-                if em is None: em = ":white_small_square:"
+                if em == "": em = ":white_small_square:"
                 await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {} status".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description=d, color=self.color))
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
@@ -399,7 +399,7 @@ class GuildWar(commands.Cog):
                     if fields[x]['value'] == '': fields[0]['value'] = 'Unavailable'
 
                 em = self.bot.getEmote(self.bot.gw.get('element', ''))
-                if em is None: em = ""
+                if em == "": em = ""
                 await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), fields=fields, footer="Last Update ▫️ {:%a. %m/%d %H:%M} JST ▫️ Update on minute 5, 25 and 45".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
         except Exception as e:
             await self.bot.sendError("ranking", str(e))
@@ -413,7 +413,7 @@ class GuildWar(commands.Cog):
                 await ctx.send(embed=self.bot.buildEmbed(title="Estimation unavailable", color=self.color))
             else:
                 em = self.bot.getEmote(self.bot.gw.get('element', ''))
-                if em is None: em = ""
+                if em == "": em = ""
                 current_time_left = self.getGWTimeLeft()
                 if current_time_left is None:
                     await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Estimations are currently unavailable", inline=True, color=self.color))

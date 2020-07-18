@@ -30,16 +30,6 @@ class GBF_Utility(commands.Cog):
             return ctx.bot.isOwner(ctx)
         return commands.check(predicate)
 
-    def isDisabled(): # for decorators
-        async def predicate(ctx):
-            return False
-        return commands.check(predicate)
-
-    def isAuthorized(): # for decorators
-        async def predicate(ctx):
-            return ctx.bot.isAuthorized(ctx)
-        return commands.check(predicate)
-
     def getMaintenanceStatus(self): # check the gbf maintenance status, empty string returned = no maintenance
         current_time = self.bot.getJST()
         msg = ""
@@ -100,6 +90,15 @@ class GBF_Utility(commands.Cog):
                 fixed += term[i] # we save
         return fixed # return the result
 
+    def stripWikiStr(self, elem):
+        txt = elem.text
+        checks = [['span', 'tooltiptext'], ['sup', 'reference'], ['span', 'skill-upgrade-text']]
+        for target in checks:
+            f = elem.findChildren(target[0], class_=target[1])
+            for e in f:
+                txt = txt.replace(e.text, "")
+        return txt.replace('C.A.', 'CA').replace('.', '. ').replace('!', '! ').replace('?', '? ').replace(':', ': ').replace('. )', '.)').replace("Damage cap", "Cap").replace("Damage", "DMG").replace("damage", "DMG").replace(" and ", " and").replace(" and", " and ").replace("  ", " ").replace("fire", str(self.bot.getEmote('fire'))).replace("water", str(self.bot.getEmote('water'))).replace("earth", str(self.bot.getEmote('earth'))).replace("wind", str(self.bot.getEmote('wind'))).replace("dark", str(self.bot.getEmote('dark'))).replace("light", str(self.bot.getEmote('light'))).replace("Fire", str(self.bot.getEmote('fire'))).replace("Water", str(self.bot.getEmote('water'))).replace("Earth", str(self.bot.getEmote('earth'))).replace("Wind", str(self.bot.getEmote('wind'))).replace("Dark", str(self.bot.getEmote('dark'))).replace("Light", str(self.bot.getEmote('light')))
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gbfwiki'])
     @commands.cooldown(3, 4, commands.BucketType.guild)
     async def wiki(self, ctx, *terms : str):
@@ -112,12 +111,163 @@ class GBF_Utility(commands.Cog):
                 for s in terms:
                     arr.append(self.fixCase(s))
                 sch = "_".join(arr)
-                url = "https://gbf.wiki/" + sch
+                url = "https://gbf.wiki/{}".format(sch)
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url) as r:
                         if r.status != 200:
                             raise Exception("HTTP Error 404: Not Found")
-                await ctx.send(url)
+                        else:
+                            soup = BeautifulSoup(await r.text(), 'html.parser') # parse the html
+                            data = {}
+                            # what we are interested in
+                            type_check = {"/Category:Fire_Characters":0, "/Category:Water_Characters":1, "/Category:Earth_Characters":2, "/Category:Wind_Characters":3, "/Category:Dark_Characters":4, "/Category:Light_Characters":5, "/Category:Special_Characters":6, "/Category:Fire_Summons":10, "/Category:Water_Summons":11, "/Category:Earth_Summons":12, "/Category:Wind_Summons":13, "/Category:Dark_Summons":14, "/Category:Light_Summons":15, "/Category:Special_Summons":16, "/Category:Sabre_Weapons":20, "/Category:Dagger_Weapons":21, "/Category:Spear_Weapons":22, "/Category:Axe_Weapons":23, "/Category:Staff_Weapons":24, "/Category:Gun_Weapons":25, "/Category:Melee_Weapons":26, "/Category:Bow_Weapons":27, "/Category:Harp_Weapons":28, "/Category:Katana_Weapons":29}
+                            for k, n in type_check.items(): # check if the page matches
+                                r = soup.find_all("a", {'href' : k})
+                                if len(r) > 0:
+                                    data['object'] = n // 10 # 0 = chara, 1 = summon, 2 = weapon
+                                    if data['object'] < 2: data['element'] = {0:'fire', 1:'water', 2:'earth', 3:'wind', 4:'dark', 5:'light', 6:'misc'}.get(n%10, "") # retrieve the element here for chara and summon
+                                    else: data['type'] = k[len('/Category:'):k.find('_Weapons')].lower().replace('sabre', 'sword') # retrieve the wpn type here
+                                    break
+                            x = data.get('object', None)
+                            if x is None or x == 0: # if no match or chara, we just post the url like before
+                                await ctx.send(url)
+                            else:
+                                # retrieve thumbnail if any
+                                try:
+                                    i = soup.find_all("script", type="application/ld+json")[0].string
+                                    s = i.find("\"image\" : \"")
+                                    if s != -1:
+                                        s += len("\"image\" : \"")
+                                        e = i.find("\"", s)
+                                        data['image'] = i[s:e]
+                                except:
+                                    pass
+                                # process the header
+                                try:
+                                    header = soup.find_all("div", class_='char-header')[0] # get it
+                                    try: # first we get the rarity
+                                        data['rarity'] = str(header.findChildren("div" , class_='char-rarity', recursive=False)[0])
+                                        if data['rarity'].find("Rarity SSR") != -1: data['rarity'] = "SSR"
+                                        elif data['rarity'].find("Rarity SR") != -1: data['rarity'] = "SR"
+                                        elif data['rarity'].find("Rarity R") != -1: data['rarity'] = "R"
+                                        else: data['rarity'] = ""
+                                    except:
+                                        pass
+                                    for child in header.findChildren("div" , recursive=False): # then the name and title if any
+                                        if 'class' not in child.attrs:
+                                            for divs in child.findChildren("div" , recursive=False):
+                                                if 'class' in divs.attrs:
+                                                    if 'char-name' in divs.attrs['class']: data['name'] = divs.text
+                                                    elif 'char-title' in divs.attrs['class']:
+                                                        try:
+                                                            title = divs.findChildren("span", recursive=False)[0].text
+                                                            data['title'] = title[1:title.find("]")]
+                                                        except:
+                                                            title = divs.text
+                                                            data['title'] = title[1:title.find("]")]
+                                except:
+                                    pass
+                                # main content
+                                tables = soup.find_all("table", class_='wikitable') # iterate all wikitable
+                                for t in tables:
+                                    body = t.findChildren("tbody" , recursive=False)[0].findChildren("tr" , recursive=False) # check for tr tag
+                                    if str(body).find("Copyable?") != -1: continue # for chara skills if I add it one day
+                                    expecting_hp = False
+                                    expecting_wpn_skill = False
+                                    expecting_sum_call = False
+                                    aura = 0
+                                    for tr in body: # iterate on tags
+                                        content = str(tr)
+                                        if expecting_sum_call:
+                                            if content.find("This is the call for the") != -1:
+                                                data['call'][1] = self.stripWikiStr(tr.findChildren("td")[0])
+                                            else:
+                                                expecting_sum_call = False
+                                        elif expecting_wpn_skill:
+                                            if 'class' in tr.attrs and tr.attrs['class'][0].startswith('skill'):
+                                                if tr.attrs['class'][-1] == "post" or (tr.attrs['class'][0] == "skill" and len(tr.attrs['class']) == 1):
+                                                    n = tr.findChildren("td", class_="skill-name", recursive=False)[0].text.replace("\n", "")
+                                                    d = tr.findChildren("td", class_="skill-desc", recursive=False)[0]
+                                                    if 'skill' not in data: data['skill'] = []
+                                                    data['skill'].append([n, self.stripWikiStr(d)])
+                                            else:
+                                                expecting_wpn_skill = False
+                                        elif expecting_hp:
+                                            if content.find('Level ') != -1:
+                                                childs = tr.findChildren(recursive=False)
+                                                try: data['lvl'] = childs[0].text[len('Level '):]
+                                                except: pass
+                                                try: data['hp'] = childs[1].text
+                                                except: pass
+                                                try: data['atk'] = childs[2].text
+                                                except: pass
+                                            else:
+                                                expecting_hp = False
+                                        elif content.find('class="hp-text"') != -1 and content.find('class="atk-text"') != -1:
+                                            expecting_hp = True
+                                            elem_table = {"/Weapon_Lists/SSR/Fire":"fire", "/Weapon_Lists/SSR/Water":"water", "/Weapon_Lists/SSR/Earth":"earth", "/Weapon_Lists/SSR/Wind":"wind", "/Weapon_Lists/SSR/Dark":"dark", "/Weapon_Lists/SSR/Light":"light"}
+                                            for s, e in elem_table.items():
+                                                if content.find(s) != -1:
+                                                    data['element'] = e
+                                                    break
+                                        elif content.find('"Skill charge attack.png"') != -1:
+                                            n = tr.findChildren("td", class_="skill-name", recursive=False)[0].text
+                                            d = tr.findChildren("td", recursive=False)[-1]
+                                            data['ca'] = [n, self.stripWikiStr(d)]
+                                        elif content.find('"/Weapon_Skills"') != -1:
+                                            expecting_wpn_skill = True
+                                        elif content.find('<a href="/Sword_Master" title="Sword Master">Sword Master</a>') != -1 or content.find('Status_Energized') != -1:
+                                            tds = tr.findChildren("td", recursive=False)
+                                            n = tds[0].text
+                                            d = tds[1]
+                                            if 'sm' not in data: data['sm'] = []
+                                            data['sm'].append([n, self.stripWikiStr(d)])
+                                        elif content.find('"/Summons#Calls"') != -1:
+                                            data['call'] = [tr.findChildren("th")[0].text[len("Call - "):], '']
+                                            expecting_sum_call = True
+                                        elif content.find("Main Summon") != -1:
+                                            aura = 1
+                                        elif content.find("Sub Summon") != -1:
+                                            aura = 2
+                                        elif content.find("This is the basic aura") != -1:
+                                            if aura == 0: aura = 1
+                                            n = tr.findChildren("span", class_="tooltip")[0].text.split("This is the basic aura")[0]
+                                            d = tr.findChildren("td")[0]
+                                            if aura == 1: data['aura'] = self.stripWikiStr(d)
+                                            elif aura == 2: data['subaura'] = self.stripWikiStr(d)
+                                        elif content.find("This is the aura") != -1:
+                                            n = tr.findChildren("span", class_="tooltip")[0].text.split("This is the aura")[0]
+                                            d = tr.findChildren("td")[0]
+                                            if aura == 1: data['aura'] = self.stripWikiStr(d)
+                                            elif aura == 2: data['subaura'] = self.stripWikiStr(d)
+                                # final message
+                                title = ""
+                                title += "{}".format(self.bot.getEmote(data.get('element', '')))
+                                title += "{}".format(self.bot.getEmote(data.get('rarity', '')))
+                                title += "{}".format(self.bot.getEmote(data.get('type', '')))
+                                title += "{}".format(data.get('name', ''))
+                                if 'title' in data: title += ", {}".format(data['title'])
+
+                                desc = ""
+                                if 'lvl' in data: desc += "**Lvl {}** ".format(data['lvl'])
+                                if 'hp' in data: desc += "{} {} ".format(self.bot.getEmote('hp'), data['hp'])
+                                if 'atk' in data: desc += "{} {}".format(self.bot.getEmote('atk'), data['atk'])
+                                if desc != "": desc += "\n"
+                                if 'ca' in data: desc += "{} **{}**▫️{}\n".format(self.bot.getEmote('skill1'), data['ca'][0], data['ca'][1])
+                                if 'skill' in data:
+                                    for s in data['skill']:
+                                        desc += "{} **{}**▫️{}\n".format(self.bot.getEmote('skill2'), s[0], s[1])
+                                if 'sm' in data:
+                                    if desc != "": desc += "\n"
+                                    for s in data['sm']:
+                                        if s[0] == "Attack" or s[0] == "Defend": continue
+                                        desc += "**{}**▫️{}\n".format(s[0], s[1])
+                                if 'call' in data: desc += "{} **{}**▫️{}\n".format(self.bot.getEmote('skill1'), data['call'][0], data['call'][1])
+                                if 'aura' in data: desc += "{} **Aura**▫️{}\n".format(self.bot.getEmote('skill2'), data['aura'])
+                                if 'subaura' in data: desc += "{} **Sub Aura**▫️{}\n".format(self.bot.getEmote('skill2'), data['subaura'])
+
+                                await ctx.send(embed=self.bot.buildEmbed(title=title, description=desc, thumbnail=data.get('image', None), url=url, color=self.color))
+                            
             except Exception as e:
                 if str(e) != "HTTP Error 404: Not Found":
                     await self.bot.sendError("wiki", str(e))
@@ -271,68 +421,81 @@ class GBF_Utility(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['drive'])
     @isYou()
+    @commands.cooldown(1, 5, commands.BucketType.guild)
     async def gdrive(self, ctx):
         """Post the (You) google drive
         (You) server only"""
-        if ctx.message.author.guild.id == self.bot.ids.get('you_server', -1):
-            try:
-                image = self.bot.get_guild(self.bot.ids['you_server']).icon_url
-            except:
-                image = ""
-            await ctx.send(embed=self.bot.buildEmbed(title="(You) Public Google Drive", description=self.bot.strings["gdrive()"], thumbnail=image, color=self.color))
-        else:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I'm not permitted to post this link here", color=self.color))
+        try:
+            image = self.bot.get_guild(self.bot.ids['you_server']).icon_url
+        except:
+            image = ""
+        await ctx.send(embed=self.bot.buildEmbed(title="(You) Public Google Drive", description=self.bot.strings["gdrive()"], thumbnail=image, color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['arcarum', 'arca', 'oracle', 'evoker', 'astra'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
     async def arcanum(self, ctx):
         """Post a link to my autistic Arcanum Sheet"""
         await ctx.send(embed=self.bot.buildEmbed(title="Arcanum Tracking Sheet", description=self.bot.strings["arcanum()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/item/article/s/250{:02d}.jpg".format(random.randint(1, 46)), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['sparktracker'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
     async def rollTracker(self, ctx):
         """Post a link to my autistic roll tracking Sheet"""
         await ctx.send(embed=self.bot.buildEmbed(title="{} GBF Roll Tracker".format(self.bot.getEmote('crystal')), description=self.bot.strings["rolltracker()"], color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['charlist', 'asset'])
-    @isYou()
-    async def datamining(self, ctx):
-        """Post a link to my autistic datamining Sheet"""
-        await ctx.send(embed=self.bot.buildEmbed(title="Asset Datamining Sheet", description=self.bot.strings["datamining()"], color=self.color))
-
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwskin', 'blueskin'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
     async def stayBlue(self, ctx):
         """Post a link to my autistic blue eternal outfit grinding Sheet"""
         await ctx.send(embed=self.bot.buildEmbed(title="5* Eternal Skin Farming Sheet", description=self.bot.strings["stayblue()"], color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['soldier'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
     async def bullet(self, ctx):
         """Post a link to my bullet grind Sheet"""
         await ctx.send(embed=self.bot.buildEmbed(title="Bullet Grind Sheet", description=self.bot.strings["bullet()"], color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gbfgcrew', 'gbfgpastebin'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
     async def pastebin(self, ctx):
         """Post a link to the /gbfg/ crew pastebin"""
         await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ Guild Pastebin", description=self.bot.strings["pastebin()"], thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/582191446182985734/unknown.png", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tracker'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
     async def dps(self, ctx):
         """Post the custom Combat tracker"""
         await ctx.send(embed=self.bot.buildEmbed(title="GBF Combat Tracker", description=self.bot.strings["dps()"], color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['grid', 'pool'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
     async def motocal(self, ctx):
         """Post the motocal link"""
         await ctx.send(embed=self.bot.buildEmbed(title="(You) Motocal", description=self.bot.strings["motocal()"], color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['raidfinder', 'python_raidfinder'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
     async def pyfinder(self, ctx):
         """Post the (You) python raidfinder"""
         await ctx.send(embed=self.bot.buildEmbed(title="(You) Python Raidfinder", description=self.bot.strings["pyfinder()"], color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['ubhl', 'ubaha'])
-    async def ubahahl(self, ctx):
-        """Post a simple Ultimate Baha HL image guide"""
-        await ctx.send(embed=self.bot.buildEmbed(title="Ultimate Bahamut HL", description=self.bot.strings["ubahahl() 1"], image=self.bot.strings["ubahahl() 2"], color=self.color))
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['ubhl', 'ubahahl'])
+    @commands.cooldown(1, 15, commands.BucketType.guild)
+    async def ubaha(self, ctx):
+        """Post the Ultimate Bahamut HL Triggers"""
+        await ctx.send(embed=self.bot.buildEmbed(title="Empyreal Ascension (Impossible)", url="https://gbf.wiki/Ultimate_Bahamut_(Raid)#impossible", description="**95%**{} Daedalus Wing (uplift)\n**85%**{} Deadly Flare (dispel)\n**80%**♦️ charge diamonds\n**75%**{} Virtuous Verse (swap)\n**70%**{} The Rage (local debuffs)\n**70-50%**♦️ charge diamonds in OD\n**55%**{} Deadly Flare (stone)\n**50 & 40**%{} Sirius (4x30% plain)\n**45 & 35**%▫️ Sirius\n**28%**♦️ charge diamonds\n**22%**{} Ultima Blast (dispel)\n**15%**{} Skyfall Ultimus\n**10% & 1%**▫️ Cosmic Collision\n**5%**{} Deadly Flare".format(self.bot.getEmote('wind'), self.bot.getEmote('fire'), self.bot.getEmote('earth'), self.bot.getEmote('light'), self.bot.getEmote('fire'), self.bot.getEmote('misc'), self.bot.getEmote('water'), self.bot.getEmote('dark'), self.bot.getEmote('dark')), footer="Stay blue", color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['darkrapture', 'rapture', 'faa', 'luci', 'lucihl', 'luciliushl'])
+    @commands.cooldown(1, 30, commands.BucketType.guild)
+    async def lucilius(self, ctx):
+        """Post the Lucilius HL Triggers"""
+        await ctx.send(embed=self.bot.buildEmbed(title="Dark Rapture (Hard)", url="https://gbf.wiki/Lucilius_(Raid)#Impossible_.28Hard.29", fields = [{'name': "{} Black Wings".format(self.bot.getEmote('1')), 'value':'**N **{} Phosphosrus (single)\n**OD**{} Iblis (multi, debuffs)\n**OD, both**▫️ Paradise Lost (party)\n**Join**{} Paradise Lost (30K)\n**70%**▫️ Sephiroth (debuff wipe)\n**50%**{} Seven Trumpets (**12 Labors**)\n**1-6**{} increase damage [10M]\n**7**{} use superior element [2M plain]\n**8**{} nullify phalanx [OverChain]\n**9**{} heal [30 hits]\n**10**{} random debuff [10 debuffs]\n**11**{} dispel 2 buffs [trigger PL]\n**12**{} deal plain damage [all labors]'.format(self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'), self.bot.getEmote('misc'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'))}, {'name': "{} Lucilius".format(self.bot.getEmote('2')), 'value':'**95%**{} Phosphosrus (single)\n**85%**{} Axion (multi)\n**70%**♦️ charge diamonds\n**60%**{} Axion (**party**)\n**55%**♦️ charge diamonds\n**25%**{} Gopherwood Ark (racial check)\n**20 & 15%**{} Axion Apocalypse (multi)\n**10 & 3%**{} Paradise Lost (999k)\n\n*Click the title for more details*'.format(self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'))}], inline=True, footer="Your fate is over", color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['beelzebub', 'bubz'])
+    @commands.cooldown(1, 15, commands.BucketType.guild)
+    async def bubs(self, ctx):
+        """Post the Beelzebub HL Triggers"""
+        await ctx.send(embed=self.bot.buildEmbed(title="Long Live the King", url="https://gbf.wiki/Beelzebub_(Raid)", description="**100% & OD**▫️ Chaoscaliber (party, stun) [30 hits]\n**N **▫️ Unisonic (multi, counter) [10M]\n**75, 60% & OD**▫️ Karma (summonless) [ChainBurst]\n**N **▫️ Black Flies (multi, slashed) [10M]\n**50%**{} Langelaan Field (4T, reflect 2K, doesn't attack) [5M+20M/death]\n**OD**▫️ Chaoscaliber (party x2, stun) [ChainBurst]\n**N **▫️ Just Execution (24 hits, -1T to buff/hit) [ChainBurst]\n**30 & 15%**▫️ Black Spear (party, defenless) [ChainBurst]\n**25 & 10%**▫️ Chaos Legion (party, not guardable) [ChainBurst]\n**King's Religion**{} Total turns reached 30xPlayer Count".format(self.bot.getEmote('misc'), self.bot.getEmote('misc')), footer="Qilin Fantasy", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["christmas", "anniversary", "anniv", "summer"])
     @commands.cooldown(3, 30, commands.BucketType.guild)
@@ -419,9 +582,12 @@ class GBF_Utility(commands.Cog):
             n100 = math.ceil(t / 168.0)
             n150 = math.ceil(t / 257.0)
             wanpan = math.ceil(t / 48.0)
-            await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator ▫️ {}".format(self.bot.getEmote('gw'), t), description="**{:,}** box(s) and **{:,}** leftover tokens\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(b, tok, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator ▫️ {}".format(self.bot.getEmote('gw'), t), description="**{:,}** box(s) and **{:,}** leftover tokens\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(b, tok, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
         except:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid token number", color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid token number", color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(60)
+            await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -450,9 +616,12 @@ class GBF_Utility(commands.Cog):
             n100 = math.ceil(t / 168.0)
             n150 = math.ceil(t / 257.0)
             wanpan = math.ceil(t / 48.0)
-            await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator ▫️ {}".format(self.bot.getEmote('gw'), b), description="**{:,}** tokens needed\n\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(t, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator ▫️ {}".format(self.bot.getEmote('gw'), b), description="**{:,}** tokens needed\n\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(t, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
         except:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid box number", color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid box number", color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(60)
+            await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -464,9 +633,12 @@ class GBF_Utility(commands.Cog):
             nm95 = meat // 10
             nm100 = meat // 20
             nm150 = meat // 20
-            await ctx.send(embed=self.bot.buildEmbed(title="{} Meat Calculator ▫️ {}".format(self.bot.getEmote('gw'), meat), description="**{:,}** NM90 or **{:}** honors\n**{:,}** NM95 or **{:}** honors\n**{:}** NM100 or **{:}** honors\n**{:,}** NM150 or **{:}** honors\n".format(nm90, self.honorFormat(nm90*260000), nm95, self.honorFormat(nm95*910000), nm100, self.honorFormat(nm100*2650000), nm150, self.honorFormat(nm150*4100000)), color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} Meat Calculator ▫️ {}".format(self.bot.getEmote('gw'), meat), description="**{:,}** NM90 or **{:}** honors\n**{:,}** NM95 or **{:}** honors\n**{:}** NM100 or **{:}** honors\n**{:,}** NM150 or **{:}** honors\n".format(nm90, self.honorFormat(nm90*260000), nm95, self.honorFormat(nm95*910000), nm100, self.honorFormat(nm100*2650000), nm150, self.honorFormat(nm150*4100000)), color=self.color))
         except:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid meat number", color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid meat number", color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(60)
+            await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -499,9 +671,12 @@ class GBF_Utility(commands.Cog):
                         daily += honor_per_nm[i]
                         honor[i+1] += honor_per_nm[i]
 
-            await ctx.send(embed=self.bot.buildEmbed(title="{} Honor Planning ▫️ {} honors".format(self.bot.getEmote('gw'), self.honorFormat(target)), description="Preliminaries & Interlude ▫️ **{:,}** meats (around **{:,}** EX+ and **{:}** honors)\nDay 1 and 2 total ▫️ **{:,}** NM95 (**{:}** honors)\nDay 3 and 4 total ▫️ **{:,}** NM150 (**{:}** honors)".format(math.ceil(total_meat*2), ex*2, self.honorFormat(honor[0]*2), nm[0]*2, self.honorFormat(honor[1]*2), nm[1]*2, self.honorFormat(honor[2]*2)), footer="Assuming {} meats / EX+ on average".format(meat_per_ex_average), color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} Honor Planning ▫️ {} honors".format(self.bot.getEmote('gw'), self.honorFormat(target)), description="Preliminaries & Interlude ▫️ **{:,}** meats (around **{:,}** EX+ and **{:}** honors)\nDay 1 and 2 total ▫️ **{:,}** NM95 (**{:}** honors)\nDay 3 and 4 total ▫️ **{:,}** NM150 (**{:}** honors)".format(math.ceil(total_meat*2), ex*2, self.honorFormat(honor[0]*2), nm[0]*2, self.honorFormat(honor[1]*2), nm[1]*2, self.honorFormat(honor[2]*2)), footer="Assuming {} meats / EX+ on average".format(meat_per_ex_average), color=self.color))
         except Exception:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid honor number", color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid honor number", color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(60)
+            await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['friday'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -677,13 +852,19 @@ class GBF_Utility(commands.Cog):
             if first: first = False
             else: msg += ", "
             msg += "{} {}".format(total[k], k)
-        await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg, url="https://gbf.wiki/Raising_Weapon_Skills", fields=fields, inline=True, footer="type: {}".format(type), color=self.color))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg, url="https://gbf.wiki/Raising_Weapon_Skills", fields=fields, inline=True, footer="type: {}".format(type), color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(60)
+            await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['cb'])
     @commands.cooldown(1, 15, commands.BucketType.guild)
     async def chainburst(self, ctx):
         """Give the Battle 2.0 chain burst gain"""
-        await ctx.send(embed=self.bot.buildEmbed(title="v2.0 Chain Burst", description="1 ▫️ **10%**\n2 ▫️ **23%**\n3 ▫️ **36%**\n4 ▫️ **50%**\n5 ▫️ **60%**", url="https://gbf.wiki/Battle_System_2.0#Chain_Burst", footer="chain size x 10 + chain size bonus", color=self.color))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="v2.0 Chain Burst", description="1 ▫️ **10%**\n2 ▫️ **23%**\n3 ▫️ **36%**\n4 ▫️ **50%**\n5 ▫️ **60%**", url="https://gbf.wiki/Battle_System_2.0#Chain_Burst", footer="chain size x 10 + chain size bonus", color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(30)
+            await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["doom", "doompost", "magnafest", "magnafes", "campaign", "brick", "bar", "sunlight", "stone", "suptix", "surprise", "evolite", "fugdidmagnafeststart"])
     @commands.cooldown(1, 60, commands.BucketType.guild)
@@ -700,6 +881,9 @@ class GBF_Utility(commands.Cog):
                             msg += "**{}** since the last {}\n".format(m.group(1), w[0].replace("_", " ").replace("Category:", ""))
 
         if msg != "":
-            await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))
         else:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Unavailable", color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Unavailable", color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(30)
+            await final_msg.delete()

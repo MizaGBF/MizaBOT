@@ -209,18 +209,14 @@ class Owner(commands.Cog):
         self.bot.savePending = True
         await ctx.message.add_reaction('✅') # white check mark
 
-    @commands.command(no_pm=True, aliases=['as'])
+    @commands.command(no_pm=True, aliases=['ss'])
     @isOwner()
-    async def addStream(self, ctx, *, txt : str):
-        """Append a line to the stream command text (Owner only)
-        separate with ';' for multiple lines"""
-        strs = txt.split(';')
-        msg = ""
-        for s in strs:
-            self.bot.stream['content'].append(s)
-            msg += "`" + s + "`\n"
+    async def setStream(self, ctx, *, txt : str):
+        """Set the stream command text (Owner only)"""
+        if txt == "": return
+        self.bot.stream['content'] = txt.split('\n')
         self.bot.savePending = True
-        await ctx.send(embed=self.bot.buildEmbed(title="Stream Settings", description="Appended the following lines:\n" + msg, color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="Stream Settings", description="Stream text sets to\n`{}`".format(txt), color=self.color))
 
     @commands.command(no_pm=True, aliases=['sst'])
     @isOwner()
@@ -242,25 +238,6 @@ class Owner(commands.Cog):
         self.bot.stream['time'] = None
         self.bot.savePending = True
         await ctx.message.add_reaction('✅') # white check mark
-
-    @commands.command(no_pm=True, aliases=['dsl'])
-    @isOwner()
-    async def delStreamLine(self, ctx, line : int = 0, many : int = 1):
-        """Delete a line from stream command text (Owner only)
-        By default, the first line is deleted
-        You can specify how many you want to delete"""
-        if many < 1:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="You can't delete less than one line", color=self.color))
-        elif line < len(self.bot.stream['content']) and line >= 0:
-            if many + line > len(self.bot.stream['content']):
-                many = len(self.bot.stream['content']) - line
-            msg = ""
-            for i in range(0, many):
-                msg += self.bot.stream['content'].pop(line) + "\n"
-            self.bot.savePending = True
-            await ctx.send(embed=self.bot.buildEmbed(title="Stream Settings", description="Removed the following lines:\n" + msg, color=self.color))
-        else:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid line number", color=self.color))
 
     @commands.command(no_pm=True)
     @isOwner()

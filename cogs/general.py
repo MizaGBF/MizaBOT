@@ -223,11 +223,6 @@ class General(commands.Cog):
             return False
         return commands.check(predicate)
 
-    def isAuthorized(): # for decorators
-        async def predicate(ctx):
-            return ctx.bot.isAuthorized(ctx)
-        return commands.check(predicate)
-
     # get a 4chan thread
     async def get4chan(self, board : str, search : str): # be sure to not abuse it, you are not supposed to call the api more than once per second
         try:
@@ -251,18 +246,20 @@ class General(commands.Cog):
             return []
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isAuthorized()
+    @commands.cooldown(2, 10, commands.BucketType.guild)
     async def roll(self, ctx, dice : str = ""):
         """Rolls a dice in NdN format."""
         try:
             rolls, limit = map(int, dice.split('d'))
             result = ", ".join(str(random.randint(1, limit)) for r in range(rolls))
-            await ctx.send(embed=self.bot.buildEmbed(title="{}'s dice Roll(s)".format(ctx.message.author.display_name), description=result, color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{}'s dice Roll(s)".format(ctx.message.author.display_name), description=result, color=self.color))
         except:
-            await ctx.send(embed=self.bot.buildEmbed(title="Format has to be in NdN", footer="example: roll 2d6", color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Format has to be in NdN", footer="example: roll 2d6", color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(20)
+            await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['choice'])
-    @isAuthorized()
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def choose(self, ctx, *, choices : str ):
         """Chooses between multiple choices.
@@ -271,9 +268,12 @@ class General(commands.Cog):
         try:
             possible = choices.split(";")
             if len(possible) < 2: raise Exception()
-            await ctx.send(embed=self.bot.buildEmbed(title="{}, I choose".format(ctx.message.author.display_name), description=random.choice(possible), color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{}, I choose".format(ctx.message.author.display_name), description=random.choice(possible), color=self.color))
         except:
-            await ctx.send(embed=self.bot.buildEmbed(title="Give me a list of something to choose from 😔, separated by ';'", color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Give me a list of something to choose from 😔, separated by ';'", color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(20)
+            await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['math'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -305,7 +305,7 @@ class General(commands.Cog):
         await ctx.send(embed=self.bot.buildEmbed(title="{} {:%Y/%m/%d %H:%M} JST".format(self.bot.getEmote('clock'), self.bot.getJST()), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, alias=['inrole', 'rolestat'])
-    @isAuthorized()
+    @commands.cooldown(1, 5, commands.BucketType.guild)
     async def roleStats(self, ctx, *name : str):
         """Search how many users have a matching role
         use quotes if your match contain spaces
@@ -323,9 +323,12 @@ class General(commands.Cog):
                 if r.name == name or (exact == False and r.name.lower().find(name.lower()) != -1):
                     i += 1
         if exact != "exact":
-            await ctx.send(embed=self.bot.buildEmbed(title="Roles containing: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon_url, footer="on server {}".format(g.name), color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Roles containing: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon_url, footer="on server {}".format(g.name), color=self.color))
         else:
-            await ctx.send(embed=self.bot.buildEmbed(title="Roles matching: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon_url, footer="on server {}".format(g.name), color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Roles matching: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon_url, footer="on server {}".format(g.name), color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(20)
+            await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['hgg2d'])
     @commands.cooldown(1, 10, commands.BucketType.default)
@@ -437,7 +440,6 @@ class General(commands.Cog):
                 await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isAuthorized()
     @commands.cooldown(1, 1, commands.BucketType.user)
     async def iam(self, ctx, *, role_name : str):
         """Add a role to you that you choose. Role must be on a list of self-assignable roles."""
@@ -462,7 +464,6 @@ class General(commands.Cog):
                 await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['iamn'])
-    @isAuthorized()
     @commands.cooldown(1, 1, commands.BucketType.user)
     async def iamnot(self, ctx, *, role_name : str):
         """Remove a role to you that you choose. Role must be on a list of self-assignable roles."""
@@ -487,7 +488,6 @@ class General(commands.Cog):
                 await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isAuthorized()
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def lsar(self, ctx, page : int = 1):
         """List the self-assignable roles available in this server"""
@@ -517,7 +517,10 @@ class General(commands.Cog):
                 self.bot.savePending = True
             count += 1
 
-        await ctx.send(embed=self.bot.buildEmbed(title="Self Assignable Roles", fields=fields, footer="Page {}/{}".format(page, 1+len(roles)//20), color=self.color))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Self Assignable Roles", fields=fields, footer="Page {}/{}".format(page, 1+len(roles)//20), color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(30)
+            await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['nitro', 'here'])
     @commands.cooldown(1, 30, commands.BucketType.guild)

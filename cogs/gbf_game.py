@@ -38,16 +38,6 @@ class GBF_Game(commands.Cog):
         except Exception as e:
             await self.bot.sendError('cleanrolltask', str(e))
 
-    def isDisabled(): # for decorators
-        async def predicate(ctx):
-            return False
-        return commands.check(predicate)
-
-    def isAuthorized(): # for decorators
-        async def predicate(ctx):
-            return ctx.bot.isAuthorized(ctx)
-        return commands.check(predicate)
-
     # used by the gacha games
     def getRoll(self, ssr, sr_mode = False):
         d = random.randint(1, 10000)
@@ -406,7 +396,7 @@ class GBF_Game(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color, footer="setRoll <crystal> [single] [ten]"))
         try:
             if not self.bot.isAuthorized(ctx):
-                await asyncio.sleep(40)
+                await asyncio.sleep(30)
                 await final_msg.delete()
         except:
             pass
@@ -484,7 +474,7 @@ class GBF_Game(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I warned my owner", color=self.color, footer=str(e)))
             await self.bot.sendError('seeRoll', str(e))
         if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(40)
+            await asyncio.sleep(30)
             await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["sparkranking", "hoarders"])
@@ -535,7 +525,7 @@ class GBF_Game(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Sorry, something went wrong :bow:", footer=str(e)))
             await self.bot.sendError("rollRanking", str(e))
         if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(45)
+            await asyncio.sleep(30)
             await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -616,7 +606,7 @@ class GBF_Game(commands.Cog):
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="**Rarity** ▫️ {}\n**Race** ▫️ {}\n**Element** ▫️ {}\n**Rating** ▫️ {:.1f}".format(self.bot.getEmote(rarity[seed % 3]), race[(seed - 1) % 6], self.bot.getEmote(element[(seed - 3) % 6]), ((seed % 41) * 0.1) + 6.0 - (seed % 3) * 1.5), inline=True, color=self.color))
         if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(45)
+            await asyncio.sleep(30)
             await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -630,7 +620,7 @@ class GBF_Game(commands.Cog):
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Today, Xil's main element is", description="{} **{}**".format(self.bot.getEmote(e), e.capitalize()), color=self.color))
         if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(45)
+            await asyncio.sleep(30)
             await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -648,7 +638,7 @@ class GBF_Game(commands.Cog):
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{}'s daily dragons are".format(ctx.author.display_name), description="{} {}\n{} {}".format(self.bot.getEmote('1'), random.choice(possible), self.bot.getEmote('2'), random.choice(possible)), thumbnail=ctx.author.avatar_url, color=self.color))
         if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(45)
+            await asyncio.sleep(30)
             await final_msg.delete()
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True, aliases=['leaks', 'leek'])
