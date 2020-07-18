@@ -128,20 +128,36 @@ class GBF_Utility(commands.Cog):
                                     if data['object'] < 2: data['element'] = {0:'fire', 1:'water', 2:'earth', 3:'wind', 4:'dark', 5:'light', 6:'misc'}.get(n%10, "") # retrieve the element here for chara and summon
                                     else: data['type'] = k[len('/Category:'):k.find('_Weapons')].lower().replace('sabre', 'sword') # retrieve the wpn type here
                                     break
+                            # retrieve thumbnail if any
+                            try:
+                                i = soup.find_all("script", type="application/ld+json")[0].string
+                                s = i.find("\"image\" : \"")
+                                if s != -1:
+                                    s += len("\"image\" : \"")
+                                    e = i.find("\"", s)
+                                    data['image'] = i[s:e]
+                            except:
+                                pass
+
                             x = data.get('object', None)
-                            if x is None or x == 0: # if no match or chara, we just post the url like before
+                            if x is None: # if no match
                                 await ctx.send(url)
+                            elif x == 0: # charater
+                                try: # only check all character versions
+                                    versions = soup.find_all("div", class_="character__versions")[0].findChildren("table", recursive=False)[0].findChildren("tbody", recursive=False)[0].findChildren("tr", recursive=False)[2].findChildren("td", recursive=False)
+                                    elems = []
+                                    for v in versions:
+                                        s = v.findChildren("a", recursive=False)[0].text
+                                        if s.lower() != ' '.join(terms).lower(): elems.append(s)
+                                    if len(elems) == 0: raise Exception()
+                                    title = soup.find_all("h1", id="firstHeading", class_="firstHeading")[0].text
+                                    desc = "This character has other versions\n"
+                                    for e in elems:
+                                        desc += "[{}](https://gbf.wiki/{})\n".format(e, e.replace(" ", "_"))
+                                    await ctx.send(embed=self.bot.buildEmbed(title=title, description=desc, image=data.get('image', None), url=url, color=self.color))
+                                except: # if none, just send the link
+                                    await ctx.send(url)
                             else:
-                                # retrieve thumbnail if any
-                                try:
-                                    i = soup.find_all("script", type="application/ld+json")[0].string
-                                    s = i.find("\"image\" : \"")
-                                    if s != -1:
-                                        s += len("\"image\" : \"")
-                                        e = i.find("\"", s)
-                                        data['image'] = i[s:e]
-                                except:
-                                    pass
                                 # process the header
                                 try:
                                     header = soup.find_all("div", class_='char-header')[0] # get it
