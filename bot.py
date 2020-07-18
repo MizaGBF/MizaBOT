@@ -27,8 +27,8 @@ class MizabotHelp(commands.DefaultHelpCommand):
         self.dm_help = True # force dm only (although our own functions only send in dm, so it should be unneeded)
 
     async def send_error_message(self, error):
-        destination = self.get_destination()
-        await destination.send(embed=bot.buildEmbed(title="Help Error", description=error))
+        try: await self.context.message.add_reaction('❎') # white negative mark
+        except: pass
 
     async def send_bot_help(self, mapping): # main help command (called when you do $help). this function reuse the code from the commands.DefaultHelpCommand class
         ctx = self.context # get $help context
@@ -39,6 +39,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
             await ctx.message.add_reaction('📬')
         except:
             await ctx.send(embed=bot.buildEmbed(title="Help Error", description="Unblock me to receive the Help"))
+            await ctx.message.remove_reaction('📬', ctx.guild.me)
             return
 
         if bot.description: # send the bot description first
