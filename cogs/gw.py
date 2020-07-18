@@ -33,12 +33,14 @@ class GuildWar(commands.Cog):
             self.getGWState()
             try:
                 if self.bot.gw['state'] == False:
-                    self.bot.gw['ranking'] = None
-                    self.bot.savePending = True
+                    if 'ranking' not in self.bot.gw or self.bot.gw['ranking'] is not None:
+                        self.bot.gw['ranking'] = None
+                        self.bot.savePending = True
                     await asyncio.sleep(3600)
                 elif self.bot.getJST() < self.bot.gw['dates']["Preliminaries"]:
-                    self.bot.gw['ranking'] = None
-                    self.bot.savePending = True
+                    if 'ranking' not in self.bot.gw or self.bot.gw['ranking'] is not None:
+                        self.bot.gw['ranking'] = None
+                        self.bot.savePending = True
                     d = self.bot.gw['dates']["Preliminaries"] - self.bot.getJST()
                     await asyncio.sleep(d.seconds + 1)
                 elif self.bot.getJST() > self.bot.gw['dates']["Day 5"] - timedelta(seconds=21600):
