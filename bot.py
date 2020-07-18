@@ -273,7 +273,7 @@ class Mizabot(commands.Bot):
     def __init__(self):
         self.botversion = "6.11" # version number
         self.saveversion = 0 # save version
-        self.botchangelog = ["Added the gmt option to $gw", "The permission system now authorize all commands everywhere but the command outputs will be deleted after a certain time instead", "Added $serverinfo", "Revamped $ubhl and added $luci & $bubs", "$wiki has been improved for summons and weapons", "Cleaned up the command list"] # bot changelog
+        self.botchangelog = ["Added the gmt option to $gw (example, `$gw 2`)", "The permission system now allow game commands everywhere but the command outputs in 'unauthorized' channels will be deleted after a certain time instead. Use `toggleFullBot` `seeBotPermission` and `allowBotEverywhere` to thinker with it. Some exceptions remain", "Added $serverinfo", "Revamped $ubhl and added $luci & $bubs", "$wiki has been improved for summons and weapons", "Cleaned up the command list"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
         self.boot_msg = "" # msg to be displayed on the debug channel after boot

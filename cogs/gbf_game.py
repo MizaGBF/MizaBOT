@@ -494,7 +494,7 @@ class GBF_Game(commands.Cog):
                     if s[0] < 0 or s[1] < 0 or s[2] < 0:
                         continue
                     r = (s[0] / 300) + s[1] + s[2] * 10
-                    if r > 1000:
+                    if r > 1500:
                         continue
                     ranking[id] = r
             if len(ranking) == 0:
