@@ -302,6 +302,11 @@ class GBF_Utility(commands.Cog):
                                     for r in res:
                                         matches.append(r.findChildren("div", class_="mw-search-result-heading", recursive=False)[0].findChildren("a", recursive=False)[0].attrs['title'])
                                         if len(matches) >= 5: break
+                                    if len(matches) == 0:
+                                        raise Exception()
+                                    elif len(matches) == 1:
+                                        await self.bot.callCommand(ctx, 'wiki', 'GBF_Utility', matches[0])
+                                        return
                                     desc = ""
                                     for m in matches:
                                         desc += "[{}](https://gbf.wiki/{})\n".format(m, m.replace(" ", "_"))
