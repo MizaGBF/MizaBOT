@@ -287,11 +287,11 @@ class GBF_Utility(commands.Cog):
             except Exception as e:
                 if str(e) != "HTTP Error 404: Not Found":
                     await self.bot.sendError("wiki", str(e))
-                    await ctx.send(embed=self.bot.buildEmbed(title="Not Found, click here to refine", url="https://gbf.wiki/index.php?title=Special:Search&search={}".format(sch), color=self.color))
+                    await ctx.send(embed=self.bot.buildEmbed(title="Not Found, click here to refine", url="https://gbf.wiki/index.php?title=Special:Search&search={}".format(terms), color=self.color))
                 else:
                     try:
                         async with aiohttp.ClientSession() as session:
-                            async with session.get("https://gbf.wiki/index.php?title=Special:Search&search={}".format(sch)) as r:
+                            async with session.get("https://gbf.wiki/index.php?title=Special:Search&search={}".format(terms)) as r:
                                 if r.status != 200:
                                     raise Exception("HTTP Error 404: Not Found")
                                 else:
@@ -311,9 +311,9 @@ class GBF_Utility(commands.Cog):
                                     for m in matches:
                                         desc += "[{}](https://gbf.wiki/{})\n".format(m, m.replace(" ", "_"))
                                     desc = "First five results\n{}".format(desc)
-                                    await ctx.send(embed=self.bot.buildEmbed(title="Not Found, click here to refine", description=desc, url="https://gbf.wiki/index.php?title=Special:Search&search={}".format(sch), color=self.color))
+                                    await ctx.send(embed=self.bot.buildEmbed(title="Not Found, click here to refine", description=desc, url="https://gbf.wiki/index.php?title=Special:Search&search={}".format(terms), color=self.color))
                     except:
-                        await ctx.send(embed=self.bot.buildEmbed(title="Not Found, click here to refine", url="https://gbf.wiki/index.php?title=Special:Search&search={}".format(sch), color=self.color))
+                        await ctx.send(embed=self.bot.buildEmbed(title="Not Found, click here to refine", url="https://gbf.wiki/index.php?title=Special:Search&search={}".format(terms), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tweet'])
     @commands.cooldown(1, 2, commands.BucketType.default)
