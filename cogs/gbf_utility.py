@@ -101,14 +101,14 @@ class GBF_Utility(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gbfwiki'])
     @commands.cooldown(3, 4, commands.BucketType.guild)
-    async def wiki(self, ctx, *terms : str):
+    async def wiki(self, ctx, *, terms : str = ""):
         """Search the GBF wiki"""
-        if len(terms) == 0:
+        if terms == "":
             await ctx.send(embed=self.bot.buildEmbed(title="Tell me what to search on the wiki", footer="wiki [search terms]", color=self.color))
         else:
             try:
                 arr = []
-                for s in terms:
+                for s in terms.split(" "):
                     arr.append(self.fixCase(s))
                 sch = "_".join(arr)
                 url = "https://gbf.wiki/{}".format(sch)
