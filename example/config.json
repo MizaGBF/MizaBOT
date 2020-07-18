@@ -58,8 +58,6 @@
         "dps()" : "",
         "motocal()" : "",
         "pyfinder()" : "",
-        "ubahahl() 1" : "",
-        "ubahahl() 2" : "",
         "invite()" : "",
         "arcanum()": "",
         "rolltracker()": "",
@@ -68,16 +66,7 @@
         "stayblue()": "",
         "leak()": "",
         "lucilius()": "",
-        "leak()": "",
         "bullet()": ""
-    },
-    "specialstrings" : {
-        "wawi" : [
-            "Very handsome {}"
-        ],
-        "xil" : [
-            "Please, shut up {}"
-        ]
     },
     "emotes" : {
         "fire" : <custom emote id used by the bot. all ids are numbers, so no quotes>,
