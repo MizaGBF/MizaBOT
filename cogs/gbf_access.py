@@ -625,6 +625,7 @@ class GBF_Access(commands.Cog):
             if not self.bot.isAuthorized(ctx):
                 await asyncio.sleep(60)
                 await final_msg.delete()
+                await ctx.message.add_reaction('✅') # white check mark
 
         except Exception as e:
             await self.bot.sendError("postCrewData", str(e))
@@ -1348,6 +1349,7 @@ class GBF_Access(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(60)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 60, commands.BucketType.guild)

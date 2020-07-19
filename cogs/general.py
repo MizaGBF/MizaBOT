@@ -258,6 +258,7 @@ class General(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(20)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['choice'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -274,6 +275,7 @@ class General(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(20)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['math'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -329,6 +331,7 @@ class General(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(20)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['hgg2d'])
     @commands.cooldown(1, 10, commands.BucketType.default)
@@ -521,6 +524,7 @@ class General(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(30)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['nitro', 'here'])
     @commands.cooldown(1, 30, commands.BucketType.guild)

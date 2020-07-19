@@ -82,6 +82,7 @@ class GBF_Game(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(45)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(30, 30, commands.BucketType.guild)
@@ -105,6 +106,7 @@ class GBF_Game(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(45)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(30, 30, commands.BucketType.guild)
@@ -121,6 +123,7 @@ class GBF_Game(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(45)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['frenzy'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
@@ -138,6 +141,7 @@ class GBF_Game(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(45)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['mook'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
@@ -157,6 +161,7 @@ class GBF_Game(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(45)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['scratcher'])
     @commands.cooldown(1, 300, commands.BucketType.user)
@@ -172,7 +177,7 @@ class GBF_Game(commands.Cog):
             'Shiva':1375, 'Europa':1375, 'Godsworn Alexiel':1375, 'Grimnir':1375,
             'Lucifer':1375, 'Bahamut':1375,
             'Michael':1375, 'Gabriel':1375, 'Uriel':1375, 'Raphael':1375, 'Metatron':1375, 'Sariel':1375,
-            'Murgleis':1000, 'Benedia':1000, 'Gambanteinn':1000, 'Love Eternal':1000, 'AK-4A':1000, 'Reunion':1000, 'Ichigo-Hitofuri':1000, 'Taisai Spirit Bow':1000, 'Unheil':1000, 'Sky Ace':1000, 'Ivory Ark':1000, 'Blutgang':1000, 'Eden':1000, 'Parazonium':1000, 'Ixaba':1000, 'Blue Sphere':1000, 'Certificus':1000, 'Fallen Sword':1000, 'Mirror-Blade Shard':1000, 'Galilei\'s Insight':1000, 'Purifying Thunderbolt':1000, 'Vortex of the Void':1000, 'Sacred Standard':1000, 'Bab-el-Mandeb':1000, 'Cute Ribbon':1000,
+            'Murgleis':892, 'Benedia':892, 'Gambanteinn':892, 'Love Eternal':892, 'AK-4A':892, 'Reunion':892, 'Ichigo-Hitofuri':892, 'Taisai Spirit Bow':892, 'Unheil':892, 'Sky Ace':892, 'Ivory Ark':892, 'Blutgang':892, 'Eden':892, 'Parazonium':892, 'Ixaba':892, 'Blue Sphere':892, 'Certificus':892, 'Fallen Sword':892, 'Mirror-Blade Shard':892, 'Galilei\'s Insight':892, 'Purifying Thunderbolt':892, 'Vortex of the Void':892, 'Sacred Standard':892, 'Bab-el-Mandeb':892, 'Cute Ribbon':892, 'Kerak': 892, 'Sunya':892, 'Fist of Destruction': 892, 'Yahata\'s Naginata': 892, # (25x1000)->25000 / 28
             'Crystals x3000':8000,
             'Intricacy Ring':3000, 'Gold Spellbook':3000, 'Moonlight Stone':3000, 'Gold Moon x2':3000, 'Ultima Unit x3':3000, 'Silver Centrum x5':3000, 'Primeval Horn x3':3000, 'Horn of Bahamut x4':3000, 'Legendary Merit x5':3000, 'Steel Brick':3000,
             'Lineage Ring x2':4000, 'Coronation Ring x3':4000, 'Silver Moon x5':4000, 'Bronze Moon x10':5000, 'Half Elixir x100':6000, 'Soul Berry x300':6000
@@ -370,6 +375,7 @@ class GBF_Game(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(30)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setcrystal', 'setspark'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
@@ -398,6 +404,7 @@ class GBF_Game(commands.Cog):
             if not self.bot.isAuthorized(ctx):
                 await asyncio.sleep(30)
                 await final_msg.delete()
+                await ctx.message.add_reaction('✅') # white check mark
         except:
             pass
 
@@ -476,6 +483,7 @@ class GBF_Game(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(30)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["sparkranking", "hoarders"])
     @commands.cooldown(1, 3, commands.BucketType.guild)
@@ -527,6 +535,7 @@ class GBF_Game(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(30)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 600, commands.BucketType.user)
@@ -608,6 +617,7 @@ class GBF_Game(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(30)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 30, commands.BucketType.guild)
@@ -622,6 +632,7 @@ class GBF_Game(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(30)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 30, commands.BucketType.guild)
@@ -640,6 +651,7 @@ class GBF_Game(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(30)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True, aliases=['leaks', 'leek'])
     @commands.cooldown(1, 300, commands.BucketType.user)

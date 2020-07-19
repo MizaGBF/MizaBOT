@@ -107,16 +107,15 @@ class GBF_Utility(commands.Cog):
                     raise Exception("HTTP Error 404: Not Found")
                 else:
                     soup = BeautifulSoup(await r.text(), 'html.parser') # parse the html
-                    res = soup.find_all("ul", class_="mw-search-results") # basically search results
                     try: title = soup.find_all("h1", id="firstHeading", class_="firstHeading")[0].text # page title
                     except: title = ""
-                    if search_mode and len(res) == 0: # handling rare cases of the search function redirecting the user directly to a page
+                    if search_mode and not title.startswith('Search results'): # handling rare cases of the search function redirecting the user directly to a page
                         search_mode = False
                         url = "https://gbf.wiki/{}".format(title) # update the url so it looks pretty (with the proper page name)
 
                     if search_mode: # use the wiki search function
                         try:
-                            res = res[0].findChildren("li", class_="mw-search-result", recursive=False) # recuperate the search results
+                            res = soup.find_all("ul", class_="mw-search-results")[0].findChildren("li", class_="mw-search-result", recursive=False) # recuperate the search results
                         except:
                             raise Exception("HTTP Error 404: Not Found") # no results
                         matches = []
@@ -124,7 +123,7 @@ class GBF_Utility(commands.Cog):
                             matches.append(r.findChildren("div", class_="mw-search-result-heading", recursive=False)[0].findChildren("a", recursive=False)[0].attrs['title'])
                             if len(matches) >= 5: break # max 5
                         if len(matches) == 0: # no results check
-                            raise Exception()
+                            raise Exception("No results")
                         elif len(matches) == 1: # single result, request it directly
                             await self.requestWiki(ctx, "https://gbf.wiki/{}".format(matches[0]))
                             return
@@ -323,8 +322,11 @@ class GBF_Utility(commands.Cog):
                 else: # failed, we try the search function
                     try:
                         await self.requestWiki(ctx, url, True) # try
-                    except:
-                        await ctx.send(embed=self.bot.buildEmbed(title="Not Found, click here to refine", url=url, color=self.color)) # no results
+                    except Exception as f:
+                        if str(f) == "No results":
+                            await ctx.send(embed=self.bot.buildEmbed(title="No matches found", color=self.color)) # no results
+                        else:
+                            await ctx.send(embed=self.bot.buildEmbed(title="Not Found, click here to refine", url=url, color=self.color)) # no results
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tweet'])
     @commands.cooldown(1, 2, commands.BucketType.default)
@@ -641,6 +643,7 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(60)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -675,6 +678,7 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(60)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -692,6 +696,7 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(60)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -730,6 +735,7 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(60)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['friday'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -909,6 +915,7 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(60)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['cb'])
     @commands.cooldown(1, 15, commands.BucketType.guild)
@@ -918,6 +925,7 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(30)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["doom", "doompost", "magnafest", "magnafes", "campaign", "brick", "bar", "sunlight", "stone", "suptix", "surprise", "evolite", "fugdidmagnafeststart"])
     @commands.cooldown(1, 60, commands.BucketType.guild)
@@ -940,3 +948,4 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(30)
             await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
