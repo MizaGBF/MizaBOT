@@ -242,7 +242,7 @@ class Management(commands.Cog):
                 self.bot.permitted[gid].pop(i)
                 self.bot.savePending = True
                 try:
-                    await self.bot.callCommand(ctx, 'seeBotPermission', 'Management')
+                    await self.bot.callCommand(ctx, 'seeBotPermission')
                 except Exception as e:
                     pass
                 await ctx.message.add_reaction('➖')
@@ -251,7 +251,7 @@ class Management(commands.Cog):
         self.bot.savePending = True
         await ctx.message.add_reaction('➕')
         try:
-            await self.bot.callCommand(ctx, 'seeBotPermission', 'Management')
+            await self.bot.callCommand(ctx, 'seeBotPermission')
         except Exception as e:
             pass
 
@@ -283,51 +283,6 @@ class Management(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Channels permitted to use all commands", description=msg, thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="Commands are sauthorized everywhere", thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isMod()
-    async def toggleBroadcast(self, ctx):
-        """Allow or not this channel to use all commands (Mod only)
-        It disables game/obnoxious commands outside of the whitelisted channels"""
-        gid = str(ctx.guild.id)
-        cid = ctx.channel.id
-        if gid not in self.bot.news:
-            self.bot.news[gid] = []
-        for i in range(0, len(self.bot.news[gid])):
-            if self.bot.news[gid][i] == cid:
-                self.bot.news[gid].pop(i)
-                self.bot.savePending = True
-                try:
-                    await self.bot.callCommand(ctx, 'seeBroadcast', 'Management')
-                except Exception as e:
-                    pass
-                await ctx.message.add_reaction('➖')
-                return
-        self.bot.news[gid].append(cid)
-        self.bot.savePending = True
-        await ctx.message.add_reaction('➕')
-        try:
-            await self.bot.callCommand(ctx, 'seeBroadcast', 'Management')
-        except Exception as e:
-            pass
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isMod()
-    async def seeBroadcast(self, ctx):
-        """See all channels news to use all commands (Mod only)"""
-        gid = str(ctx.guild.id)
-        if gid in self.bot.news:
-            msg = ""
-            for c in ctx.guild.channels:
-                if c.id in self.bot.news[gid]:
-                    try:
-                        msg += c.name + "\n"
-                    except:
-                        pass
-            await ctx.send(embed=self.bot.buildEmbed(title="Channels receiving broadcasts", description=msg, thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
-        else:
-            await ctx.send(embed=self.bot.buildEmbed(title="No channels set to receive broadcasts", thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
-
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['mizabot'])
     @commands.cooldown(1, 10, commands.BucketType.guild)

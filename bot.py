@@ -877,12 +877,13 @@ class Mizabot(commands.Bot):
             self.errn += 1
             print("Invalid ID: {}".format(id))
 
-    async def callCommand(self, ctx, command, cog, *args, **kwargs): #call a command in a cog
-        cmds = self.get_cog(cog).get_commands()
-        for c in cmds:
-            if c.name == command:
-                await ctx.invoke(c, *args, **kwargs)
-                return
+    async def callCommand(self, ctx, command, *args, **kwargs): #call a command in a cog
+        for cn in self.cogs:
+            cmds = self.get_cog(cn).get_commands()
+            for cm in cmds:
+                if cm.name == command:
+                    await ctx.invoke(cm, *args, **kwargs)
+                    return
         raise Exception("Command `{}` not found".format(command))
 
     async def send(self, channel_name : str, msg : str = "", embed : discord.Embed = None, file : discord.File = None): # send something to a channel

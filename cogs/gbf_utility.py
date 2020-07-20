@@ -153,7 +153,7 @@ class GBF_Utility(commands.Cog):
                         for m in matches: # build the message with the results
                             desc += "[{}](https://gbf.wiki/{})\n".format(m, m.replace(" ", "_"))
                         desc = "First five results\n{}".format(desc)
-                        await ctx.send(embed=self.bot.buildEmbed(title="Not Found, click here to refine", description=desc, url=url, color=self.color))
+                        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Not Found, click here to refine", description=desc, url=url, color=self.color))
                     else: # direct access to the page (assume a match)
                         data = {}
                         # what we are interested in
@@ -178,7 +178,7 @@ class GBF_Utility(commands.Cog):
 
                         x = data.get('object', None)
                         if x is None: # if no match
-                            await ctx.send(url)
+                            final_msg = await ctx.send(url)
                         elif x == 0: # charater
                             try: # only check all character versions
                                 versions = soup.find_all("div", class_="character__versions")[0].findChildren("table", recursive=False)[0].findChildren("tbody", recursive=False)[0].findChildren("tr", recursive=False)[2].findChildren("td", recursive=False)
@@ -190,9 +190,9 @@ class GBF_Utility(commands.Cog):
                                 desc = "This character has other versions\n"
                                 for e in elems:
                                     desc += "[{}](https://gbf.wiki/{})\n".format(e, e.replace(" ", "_"))
-                                await ctx.send(embed=self.bot.buildEmbed(title=title, description=desc, image=data.get('image', None), url=url, color=self.color))
+                                final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=desc, image=data.get('image', None), url=url, color=self.color))
                             except: # if none, just send the link
-                                await ctx.send(url)
+                                final_msg = await ctx.send(url)
                         else:
                             # process the header
                             try:
@@ -318,7 +318,11 @@ class GBF_Utility(commands.Cog):
                             if 'aura' in data: desc += "{} **Aura**▫️{}\n".format(self.bot.getEmote('skill2'), data['aura'])
                             if 'subaura' in data: desc += "{} **Sub Aura**▫️{}\n".format(self.bot.getEmote('skill2'), data['subaura'])
 
-                            await ctx.send(embed=self.bot.buildEmbed(title=title, description=desc, thumbnail=data.get('image', None), url=url, color=self.color))
+                            final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=desc, thumbnail=data.get('image', None), url=url, color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(80)
+            await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
 
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gbfwiki'])
@@ -989,7 +993,7 @@ class GBF_Utility(commands.Cog):
                 self.bot.spark[0][id] = [crystal, single, ten, datetime.utcnow()]
             self.bot.savePending = True
             try:
-                await self.bot.callCommand(ctx, 'seeRoll', 'GBF_Game')
+                await self.bot.callCommand(ctx, 'seeRoll')
             except Exception as e:
                 final_msg= await ctx.send(embed=self.bot.buildEmbed(title="Summary", description="**{}** crystal(s)\n**{}** single roll ticket(s)\n**{}** ten roll ticket(s)".format(crystal, single, ten), color=self.color))
                 await self.bot.sendError('setRoll', str(e), 'B')
