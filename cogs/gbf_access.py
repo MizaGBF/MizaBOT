@@ -83,7 +83,7 @@ class GBF_Access(commands.Cog):
                 continue
             else:
                 maintenance_time = self.bot.getJST()
-                if self.bot.maintenance['state'] == True and self.bot.maintenance['duration'] == 0:
+                if self.bot.maintenance['state'] == True and (self.bot.maintenance['duration'] == 0 or (self.bot.getJST() > self.bot.maintenance['time'] + timedelta(seconds=3600*self.bot.maintenance['duration']))):
                     self.bot.maintenance = {"state" : False, "time" : None, "duration" : 0}
                     self.bot.savePending = True
 
