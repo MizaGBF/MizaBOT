@@ -271,9 +271,9 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.11" # version number
+        self.botversion = "6.12" # version number
         self.saveversion = 0 # save version
-        self.botchangelog = ["Added the gmt option to $gw (example, `$gw 2`)", "The permission system now allow game commands everywhere but the command outputs in 'unauthorized' channels will be deleted after a certain time instead. Use `toggleFullBot` `seeBotPermission` and `allowBotEverywhere` to thinker with it. Some exceptions remain", "Added $serverinfo", "Revamped $ubhl and added $luci & $bubs", "$wiki has been improved", "Cleaned up the command list"] # bot changelog
+        self.botchangelog = ["Improved `$wiki`, `$gw`, `$4chan`, `$hgg` and `$gbfg`", "Reworked `$seeroll` and `$ubhl`", "Added `$serverinfo`, `$luci` and `$bubs`", "Roll commands (`$roulette`, etc...) automatically detect premium galas", "Cleaned up some old commands"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
@@ -317,6 +317,7 @@ class Mizabot(commands.Bot):
         self.emote_cache = {} # store used emotes
         self.granblue = {} # store player/crew ids
         self.assignablerole = {} # self assignable role
+        self.bannedusers = [] # user banned from using the bot
         self.extra = {} # extra data storage for plug'n'play cogs
         self.on_message_high = {} # on message callback (high priority)
         self.on_message_low = {} # on message callback
@@ -406,6 +407,7 @@ class Mizabot(commands.Bot):
                 data = json.load(f, object_pairs_hook=self.json_deserial_dict) # deserializer here
                 self.tokens = data['tokens']
                 self.ids = data.get('ids', {})
+                self.bannedusers = data.get('banned', [])
                 self.games = data.get('games', ['Granblue Fantasy'])
                 self.strings = data.get('strings', {})
                 self.emotes = data.get('emotes', {})
@@ -554,7 +556,7 @@ class Mizabot(commands.Bot):
 
         while True:
             try:
-                await asyncio.sleep(120)
+                await asyncio.sleep(150)
                 for g in guilds:
                     res = await g.invites()
                     currents = {}
@@ -1023,6 +1025,9 @@ async def global_check(ctx):
     if id in bot.guilddata['pending']: # pending check
         await bot.react(ctx, 'cooldown')
         return False
+    elif ctx.guild.owner.id in bot.bannedusers:
+        await bot.send('debug', embed=bot.buildEmbed(title="Banned message by {}".format(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=datetime.utcnow()))
+        return False
     return True
 
 @bot.event # if an error happens
@@ -1038,7 +1043,7 @@ async def on_command_error(ctx, error):
         return
     else:
         bot.errn += 1
-        await bot.send('debug', embed=bot.buildEmbed(title="⚠ Error caused by {}".format(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], timestamp=datetime.utcnow()))
+        await bot.send('debug', embed=bot.buildEmbed(title="⚠ Error caused by {}".format(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=datetime.utcnow()))
 
 # (You) pin board system
 @bot.event

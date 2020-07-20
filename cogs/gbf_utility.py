@@ -19,7 +19,29 @@ class GBF_Utility(commands.Cog):
         self.color = 0x46fc46
 
     def startTasks(self):
-        pass
+        self.bot.runTask('cleanroll', self.cleanrolltask)
+
+    async def cleanrolltask(self): # silent task
+        await asyncio.sleep(3600)
+        if self.bot.exit_flag: return
+        try:
+            c = datetime.utcnow()
+            change = False
+            for id in list(self.bot.spark[0].keys()):
+                if len(self.bot.spark[0][id]) == 3: # backward compatibility
+                    self.bot.spark[0][id].append(c)
+                    change = True
+                else:
+                    d = c - self.bot.spark[0][id][3]
+                    if d.days >= 30:
+                        del self.bot.spark[0][id]
+                        change = True
+            if change: self.bot.savePending = True
+        except asyncio.CancelledError:
+            await self.bot.sendError('cleanrolltask', 'cancelled')
+            return
+        except Exception as e:
+            await self.bot.sendError('cleanrolltask', str(e))
 
     def isYou(): # for decorators
         async def predicate(ctx):
@@ -92,7 +114,7 @@ class GBF_Utility(commands.Cog):
         return fixed # return the result
 
     def stripWikiStr(self, elem):
-        txt = elem.text
+        txt = elem.text.replace('foeBoost', 'foe. Boost') # special cases
         checks = [['span', 'tooltiptext'], ['sup', 'reference'], ['span', 'skill-upgrade-text']]
         for target in checks:
             f = elem.findChildren(target[0], class_=target[1])
@@ -932,7 +954,7 @@ class GBF_Utility(commands.Cog):
     async def deadgame(self, ctx):
         """Give the time elapsed of various GBF related releases"""
         msg = ""
-        wiki_checks = [["Category:Campaign", "<td>(\d+ days)<\/td>\s*<td>Time since last campaign<\/td>"], ["Surprise_Special_Draw_Set", "<td>(\d+ days)<\/td>\s*<td>Time since last ticket<\/td>"], ["Damascus_Ingot", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last brick<\/td>"], ["Gold_Brick", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last brick<\/td>"], ["Sunlight_Stone", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last stone<\/td>"], ["Sephira_Evolite", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last evolite<\/td>"]]
+        wiki_checks = [["Campaign", "<td>(\d+ days)<\/td>\s*<td>Time since last campaign<\/td>"], ["Surprise_Special_Draw_Set", "<td>(\d+ days)<\/td>\s*<td>Time since last ticket<\/td>"], ["Damascus_Ingot", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last brick<\/td>"], ["Gold_Brick", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last brick<\/td>"], ["Sunlight_Stone", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last stone<\/td>"], ["Sephira_Evolite", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last evolite<\/td>"]]
         for w in wiki_checks:
             async with aiohttp.ClientSession() as session:
                 async with session.get("https://gbf.wiki/{}".format(w[0])) as r:
@@ -945,6 +967,151 @@ class GBF_Utility(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))
         else:
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Unavailable", color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(30)
+            await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setcrystal', 'setspark'])
+    @commands.cooldown(30, 30, commands.BucketType.guild)
+    async def setRoll(self, ctx, crystal : int, single : int = 0, ten : int = 0):
+        """Set your roll count"""
+        id = str(ctx.message.author.id)
+        try:
+            if crystal < 0 or single < 0 or ten < 0:
+                raise Exception('Negative numbers')
+            if crystal > 500000 or single > 1000 or ten > 100:
+                raise Exception('Big numbers')
+            if crystal + single + ten == 0: 
+                if id in self.bot.spark[0]:
+                    self.bot.spark[0].pop(id)
+            else:
+                self.bot.spark[0][id] = [crystal, single, ten, datetime.utcnow()]
+            self.bot.savePending = True
+            try:
+                await self.bot.callCommand(ctx, 'seeRoll', 'GBF_Game')
+            except Exception as e:
+                final_msg= await ctx.send(embed=self.bot.buildEmbed(title="Summary", description="**{}** crystal(s)\n**{}** single roll ticket(s)\n**{}** ten roll ticket(s)".format(crystal, single, ten), color=self.color))
+                await self.bot.sendError('setRoll', str(e), 'B')
+        except Exception as e:
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color, footer="setRoll <crystal> [single] [ten]"))
+        try:
+            if not self.bot.isAuthorized(ctx):
+                await asyncio.sleep(30)
+                await final_msg.delete()
+                await ctx.message.add_reaction('✅') # white check mark
+        except:
+            pass
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['seecrystal', 'seespark'])
+    @commands.cooldown(30, 30, commands.BucketType.guild)
+    async def seeRoll(self, ctx, member : discord.Member = None):
+        """Post your roll count"""
+        if member is None: member = ctx.author
+        id = str(member.id)
+        try:
+            # get the roll count
+            if id in self.bot.spark[0]:
+                s = self.bot.spark[0][id]
+                if s[0] < 0 or s[1] < 0 or s[2] < 0:
+                    raise Exception('Negative numbers')
+                r = (s[0] / 300) + s[1] + s[2] * 10
+                fr = math.floor(r)
+                if len(s) > 3: timestamp = s[3]
+                else: timestamp = None
+            else:
+                r = 0
+                fr = 0
+                s = None
+                timestamp = None
+
+            # calculate estimation
+            # note: those numbers are from my own experimentation
+            month_min = [80, 80, 140, 95, 80, 75, 75, 140, 70, 80, 80, 150]
+            month_max = [60, 50, 100, 70, 55, 50, 50, 100, 50, 60, 60, 110]
+            month_day = [31.0, 28.25, 31.0, 30.0, 31.0, 30.0, 31.0, 31.0, 30.0, 31.0, 30.0, 31.0]
+
+            # get current day
+            if timestamp is None: now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+            else: now = timestamp.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+            t_min = now
+            t_max = now
+            r_min = r % 300
+            r_max = r_min
+            expected = [month_max[now.month-1], month_min[now.month-1]]
+            while r_min < 300 or r_max < 300: # increase the date until we reach the 300 target for both estimation
+                if r_min < 300:
+                    m = (t_min.month-1) % 12
+                    r_min += month_min[m] / month_day[m]
+                    t_min += timedelta(days=1)
+                if r_max < 300:
+                    m = (t_max.month-1) % 12
+                    r_max += month_max[m] / month_day[m]
+                    t_max += timedelta(days=1)
+
+            # roll count text
+            title = "{} has {} roll".format(member.display_name, fr)
+            if fr != 1: title += "s"
+            # sending
+            if s is None:
+                final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':title, 'icon_url':member.avatar_url}, description="Update your rolls with the `setRoll` command", footer="Next spark between {} and {} from 0 rolls".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), color=self.color))
+            else:
+                final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':title, 'icon_url':member.avatar_url}, description="**{} {} {} {} {} {}**\n*Expecting {} to {} rolls in {}*".format(self.bot.getEmote("crystal"), s[0], self.bot.getEmote("singledraw"), s[1], self.bot.getEmote("tendraw"), s[2], expected[0], expected[1], now.strftime("%B")), footer="Next spark between {} and {}".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), timestamp=timestamp, color=self.color))
+        except Exception as e:
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I warned my owner", color=self.color, footer=str(e)))
+            await self.bot.sendError('seeRoll', str(e))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(30)
+            await final_msg.delete()
+            await ctx.message.add_reaction('✅') # white check mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["sparkranking", "hoarders"])
+    @commands.cooldown(1, 3, commands.BucketType.guild)
+    async def rollRanking(self, ctx):
+        """Show the ranking of everyone saving for a spark in the server
+        You must use $setRoll to set/update your roll count"""
+        try:
+            ranking = {}
+            guild = ctx.message.author.guild
+            for m in guild.members:
+                id = str(m.id)
+                if id in self.bot.spark[0]:
+                    if id in self.bot.spark[1]:
+                        continue
+                    s = self.bot.spark[0][id]
+                    if s[0] < 0 or s[1] < 0 or s[2] < 0:
+                        continue
+                    r = (s[0] / 300) + s[1] + s[2] * 10
+                    if r > 1500:
+                        continue
+                    ranking[id] = r
+            if len(ranking) == 0:
+                final_msg = await ctx.send(embed=self.bot.buildEmbed(title="The ranking of this server is empty"))
+                return
+            ar = -1
+            i = 0
+            emotes = {0:self.bot.getEmote('SSR'), 1:self.bot.getEmote('SR'), 2:self.bot.getEmote('R')}
+            msg = ""
+            top = 15
+            for key, value in sorted(ranking.items(), key = itemgetter(1), reverse = True):
+                if i < top:
+                    fr = math.floor(value)
+                    msg += "**#{:<2}{} {}** with {} roll".format(i+1, emotes.pop(i, "▫️"), guild.get_member(int(key)).display_name, fr)
+                    if fr != 1: msg += "s"
+                    msg += "\n"
+                if key == str(ctx.message.author.id):
+                    ar = i
+                    if i >= top: break
+                i += 1
+                if i >= 100:
+                    break
+            if ar >= top: footer = "You are ranked #{}".format(ar+1)
+            elif ar == -1: footer = "You aren't ranked ▫️ You need at least one roll to be ranked"
+            else: footer = ""
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} Spark ranking of {}".format(self.bot.getEmote('crown'), guild.name), color=self.color, description=msg, footer=footer, thumbnail=guild.icon_url))
+        except Exception as e:
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Sorry, something went wrong :bow:", footer=str(e)))
+            await self.bot.sendError("rollRanking", str(e))
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(30)
             await final_msg.delete()

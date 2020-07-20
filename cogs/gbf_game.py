@@ -13,31 +13,6 @@ class GBF_Game(commands.Cog):
         self.bot = bot
         self.color = 0xfce746
 
-    def startTasks(self):
-        self.bot.runTask('cleanroll', self.cleanrolltask)
-
-    async def cleanrolltask(self): # silent task
-        await asyncio.sleep(3600)
-        if self.bot.exit_flag: return
-        try:
-            c = datetime.utcnow()
-            change = False
-            for id in list(self.bot.spark[0].keys()):
-                if len(self.bot.spark[0][id]) == 3: # backward compatibility
-                    self.bot.spark[0][id].append(c)
-                    change = True
-                else:
-                    d = c - self.bot.spark[0][id][3]
-                    if d.days >= 30:
-                        del self.bot.spark[0][id]
-                        change = True
-            if change: self.bot.savePending = True
-        except asyncio.CancelledError:
-            await self.bot.sendError('cleanrolltask', 'cancelled')
-            return
-        except Exception as e:
-            await self.bot.sendError('cleanrolltask', str(e))
-
     # used by the gacha games
     def getRoll(self, ssr, sr_mode = False):
         d = random.randint(1, 10000)
@@ -45,9 +20,11 @@ class GBF_Game(commands.Cog):
         elif (not sr_mode and d < 1500 + ssr) or sr_mode: return 1
         return 2
 
-    legfestWord = {"double", "x2", "legfest", "flashfest", "flash", "leg", "gala", "2"}
+    legfestWord = {"double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2"}
+    notfestWord = {"normal", "x1", "3%", "gacha", "1"}
     def isLegfest(self, word):
-        if word.lower() in self.legfestWord: return 2 # 2 because the rates are doubled
+        word = word.lower()
+        if word not in self.notfestWord and (word in self.legfestWord or self.bot.gbfdata.get('gachacontent', '').find("**Premium Gala**") != -1): return 2 # 2 because the rates are doubled
         return 1
 
     def tenDraws(self, rate, draw, mode = 0):
@@ -68,7 +45,8 @@ class GBF_Game(commands.Cog):
     @commands.cooldown(60, 60, commands.BucketType.guild)
     async def single(self, ctx, double : str = ""):
         """Do a single roll
-        6% keywords: "double", "x2", "legfest", "flashfest", "flash", "leg", "gala", "2"."""
+        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
+        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
         l = self.isLegfest(double)
         if l == 2: footer = "6% SSR rate"
         else: footer = "3% SSR rate"
@@ -80,7 +58,7 @@ class GBF_Game(commands.Cog):
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} did a single roll".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
         if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(45)
+            await asyncio.sleep(25)
             await final_msg.delete()
             await ctx.message.add_reaction('✅') # white check mark
 
@@ -88,7 +66,8 @@ class GBF_Game(commands.Cog):
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def ten(self, ctx, double : str = ""):
         """Do ten gacha rolls
-        6% keywords: "double", "x2", "legfest", "flashfest", "flash", "leg", "gala", "2"."""
+        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
+        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
         l = self.isLegfest(double)
         if l == 2: footer = "6% SSR rate"
         else: footer = "3% SSR rate"
@@ -104,7 +83,7 @@ class GBF_Game(commands.Cog):
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} did ten rolls".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
         if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(45)
+            await asyncio.sleep(25)
             await final_msg.delete()
             await ctx.message.add_reaction('✅') # white check mark
 
@@ -112,7 +91,8 @@ class GBF_Game(commands.Cog):
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def spark(self, ctx, double : str = ""):
         """Do thirty times ten gacha rolls
-        6% keywords: "double", "x2", "legfest", "flashfest", "flash", "leg", "gala", "2"."""
+        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
+        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
         l = self.isLegfest(double)
         if l == 2: footer = "6% SSR rate"
         else: footer = "3% SSR rate"
@@ -121,7 +101,7 @@ class GBF_Game(commands.Cog):
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} sparked".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
         if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(45)
+            await asyncio.sleep(25)
             await final_msg.delete()
             await ctx.message.add_reaction('✅') # white check mark
 
@@ -129,7 +109,8 @@ class GBF_Game(commands.Cog):
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def gachapin(self, ctx, double : str = ""):
         """Do ten rolls until you get a ssr
-        6% keywords: "double", "x2", "legfest", "flashfest", "flash", "leg", "gala", "2"."""
+        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
+        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
         l = self.isLegfest(double)
         if l == 2: footer = "6% SSR rate"
         else: footer = "3% SSR rate"
@@ -139,7 +120,7 @@ class GBF_Game(commands.Cog):
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} rolled the Gachapin".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
         if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(45)
+            await asyncio.sleep(25)
             await final_msg.delete()
             await ctx.message.add_reaction('✅') # white check mark
 
@@ -159,7 +140,7 @@ class GBF_Game(commands.Cog):
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} rolled the Mukku".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
         if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(45)
+            await asyncio.sleep(25)
             await final_msg.delete()
             await ctx.message.add_reaction('✅') # white check mark
 
@@ -294,7 +275,8 @@ class GBF_Game(commands.Cog):
     @commands.cooldown(1, 180, commands.BucketType.user)
     async def roulette(self, ctx, double : str = ""):
         """Imitate the GBF roulette
-        6% keywords: "double", "x2", "legfest", "flashfest", "flash", "leg", "gala", "2"."""
+        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
+        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
         l = self.isLegfest(double)
         if l == 2: footer = "6% SSR rate"
         else: footer = "3% SSR rate"
@@ -377,166 +359,6 @@ class GBF_Game(commands.Cog):
             await final_msg.delete()
             await ctx.message.add_reaction('✅') # white check mark
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setcrystal', 'setspark'])
-    @commands.cooldown(30, 30, commands.BucketType.guild)
-    async def setRoll(self, ctx, crystal : int, single : int = 0, ten : int = 0):
-        """Set your roll count"""
-        id = str(ctx.message.author.id)
-        try:
-            if crystal < 0 or single < 0 or ten < 0:
-                raise Exception('Negative numbers')
-            if crystal > 500000 or single > 1000 or ten > 100:
-                raise Exception('Big numbers')
-            if crystal + single + ten == 0: 
-                if id in self.bot.spark[0]:
-                    self.bot.spark[0].pop(id)
-            else:
-                self.bot.spark[0][id] = [crystal, single, ten, datetime.utcnow()]
-            self.bot.savePending = True
-            try:
-                await self.bot.callCommand(ctx, 'seeRoll', 'GBF_Game')
-            except Exception as e:
-                final_msg= await ctx.send(embed=self.bot.buildEmbed(title="Summary", description="**{}** crystal(s)\n**{}** single roll ticket(s)\n**{}** ten roll ticket(s)".format(crystal, single, ten), color=self.color))
-                await self.bot.sendError('setRoll', str(e), 'B')
-        except Exception as e:
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color, footer="setRoll <crystal> [single] [ten]"))
-        try:
-            if not self.bot.isAuthorized(ctx):
-                await asyncio.sleep(30)
-                await final_msg.delete()
-                await ctx.message.add_reaction('✅') # white check mark
-        except:
-            pass
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['seecrystal', 'seespark'])
-    @commands.cooldown(30, 30, commands.BucketType.guild)
-    async def seeRoll(self, ctx, member : discord.Member = None):
-        """Post your roll count"""
-        if member is None: member = ctx.author
-        id = str(member.id)
-        try:
-            # get the roll count
-            if id in self.bot.spark[0]:
-                s = self.bot.spark[0][id]
-                if s[0] < 0 or s[1] < 0 or s[2] < 0:
-                    raise Exception('Negative numbers')
-                r = (s[0] / 300) + s[1] + s[2] * 10
-                fr = math.floor(r)
-                if len(s) > 3: timestamp = s[3]
-                else: timestamp = None
-            else:
-                r = 0
-                fr = 0
-                timestamp = None
-
-            # calculate estimation
-            # note: those numbers are from my own experimentation
-            month_min = [90, 80, 145, 95, 80, 85, 85, 120, 60, 70, 70, 145]
-            month_max = [65, 50, 110, 70, 55, 65, 65, 80, 50, 55, 55, 110]
-            month_day = [31.0, 28.25, 31.0, 30.0, 31.0, 30.0, 31.0, 31.0, 30.0, 31.0, 30.0, 31.0]
-
-            # get current day
-            if timestamp is None: now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-            else: now = timestamp.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-            t_min = now
-            t_max = now
-            r_min = r % 300
-            r_max = r_min
-            while r_min < 300 or r_max < 300: # increase the date until we reach the 300 target for both estimation
-                if r_min < 300:
-                    m = (t_min.month-1) % 12
-                    r_min += month_min[m] / month_day[m]
-                    t_min += timedelta(days=1)
-                if r_max < 300:
-                    m = (t_max.month-1) % 12
-                    r_max += month_max[m] / month_day[m]
-                    t_max += timedelta(days=1)
-
-            # roll count text
-            title = "{} {} has {} roll".format(self.bot.getEmote('crystal'), member.display_name, fr)
-            if fr != 1: title += "s"
-            # flavor text
-            if r >= 1200: description = "0̴̧̛͙̠͕͎̭͎̞͚̥̹̟̫̳̫̥͍͙̳̠͈̮̈̂͗̈́̾͐̉1̶̧̛̼͉̟̻̼͍̥̱͖̲̜̬̝̟̦̻̤͓̼̰̱͔̙͔̩̮̝̩̰̐̾͐͑̍̈́̈̋̒̊̔̿́͘͝ͅ0̶̨̢̢̢̨̧̨̡̧̛̛̱̲̫͕̘͍̟̞̬͍͇̜͓̹̹̗̤̗̖̻̞͈̩̪̗̬̖͍̙͙̗̩̳̩̫͕̥̘̩̲̲̩̈́̏̀̽͑̅̔̇̎͂͗̄̂̒̈̇̊̎̔͐̍̓̓̆͒͑̾̓̿̊̀̎̈́̓̂̉̎̉̋̆̇̆̍̈́͗͂̚͘͘͘̚̚̚͜͜͜͝͝͝ͅ1̷̢̧̫͖̤͉̞͓͖̱͎͔̮͔̺̺͈̜͔͇̦͍͓̲̩̼̺̹͙̪̺͉̰͚̺̗̹̝̥̱͍̥͚͓̲̻̣͈̣̥̆̑̋͒̆̆̒̐͑́̏̀̋̍̅͂̇͛̑́̏͑̑͛̈́̒͜͜͠͝͠͝ͅ0̸̧̧̻̦̱̳͖̝̣̻̩͒͂̓̒̈́̆̓̑̅̎͗̓͛͗̍̃̈́̒̈̄̄̚͠͝0̷̢̨̛͔͍̝͉̗͇̫͈̣̳̼͙͓̮̞̻̫̝͓̬̼̲̘̼̫̤͎͛̈̒͒̎͊̌̑̂̉̂̍͂̀̐̈́̓̓̃͊̈́̑̍͂̋̐͂̕͜͝͝1̵̢̡̡̧̡̨̘̖͓̭̩͍̦̭͍̭̙̜̝̙̹̰̻͖̳̱̫̦̙͓̙̺̮͈̳͇͍̹̗̬̖͇͉̳̃̏͗̉ͅ1̴̡̢̨̨̯̺͕̮͈͈̪̮̘̱͓̜̗͓͓͚͕̱̮̬͈̦̖͚̪̬̠͎̫̻̯̭̫̫̜̺̪̞̝̞͖͈͓̖͓̼̲̓̓̈̿̒̋̏̓͂̋̔̿̀̌̏̐̓͑̎̓͐̃̇͑͐̒̀̑͗̇̀̃͘͘̚͜͝ͅ0̷̨̡̡̧̨̛̣͕̖͎̱͚̦̯̻̳̠̞͇̙̣̜͎͍̬̹͖̟̖̠̘̪̞͓͖̫̣̹̫͓̯̖̯͓̻̯̘̫̣̤̤̝̘͙̣͇̯̥̓̒͐͂̄̈́̾͋͐̃̍͛̍͒̓̌̌̇̋͌͂̎̽̇́̈́̒̈́̑̿̈́̇͊̀̽̿͛́͆̊͒͒͊̀̄͌̈͑͂̄̏̿̕̚̕͘͜͠͝͠ͅ1̷̛͕͎̲̙̦͑̔̐̀̊́̊̾̊͂͊̎̀̂͊͐̍́̀̓̊͊̒͊̇̋̉̂̏͌̀̈̓̚͝ͅ1̵̡̡̡̨̧̢̳͉̺̯͓̗̞̺̯͔̯̫̠̮̭͉̗̬̝̜͙̥̠̝͈̯͍̜͉̪̺̘̈̌̏̆̄1̴̛̺̋̄͛̈́́̒̈́̊͂͊͆̍̇̔͊̐̎̇̆̃̈́̈́̌̉̈́̽͑́͑̆̋̀̽̍̎͛̿̊͊̊͛̄̄̓̌́̓́̿̓́̓͘̚̕͠͝͝͠0̸̛͓̑̍̊̒0̵̢̧̪͉̖͕͇̟͔̟͕͙̠͎̥̝̣̬͕͚̤̟͙̣̳̲͆̒͂͆̿̍̈́̕0̴̨̨̧̢̛͚̦̟̟̩̳̘̮͔̭̰̘̹̱͉͕̱̭̬̦̮͈̜̙̻̼̝͚̳͔͎͔͈̦͉̤͔͕͊̉̽̄̋͒͛͒̓̊̃̔͒͌͑̈́̆̅́̍͋̅̏̈́́͒̆̍̽͌́̕̚̕̚͜ͅ0̷̧̧̡̨̱̺̤̪̝͈̲̪̻̹̞̰̼̣̻̮̠͙͚̤̻͚̘̠͔͓͈͎̙͉̩̰͎͍̤̼̞̜̦̲͍̲̭͈̱̠͕̲̯͍͋̑̐̎̉̆̇̉̚͜͜͝ͅͅͅͅ0̶̡̲̼̦͎̬͚͉͓̻̝͙̪̪̫̭̥̰̺͈̜̝͖̭̰̤̈͂̈͌͊͛͆̔̓̉̍̍̇̃͂̇̔̿̾̒̆̓͊͊̑̍̅̔͆͝͝ͅ1̸̛̛̛̛̼͙͇̗͈͚̤̅͛͊̾͌̌̌̑̒̆̐̇̃̎̅̈́̂͋̽͗̀̐̎̒͊̏̿̓̐͆́̒̐̋̌̂͂̈̀̚͠͝1̷̡̨̧̢̡̨̝̟͚̜̞̻͙̳̻̣̱̗̬̠̘̤̪̮̻̟͔̺̥̳̯͔̲͈͉͇̥̼̘͖͉̼͙̠͓̘̯̱̜̗̼͓͓̳̠͊͌͌͛̌́̉̽̿͐̆͌̽̕͜ͅͅͅ0̴͙̩̤̳̼̼̰̲͍̝̳͎̭̙͓̙̱͉͚̯̌̋̐̒̒̍́́̏̍̈́͐̀͗̓͋̿̋̏0̵̡̧̡̢̨̣̻͖̹͕̬͉̟̰̱̬͙̪̬̰̫͖͚̩̪̘͖͓̫̣͉̮̲͎̘͓̗̥̦̞͇̖̦̩̼̮̝̙̈́͐̇̇̄̿̒̆̓̐̌̄̃̐͐̃͆̄̂̉͑͋̉͆͋̓͊̆͌̆̍̔̍͐̈́̾̓͋͗̀̈́͌̓͋̐̉͂͗̒̕̚͘͠͝͝0̸̧̢̨̡̨̧̛̖͙̰̮̙͉̬̬̪̟̮̣̫̳̭̤̞̖̩͔̰̣͇͓͓͋͂͂̄̉̀̊͂̌̍͋̒̋̋̓͂̽̌́̎̀̄̅̄̒̉͐̓͑͐̃̿̍̕̕͘͠ͅ0̸̡̢̡̧̛̪̫̺̪̩̜̜̼̘̺͚͉̩̮͍̜̪̪̪̰́̓͊̾̽̃̿̅͗̏̐̅͗̅͋̇̓̑͆͌͂̅̃͋͒̿̔͛̀̄̐͂͊̒̂͋̕̚͜͝͝͠1̷̛̛̛̫̙̝̺̹̜͕̮̺͈̏̽͛͒̃̈́͐̂̓̍͒́̑̃̒̒͋̅̐̋̌͗̎͒̓̊̉͒͒͗͋̓̓́̅̊̋̽̚͘͝͝͝͝͠0̸̧̨̢̡̧̡̧̛̼̦͓͔͍̠͇̯̘͓̮̼̠̼̫̝̮̪̹̘̘̗̬̫͍̺̭͈̜̲̭̳̜̹̖̩͋̓͋̈́́̈̍̇́͋̋̔̌̀̓̓͊͐̃̇̎́̋̈̀͛̎̒̏̊͂͗̕͝͝͝͝͠ͅ1̸̛̦̉̇̐̒̈͑̾̽͒̈̋̏̍̅̈̈́̊̂̾̀̕̚͘͘̕͝1̷̛̮̱͇̮̦̞̝̣͔̇́̍̔̄̀͂̏̿͗̎̚̕͘ͅͅ1̸̺̭̼̤̩̫̬̳͇̗̭̬̫̺͍̳̠͆̈́̔̓͋̄̈́̀̒̔̅͋̅̓̑̊͑̿̉͒͌̍̓̆͊́̚͝͝͝͝ͅ0̴̨̨̨̘̞͓̮̬̹̪͉̻͎͔̪̗͙̉̈̆̈͋͒̾̊͐̐͆̈̉̇̈́̏́̌͗̍̏̒̋̔͒͒͘̚̕͘͠͝ͅ0̴̡̧̛̭̘̞̹̮̼̼̥̫̯͚̮̙̮͓͚̝͇̆̓͂̇͂͒̆̒̂̀͆́̇̉̈́̐̀̿̌̎̿̃͛̊̄̑̃͛̍͂͒̚̚͜͜͠1̸̢̧̢̧̨̛̛̱̠̖̫̬̦̘͓͍̯̺̞͈̱̞͔̮̮̪͔͚̟̞̰̠̪͑̅̀̈́̀̈́͑̏̋̈́̂̓̄́͋̿͌̇͑̈̈͛̀̈͐̃̄͛́̊̌̂͋͒̉̀̀̍͆͒͆̈́͌̎̍̃͌͜͝͝͝͠ͅͅ0̸̻̺̱̦̖͈̯̼͙̳̤͉̬̫͖͚̲̝͖͈͉̼̺̲̬̣̘̦̺͈͕̈̅̌͂̋̋̏̀͒́͌̐̀̄͆͐̐̊́́̄́̓́̑̾͗̃͒̋̽̍̆̚̕͘͜͝͝͝ͅ0̶̨̧̨̡̗̣̬͍͈̱̣̭͉͌1̵̨̛̛̛̘͍̠̟̹͚̟͚̻͚͔̗̘̻̭͙͇̇̀͂̉̂͛̎̂́̽̒͗̑̾̊̅́͛͗̾͌̉͌́͌̔͆̊͆̍̊̔͂͑̓̊̓̋̿͌́̇̀̃́͆̐͗̿̋̑̓̚̕͜͝͝1̵̧̧̛̘͕̹̥͔̻͇͖̪̘̙̪̯̭̺͓͎̣̳̦̻̻͓͍͓̹̙̲̝̘̞̱̯̝̘̖͓̤̜̭͙͎̑̃̃̌͆̃͌̋͋̾͒̈́̎͌̈́͒̆̌͆̅̀̅͑̑̿͌̏̀̇͗̈́̚̕͜͠͝͝ͅ0̴̢̧̨̧̡̢̡̡̝̖̥̖̮̲͔͚̳͙̹̪̣̭̹̠̪̯͍͇̼͈̙̭͈̤̤̼̺̱̰̥̭̺͇̘̻͙̺̮̹͚̯̤̩̹̟̝̟́̔̊̀̊̽̓͜͜1̵̡̨̨̛̺͎̤̰̤͎̯̮͔͎͇̱̠̳͙̻̳̗̬͙̼̱͈̰͓͕͕͔͍̫̼̯͖̘͒̓̒͆̎̋̆͌͌̿̾̑̀̑̄͐̈́͑̒͗̔͋̾̿̐͑͂͊͐͆̿͑͐͗̐̑̈́̅́̍̋̎̃͂̌̃͘͘͘͘͘̕͠͠0̶̨̨̧̨̢̪͙̩̜̩̟͍̮̟̪̙͚̭̭͇̲̹̟̳͙͇̥̗̭̹̺̥͇̮̞͙̹͎̍̃̎̊̐̎͜͜͜1̸̡̨̡̢̢̧̨̠̝͉̤̹̺̠͕̹̬̝̳̟̦͙͕̯̦̟̰͚̹͙͔̫͖̹̪̙̪̞̖̠͔́͗̓͜ͅͅ1̸̢̨̛̛͍̣̠̠̭̯͈̱͕̘̼͖͖͇̠̰̟̙̪̪̳͙̞̭͉͙̓̔̈́͌͑̌͑̉̈́́͌̍̿̀͌͂̎͊̎̇̌̆̒͊͒͆͊̆́͐̕͘̕͝͠͠ :robot:\n"
-            elif r >= 1150: description = "P̶̧̢̺̜̮̟̼͔͔̻̲̩͎̘̖̲̐͂̑͂͛́͑̍̊̓͌̀̃͛͊͑͋̑̽̀́̆̀̔͋̋̂̏͒̀̎̈̾͑̉̅͒̉͂̑͒̕̕̚̚͝͝͝͝͝͝͝ļ̴̡̩͓͙̪̫̥͇͈͈̪̭̣̲͇̥̪͍̫̼̟͙̱̟̤̩̬͇̬̝͇̞͆͆͆̓̾̎͌̈͆̾̅̀͐̄̇̈́̔̊́̾̈͗̊̏̊̀̀̕̚̕͜͝͝ͅe̵̡̢̨̢̨̧̨̛̛̗̪̟̼̘̤̻̭̮̙̼̞͙̲̗̟͔̠̲̦̯̖̪̪͖̱̳̼̺͎͎̬̜̤̣͍̩̫̱̪̮̰̗̲̫̾̀̀̍̈́͂͋̑͑̑͒̈́̊͊̑́̐̅̿̈́̎͗̀̔̍̔̋̍̄͊̑̆̀̏̏̈́̀̉̈̐̅̚͘͘͜͜͝͝ͅͅȧ̴̢̢̧̧̢̡̳͕̲͖̰͔̝͖̱̙͙̫̞͕̮̫̼̤̹͔̫̹͉͚̞̠̬͎̘̯̱̳̯̠̪̰͎̖̻̹̖̜̪̣͍͋̄̐̍̽̒̓̀̐̈́̚͜ͅͅs̷̢̨̡̡̢̛̛̙̫̮͙̤͎̗̭̯̭͚̖͕̰̜̱̘̥̝͖̺͇̳̥̆͒̽͒̓̅̀́̽͌͌͌͂̉͛̊͌̌̉̌̋̈̀̽̍̀̔̋̀̒͒̃̌̊̆̍̀͊̐̐̇̑̽̊͘̕̕͝ͅe̶̢̧̨̢̧̨̝̗̝̠͙̳̼̙̤͍̠͖̙̖̱̳̼̘͉͍̲̦͉̝̞̞̬̮̝̱̥̪̟̯̹̹̘͇̗̯͓̬͖͐̓͛͛̓̌̂͊̚͘͠ͅ ̴̧̢̩̪̥̺̼͙̺̱̞̩̞͕͇̰͔̙͎͈̼̠̮͓̬̺͍̥͍͙̰̮̹̔̈͒̋͂͋̇̿̀̓̏̋̋̅̓͘̚͜͠͝͝Ş̵̛̛͇̙̟̼̤̫̱͖͖̮̩̹̭̮̣̩̫̙̳̗̜͓̪̻̖͇̼͖̣̝̈̏̏̈́̍̍̃̓̒̾̎͐͗͂̑͐͆̃͐̎̽͂͆͊̐̀̎̂͗̀́̿̎̆̀̾́̃̃̌̒̍̓͌̉̍̕͘̕͝͠͝ͅp̵̡̧̙͈̗̟͚̳̱͔̳̺̟̤̞̰̺̫̤͙̜̩͚̹̰͎͚͕̭͕̀̈̈̉̎̔̇ͅͅa̷̢̧̢̧̨̙͔͇͈̭̥̦͖̭̲͎̥͈͚͖̟͓̱͚͉̰̣͍͉̰͇͔̖̲̖͙̫̰̜̯̦͆̌̋̂̀̓͊́̓̄̒̈́̓͌̅́́̀͑́͊̚̕͜ͅŗ̵̡̗̲͇̺̰̭͕̪̩͋̊̎̔͒͛̈́̿͊͂̂̏̑́̉́͒͌̑̎͐͊̒͂́̄̋́͋͂̅̅͗͊̕̚͘̕̕̚͘͠͠ͅķ̵̨̧̧̹̩͇̣͔̤̦͍͉̘̘̹̹̠̪̰͉̗̯̦̣̘͉̳̦̼̥͕̣̪̭̩̦̥͓̝̣̰͉̻̇̈́̾̈͊̈́͗̈́̈́̌̂̈́͒̏̐͆̀̔̿̉̅̈́̀̈́͌̌̈͊̐̂͒̓́̀͛̌͘̚͘͘̚͘͜͜͝͝͠͠ :robot:\n"
-            elif r >= 1100: description = "Į̵̨̡̧̧̢̧̧͈͍͓͎̻͓͚̼̭̬̺̠̺̘̰̬̖̥̘̪̞̠̟̦̪͕̺̙͍͈̭͚̫̤͕̪̖̩̲̜̈́̅̍͛̽̑̐͋̀̅͂̑͋̊͂̒̊̀̂͊̈́͆̃͌̂̆̓́̒̓̈̒̍̑̂̓̕͘͘̕̕̕͝͝ͅͅt̷̨͇̥͇̭̹̀̔́̉͗̃͂̀͗̐̐̈́̎̀͘͜ ̸̡̛̗̭̫̟̫̬͇̲̳̺̗̦̭̤̠̗͓̳̥͉̗̖̰͎̩̬͚̙̯͕̟̭̗̮̤̲̭̲͉̠̦̹͎̩̤̺̖͈̘̞͇͒̂͆͆͗̂͗͛̒̏͒́͛̏͂͋̿͊̽̊͊̂̋́̐͌̇̄͛̐̐̌͒̏̔̑́͐͐͘̕͜͜͝͝͝h̸̢̡͔̗͕̻͍͚̦̪͇̺̘̗̞̭͇̰̼̠̟͉̰̤̞̞͔͙̻̯̬̬̬͓̩̻͖̞͈̙̐̊̓͒̒́͊̓̆̀͑́̌̀̊̓̿̎͛̍̅̋̔́̆̓̎̊̊́̀̄̂̾̎̍̏̒͛̆̇̉͐̏̏̂̃̕̚͘̕̚͠͝ͅŭ̷̢̯̱̤͎̦̥̜͈̉̆̏̊̄̈́̾̍̇͗̈́̈́͑̑́͌́̊̂͂̈́̉̓̐̑̃̾̽̊̂̕̕͜͝͝͝r̴̡̢̫̪͎̜͉͕̹̼̞̭̥̖̼̤̻̥͈͇̓̓͊͂͑̐̉̂̍̈́̏̓͜͝ͅţ̵̛̩̮̝̼̲͚̩̼̖̫̖͔̪̘̫͍̗̭̦̪͒͐̆̔͛̋̑̒̄̓̏̃̎̓̈́͛̇͛͋͗̅̏̊́̿̐͐͌͑͐̎̏̀̏͐̔̊̎̆̽̓̀̄̌́͘͜͝͝͝ͅs̸̛͚̣͛̀́́̌͌̏͌̉̐̒͑͋̐̍̚̕͝ :robot:\n"
-            elif r >= 1050: description = "S̷̨̧̢̯̝̱̩̥̺̹̜̬̳̜̳̞̪̳̘̼͓̭͖̮̱͈̼̫̰̘̟̻̞͈̩͔̻̯̥̜͔̭̰̾͌̌̊̍͊͛̊̉̀͛̑̍͆̂̐̔̈̍̅̎̐͊̐̓͂̀͒̾̑̄͗͛̄͊̑̿̿̉́̉̌͋̂̕͜͜͝͠ͅͅţ̸̢̨̢̨̨̳̳̮͉̰͖͈͓͈̖̗̻̭̺̳̮̜͕͕͚̜͎̳͇̹̪̪̯͓̤͔͖͇̣̼̬̺͙̞͉͋͊͐͆̽͜͜ơ̵̡̨̧̰̫͔͓̘̗̺͚̺͓̠̹̤̻̟͖̮͎͎̰̦̤̥̘̹̼̗̭͓̻͈͔̱̈́̔͒͗̈͒̈́͛̎̋͛̌̏͂͂̊͊͊̓̏̈́̑̆͗͊̄̎͒̌̎̈́̀̆͑̒̾͌͂́͌̽̋̕̚̚̕͠͝͝͝͝ṕ̶̨͈̜̰̓̾̏̍̐̊̾̃͑̏̂̐̽̔͋̽̀̈́̍̾͊̑̃̽́̈́̚͜͠͠͝ ̴̛͍͙̺̳͚̖͉̝̜̦̘̥̭̤̹̂̈́̌̀̂͌̑̔͊̅̾͗̊̈͝ņ̵̧̢̳̣̥̙̭̭̖̖̲͓̦̗̩̝͉̦̣͉̬̗̙̘̪̲͖̜̟̫͓̖̦̣̩̝͙̫͈́̋̽͂̓͐͌̀̂̌̑̏͌̍̑̿̒̌͗̽͆͐̈́̆̅̋̆̽̍̅̅̃̑̈́̍̃͘͜͜͝ͅö̵͈́w̷̧̧̧̢̛̛̗̺̪͍̬̪͚͇͇̯͈͓̰̯̻̭̹̺̞̣͍͇̯̪̮̬̙͓̤̱̘̱͓̫̅̈̓͛͗̋̐̓̑̎́̓͆͒͂́̈́̈́͗́̌̌͂͊̄̊̈́̋͌́̓̌̒̑̆̐́̐͛̆̈́̓̓̚̚͝͠͝͝͝͠͝ͅͅͅ :robot: \n"
-            elif r >= 1000: description = "ReAcHiNg CrItIcAl :robot:\n"
-            elif r >= 900: description = "Will you spark soon? :skull:\n"
-            elif r >= 600: description = "**STOP HOARDING** :confounded:\n"
-            elif r >= 350: description = "What are you waiting for? :thinking:\n"
-            elif r >= 300: description = "Dickpick or e-sport pick? :smirk:\n"
-            elif r >= 250: description = "Almost! :blush: \n"
-            elif r >= 220: description = "One more month :thumbsup: \n"
-            elif r >= 180: description = "You are getting close :ok_hand: \n"
-            elif r >= 150: description = "Half-way done :relieved:\n"
-            elif r >= 100: description = "Stay strong :wink:\n"
-            elif r >= 50: description = "You better save these rolls :spy: \n"
-            elif r >= 20: description = "Start saving **NOW** :rage:\n"
-            else: description = "Pathetic :nauseated_face: \n"
-            # estimation text
-            footer = "Next spark between {}/{}/{} and {}/{}/{}".format(t_min.year, t_min.month, t_min.day, t_max.year, t_max.month, t_max.day)
-            # sending
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=description, footer=footer, timestamp=timestamp, color=self.color))
-        except Exception as e:
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I warned my owner", color=self.color, footer=str(e)))
-            await self.bot.sendError('seeRoll', str(e))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(30)
-            await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["sparkranking", "hoarders"])
-    @commands.cooldown(1, 3, commands.BucketType.guild)
-    async def rollRanking(self, ctx):
-        """Show the ranking of everyone saving for a spark in the server
-        You must use $setRoll to set/update your roll count"""
-        try:
-            ranking = {}
-            guild = ctx.message.author.guild
-            for m in guild.members:
-                id = str(m.id)
-                if id in self.bot.spark[0]:
-                    if id in self.bot.spark[1]:
-                        continue
-                    s = self.bot.spark[0][id]
-                    if s[0] < 0 or s[1] < 0 or s[2] < 0:
-                        continue
-                    r = (s[0] / 300) + s[1] + s[2] * 10
-                    if r > 1500:
-                        continue
-                    ranking[id] = r
-            if len(ranking) == 0:
-                final_msg = await ctx.send(embed=self.bot.buildEmbed(title="The ranking of this server is empty"))
-                return
-            ar = -1
-            i = 0
-            emotes = {0:self.bot.getEmote('SSR'), 1:self.bot.getEmote('SR'), 2:self.bot.getEmote('R')}
-            msg = ""
-            top = 15
-            for key, value in sorted(ranking.items(), key = itemgetter(1), reverse = True):
-                if i < top:
-                    fr = math.floor(value)
-                    msg += "**#{:<2}{} {}** with {} roll".format(i+1, emotes.pop(i, "▫️"), guild.get_member(int(key)).display_name, fr)
-                    if fr != 1: msg += "s"
-                    msg += "\n"
-                if key == str(ctx.message.author.id):
-                    ar = i
-                    if i >= top: break
-                i += 1
-                if i >= 100:
-                    break
-            if ar >= top: footer = "You are ranked #{}".format(ar+1)
-            elif ar == -1: footer = "You aren't ranked ▫️ You need at least one roll to be ranked"
-            else: footer = ""
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} Spark ranking of {}".format(self.bot.getEmote('crown'), guild.name), color=self.color, description=msg, footer=footer, thumbnail=guild.icon_url))
-        except Exception as e:
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Sorry, something went wrong :bow:", footer=str(e)))
-            await self.bot.sendError("rollRanking", str(e))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(30)
-            await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
-
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 600, commands.BucketType.user)
     async def quota(self, ctx):
@@ -545,7 +367,7 @@ class GBF_Game(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="{} {} is a bad boy".format(self.bot.getEmote('gw'), ctx.author.display_name), description="Your account is **restricted.**", thumbnail=ctx.author.avatar_url, color=self.color))
             return
 
-        h = random.randint(400, 2000)
+        h = random.randint(800, 4000)
         m = random.randint(70, 180)
         c = random.randint(1, 100)
 
@@ -656,7 +478,8 @@ class GBF_Game(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True, aliases=['leaks', 'leek'])
     @commands.cooldown(1, 300, commands.BucketType.user)
     async def leak(self, ctx):
-        r = random.randint(1, 5)
+        if random.randint(1, 2000) == 1: r = 365
+        else: r = random.randint(1, 5)
         if not isinstance(self.bot.extra, dict): self.bot.extra = {}
         self.bot.extra['leak'] = self.bot.extra.get('leak', 0) + r
         self.bot.savePending = True

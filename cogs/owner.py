@@ -36,7 +36,6 @@ class Owner(commands.Cog):
             msg += "Banned Guilds are `" + "` `".join(str(x) for x in self.bot.guilddata['banned']) + "`\n"
         if len(self.bot.guilddata['owners']) > 0:
             msg += "Banned Owners are `" + "` `".join(str(x) for x in self.bot.guilddata['owners']) + "`\n"
-        embed.add_field(name="Banned owners", value=msg, inline=False)
         await self.bot.send('debug', embed=self.bot.buildEmbed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
 
     @commands.command(no_pm=True)
@@ -57,6 +56,19 @@ class Owner(commands.Cog):
             await self.bot.channels['debug'].purge()
         except Exception as e:
             await self.bot.sendError('clear', str(e))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isOwner()
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def checkrole(self, ctx):
+        """List all the roles in use on a server (Owner only)"""
+        g = ctx.author.guild
+        for r in g.roles:
+            count = 0
+            for m in g.members:
+                for mr in m.roles:
+                    if r.id == mr.id: count += 1
+            await ctx.send("Role `{}` has {} users".format(r.name, count))
 
     @commands.command(no_pm=True)
     @isOwner()

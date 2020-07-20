@@ -6,6 +6,8 @@ import random
 from datetime import datetime, timedelta
 import math
 import json
+import re
+from xml.sax import saxutils as su
 
 # #####################################################################################
 # math parser used by $calc
@@ -223,6 +225,10 @@ class General(commands.Cog):
             return False
         return commands.check(predicate)
 
+    def cleanhtml(self, raw):
+      cleaner = re.compile('<.*?>')
+      return su.unescape(re.sub(cleaner, '', raw.replace('<br>', ' '))).replace('>', '')
+
     # get a 4chan thread
     async def get4chan(self, board : str, search : str): # be sure to not abuse it, you are not supposed to call the api more than once per second
         try:
@@ -237,7 +243,7 @@ class General(commands.Cog):
                 for t in p["threads"]:
                     try:
                         if t["sub"].lower().find(search) != -1 or t["com"].lower().find(search) != -1:
-                            threads.append([t["no"], t["replies"]]) # store the thread ids matching our search word
+                            threads.append([t["no"], t["replies"], self.cleanhtml(t['com'])]) # store the thread ids matching our search word
                     except:
                         pass
             threads.sort(reverse=True)
@@ -344,8 +350,14 @@ class General(commands.Cog):
         if len(threads) > 0:
             msg = ""
             for t in threads:
-                msg += '🔞 https://boards.4channel.org/vg/thread/{} ▫️ *{} replies*\n'.format(t[0], t[1])
-            await ctx.send(embed=self.bot.buildEmbed(title="/hgg2d/ latest thread(s)", description=msg, footer="Good fap, fellow 4channeler", color=self.color))
+                if len(t[2]) > 23:
+                    msg += '🔞 [{}](https://boards.4channel.org/vg/thread/{}) ▫️ *{} replies* ▫️ {}...\n'.format(t[0], t[0], t[1], t[2][:23])
+                else:
+                    msg += '🔞 [{}](https://boards.4channel.org/vg/thread/{}) ▫️ *{} replies* ▫️ {}\n'.format(t[0], t[0], t[1], t[2])
+                if len(msg) > 1800:
+                    msg += 'and more...'
+                    break
+            await ctx.send(embed=self.bot.buildEmbed(title="/hgg2d/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="/hgg2d/ Error", description="I couldn't find a single /hgg2d/ thread 😔", color=self.color))
 
@@ -357,7 +369,13 @@ class General(commands.Cog):
         if len(threads) > 0:
             msg = ""
             for t in threads:
-                msg += ':poop: https://boards.4channel.org/vg/thread/{} ▫️ *{} replies*\n'.format(t[0], t[1])
+                if len(t[2]) > 23:
+                    msg += ':poop: [{}](https://boards.4channel.org/vg/thread/{}) ▫️ *{} replies* ▫️ {}...\n'.format(t[0], t[0], t[1], t[2][:23])
+                else:
+                    msg += ':poop: [{}](https://boards.4channel.org/vg/thread/{}) ▫️ *{} replies* ▫️ {}\n'.format(t[0], t[0], t[1], t[2])
+                if len(msg) > 1800:
+                    msg += 'and more...'
+                    break
             await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ Error", description="I couldn't find a single /gbfg/ thread 😔", color=self.color))
@@ -375,7 +393,13 @@ class General(commands.Cog):
         if len(threads) > 0:
             msg = ""
             for t in threads:
-                msg += ':four_leaf_clover: https://boards.4channel.org/{}/thread/{} ▫️ *{} replies*\n'.format(board, t[0], t[1])
+                if len(t[2]) > 23:
+                    msg += ':four_leaf_clover: [{}](https://boards.4channel.org/{}/thread/{}) ▫️ *{} replies* ▫️ {}...\n'.format(t[0], board, t[0], t[1], t[2][:23])
+                else:
+                    msg += ':four_leaf_clover: [{}](https://boards.4channel.org/{}/thread/{}) ▫️ *{} replies* ▫️ {}\n'.format(t[0], board, t[0], t[1], t[2])
+                if len(msg) > 1800:
+                    msg += 'and more...'
+                    break
             await ctx.send(embed=self.bot.buildEmbed(title="4chan Search result", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="4chan Search result", description="No matching threads found", color=self.color))
@@ -531,4 +555,4 @@ class General(commands.Cog):
     async def serverinfo(self, ctx):
         """Get informations on the current guild (Owner only)"""
         guild = ctx.guild
-        await ctx.send(embed=self.bot.buildEmbed(title=guild.name + " status", description="**ID** ▫️ {}\n**Owner** ▫️ {}\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon_url, color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title=guild.name + " status", description="**ID** ▫️ {}\n**Owner** ▫️ {}\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon_url, timestamp=guild.created_at, color=self.color))
