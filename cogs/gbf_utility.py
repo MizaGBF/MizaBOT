@@ -11,6 +11,7 @@ import os
 from bs4 import BeautifulSoup
 from xml.sax import saxutils as su
 from urllib import parse
+from operator import itemgetter
 
 class GBF_Utility(commands.Cog):
     """GBF related commands."""

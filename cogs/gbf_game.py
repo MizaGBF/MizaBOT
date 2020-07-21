@@ -4,7 +4,6 @@ import asyncio
 import random
 from datetime import datetime, timedelta
 import math
-from operator import itemgetter
 import string
 
 class GBF_Game(commands.Cog):
