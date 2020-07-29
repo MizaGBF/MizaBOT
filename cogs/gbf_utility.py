@@ -19,31 +19,6 @@ class GBF_Utility(commands.Cog):
         self.bot = bot
         self.color = 0x46fc46
 
-    def startTasks(self):
-        self.bot.runTask('cleanroll', self.cleanrolltask)
-
-    async def cleanrolltask(self): # silent task
-        await asyncio.sleep(3600)
-        if self.bot.exit_flag: return
-        try:
-            c = datetime.utcnow()
-            change = False
-            for id in list(self.bot.spark[0].keys()):
-                if len(self.bot.spark[0][id]) == 3: # backward compatibility
-                    self.bot.spark[0][id].append(c)
-                    change = True
-                else:
-                    d = c - self.bot.spark[0][id][3]
-                    if d.days >= 30:
-                        del self.bot.spark[0][id]
-                        change = True
-            if change: self.bot.savePending = True
-        except asyncio.CancelledError:
-            await self.bot.sendError('cleanrolltask', 'cancelled')
-            return
-        except Exception as e:
-            await self.bot.sendError('cleanrolltask', str(e))
-
     def isYou(): # for decorators
         async def predicate(ctx):
             return ctx.bot.isServer(ctx, 'you_server')
@@ -959,7 +934,7 @@ class GBF_Utility(commands.Cog):
     async def deadgame(self, ctx):
         """Give the time elapsed of various GBF related releases"""
         msg = ""
-        wiki_checks = [["Campaign", "<td>(\d+ days)<\/td>\s*<td>Time since last campaign<\/td>"], ["Surprise_Special_Draw_Set", "<td>(\d+ days)<\/td>\s*<td>Time since last ticket<\/td>"], ["Damascus_Ingot", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last brick<\/td>"], ["Gold_Brick", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last brick<\/td>"], ["Sunlight_Stone", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last stone<\/td>"], ["Sephira_Evolite", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last evolite<\/td>"]]
+        wiki_checks = [["Category:Campaign", "<td>(\d+ days)<\/td>\s*<td>Time since last campaign<\/td>"], ["Surprise_Special_Draw_Set", "<td>(\d+ days)<\/td>\s*<td>Time since last ticket<\/td>"], ["Damascus_Ingot", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last brick<\/td>"], ["Gold_Brick", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last brick<\/td>"], ["Sunlight_Stone", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last stone<\/td>"], ["Sephira_Evolite", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last evolite<\/td>"]]
         for w in wiki_checks:
             async with aiohttp.ClientSession() as session:
                 async with session.get("https://gbf.wiki/{}".format(w[0])) as r:
@@ -996,7 +971,7 @@ class GBF_Utility(commands.Cog):
             try:
                 await self.bot.callCommand(ctx, 'seeRoll')
             except Exception as e:
-                final_msg= await ctx.send(embed=self.bot.buildEmbed(title="Summary", description="**{}** crystal(s)\n**{}** single roll ticket(s)\n**{}** ten roll ticket(s)".format(crystal, single, ten), color=self.color))
+                final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':title, 'icon_url':member.avatar_url}, description="**{} {} {} {} {} {}**".format(self.bot.getEmote("crystal"), crystal, self.bot.getEmote("singledraw"), single, self.bot.getEmote("tendraw"), ten), color=self.color))
                 await self.bot.sendError('setRoll', str(e), 'B')
         except Exception as e:
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color, footer="setRoll <crystal> [single] [ten]"))

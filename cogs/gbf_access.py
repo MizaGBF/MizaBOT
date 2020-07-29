@@ -95,7 +95,7 @@ class GBF_Access(commands.Cog):
                         acc = self.bot.gbfaccounts[i]
                         if acc[3] == 0 or (acc[3] == 1 and (acc[5] is None or current_time - acc[5] >= timedelta(seconds=7200))):
                             r = await self.bot.sendRequest(self.bot.gbfwatch['test'], account=i, decompress=True, load_json=True, check=True)
-                            if r is None:
+                            if r is None or str(r.get('user_id', None)) != str(acc[0]):
                                 await self.bot.send('debug', embed=self.bot.buildEmbed(title="Account refresh", description="Account #{} is down".format(i) , color=self.color))
                                 self.bot.gbfaccounts[i][3] = 2
                             elif r == "Maintenance":
@@ -152,7 +152,7 @@ class GBF_Access(commands.Cog):
 
     def postPastebin(self, title, paste, duration = '1D'): # to send informations on a pastebin, requires dev and user keys
         try:
-            url = "http://pastebin.com/api/api_post.php"
+            url = "https://pastebin.com/api/api_post.php"
             values = {'api_option' : 'paste',
                       'api_dev_key' : self.bot.pastebin['dev_key'],
                       'api_user_key' : self.bot.pastebin['user_key'],
@@ -170,7 +170,7 @@ class GBF_Access(commands.Cog):
     def delPastebin(self, link): # delete a pastebin
         try:
             link = link.replace('https://pastebin.com/', '')
-            url = "http://pastebin.com/api/api_post.php"
+            url = "https://pastebin.com/api/api_post.php"
             values = {'api_option' : 'delete',
                       'api_dev_key' : self.bot.pastebin['dev_key'],
                       'api_user_key' : self.bot.pastebin['user_key'],
@@ -187,9 +187,9 @@ class GBF_Access(commands.Cog):
     async def getPastebinUserKey(self, ctx):
         """No description"""
         url = "https://pastebin.com/api/api_login.php"
-        values = {'api_dev_key' : self.bot.baguette['dev_key'],
-                  'api_user_name' : self.bot.baguette['user'],
-                  'api_user_password' : self.bot.baguette['pass']}
+        values = {'api_dev_key' : self.bot.pastebin['dev_key'],
+                  'api_user_name' : self.bot.pastebin['user'],
+                  'api_user_password' : self.bot.pastebin['pass']}
 
         try:
             await ctx.message.add_reaction('✅') # white check mark
@@ -693,9 +693,6 @@ class GBF_Access(commands.Cog):
         if res is not None: return unquote(res['data'])
         else: return res
 
-    async def getScoutData(self, id : int): # get scout data
-        return await self.bot.sendRequest("http://game.granbluefantasy.jp/forum/search_users_id?_=TS1&t=TS2&uid=ID", account=self.bot.gbfcurrent, decompress=True, load_json=True, payload={"special_token":None,"user_id":str(id)}, check=True)
-
     async def requestRanking(self, page, crew = True): # get gw ranking data
         if not await self.bot.isGameAvailable():
             return None
@@ -731,7 +728,7 @@ class GBF_Access(commands.Cog):
             if (NY == False and self.bot.gbfdata['gachatimesub'] < self.bot.gbfdata['gachatime']) or (NY == True and self.bot.gbfdata['gachatimesub'] > self.bot.gbfdata['gachatime']): self.bot.gbfdata['gachatime'] = self.bot.gbfdata['gachatimesub'] # switched the sign
             random_key = data['legend']['random_key']
             header_images = data['header_images']
-            logo_image = data.get('logo_image', '')
+            logo_id = {'logo_fire':1, 'logo_water':2, 'logo_earth':3, 'logo_wind':4, 'logo_dark':5, 'logo_light':6}.get(data.get('logo_image', ''), data.get('logo_image', '').replace('logo_', ''))
             self.bot.gbfdata['gachabanner'] = None
             gachaid = data['legend']['lineup'][-1]['id']
 
@@ -784,7 +781,7 @@ class GBF_Access(commands.Cog):
                         banner_msg += "\n"
             self.bot.gbfdata['gachacontent'] = banner_msg
             # add image
-            gachas = ['{}/tips/description_gacha.jpg'.format(random_key), '{}/tips/description_{}.jpg'.format(random_key, logo_image.replace('logo', 'gacha')), '{}/tips/description_{}.jpg'.format(random_key, header_images[0]), 'header/{}.png'.format(header_images[0])]
+            gachas = ['{}/tips/description_gacha.jpg'.format(random_key), '{}/tips/description_gacha_{}.jpg'.format(random_key, logo_id), '{}/tips/description_{}.jpg'.format(random_key, header_images[0]), 'header/{}.png'.format(header_images[0])]
             for g in gachas:
                 data = await self.bot.sendRequest("http://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(g), no_base_headers=True)
                 if data is not None:
@@ -873,7 +870,7 @@ class GBF_Access(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="GBF Account status", description="No accounts set in slot {}".format(id), color=self.color))
             return
         r = await self.bot.sendRequest(self.bot.gbfwatch['test'], account=id, decompress=True, load_json=True, check=True)
-        if r is None:
+        if r is None or r.get('user_id', None) != acc[0]:
             await self.bot.send('debug', embed=self.bot.buildEmbed(title="GBF Account status", description="Account #{} is down\nck: `{}`\nuid: `{}`\nua: `{}`\n".format(id, acc[0], acc[1], acc[2]) , color=self.color))
             self.bot.gbfaccounts[id][3] = 2
             self.bot.savePending = True
@@ -978,37 +975,6 @@ class GBF_Access(commands.Cog):
                 await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, thumbnail=content[3], color=self.color))
         except Exception as e:
             await self.bot.sendError("getcurrentgacha", str(e))
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['badboi', 'branded', 'restricted'])
-    @commands.cooldown(5, 30, commands.BucketType.guild)
-    async def brand(self, ctx, id : int):
-        """Check if a GBF profile is restricted"""
-        try:
-            if id < 0 or id >= 100000000:
-                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
-                return
-            if id in self.badprofilecache:
-                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
-                return
-            data = await self.getScoutData(id)
-            if data == "Maintenance":
-                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Game is in maintenance", color=self.color))
-                return
-            elif len(data['user']) == 0:
-                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="In game message:\n`{}`".format(data['no_member_msg'].replace("<br>", " ")), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
-                return
-            try:
-                if data['user']["restriction_flag_list"]["event_point_deny_flag"]:
-                    status = "Account is restricted"
-                else:
-                    status = "Account isn't restricted"
-            except:
-                status = "Account isn't restricted"
-            await ctx.send(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('gw'), data['user']['nickname']), description=status, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/leader/talk/{}.png".format(data['user']['image']), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
-
-        except Exception as e:
-            await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Unavailable", color=self.color))
-            await self.bot.sendError("brand", str(e))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['clearid'])
     @isOwner()

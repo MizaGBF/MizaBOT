@@ -271,7 +271,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.12" # version number
+        self.botversion = "6.13" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Improved `$wiki`, `$gw`, `$4chan`, `$hgg` and `$gbfg`", "Reworked `$seeroll` and `$ubhl`", "Added `$serverinfo`, `$luci` and `$bubs`", "Roll commands (`$roulette`, etc...) automatically detect premium galas", "Cleaned up some old commands"] # bot changelog
         self.running = True # if True, the bot is running
@@ -594,6 +594,52 @@ class Mizabot(commands.Bot):
                 if str(e).startswith('500 INTERNAL SERVER ERROR'): # assume discord server issues and sleep
                     await asyncio.sleep(1000)
 
+    async def cleansave(self): # background task to clean up the save data, once per boot
+        await asyncio.sleep(1000) # after 1000 seconds
+        if self.exit_flag: return
+        try:
+            change = False
+            # clean up spark data
+            c = datetime.utcnow()
+            for id in list(self.spark[0].keys()):
+                if len(self.spark[0][id]) == 3: # backward compatibility
+                    self.spark[0][id].append(c)
+                    change = True
+                else:
+                    d = c - self.spark[0][id][3]
+                    if d.days >= 30:
+                        del self.spark[0][id]
+                        change = True
+
+            # clean up schedule
+            c = self.getJST()
+            new_schedule = []
+            for i in range(0, len(self.schedule), 2):
+                try:
+                    date = self.schedule[i].replace(" ", "").split("-")[-1].split("/")
+                    x = c.replace(month=int(date[0]), day=int(date[1])+1, microsecond=0)
+                    if c - x > timedelta(days=160):
+                        x = x.replace(year=x.year+1)
+                    if c >= x:
+                        continue
+                except:
+                    pass
+                new_schedule.append(self.schedule[i])
+                new_schedule.append(self.schedule[i+1])
+
+            if len(new_schedule) != len(self.schedule):
+                self.schedule = new_schedule
+                change = True
+                await self.send('debug', embed=self.buildEmbed(title="cleansave()", description="The schedule has been cleaned up", timestamp=datetime.utcnow()))
+
+            # raise save flag
+            if change: self.savePending = True
+        except asyncio.CancelledError:
+            await self.sendError('cleansave', 'cancelled')
+            return
+        except Exception as e:
+            await self.sendError('cleansave', str(e))
+
     def isAuthorized(self, ctx): # check if the command is authorized in the channel
         id = str(ctx.guild.id)
         if id in self.permitted: # if id is found, it means the check is enabled
@@ -831,6 +877,7 @@ class Mizabot(commands.Bot):
     async def startTasks(self): # start our tasks
         self.runTask('status', self.statustask)
         self.runTask('invitetracker', self.invitetracker)
+        self.runTask('cleansave', self.cleansave)
         for c in self.cogs:
             try:
                 self.get_cog(c).startTasks()
@@ -1015,6 +1062,7 @@ async def on_guild_join(guild): # when the bot joins a new guild
 @bot.event
 async def on_message(message): # to do something with a message
     if await bot.runOnMessageCallback(message):
+        # end
         await bot.process_commands(message) # don't forget
 
 @bot.check # authorize or not a command on a global scale
@@ -1023,11 +1071,11 @@ async def global_check(ctx):
     if id in bot.guilddata['banned'] or str(ctx.guild.owner.id) in bot.guilddata['owners']: # ban check
         await ctx.guild.leave() # leave the server if banned
         return False
-    if id in bot.guilddata['pending']: # pending check
+    elif id in bot.guilddata['pending']: # pending check
         await bot.react(ctx, 'cooldown')
         return False
     elif ctx.guild.owner.id in bot.bannedusers:
-        await bot.send('debug', embed=bot.buildEmbed(title="Banned message by {}".format(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=datetime.utcnow()))
+        await bot.send('debug', embed=bot.buildEmbed(title="[TEST] Banned message by {}".format(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=datetime.utcnow()))
         return False
     return True
 
