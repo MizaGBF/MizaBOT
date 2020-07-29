@@ -741,13 +741,13 @@ class GBF_Access(commands.Cog):
             if not data['ratio'][0]['ratio'].startswith('3'):
                 banner_msg += " ▫️ **Premium Gala**"
             banner_msg += "\n"
-            possible_zodiac = ['Anila', 'Andira', 'Mahira', 'Vajra', 'Kumbhira', 'Vikala']
+            possible_zodiac_wpn = ['Ramulus', 'Dormius', 'Gallinarius', 'Canisius', 'Porculius', 'Rodentius']
             rateuplist = {'zodiac':[]}
             for appear in data['appear']:
                 if appear['rarity'] == 4: # ssr rarity only
                     if appear['category_name'] not in rateuplist: rateuplist[appear['category_name']] = {}
                     for item in appear['item']:
-                        if 'character_name' in item and item['character_name'] in possible_zodiac:
+                        if 'character_name' in item and item.get('name', '') in possible_zodiac_wpn:
                             rateuplist['zodiac'].append(item['character_name'])
                         if item['incidence'] is not None:
                             if item['drop_rate'] not in rateuplist[appear['category_name']]: rateuplist[appear['category_name']][item['drop_rate']] = []
