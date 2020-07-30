@@ -109,7 +109,7 @@ class GBF_Utility(commands.Cog):
                     except: title = ""
                     if search_mode and not title.startswith('Search results'): # handling rare cases of the search function redirecting the user directly to a page
                         search_mode = False
-                        url = "https://gbf.wiki/{}".format(title) # update the url so it looks pretty (with the proper page name)
+                        url = "https://gbf.wiki/{}".format(title.replace(' ', '_')) # update the url so it looks pretty (with the proper page name)
 
                     if search_mode: # use the wiki search function
                         try:
