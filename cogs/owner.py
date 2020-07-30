@@ -77,7 +77,7 @@ class Owner(commands.Cog):
         try:
             toleave = self.bot.get_guild(id)
             await toleave.leave()
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
             await self.guildList()
         except Exception as e:
             await self.bot.sendError('leave', str(e))
@@ -96,7 +96,7 @@ class Owner(commands.Cog):
                 await toleave.leave()
             except:
                 pass
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
             await self.guildList()
         except Exception as e:
             await self.bot.sendError('ban_server', str(e))
@@ -116,7 +116,7 @@ class Owner(commands.Cog):
                         await g.leave()
                 except:
                     pass
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
             await self.guildList()
         except Exception as e:
             await self.bot.sendError('ban_owner', str(e))
@@ -133,7 +133,7 @@ class Owner(commands.Cog):
                 guild = self.bot.get_guild(id)
                 if guild:
                     await guild.owner.send(embed=self.bot.buildEmbed(title="I'm now available for use in {}".format(guild.name), description="Use `$help` for my list of commands, `$help Management` for mod only commands.\nUse `$setPrefix` to change the command prefix (default: `$`)\nIf you encounter an issue, use `$bug_report` and describe the problem.\nIf I'm down or slow, I might be rebooting, in maintenance or Discord itself might be acting up.", thumbnail=guild.icon_url))
-                    await ctx.message.add_reaction('✅') # white check mark
+                    await self.bot.react(ctx.message, '✅') # white check mark
                     await self.guildList()
         except Exception as e:
             await self.bot.sendError('accept', str(e))
@@ -150,7 +150,7 @@ class Owner(commands.Cog):
                 guild = self.bot.get_guild(id)
                 if guild:
                     await guild.leave()
-                await ctx.message.add_reaction('✅') # white check mark
+                await self.bot.react(ctx.message, '✅') # white check mark
                 await self.guildList()
         except Exception as e:
             await self.bot.sendError('refuse', str(e))
@@ -160,7 +160,7 @@ class Owner(commands.Cog):
     async def _save(self, ctx):
         """Command to make a snapshot of the bot's settings (Owner only)"""
         await self.bot.autosave(True)
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(name='load', no_pm=True, aliases=['l'])
     @isOwner()
@@ -176,20 +176,20 @@ class Owner(commands.Cog):
             await self.bot.send('debug', embed=self.bot.buildEmbed(title=ctx.guild.me.name, description="save.json reloaded", color=self.color))
         else:
             await self.bot.send('debug', embed=self.bot.buildEmbed(title=ctx.guild.me.name, description="save.json loading failed", color=self.color))
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, aliases=['guilds'])
     @isOwner()
     async def servers(self, ctx):
         """List all servers (Owner only)"""
         await self.guildList()
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, aliases=['checkbuff'])
     @isOwner()
     async def buffcheck(self, ctx): # debug stuff
         """List the GW buff list for (You) (Owner only)"""
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
         msg = ""
         for b in self.bot.gw['buffs']:
             msg += '{0:%m/%d %H:%M}: '.format(b[0])
@@ -209,7 +209,7 @@ class Owner(commands.Cog):
             self.bot.maintenance['duration'] = duration
             self.bot.maintenance['state'] = True
             self.bot.savePending = True
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
         except Exception as e:
             await self.bot.sendError('setmaintenance', str(e))
 
@@ -219,7 +219,7 @@ class Owner(commands.Cog):
         """Delete the maintenance date (Owner only)"""
         self.bot.maintenance = {"state" : False, "time" : None, "duration" : 0}
         self.bot.savePending = True
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, aliases=['ss'])
     @isOwner()
@@ -238,7 +238,7 @@ class Owner(commands.Cog):
         try:
             self.bot.stream['time'] = datetime.now().replace(year=year, month=month, day=day, hour=hour, minute=0, second=0, microsecond=0)
             self.bot.savePending = True
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
         except Exception as e:
             await self.bot.sendError('setstreamtime', str(e))
 
@@ -249,7 +249,7 @@ class Owner(commands.Cog):
         self.bot.stream['content'] = []
         self.bot.stream['time'] = None
         self.bot.savePending = True
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -258,7 +258,7 @@ class Owner(commands.Cog):
         Use ; to separate elements"""
         self.bot.schedule = txt.split(';')
         self.bot.savePending = True
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -280,9 +280,9 @@ class Owner(commands.Cog):
                     msg = msg[:-1]
                     msg += "`"
                     await self.bot.send('debug', embed=self.bot.buildEmbed(title="Automatic schedule detection", description=msg, color=self.color))
-                    await ctx.message.add_reaction('✅') # white check mark
+                    await self.bot.react(ctx.message, '✅') # white check mark
                     return
-        await ctx.message.add_reaction('❎') # white negative mark
+        await self.bot.react(ctx.message, '❎') # white negative mark
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -305,14 +305,14 @@ class Owner(commands.Cog):
 
         self.bot.schedule = new_schedule
         self.bot.savePending = True
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True)
     @isOwner()
     async def setStatus(self, ctx, *, terms : str):
         """Change the bot status (Owner only)"""
         await self.bot.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=terms))
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -322,7 +322,7 @@ class Owner(commands.Cog):
         if id not in self.bot.spark[1]:
             self.bot.spark[1].append(id)
             self.bot.savePending = True
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, aliases=['unbanspark'])
     @isOwner()
@@ -336,7 +336,7 @@ class Owner(commands.Cog):
                 if id == self.bot.spark[1][i]: self.bot.spark[1].pop(i)
                 else: i += 1
             self.bot.savePending = True
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -350,7 +350,7 @@ class Owner(commands.Cog):
                 count += 1
         if count > 0:
             self.bot.savePending = True
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -361,7 +361,7 @@ class Owner(commands.Cog):
         self.bot.gbfdata['gachatime'] = None
         self.bot.gbfdata['gachatimesub'] = None
         self.bot.savePending = True
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -396,7 +396,7 @@ class Owner(commands.Cog):
             if k not in guild_ids or len(self.bot.news[k]) == 0:
                 self.bot.news.pop(k)
                 self.bot.savePending = True
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -412,14 +412,14 @@ class Owner(commands.Cog):
                     await channel.send(embed=embed)
                 except Exception as e:
                     self.bot.sendError('broadcast', str(e))
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True)
     @isOwner()
     async def newgwtask(self, ctx):
         """Start a new checkGWBuff() task (Owner only)"""
         self.bot.runTask('check_buff', self.bot.get_cog('GuildWar').checkGWBuff)
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -436,7 +436,7 @@ class Owner(commands.Cog):
         ubhl_c = self.bot.get_channel(self.bot.ids['gbfg_ubhl'])
         gbfg_g = self.bot.get_guild(self.bot.ids['gbfg'])
         whitelist = {}
-        await self.bot.react(ctx, 'time')
+        await self.bot.react(ctx.message, 'time')
         async for message in ubhl_c.history(limit=10000): 
             if message.author.id in whitelist:
                 continue
@@ -452,7 +452,7 @@ class Owner(commands.Cog):
                         await member.remove_roles(r)
                         i += 1
                     break
-        await self.bot.unreact(ctx, 'time')
+        await self.bot.unreact(ctx.message, 'time')
         await ctx.send(embed=self.bot.buildEmbed(title="*ubaha-hl* purge results", description="{} inactive user(s)".format(i), color=self.color))
 
     @commands.command(no_pm=True)
@@ -462,7 +462,7 @@ class Owner(commands.Cog):
         luci_c = self.bot.get_channel(bot.lucilius['main'])
         gbfg_g = self.bot.get_guild(self.bot.ids['gbfg'])
         whitelist = {}
-        await self.bot.react(ctx, 'time')
+        await self.bot.react(ctx.message, 'time')
         async for message in luci_c.history(limit=10000): 
             if message.author.id in whitelist:
                 continue
@@ -478,7 +478,7 @@ class Owner(commands.Cog):
                         await member.remove_roles(r)
                         i += 1
                     break
-        await self.bot.unreact(ctx, 'time')
+        await self.bot.unreact(ctx.message, 'time')
         await ctx.send(embed=self.bot.buildEmbed(title="*ubaha-hl* purge results", description="{} inactive user(s)".format(i), color=self.color))
 
     @commands.command(no_pm=True)
@@ -488,7 +488,7 @@ class Owner(commands.Cog):
         g = self.bot.get_guild(self.bot.ids['gbfg'])
         t = datetime.utcnow() - timedelta(days=30)
         whitelist = {}
-        await self.bot.react(ctx, 'time')
+        await self.bot.react(ctx.message, 'time')
         for c in g.channels:
             try:
                 async for message in c.history(limit=50000): 
@@ -506,43 +506,8 @@ class Owner(commands.Cog):
                     i += 1
             except:
                 pass
-        await self.bot.unreact(ctx, 'time')
+        await self.bot.unreact(ctx.message, 'time')
         await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ purge results", description="{} inactive user(s) successfully kicked".format(i), color=self.color))
-
-    @commands.command(no_pm=True)
-    @isOwner()
-    async def gbfg_emote(self, ctx):
-        """Check emote usage in the /gbfg/ server (Owner only)"""
-        await self.bot.react(ctx, 'time')
-        g = self.bot.get_guild(self.bot.ids['gbfg'])
-        u = self.bot.get_user(156948874630660096) # snak
-        emotecount = {}
-        for e in g.emojis:
-            emotecount[str(e)] = 0
-
-        regex = re.compile("^<:\w*:\d+>$|^:\w*:$")
-        for c in g.channels:
-            try:
-                async for message in c.history(limit=50000): 
-                    try:
-                        res = regex.findall(message.content)
-                        for r in res:
-                            if r in emotecount:
-                                emotecount[r] += 1
-                    except:
-                        pass
-            except:
-                pass
-        msg = ""
-        for e in emotecount:
-            msg += "{} ▫️ {} use(s)\n".format(e, emotecount[e])
-            if len(msg) > 1800:
-                await u.send(msg)
-                msg = ""
-        await self.bot.unreact(ctx, 'time')
-        if len(msg) > 0:
-            await u.send(msg)
-        await ctx.send('DONE')
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
@@ -551,7 +516,7 @@ class Owner(commands.Cog):
         try:
             with open(filename, 'rb') as infile:
                 await self.bot.send('debug', file=discord.File(infile))
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
         except Exception as e:
             await self.bot.sendError('getfile', str(e))
 
@@ -560,25 +525,3 @@ class Owner(commands.Cog):
     async def punish(self, ctx):
         """Punish the bot"""
         await ctx.send("Please, Master, make it hurt.")
-
-    @commands.command(no_pm=True)
-    @isOwner()
-    async def snackcount(self, ctx):
-        """Count Snacks mono emote posts"""
-        await self.bot.react(ctx, 'time')
-        sc = 0
-        mc = 0
-        regex = re.compile("^<a?:\w*:\d+>$|^:\w*:$")
-        c = ctx.channel
-        try:
-            async for message in c.history(limit=50000): 
-                try:
-                    if message.author.id == self.bot.ids['snacks']:
-                        sc += 1
-                        if regex.search(message.content):
-                            mc += 1
-                except:
-                    pass
-        except:
-            pass
-        await ctx.send(embed=self.bot.buildEmbed(title="Results", description="{} message(s) from Snacks in the last 50000 messages of this channel.\n{} are mono-emotes ({:.2f}%).".format(sc, mc, mc/sc*100), color=self.color))

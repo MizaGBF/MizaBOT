@@ -115,9 +115,14 @@ class GBF_Access(commands.Cog):
                 v = await self.bot.getGameversion()
                 s = self.bot.updateGameversion(v)
                 if s == 3:
-                    await self.bot.sendMulti(['debug', 'private_update'], embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version updated to `{}` (`{}`)".format(v, self.bot.versionToDateStr(v)) , color=self.color))
+                    react = await self.bot.sendMulti(['debug', 'private_update'], embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version updated to `{}` (`{}`)".format(v, self.bot.versionToDateStr(v)) , color=self.color))
+                    try:
+                        for r in react: await self.bot.react(r, 'time')
+                    except:
+                        pass
                     # content check
                     msg = ""
+                    gbfg_msg = ""
                     thumb = ""
                     # gacha
                     tickets = await self.updateTicket()
@@ -127,17 +132,26 @@ class GBF_Access(commands.Cog):
                         self.bot.gbfdata['new_ticket'] = tickets
                         self.bot.savePending = True
                     news = await self.cc()
+                    try:
+                        for r in react: await self.bot.unreact(r, 'time')
+                    except:
+                        pass
                     if len(news) > 0:
                         msg += "**Content update**\n"
                         for k in news:
                             msg += "{} {}\n".format(news[k], k)
+                            if len(msg) > 1800: # limit at 2000 characters
+                                await self.bot.sendMulti(['debug', 'private_update'], embed=self.bot.buildEmbed(title="Latest Update", description=msg, thumbnail=thumb, color=self.color))
+                                msg = msg.split("\n")
+                                for m in msg:
+                                    if m.find(" to ") != -1: gbfg_msg += m + "\n"
+                                msg = ""
                     if msg != "":
                         await self.bot.sendMulti(['debug', 'private_update'], embed=self.bot.buildEmbed(title="Latest Update", description=msg, thumbnail=thumb, color=self.color))
                         await self.bot.send('debug', embed=self.bot.buildEmbed(title="Reminder", description="Keep it private", color=self.color))
 
                         # throw a bone at gbfg
                         msg = msg.split("\n")
-                        gbfg_msg = ""
                         for m in msg:
                             if m.find(" to ") != -1: gbfg_msg += m + "\n"
                         await self.bot.send('gbfg_teasing', embed=self.bot.buildEmbed(title="Latest Update", description=gbfg_msg, thumbnail=thumb, color=self.color))
@@ -192,7 +206,7 @@ class GBF_Access(commands.Cog):
                   'api_user_password' : self.bot.pastebin['pass']}
 
         try:
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
             req = request.Request(url, parse.urlencode(values).encode('utf-8'))
             with request.urlopen(req) as response:
                the_page = response.read()
@@ -218,6 +232,7 @@ class GBF_Access(commands.Cog):
     async def dad(self, id, silent, mode = 0): # black magic
         if id[0] == '3': type = 0
         elif id[0] == '2': type = 1
+        elif id[0] == '1': type = 2
         else: return ["", {}]
         try:
             files = self.bot.gbfwatch["files"]
@@ -309,6 +324,12 @@ class GBF_Access(commands.Cog):
         if 'w' not in self.bot.gbfdata:
             self.bot.gbfdata['w'] = {"0": [[82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92], [74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84], [64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74], [42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52], [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61], [49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59], [69, 70, 80, 81, 82, 83, 84], [34, 35, 36, 37, 38, 39, 40, 41, 42, 44, 45], [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42], [25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35]], "1": [[191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201], [119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129], [138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148], [117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127], [161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171], [123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133], [120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130], [89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99], [118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128], [112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122]]}
             self.bot.savePending = True
+        if 'wd' not in self.bot.gbfdata:
+            self.bot.gbfdata['wd'] = [[62, 53, 46, 54, 48, 40], [35, 40, 40, 41, 37, 43], [42, 38, 40, 42, 41, 37], [39, 30, 43, 30, 36, 31], [47, 55, 46, 38, 48, 44], [35, 34, 30, 33, 36, 38], [39, 35, 49, 33, 35, 32], [21, 26, 23, 30, 30, 18], [22, 28, 29, 30, 34, 30], [30, 23, 25, 23, 27, 34]]
+            self.bot.savePending = True
+        if 'sd' not in self.bot.gbfdata:
+            self.bot.gbfdata['sd'] = [56, 53, 54, 63, 54, 52]
+            self.bot.savePending = True
 
         try:
             num = self.bot.gbfwatch['num']
@@ -317,7 +338,10 @@ class GBF_Access(commands.Cog):
             cl = self.bot.gbfwatch['cl']
             wl = self.bot.gbfwatch['wl']
             ws = self.bot.gbfwatch['ws']
+            ss = self.bot.gbfwatch['ss']
             wt = self.bot.gbfwatch['wt']
+            ee = self.bot.gbfwatch['ee']
+            ic = self.bot.gbfwatch['ic']
         except:
             return found
 
@@ -363,7 +387,22 @@ class GBF_Access(commands.Cog):
 
                         await self.bot.send('debug', embed=self.bot.buildEmbed(title=crt[i][0], description=data[0], fields=fields, color=self.color))
                 id += 1
-                await asyncio.sleep(0.001)
+            await asyncio.sleep(0.001)
+
+        for e in range(6):
+            try:
+                r = await self.bot.sendRequest(ic[2].format(e+1), account=self.bot.gbfcurrent, decompress=True, load_json=True)
+                l = r['last']
+                r = await self.bot.sendRequest(ic[3].format(l, e+1), account=self.bot.gbfcurrent, decompress=True, load_json=True)
+                n = (l - 1) * 20 + len(r[ss[3]])
+                if n != self.bot.gbfdata['sd'][e]:
+                    found[ss[1].format(self.bot.getEmote(ee[str(e+1)]), self.bot.gbfdata['sd'][e], n)] = ""
+                    self.bot.gbfdata['sd'][e] = n
+                    self.bot.savePending = True
+            except Exception as abc:
+                await self.bot.send('debug', str(abc))
+                pass
+        await asyncio.sleep(0.001)
 
         if nc is not None:
             if self.bot.gbfdata['count'][2] != nc['archive']['weapon_num']['max']: found[ns[2].format(self.bot.gbfdata['count'][2], nc['archive']['weapon_num']['max'])] = ""
@@ -384,20 +423,20 @@ class GBF_Access(commands.Cog):
                     stid = self.bot.gbfdata['w'][k][i][-1] - 10
                     max = self.bot.gbfdata['w'][k][i][-1]
                 id = (103 + x) * 10000000 + i * 100000 + stid * 100
+                await asyncio.sleep(0.001)
                 while errc < 4 or stid <= max:
                     if stid in self.bot.gbfdata['w'][k][i]:
                         stid += 1
                         continue
 
-                    await asyncio.sleep(0.001)
-
                     id = (103 + x) * 10000000 + i * 100000 + stid * 100
-                    data = await self.bot.sendRequest(wl[0].format(id), no_base_headers=True)
-                    if data is None:
-                        data = await self.bot.sendRequest(wl[1].format(id), no_base_headers=True)
-                    if data is None:
-                        data = await self.bot.sendRequest(wl[2].format(id), no_base_headers=True)
-                    if data is None:
+                    wfound = False
+                    for wul in wl:
+                        data = await self.bot.sendRequest(wul.format(id), no_base_headers=True)
+                        if data is not None:
+                            wfound = True
+                            break
+                    if not wfound:
                         errc += 1
                         stid += 1
                         continue
@@ -405,7 +444,7 @@ class GBF_Access(commands.Cog):
                     errc = 0
                     self.bot.gbfdata['w'][k][i].append(stid)
 
-                    tt = ws[x+2].format(wt.get(str(i+1), "Error"))
+                    tt = ws[x+2].format(self.bot.getEmote(wt.get(str(i+1), "Error")))
                     if tt not in found:
                         found[tt] = 1
                     else:
@@ -419,6 +458,24 @@ class GBF_Access(commands.Cog):
                 self.bot.gbfdata['w'][k][i].sort()
                 if len(self.bot.gbfdata['w'][k][i]) > 11: self.bot.gbfdata['w'][k][i] = self.bot.gbfdata['w'][k][i][-11:]
                 self.bot.savePending = True
+
+        for t in range(10):
+            for e in range(6):
+                try:
+                    r = await self.bot.sendRequest(ic[0].format(t+1, e+1), account=self.bot.gbfcurrent, decompress=True, load_json=True)
+                    l = r['last']
+                    r = await self.bot.sendRequest(ic[1].format(l, t+1, e+1), account=self.bot.gbfcurrent, decompress=True, load_json=True)
+                    n = (l - 1) * 20 + len(r[ss[2]])
+                    if n != self.bot.gbfdata['wd'][t][e]:
+                        found[ss[0].format(self.bot.getEmote(ee[str(e+1)]), self.bot.getEmote(wt[str(t+1)]), self.bot.gbfdata['wd'][t][e], n)] = ""
+                        self.bot.gbfdata['wd'][t][e] = n
+                        self.bot.savePending = True
+                        await asyncio.sleep(0.001)
+                except Exception as abc:
+                    await self.bot.send('debug', str(abc))
+                    pass
+                await asyncio.sleep(0.001)
+
         return found
 
     async def summontask(self): # discord summon update task
@@ -460,9 +517,9 @@ class GBF_Access(commands.Cog):
         if self.sql['summon'][0]:
             return True
         else:
-            await self.bot.react(ctx, 'time')
+            await self.bot.react(ctx.message, 'time')
             r = await self.loadSumDB()
-            await self.bot.unreact(ctx, 'time')
+            await self.bot.unreact(ctx.message, 'time')
             return r
 
     async def getCrewData(self, ctx, target): # retrieve a crew data
@@ -625,7 +682,7 @@ class GBF_Access(commands.Cog):
             if not self.bot.isAuthorized(ctx):
                 await asyncio.sleep(60)
                 await final_msg.delete()
-                await ctx.message.add_reaction('✅') # white check mark
+                await self.bot.react(ctx.message, '✅') # white check mark
 
         except Exception as e:
             await self.bot.sendError("postCrewData", str(e))
@@ -858,7 +915,7 @@ class GBF_Access(commands.Cog):
             elif acc[3] == 2: msg += "❎"
             msg += "\n"
         await self.bot.send('debug', embed=self.bot.buildEmbed(title="GBF Account status", description=msg, color=self.color))
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
@@ -881,7 +938,7 @@ class GBF_Access(commands.Cog):
             self.bot.gbfaccounts[id][3] = 1
             self.bot.gbfaccounts[id][5] = self.bot.getJST()
             self.bot.savePending = True
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
@@ -890,9 +947,9 @@ class GBF_Access(commands.Cog):
         if self.bot.getGBFAccount(id) is not None:
             self.bot.gbfcurrent = id
             self.bot.savePending = True
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
         else:
-            await ctx.message.add_reaction('❌')
+            await self.bot.react(ctx.message, '❌')
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
@@ -908,14 +965,14 @@ class GBF_Access(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid parameter {}".format(ua), color=self.color))
             return
         self.bot.addGBFAccount(uid, ck, str)
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
     async def delAccount(self, ctx, num : int):
         """Add a GBF account to the bot (Owner only)"""
         if self.bot.delGBFAccount(num):
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="No account in slot {}".format(num), color=self.color))
 
@@ -931,7 +988,7 @@ class GBF_Access(commands.Cog):
                 await self.bot.send('debug', embed=self.bot.buildEmbed(title="Account #{} current UID".format(num), description="`{}`".format(acc[0]), color=self.color))
         elif not self.bot.updateGBFAccount(num, uid=uid):
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid parameter {}".format(uid), color=self.color))
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
@@ -945,7 +1002,7 @@ class GBF_Access(commands.Cog):
                 await self.bot.send('debug', embed=self.bot.buildEmbed(title="Account #{} current CK".format(num), description="`{}`".format(acc[1]), color=self.color))
         elif not self.bot.updateGBFAccount(num, ck=ck):
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid parameter {}".format(ck), color=self.color))
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
@@ -959,7 +1016,7 @@ class GBF_Access(commands.Cog):
                 await self.bot.send('debug', embed=self.bot.buildEmbed(title="Account #{} current UA".format(num), description="`{}`".format(acc[2]), color=self.color))
         elif not self.bot.updateGBFAccount(num, ua=ua):
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid parameter {}".format(ua), color=self.color))
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rateup', 'banner'])
     @commands.cooldown(1, 60, commands.BucketType.guild)
@@ -985,7 +1042,7 @@ class GBF_Access(commands.Cog):
                 del self.bot.gbfids[discord_id]
                 self.bot.savePending = True
                 await self.bot.send('debug', 'User `{}` has been removed'.format(discord_id))
-                await ctx.message.add_reaction('✅') # white check mark
+                await self.bot.react(ctx.message, '✅') # white check mark
                 return
         if str(discord_id) not in self.bot.gbfids:
             await ctx.send(embed=self.bot.buildEmbed(title="Clear Profile Error", description="ID not found", color=self.color))
@@ -995,10 +1052,10 @@ class GBF_Access(commands.Cog):
     @isOwner()
     async def forceSummonUpdate(self, ctx):
         """Force update the summon list (Owner only)"""
-        await self.bot.react(ctx, 'time')
+        await self.bot.react(ctx.message, 'time')
         await self.updateSummon()
-        await self.bot.unreact(ctx, 'time')
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.unreact(ctx.message, 'time')
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
@@ -1019,7 +1076,7 @@ class GBF_Access(commands.Cog):
             return
         del self.bot.gbfids[str(ctx.author.id)]
         self.bot.savePending = True
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setid'])
     @commands.cooldown(1, 60, commands.BucketType.user)
@@ -1043,7 +1100,7 @@ class GBF_Access(commands.Cog):
             # register
             self.bot.gbfids[str(ctx.author.id)] = id
             self.bot.savePending = True
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
         except Exception as e:
             await self.bot.sendError("setprofile", str(e))
 
@@ -1315,7 +1372,7 @@ class GBF_Access(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(60)
             await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 60, commands.BucketType.guild)
@@ -1395,9 +1452,9 @@ class GBF_Access(commands.Cog):
         if not await self.bot.isGameAvailable():
             await ctx.send(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))
             return
-        await self.bot.react(ctx, 'time')
+        await self.bot.react(ctx.message, 'time')
         data = await self.dad(id, False, mode)
-        await self.bot.unreact(ctx, 'time')
+        await self.bot.unreact(ctx.message, 'time')
         if data[0] != "":
             # processing
             fields = []
@@ -1411,7 +1468,7 @@ class GBF_Access(commands.Cog):
                     fields.append({'name':k, 'value':tmp[:-2]})
 
             await self.bot.send('debug', embed=self.bot.buildEmbed(title=id, description=data[0], fields=fields, color=self.color))
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
@@ -1420,9 +1477,9 @@ class GBF_Access(commands.Cog):
         if not await self.bot.isGameAvailable():
             await ctx.send(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))
             return
-        await self.bot.react(ctx, 'time')
+        await self.bot.react(ctx.message, 'time')
         news = await self.cc()
-        await self.bot.unreact(ctx, 'time')
+        await self.bot.unreact(ctx.message, 'time')
         msg = ""
         if len(news) > 0:
             msg += "**Content update**\n"
@@ -1430,7 +1487,7 @@ class GBF_Access(commands.Cog):
                 msg += "{} {}\n".format(news[k], k)
         if msg != "":
             await self.bot.send('debug', embed=self.bot.buildEmbed(title="Result", description=msg, color=self.color))
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     def isGWRunning(self): # return True if a guild war is on going
         if self.bot.gw['state'] == True:
@@ -1476,9 +1533,9 @@ class GBF_Access(commands.Cog):
     async def searchGWDBCrew(self, ctx, terms, mode):
         while self.loadinggw: await asyncio.sleep(0.001)
         if self.sql['old_gw'][2] is None or self.sql['gw'][2] is None:
-            await self.bot.react(ctx, 'time')
+            await self.bot.react(ctx.message, 'time')
             await self.loadGWDB()
-            await self.bot.unreact(ctx, 'time')
+            await self.bot.unreact(ctx.message, 'time')
 
         data = [None, None]
 
@@ -1513,9 +1570,9 @@ class GBF_Access(commands.Cog):
     async def searchGWDBPlayer(self, ctx, terms, mode):
         while self.loadinggw: await asyncio.sleep(0.001)
         if self.sql['old_gw'][2] is None or self.sql['gw'][2] is None:
-            await self.bot.react(ctx, 'time')
+            await self.bot.react(ctx.message, 'time')
             await self.loadGWDB()
-            await self.bot.unreact(ctx, 'time')
+            await self.bot.unreact(ctx.message, 'time')
 
         data = [None, None]
 
@@ -1552,13 +1609,13 @@ class GBF_Access(commands.Cog):
     async def reloadDB(self, ctx):
         """Download GW.sql (Owner only)"""
         while self.loadinggw: await asyncio.sleep(0.001)
-        await self.bot.react(ctx, 'time')
+        await self.bot.react(ctx.message, 'time')
         await self.loadGWDB()
-        await self.bot.unreact(ctx, 'time')
+        await self.bot.unreact(ctx.message, 'time')
         if False in self.sql or None in self.sql:
-            await ctx.message.add_reaction('❎') # white negative mark
+            await self.bot.react(ctx.message, '❎') # white negative mark
         else:
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwcrew'])
     @commands.cooldown(2, 15, commands.BucketType.user)
@@ -1645,7 +1702,7 @@ class GBF_Access(commands.Cog):
                 fields = []
 
         if all:
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
             return
         elif len(result) > 3: desc = "3/{} random result(s) shown".format(len(result))
         else: desc = ""
@@ -1734,7 +1791,7 @@ class GBF_Access(commands.Cog):
                 fields = []
 
         if all:
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
             return
         elif len(result) > 30: desc = "30/{} random result(s) shown".format(len(result))
         else: desc = ""

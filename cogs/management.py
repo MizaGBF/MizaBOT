@@ -49,7 +49,7 @@ class Management(commands.Cog):
         if len(terms) == 0:
             return
         await self.bot.send('debug', embed=self.bot.buildEmbed(title="Bug Report", description=terms, footer="{} ▫️ User ID: {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar_url, color=self.color))
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isAuthorized()
@@ -71,7 +71,7 @@ class Management(commands.Cog):
         if id in self.bot.st:
             self.bot.st.pop(id)
             self.bot.savePending = True
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
         else:
             await ctx.send(embed=self.bot.buildEmbed(title=ctx.guild.name, description="No ST set on this server\nI can't delete.", thumbnail=ctx.guild.icon_url, color=self.color))
 
@@ -84,7 +84,7 @@ class Management(commands.Cog):
             return
         self.bot.st[str(ctx.message.author.guild.id)] = [st1, st2]
         self.bot.savePending = True
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['banspark'])
     @isMod()
@@ -190,7 +190,7 @@ class Management(commands.Cog):
         self.bot.cancelTask('check_buff')
         self.bot.gw['state'] = False
         self.bot.savePending = True
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isAuthorizedSpecial()
@@ -202,7 +202,7 @@ class Management(commands.Cog):
             self.bot.gw['state'] = True
             self.bot.runTask('check_buff', self.bot.get_cog('GuildWar').checkGWBuff)
             self.bot.savePending = True
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="No Guild War available in my memory", color=self.color))
 
@@ -213,7 +213,7 @@ class Management(commands.Cog):
         if not self.bot.gw['skip']:
             self.bot.gw['skip'] = True
             self.bot.savePending = True
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I'm already skipping the next set of buffs", color=self.color))
 
@@ -224,7 +224,7 @@ class Management(commands.Cog):
         if self.bot.gw['skip']:
             self.bot.gw['skip'] = False
             self.bot.savePending = True
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="No buff skip is currently set", color=self.color))
 
@@ -245,11 +245,11 @@ class Management(commands.Cog):
                     await self.bot.callCommand(ctx, 'seeBotPermission')
                 except Exception as e:
                     pass
-                await ctx.message.add_reaction('➖')
+                await self.bot.react(ctx.message, '➖')
                 return
         self.bot.permitted[gid].append(cid)
         self.bot.savePending = True
-        await ctx.message.add_reaction('➕')
+        await self.bot.react(ctx.message, '➕')
         try:
             await self.bot.callCommand(ctx, 'seeBotPermission')
         except Exception as e:
@@ -305,7 +305,7 @@ class Management(commands.Cog):
     async def asar(self, ctx, *, role_name : str = ""):
         """Add a role to the list of self-assignable roles (Mod Only)"""
         if role_name == "":
-            await ctx.message.add_reaction('❎') # negative check mark
+            await self.bot.react(ctx.message, '❎') # negative check mark
             return
         role = None
         for r in ctx.guild.roles:
@@ -313,24 +313,24 @@ class Management(commands.Cog):
                 role = r
                 break
         if role is None:
-            await ctx.message.add_reaction('❎') # negative check mark
+            await self.bot.react(ctx.message, '❎') # negative check mark
             return
         id = str(ctx.guild.id)
         if id not in self.bot.assignablerole:
             self.bot.assignablerole[id] = {}
         if role.name.lower() in self.bot.assignablerole[id]:
-            await ctx.message.add_reaction('❎') # negative check mark
+            await self.bot.react(ctx.message, '❎') # negative check mark
             return
         self.bot.assignablerole[id][role.name.lower()] = role.id
         self.bot.savePending = True
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isMod()
     async def rsar(self, ctx, *, role_name : str = ""):
         """Remove a role from the list of self-assignable roles (Mod Only)"""
         if role_name == "":
-            await ctx.message.add_reaction('❎') # negative check mark
+            await self.bot.react(ctx.message, '❎') # negative check mark
             return
         role = None
         for r in ctx.guild.roles:
@@ -338,14 +338,14 @@ class Management(commands.Cog):
                 role = r
                 break
         if role is None:
-            await ctx.message.add_reaction('❎') # negative check mark
+            await self.bot.react(ctx.message, '❎') # negative check mark
             return
         id = str(ctx.guild.id)
         if id not in self.bot.assignablerole:
             self.bot.assignablerole[id] = {}
         if role.name.lower() not in self.bot.assignablerole[id]:
-            await ctx.message.add_reaction('❎') # negative check mark
+            await self.bot.react(ctx.message, '❎') # negative check mark
             return
         self.bot.assignablerole[id].pop(role.name.lower())
         self.bot.savePending = True
-        await ctx.message.add_reaction('✅') # white check mark
+        await self.bot.react(ctx.message, '✅') # white check mark

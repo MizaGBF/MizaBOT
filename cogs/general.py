@@ -264,7 +264,7 @@ class General(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(20)
             await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['choice'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -281,7 +281,7 @@ class General(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(20)
             await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['math'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -337,7 +337,7 @@ class General(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(20)
             await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['hgg2d'])
     @commands.cooldown(1, 10, commands.BucketType.default)
@@ -431,7 +431,7 @@ class General(commands.Cog):
         try:
             self.bot.reminders[id].append([datetime.utcnow().replace(microsecond=0) + timedelta(seconds=32400) + d, msg]) # keep JST
             self.bot.savePending = True
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
         except:
             await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", footer="I have no clues about what went wrong", color=self.color))
 
@@ -464,7 +464,7 @@ class General(commands.Cog):
                 if len(self.bot.reminders[id]) == 0:
                     self.bot.reminders.pop(id)
                 self.bot.savePending = True
-                await ctx.message.add_reaction('✅') # white check mark
+                await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 1, commands.BucketType.user)
@@ -473,12 +473,12 @@ class General(commands.Cog):
         g = str(ctx.guild.id)
         roles = self.bot.assignablerole.get(g, {})
         if role_name.lower() not in roles:
-            await ctx.message.add_reaction('❎') # negative check mark
+            await self.bot.react(ctx.message, '❎') # negative check mark
         else:
             id = roles[role_name.lower()]
             r = ctx.guild.get_role(id)
             if r is None: # role doesn't exist anymore
-                await ctx.message.add_reaction('❎') # negative check mark
+                await self.bot.react(ctx.message, '❎') # negative check mark
                 self.bot.assignablerole[g].pop(role_name.lower())
                 if len(self.bot.assignablerole[g]) == 0:
                     self.bot.assignablerole.pop(g)
@@ -488,7 +488,7 @@ class General(commands.Cog):
                     await ctx.author.add_roles(r)
                 except:
                     pass
-                await ctx.message.add_reaction('✅') # white check mark
+                await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['iamn'])
     @commands.cooldown(1, 1, commands.BucketType.user)
@@ -497,12 +497,12 @@ class General(commands.Cog):
         g = str(ctx.guild.id)
         roles = self.bot.assignablerole.get(g, {})
         if role_name.lower() not in roles:
-            await ctx.message.add_reaction('❎') # negative check mark
+            await self.bot.react(ctx.message, '❎') # negative check mark
         else:
             id = roles[role_name.lower()]
             r = ctx.guild.get_role(id)
             if r is None: # role doesn't exist anymore
-                await ctx.message.add_reaction('❎') # negative check mark
+                await self.bot.react(ctx.message, '❎') # negative check mark
                 self.bot.assignablerole[g].pop(role_name.lower())
                 if len(self.bot.assignablerole[g]) == 0:
                     self.bot.assignablerole.pop(g)
@@ -512,7 +512,7 @@ class General(commands.Cog):
                     await ctx.author.remove_roles(r)
                 except:
                     pass
-                await ctx.message.add_reaction('✅') # white check mark
+                await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 5, commands.BucketType.guild)
@@ -548,7 +548,7 @@ class General(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(30)
             await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['nitro', 'here'])
     @commands.cooldown(1, 30, commands.BucketType.guild)

@@ -36,10 +36,9 @@ class MizabotHelp(commands.DefaultHelpCommand):
         me = ctx.author.guild.me # bot own user infos
 
         try:
-            await ctx.message.add_reaction('📬')
+            await bot.react(ctx.message, '📬')
         except:
             await ctx.send(embed=bot.buildEmbed(title="Help Error", description="Unblock me to receive the Help"))
-            await ctx.message.remove_reaction('📬', ctx.guild.me)
             return
 
         if bot.description: # send the bot description first
@@ -47,7 +46,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
                 await ctx.author.send(embed=bot.buildEmbed(title=me.name + " Help", description=bot.description, thumbnail=me.avatar_url)) # author.send = dm
             except:
                 await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
-                await ctx.message.remove_reaction('📬', ctx.guild.me)
+                await bot.unreact(ctx.message, '📬')
                 return
 
         no_category = "No Category:"
@@ -70,7 +69,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
                             await ctx.author.send(embed=embed) # author.send = dm
                         except:
                             await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
-                            await ctx.message.remove_reaction('📬', ctx.guild.me)
+                            await bot.unreact(ctx.message, '📬')
                             return
                         embed = discord.Embed(title="{} **{}** Category".format(bot.getEmote('mark'), category[:-1]), color=embed.colour)
                 if len(embed.fields) > 0: # only send if there is at least one field
@@ -78,15 +77,15 @@ class MizabotHelp(commands.DefaultHelpCommand):
                         await ctx.author.send(embed=embed) # author.send = dm
                     except:
                         await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
-                        await ctx.message.remove_reaction('📬', ctx.guild.me)
+                        await bot.unreact(ctx.message, '📬')
                         return
 
         # final words
         await ctx.author.send(embed=bot.buildEmbed(title="{} Need more help?".format(bot.getEmote('question')), description="Use help <command name>\nOr help <category name>"))
 
         try:
-            await ctx.message.remove_reaction('📬', ctx.guild.me)
-            await ctx.message.add_reaction('✅') # white check mark
+            await bot.unreact(ctx.message, '📬')
+            await bot.react(ctx.message, '✅') # white check mark
         except:
             await ctx.send(embed=bot.buildEmbed(title="Help Error", description="Did {} delete its message?".format(ctx.author)))
 
@@ -94,7 +93,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
         ctx = self.context
         bot = ctx.bot
         try:
-            await ctx.message.add_reaction('📬')
+            await bot.react(ctx.message, '📬')
         except:
             await ctx.send(embed=bot.buildEmbed(title="Help Error", description="Unblock me to receive the Help"))
             return
@@ -107,17 +106,17 @@ class MizabotHelp(commands.DefaultHelpCommand):
             await ctx.author.send(embed=embed) # author.send = dm
         except:
             await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
-            await ctx.message.remove_reaction('📬', ctx.guild.me)
+            await bot.unreact(ctx.message, '📬')
             return
 
-        await ctx.message.remove_reaction('📬', ctx.guild.me)
+        await bot.unreact(ctx.message, '📬')
         await self.context.message.add_reaction('✅') # white check mark
 
     async def send_cog_help(self, cog): # category help ($help <category)
         ctx = self.context
         bot = ctx.bot
         try:
-            await ctx.message.add_reaction('📬')
+            await bot.react(ctx.message, '📬')
         except:
             await ctx.send(embed=bot.buildEmbed(title="Help Error", description="Unblock me to receive the Help"))
             return
@@ -132,7 +131,7 @@ class MizabotHelp(commands.DefaultHelpCommand):
                     await ctx.author.send(embed=embed) # author.send = dm
                 except:
                     await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
-                    await ctx.message.remove_reaction('📬', ctx.guild.me)
+                    await bot.unreact(ctx.message, '📬')
                     return
                 embed = discord.Embed(title="{} **{}** Category".format(bot.getEmote('mark'), cog.qualified_name), description=cog.description, color=embed.colour)
         if len(embed.fields) > 0:
@@ -140,11 +139,11 @@ class MizabotHelp(commands.DefaultHelpCommand):
                 await ctx.author.send(embed=embed) # author.send = dm
             except:
                 await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
-                await ctx.message.remove_reaction('📬', ctx.guild.me)
+                await bot.unreact(ctx.message, '📬')
                 return
 
-        await ctx.message.remove_reaction('📬', ctx.guild.me)
-        await self.context.message.add_reaction('✅') # white check mark
+        await bot.unreact(ctx.message, '📬')
+        await bot.react(ctx.message, '✅') # white check mark
 
 # #####################################################################################
 # Google Drive Access (to save/load the data)
@@ -271,7 +270,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.13" # version number
+        self.botversion = "6.14" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Improved `$wiki`, `$gw`, `$4chan`, `$hgg` and `$gbfg`", "Reworked `$seeroll` and `$ubhl`", "Added `$serverinfo`, `$luci` and `$bubs`", "Roll commands (`$roulette`, etc...) automatically detect premium galas", "Cleaned up some old commands"] # bot changelog
         self.running = True # if True, the bot is running
@@ -675,19 +674,19 @@ class Mizabot(commands.Bot):
                 return ""
             except:
                 return ""
-        return ""
+        return key
 
-    async def react(self, ctx, key): # add a reaction using a custom emote defined in config.json
+    async def react(self, msg, key): # add a reaction using a custom emote defined in config.json
         try:
-            await ctx.message.add_reaction(self.getEmote(key))
+            await msg.add_reaction(self.getEmote(key))
             return True
         except Exception as e:
             await self.sendError('react', str(e))
             return False
 
-    async def unreact(self, ctx, key): # remove a reaction using a custom emote defined in config.json
+    async def unreact(self, msg, key): # remove a reaction using a custom emote defined in config.json
         try:
-            await ctx.message.remove_reaction(self.getEmote(key), ctx.guild.me)
+            await msg.remove_reaction(self.getEmote(key), msg.guild.me)
             return True
         except Exception as e:
             await self.sendError('unreact', str(e))
@@ -1072,7 +1071,7 @@ async def global_check(ctx):
         await ctx.guild.leave() # leave the server if banned
         return False
     elif id in bot.guilddata['pending']: # pending check
-        await bot.react(ctx, 'cooldown')
+        await bot.react(ctx.message, 'cooldown')
         return False
     elif ctx.guild.owner.id in bot.bannedusers:
         await bot.send('debug', embed=bot.buildEmbed(title="[TEST] Banned message by {}".format(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=datetime.utcnow()))
@@ -1083,7 +1082,7 @@ async def global_check(ctx):
 async def on_command_error(ctx, error):
     msg = str(error)
     if msg.find('You are on cooldown.') == 0:
-        await bot.react(ctx, 'cooldown')
+        await bot.react(ctx.message, 'cooldown')
     elif msg.find('required argument that is missing') != -1:
         return
     elif msg.find('check functions for command') != -1:

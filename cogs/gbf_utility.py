@@ -298,7 +298,7 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(80)
             await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gbfwiki'])
@@ -648,7 +648,7 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(60)
             await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -683,7 +683,7 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(60)
             await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -701,7 +701,7 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(60)
             await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -740,7 +740,7 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(60)
             await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['friday'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -920,7 +920,7 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(60)
             await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['cb'])
     @commands.cooldown(1, 15, commands.BucketType.guild)
@@ -930,7 +930,7 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(30)
             await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["doom", "doompost", "magnafest", "magnafes", "campaign", "brick", "bar", "sunlight", "stone", "suptix", "surprise", "evolite", "fugdidmagnafeststart"])
     @commands.cooldown(1, 60, commands.BucketType.guild)
@@ -953,7 +953,7 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(30)
             await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setcrystal', 'setspark'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
@@ -982,7 +982,7 @@ class GBF_Utility(commands.Cog):
             if not self.bot.isAuthorized(ctx):
                 await asyncio.sleep(30)
                 await final_msg.delete()
-                await ctx.message.add_reaction('✅') # white check mark
+                await self.bot.react(ctx.message, '✅') # white check mark
         except:
             pass
 
@@ -1046,7 +1046,7 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(30)
             await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["sparkranking", "hoarders"])
     @commands.cooldown(1, 3, commands.BucketType.guild)
@@ -1098,4 +1098,4 @@ class GBF_Utility(commands.Cog):
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(30)
             await final_msg.delete()
-            await ctx.message.add_reaction('✅') # white check mark
+            await self.bot.react(ctx.message, '✅') # white check mark
