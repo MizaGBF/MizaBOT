@@ -561,7 +561,10 @@ class GBF_Utility(commands.Cog):
         if len(self.bot.stream['content']) == 0:
             await ctx.send(embed=self.bot.buildEmbed(title="No event or stream available", color=self.color))
         elif op == "raw":
-            await ctx.send('`' + str(self.bot.stream['content']) + '`')
+            msg = ""
+            for c in self.bot.stream['content']:
+                msg += c + '\n'
+            await ctx.send('`' + msg + '`')
         else:
             title = self.bot.stream['content'][0]
             msg = ""
