@@ -7,6 +7,7 @@
 * [psutil](https://psutil.readthedocs.io/en/latest/).  
 * [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/).  
 * [Tweepy](https://github.com/tweepy/tweepy).  
+* [Pillow](https://pillow.readthedocs.io/en/stable/).  
 * `pip install -r requirements.txt` to install all the modules.  
 ### Setup  
 The bot is designed to be used on [Heroku](https://www.heroku.com).  
