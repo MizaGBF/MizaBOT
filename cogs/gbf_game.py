@@ -146,18 +146,15 @@ class GBF_Game(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['scratcher'])
     @commands.cooldown(1, 300, commands.BucketType.user)
     async def scratch(self, ctx):
-        """Imitate the GBF scratch game"""
+        """Imitate the GBF scratch game from Anniversary 2020"""
         # loot table (based on real one)
         loot = {
             'Siero Ticket':10,
             'Sunlight Stone':300,
             'Gold Brick':200,
             'Damascus Ingot':450,
-            'Agni':1375, 'Varuna':1375, 'Titan':1375, 'Zephyrus':1375, 'Zeus':1375, 'Hades':1375,
-            'Shiva':1375, 'Europa':1375, 'Godsworn Alexiel':1375, 'Grimnir':1375,
-            'Lucifer':1375, 'Bahamut':1375,
-            'Michael':1375, 'Gabriel':1375, 'Uriel':1375, 'Raphael':1375, 'Metatron':1375, 'Sariel':1375,
-            'Murgleis':892, 'Benedia':892, 'Gambanteinn':892, 'Love Eternal':892, 'AK-4A':892, 'Reunion':892, 'Ichigo-Hitofuri':892, 'Taisai Spirit Bow':892, 'Unheil':892, 'Sky Ace':892, 'Ivory Ark':892, 'Blutgang':892, 'Eden':892, 'Parazonium':892, 'Ixaba':892, 'Blue Sphere':892, 'Certificus':892, 'Fallen Sword':892, 'Mirror-Blade Shard':892, 'Galilei\'s Insight':892, 'Purifying Thunderbolt':892, 'Vortex of the Void':892, 'Sacred Standard':892, 'Bab-el-Mandeb':892, 'Cute Ribbon':892, 'Kerak': 892, 'Sunya':892, 'Fist of Destruction': 892, 'Yahata\'s Naginata': 892, # (25x1000)->25000 / 28
+            'Agni':1302, 'Varuna':1302, 'Titan':1302, 'Zephyrus':1302, 'Zeus':1302, 'Hades':1302, 'Shiva':1302, 'Europa':1302, 'Godsworn Alexiel':1302, 'Grimnir':1302, 'Lucifer':1302, 'Bahamut':1302, 'Michael':1302, 'Gabriel':1302, 'Uriel':1302, 'Raphael':1302, 'Metatron':1302, 'Sariel':1302, 'Belial':1302, # (18*1375)->24750 / 19
+            'Murgleis':862, 'Benedia':862, 'Gambanteinn':862, 'Love Eternal':862, 'AK-4A':862, 'Reunion':862, 'Ichigo-Hitofuri':862, 'Taisai Spirit Bow':862, 'Unheil':862, 'Sky Ace':862, 'Ivory Ark':862, 'Blutgang':862, 'Eden':862, 'Parazonium':862, 'Ixaba':862, 'Blue Sphere':862, 'Certificus':862, 'Fallen Sword':862, 'Mirror-Blade Shard':862, 'Galilei\'s Insight':862, 'Purifying Thunderbolt':862, 'Vortex of the Void':862, 'Sacred Standard':862, 'Bab-el-Mandeb':862, 'Cute Ribbon':862, 'Kerak': 862, 'Sunya':862, 'Fist of Destruction': 862, 'Yahata\'s Naginata': 862, # (25x1000)->25000 / 29
             'Crystals x3000':8000,
             'Intricacy Ring':3000, 'Gold Spellbook':3000, 'Moonlight Stone':3000, 'Gold Moon x2':3000, 'Ultima Unit x3':3000, 'Silver Centrum x5':3000, 'Primeval Horn x3':3000, 'Horn of Bahamut x4':3000, 'Legendary Merit x5':3000, 'Steel Brick':3000,
             'Lineage Ring x2':4000, 'Coronation Ring x3':4000, 'Silver Moon x5':4000, 'Bronze Moon x10':5000, 'Half Elixir x100':6000, 'Soul Berry x300':6000
@@ -270,6 +267,90 @@ class GBF_Game(commands.Cog):
             pulled[grid[i][0]] = pulled.get(grid[i][0], 0) + 1
             if reveal_count == 9 or (selected[grid[i][0]] == 0 and grid[i][0] == win):
                 win_flag = True
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['chests', 'rush'])
+    @commands.cooldown(1, 300, commands.BucketType.user)
+    async def chest(self, ctx):
+        """Imitate the GBF treasure game from Summer 2020"""
+        message = None
+        loot = {
+            'Murgleis':100, 'Benedia':100, 'Gambanteinn':100, 'Love Eternal':100, 'AK-4A':100, 'Reunion':100, 'Ichigo-Hitofuri':100, 'Taisai Spirit Bow':100, 'Unheil':100, 'Sky Ace':100, 'Ivory Ark':100, 'Blutgang':100, 'Eden':100, 'Parazonium':100, 'Ixaba':100, 'Blue Sphere':100, 'Certificus':100, 'Fallen Sword':100, 'Mirror-Blade Shard':100, 'Galilei\'s Insight':100, 'Purifying Thunderbolt':100, 'Vortex of the Void':100, 'Sacred Standard':100, 'Bab-el-Mandeb':100, 'Cute Ribbon':100, 'Kerak':100, 'Sunya':100, 'Fist of Destruction':100, 'Yahata\'s Naginata':100,
+            'Ruler of Fate':300, 'Ancient Bandages':300, 'Gottfried':300, 'Acid Bolt Shooter':300, 'Mystic Spray Gun':300, 'Metal Destroyer':300, 'Gangsta Knife':300, 'Vagabond':300, 'Heavenly Fawn Bow':300, 'Another Sky':300,
+            'Agni':150, 'Varuna':150, 'Titan':150, 'Zephyrus':150, 'Zeus':150, 'Hades':150, 'Shiva':150, 'Europa':150, 'Godsworn Alexiel':150, 'Grimnir':150, 'Lucifer':150, 'Bahamut':150, 'Michael':150, 'Gabriel':150, 'Uriel':150, 'Raphael':150, 'Metatron':150, 'Sariel':150, 'Belial':150,
+            '10K Crystal':100,
+            '3K Crystal':600,'Intricacy Ring x3':600,'Damascus Crystal x3':600, 'Premium 10-Part Ticket':600,
+            'Intricacy Ring':1000, 'Lineage Ring x2':1000, 'Coronation Ring x3':1000, 'Gold Moon x2':1000,
+            'Gold Moon':1500, 'Silver Moon x5':1500, 'Bronze Moon x10':1500, 'Premium Draw Ticket':1500, 'Gold Spellbook x3':1500,
+            'Half Elixir x10':2250, 'Soul Berry x10':2250, 
+            "Satin Feather x10":2500, "Zephyr Feather x10":2500, "Untamed Flame x10":2500, "Rough Stone x10":2500, "Fresh Water Jug x10":2500, "Swirling Amber x10":2500, "Falcon Feather x10":2500, "Vermilion Stone x10":2500, "Hollow Soul x10":2500, "Lacrimosa x10":2500, "Foreboding Clover x10":2500, "Blood Amber x10":2500, "Antique Cloth x10":2500, 
+            "White Dragon Scale x10":2500, "Champion Merit x10":2500, "Supreme Merit x10":2500, "Blue Sky Crystal x10":2500, "Rainbow Prism x10":2500, "Rubeus Cenum x10":2500, "Indicus Cenum x10":2500, "Luteus Cenum x10":2500, "Galbinus Cenum x10":2500, "Niveus Cenum x10":2500, "Ater Cenum x10":2500, "Fire Urn x10":2500, "Water Urn x10":2500, "Earth Urn x10":2500, "Wind Urn x10":2500, "Light Urn x10":2500, "Dark Urn x10":2500, "Horn of Bahamut x10":2500, "Primeval Horn x10":2500, "Legendary Merit":2500, 
+            "Sword Stone x50":2000, "Dagger Stone x50":2000, "Spear Stone x50":2000, "Axe Stone x50":2000, "Staff Stone x50":2000, "Pistol Stone x50":2000, "Melee Stone x50":2000, "Bow Stone x50":2000, "Harp Stone x50":2000, "Katana Stone x50":2000, "Silver Centrum x5":2000, "Ultima Unit x3":2000, "Fire Quartz x50":2000, "Water Quartz x50":2000, "Earth Quartz x50":2000, "Wind Quartz x50":2000, "Light Quartz x50":2000, "Dark Quartz x50":2000, "Shiva Omega Anima x3":2000, "Europa Omega Anima x3":2000, "Alexiel Omega Anima x3":2000, "Grimnir Omega Anima x3":2000, "Metatron Omega Anima x3":2000, "Avatar Omega Anima x3":2000
+        }
+
+        mm = 0 # maximum random loot value
+        rm = 0 # rare loot value
+        for x in loot:
+            mm += loot[x] # calculated here
+            if x == 'Premium 10-Part Ticket': rm = mm
+
+        results = []
+        l = random.randint(0, 9)
+        while len(results) < l:
+            n = random.randint(1, mm)
+            c = 0
+            check = ""
+            for x in loot:
+                if n < c + loot[x]:
+                    check = x
+                    break
+                else:
+                    c += loot[x]
+            if check != "":
+                if n < rm and random.randint(1, 100) <= 20: results.append(["**" + check + "**", -1])
+                else: results.append([check, 0])
+
+        while len(results) < 9: results.append([None, 0])
+        random.shuffle(results)
+
+        opened = 0
+        game_over = False
+        fields = [{'name': "{}".format(self.bot.getEmote('1')), 'value':''}, {'name': "{}".format(self.bot.getEmote('2')), 'value':''}, {'name': "{}".format(self.bot.getEmote('3')), 'value':''}]
+        title = "{} is opening...".format(ctx.author.display_name)
+        while True:
+            for i in range(9):
+                if i < 3: fields[i]['value'] = ''
+                if results[i][1] == -1: fields[i%3]['value'] += "{0}{0}{0}{0}{0}{0}\n".format(self.bot.getEmote('red'))
+                elif results[i][1] == 0: fields[i%3]['value'] += "{0}{0}{0}{0}{0}{0}\n".format(self.bot.getEmote('gold'))
+                elif results[i][0] is None: fields[i%3]['value'] += "{0}{0}{0}{0}{0}{0}\n".format(self.bot.getEmote('kmr'))
+                else: fields[i%3]['value'] += results[i][0] + "\n"
+
+            if game_over:
+                title = "{} opened".format(ctx.author.display_name)
+            if message is None:
+                message = await ctx.send(embed=self.bot.buildEmbed(author={'name':title, 'icon_url':ctx.author.avatar_url}, inline=True, fields=fields, color=self.color))
+            else:
+                await message.edit(embed=self.bot.buildEmbed(author={'name':title, 'icon_url':ctx.author.avatar_url}, inline=True, fields=fields, color=self.color))
+            if game_over:
+                if not self.bot.isAuthorized(ctx):
+                    await asyncio.sleep(45)
+                    await message.delete()
+                    await self.bot.react(ctx.message, '✅') # white check mark
+                return
+            await asyncio.sleep(1)
+
+            while True:
+                n = random.randint(0, 8)
+                if results[n][1] <= 0:
+                    if results[n][0] is None:
+                        if l == opened:
+                            results[n][1] = 1
+                            game_over = True
+                            break
+                    else:
+                        results[n][1] = 1
+                        opened += 1
+                        if opened == 9: game_over = True
+                        break
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 180, commands.BucketType.user)

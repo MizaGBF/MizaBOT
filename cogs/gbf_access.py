@@ -16,8 +16,7 @@ import string
 import sqlite3
 from bs4 import BeautifulSoup
 from xml.sax import saxutils as su
-
-import math
+from PIL import Image, ImageFont, ImageDraw
 
 class GBF_Access(commands.Cog):
     """GBF advanced commands."""
@@ -246,6 +245,7 @@ class GBF_Access(commands.Cog):
 
         paste = ""
         counter = 0
+        font = ImageFont.truetype("assets/font.ttf", 16)
         for f in files[type]:
             if mode == 1: ff = f[0] + id + f[1] + '_s2'
             else: ff = f[0] + id + f[1]
@@ -262,6 +262,9 @@ class GBF_Access(commands.Cog):
                 stack = []
                 dupelist = []
                 match = 0
+                rcs = []
+                wd = 0
+                ht = 0
                 current = data.find("{", 0) + 1
 
                 while current < len(data):
@@ -299,8 +302,39 @@ class GBF_Access(commands.Cog):
                                 stack.pop()
                             except:
                                 pass
+                        elif len(stack) == 1:
+                            sstr = data[current:]
+                            if sstr.startswith("Rectangle("):
+                                lp = sstr.find(")")
+                                try:
+                                    rc = sstr[len("Rectangle("):lp].split(',')
+                                    rc = [int(ir.replace('1e3', '1000')) for ir in rc]
+                                    for p in rc:
+                                        if p < 0: raise Exception()
+                                    if sum(rc) == 0:
+                                        raise Exception()
+                                    rc[2] += rc[0]
+                                    rc[3] += rc[1]
+                                    if rc[2] > wd: wd = rc[2]
+                                    if rc[3] > ht: ht = rc[3]
+                                    rc.append(stack[-1][-2])
+                                    rcs.append(rc)
+                                except:
+                                    pass
                     current += 1
                 paste += self.pa(root, 0)
+                i = Image.new('RGBA', (wd+10,ht+10), "black")
+                d = ImageDraw.Draw(i)
+                for rc in rcs:
+                    try:
+                        d.rectangle(rc[:4],outline=(160,160,160))
+                        d.text((rc[0], rc[1]),rc[4],font=font,fill=(255,255,255))
+                    except:
+                        pass
+                i.save("{}.png".format(ff), "PNG")
+                with open("{}.png".format(ff), 'rb') as infile:
+                    await self.bot.send('debug', "{}.png".format(ff), file=discord.File(infile))
+                self.bot.delFile("{}.png".format(ff))
             except:
                 if counter >= 3 and len(paste) == 0: return ["", {}]
             counter+=1

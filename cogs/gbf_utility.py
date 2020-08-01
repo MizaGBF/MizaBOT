@@ -932,19 +932,23 @@ class GBF_Utility(commands.Cog):
             await final_msg.delete()
             await self.bot.react(ctx.message, '✅') # white check mark
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["doom", "doompost", "magnafest", "magnafes", "campaign", "brick", "bar", "sunlight", "stone", "suptix", "surprise", "evolite", "fugdidmagnafeststart"])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["doom", "doompost", "magnafest", "magnafes", "campaign", "brick", "bar", "sunlight", "stone", "suptix", "surprise", "evolite", "fugdidmagnafeststart", "alivegame", "alive"])
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def deadgame(self, ctx):
         """Give the time elapsed of various GBF related releases"""
         msg = ""
-        wiki_checks = [["Category:Campaign", "<td>(\d+ days)<\/td>\s*<td>Time since last campaign<\/td>"], ["Surprise_Special_Draw_Set", "<td>(\d+ days)<\/td>\s*<td>Time since last ticket<\/td>"], ["Damascus_Ingot", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last brick<\/td>"], ["Gold_Brick", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last brick<\/td>"], ["Sunlight_Stone", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last stone<\/td>"], ["Sephira_Evolite", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last evolite<\/td>"]]
+        wiki_checks = ["Category:Campaign", "Surprise_Special_Draw_Set", "Damascus_Ingot", "Gold_Brick", "Sunlight_Stone", "Sephira_Evolite"]
+        regexs = ["<td>(\d+ days)<\/td>\s*<td>Time since last", "<td>(-\d+ days)<\/td>\s*<td>Time since last", "<td>(\d+ days)<\/td>\s*<td>Time since last", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last "]
         for w in wiki_checks:
             async with aiohttp.ClientSession() as session:
-                async with session.get("https://gbf.wiki/{}".format(w[0])) as r:
+                async with session.get("https://gbf.wiki/{}".format(w)) as r:
                     if r.status == 200:
-                        m = re.search(w[1], await r.text())
-                        if m:
-                            msg += "**{}** since the last {}\n".format(m.group(1), w[0].replace("_", " ").replace("Category:", ""))
+                        t = await r.text()
+                        for r in regexs:
+                            m = re.search(r, t)
+                            if m:
+                                msg += "**{}** since the last {}\n".format(m.group(1), w.replace("_", " ").replace("Category:", ""))
+                                break
 
         if msg != "":
             final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))
@@ -1010,8 +1014,8 @@ class GBF_Utility(commands.Cog):
 
             # calculate estimation
             # note: those numbers are from my own experimentation
-            month_min = [80, 80, 140, 95, 80, 75, 75, 140, 70, 80, 80, 150]
-            month_max = [60, 50, 100, 70, 55, 50, 50, 100, 50, 60, 60, 110]
+            month_min = [80, 80, 140, 95, 80, 75, 75, 210, 70, 80, 80, 150]
+            month_max = [60, 50, 100, 70, 55, 50, 50, 180, 50, 60, 60, 110]
             month_day = [31.0, 28.25, 31.0, 30.0, 31.0, 30.0, 31.0, 31.0, 30.0, 31.0, 30.0, 31.0]
 
             # get current day
