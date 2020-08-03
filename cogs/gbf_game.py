@@ -306,7 +306,7 @@ class GBF_Game(commands.Cog):
                 else:
                     c += loot[x]
             if check != "":
-                if n < rm and random.randint(1, 100) <= 20: results.append(["**" + check + "**", -1])
+                if n < rm and len(results) == l - 1: results.append(["**" + check + "**", -1])
                 else: results.append([check, 0])
 
         while len(results) < 9: results.append([None, 0])
@@ -314,13 +314,16 @@ class GBF_Game(commands.Cog):
 
         opened = 0
         game_over = False
+        display_chest = True
         fields = [{'name': "{}".format(self.bot.getEmote('1')), 'value':''}, {'name': "{}".format(self.bot.getEmote('2')), 'value':''}, {'name': "{}".format(self.bot.getEmote('3')), 'value':''}]
         title = "{} is opening...".format(ctx.author.display_name)
         while True:
             for i in range(9):
                 if i < 3: fields[i]['value'] = ''
-                if results[i][1] == -1: fields[i%3]['value'] += "{0}{0}{0}{0}{0}{0}\n".format(self.bot.getEmote('red'))
-                elif results[i][1] == 0: fields[i%3]['value'] += "{0}{0}{0}{0}{0}{0}\n".format(self.bot.getEmote('gold'))
+                if results[i][1] == -3: fields[i%3]['value'] += "{0}{0}{0}{0}{0}{0}\n".format(self.bot.getEmote('red'))
+                elif results[i][1] == -2: fields[i%3]['value'] += "{0}{0}{0}{0}{0}{0}\n".format(self.bot.getEmote('kmr'))
+                elif results[i][1] <= 0 and display_chest: fields[i%3]['value'] += "{0}{0}{0}{0}{0}{0}\n".format(self.bot.getEmote('gold'))
+                elif results[i][1] <= 0: fields[i%3]['value'] += "✖️\n"
                 elif results[i][0] is None: fields[i%3]['value'] += "{0}{0}{0}{0}{0}{0}\n".format(self.bot.getEmote('kmr'))
                 else: fields[i%3]['value'] += results[i][0] + "\n"
 
@@ -341,15 +344,27 @@ class GBF_Game(commands.Cog):
             while True:
                 n = random.randint(0, 8)
                 if results[n][1] <= 0:
-                    if results[n][0] is None:
+                    if results[n][1] == -3:
+                        results[n][1] = 1
+                        opened += 1
+                        game_over = True
+                        break
+                    elif results[n][1] < 0:
+                        results[n][1] -= 1
+                        display_chest = False
+                        break
+                    elif results[n][0] is None:
                         if l == opened:
                             results[n][1] = 1
                             game_over = True
+                            display_chest = False
                             break
                     else:
                         results[n][1] = 1
                         opened += 1
-                        if opened == 9: game_over = True
+                        if opened == 9:
+                            game_over = True
+                            display_chest = False
                         break
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -559,14 +574,19 @@ class GBF_Game(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True, aliases=['leaks', 'leek'])
     @commands.cooldown(1, 300, commands.BucketType.user)
     async def leak(self, ctx):
-        if random.randint(1, 2000) == 1: r = 365
-        else: r = random.randint(1, 5)
+        if random.randint(1, 1000) == 1:
+            r = 365
+            bingo = True
+        else:
+            r = random.randint(1, 5)
+            bingo = False
         if not isinstance(self.bot.extra, dict): self.bot.extra = {}
         self.bot.extra['leak'] = self.bot.extra.get('leak', 0) + r
         self.bot.savePending = True
-        if r == 1:
-            msg = await ctx.send(embed=self.bot.buildEmbed(title="Alliah has been delayed by 1 day", footer="{} days total".format(self.bot.extra['leak']), color=self.color))
-        else:
-            msg = await ctx.send(embed=self.bot.buildEmbed(title="Alliah has been delayed by {} days".format(r), footer="{} days total".format(self.bot.extra['leak']), color=self.color))
-        await asyncio.sleep(30)
-        await msg.delete()
+        title = "Alliah has been delayed by {} day".format(r)
+        if r != 1: title += "s"
+        if bingo: title = ":confetti_ball: :partying_face: " + title + " :partying_face: :confetti_ball:"
+        msg = await ctx.send(embed=self.bot.buildEmbed(title=title, footer="{} days total".format(self.bot.extra['leak']), color=self.color))
+        if not bingo:
+            await asyncio.sleep(30)
+            await msg.delete()

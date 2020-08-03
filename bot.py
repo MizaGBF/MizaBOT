@@ -270,7 +270,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.15" # version number
+        self.botversion = "6.16" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Improved `$wiki`, `$gw`, `$4chan`, `$hgg` and `$gbfg`", "Reworked `$seeroll` and `$ubhl`", "Added `$serverinfo`, `$luci`, `$bubs` and `$rush`", "Roll commands (`$roulette`, etc...) automatically detect premium galas", "Cleaned up some old commands"] # bot changelog
         self.running = True # if True, the bot is running

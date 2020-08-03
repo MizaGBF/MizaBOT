@@ -152,11 +152,55 @@ class GBF_Utility(commands.Cog):
                         except:
                             pass
 
+                        # retrieve ID
+                        tables = soup.find_all("table", class_='wikitable') # iterate all wikitable
+                        for t in tables:
+                            body = t.findChildren("tbody" , recursive=False)[0].findChildren("tr" , recursive=False) # check for tr tag
+                            for tr in body:
+                                if str(tr).find("ID") != -1:
+                                    try:
+                                        if tr.findChildren("th")[0].text.strip() == "ID":
+                                            data['id'] = tr.findChildren("td")[0].text
+                                    except: pass
+
+                        # retrieve description
+                        try: data['description'] = soup.find_all("meta", {'name' : 'description'})[0].attrs['content']
+                        except: pass
+
+                        # get rarity, title and name
+                        try: 
+                            header = soup.find_all("div", class_='char-header')[0] # get it
+                            try: # first we get the rarity
+                                data['rarity'] = str(header.findChildren("div" , class_='char-rarity', recursive=False)[0])
+                                if data['rarity'].find("Rarity SSR") != -1: data['rarity'] = "SSR"
+                                elif data['rarity'].find("Rarity SR") != -1: data['rarity'] = "SR"
+                                elif data['rarity'].find("Rarity R") != -1: data['rarity'] = "R"
+                                else: data['rarity'] = ""
+                            except:
+                                pass
+                            for child in header.findChildren("div" , recursive=False): # then the name and title if any
+                                if 'class' not in child.attrs:
+                                    for divs in child.findChildren("div" , recursive=False):
+                                        if 'class' in divs.attrs:
+                                            if 'char-name' in divs.attrs['class']: data['name'] = divs.text
+                                            elif 'char-title' in divs.attrs['class']:
+                                                try:
+                                                    tx = divs.findChildren("span", recursive=False)[0].text
+                                                    data['title'] = tx[1:tx.find("]")]
+                                                except:
+                                                    tx = divs.text
+                                                    data['title'] = tx[1:tx.find("]")]
+                        except:
+                            pass
+
                         x = data.get('object', None)
                         if x is None: # if no match
-                            final_msg = await ctx.send(url)
+                            final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=data.get('description', None), image=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
                         elif x == 0: # charater
-                            try: # only check all character versions
+                            if 'title' in data: title = title + ", " + data['title']
+                            if 'rarity' in data: title = "{} {}".format(self.bot.getEmote(data['rarity']), title)
+                            try:
+                                # check all character versions
                                 versions = soup.find_all("div", class_="character__versions")[0].findChildren("table", recursive=False)[0].findChildren("tbody", recursive=False)[0].findChildren("tr", recursive=False)[2].findChildren("td", recursive=False)
                                 elems = []
                                 for v in versions:
@@ -166,37 +210,11 @@ class GBF_Utility(commands.Cog):
                                 desc = "This character has other versions\n"
                                 for e in elems:
                                     desc += "[{}](https://gbf.wiki/{})\n".format(e, e.replace(" ", "_"))
-                                final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=desc, image=data.get('image', None), url=url, color=self.color))
+                                final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=desc, image=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
                             except: # if none, just send the link
-                                final_msg = await ctx.send(url)
-                        else:
-                            # process the header
-                            try:
-                                header = soup.find_all("div", class_='char-header')[0] # get it
-                                try: # first we get the rarity
-                                    data['rarity'] = str(header.findChildren("div" , class_='char-rarity', recursive=False)[0])
-                                    if data['rarity'].find("Rarity SSR") != -1: data['rarity'] = "SSR"
-                                    elif data['rarity'].find("Rarity SR") != -1: data['rarity'] = "SR"
-                                    elif data['rarity'].find("Rarity R") != -1: data['rarity'] = "R"
-                                    else: data['rarity'] = ""
-                                except:
-                                    pass
-                                for child in header.findChildren("div" , recursive=False): # then the name and title if any
-                                    if 'class' not in child.attrs:
-                                        for divs in child.findChildren("div" , recursive=False):
-                                            if 'class' in divs.attrs:
-                                                if 'char-name' in divs.attrs['class']: data['name'] = divs.text
-                                                elif 'char-title' in divs.attrs['class']:
-                                                    try:
-                                                        title = divs.findChildren("span", recursive=False)[0].text
-                                                        data['title'] = title[1:title.find("]")]
-                                                    except:
-                                                        title = divs.text
-                                                        data['title'] = title[1:title.find("]")]
-                            except:
-                                pass
-                            # main content
-                            tables = soup.find_all("table", class_='wikitable') # iterate all wikitable
+                                final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=data.get('description', None), image=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
+                        else: # summon and weapon
+                            # iterate all wikitable again
                             for t in tables:
                                 body = t.findChildren("tbody" , recursive=False)[0].findChildren("tr" , recursive=False) # check for tr tag
                                 if str(body).find("Copyable?") != -1: continue # for chara skills if I add it one day
@@ -208,16 +226,19 @@ class GBF_Utility(commands.Cog):
                                     content = str(tr)
                                     if expecting_sum_call:
                                         if content.find("This is the call for") != -1 or content.find("This is the basic call for") != -1:
-                                            data['call'][1] = self.stripWikiStr(tr.findChildren("td")[0])
+                                            try: data['call'][1] = self.stripWikiStr(tr.findChildren("td")[0])
+                                            except: pass
                                         else:
                                             expecting_sum_call = False
                                     elif expecting_wpn_skill:
                                         if 'class' in tr.attrs and tr.attrs['class'][0].startswith('skill'):
                                             if tr.attrs['class'][-1] == "post" or (tr.attrs['class'][0] == "skill" and len(tr.attrs['class']) == 1):
-                                                n = tr.findChildren("td", class_="skill-name", recursive=False)[0].text.replace("\n", "")
-                                                d = tr.findChildren("td", class_="skill-desc", recursive=False)[0]
-                                                if 'skill' not in data: data['skill'] = []
-                                                data['skill'].append([n, self.stripWikiStr(d)])
+                                                try: 
+                                                    n = tr.findChildren("td", class_="skill-name", recursive=False)[0].text.replace("\n", "")
+                                                    d = tr.findChildren("td", class_="skill-desc", recursive=False)[0]
+                                                    if 'skill' not in data: data['skill'] = []
+                                                    data['skill'].append([n, self.stripWikiStr(d)])
+                                                except: pass
                                         else:
                                             expecting_wpn_skill = False
                                     elif expecting_hp:
@@ -232,42 +253,54 @@ class GBF_Utility(commands.Cog):
                                         else:
                                             expecting_hp = False
                                     elif content.find('class="hp-text"') != -1 and content.find('class="atk-text"') != -1:
-                                        expecting_hp = True
-                                        elem_table = {"/Weapon_Lists/SSR/Fire":"fire", "/Weapon_Lists/SSR/Water":"water", "/Weapon_Lists/SSR/Earth":"earth", "/Weapon_Lists/SSR/Wind":"wind", "/Weapon_Lists/SSR/Dark":"dark", "/Weapon_Lists/SSR/Light":"light"}
-                                        for s, e in elem_table.items():
-                                            if content.find(s) != -1:
-                                                data['element'] = e
-                                                break
+                                        try:
+                                            expecting_hp = True
+                                            elem_table = {"/Weapon_Lists/SSR/Fire":"fire", "/Weapon_Lists/SSR/Water":"water", "/Weapon_Lists/SSR/Earth":"earth", "/Weapon_Lists/SSR/Wind":"wind", "/Weapon_Lists/SSR/Dark":"dark", "/Weapon_Lists/SSR/Light":"light"}
+                                            for s, e in elem_table.items():
+                                                if content.find(s) != -1:
+                                                    data['element'] = e
+                                                    break
+                                        except: pass
                                     elif content.find('"Skill charge attack.png"') != -1:
-                                        n = tr.findChildren("td", class_="skill-name", recursive=False)[0].text
-                                        d = tr.findChildren("td", recursive=False)[-1]
-                                        data['ca'] = [n, self.stripWikiStr(d)]
+                                        try:
+                                            n = tr.findChildren("td", class_="skill-name", recursive=False)[0].text
+                                            d = tr.findChildren("td", recursive=False)[-1]
+                                            data['ca'] = [n, self.stripWikiStr(d)]
+                                        except: pass
                                     elif content.find('"/Weapon_Skills"') != -1:
                                         expecting_wpn_skill = True
                                     elif content.find('<a href="/Sword_Master" title="Sword Master">Sword Master</a>') != -1 or content.find('Status_Energized') != -1:
-                                        tds = tr.findChildren("td", recursive=False)
-                                        n = tds[0].text
-                                        d = tds[1]
-                                        if 'sm' not in data: data['sm'] = []
-                                        data['sm'].append([n, self.stripWikiStr(d)])
+                                        try:
+                                            tds = tr.findChildren("td", recursive=False)
+                                            n = tds[0].text
+                                            d = tds[1]
+                                            if 'sm' not in data: data['sm'] = []
+                                            data['sm'].append([n, self.stripWikiStr(d)])
+                                        except: pass
                                     elif content.find('"/Summons#Calls"') != -1:
-                                        data['call'] = [tr.findChildren("th")[0].text[len("Call - "):], '']
-                                        expecting_sum_call = True
+                                        try:
+                                            data['call'] = [tr.findChildren("th")[0].text[len("Call - "):], '']
+                                            expecting_sum_call = True
+                                        except: pass
                                     elif content.find("Main Summon") != -1:
                                         aura = 1
                                     elif content.find("Sub Summon") != -1:
                                         aura = 2
                                     elif content.find("This is the basic aura") != -1:
-                                        if aura == 0: aura = 1
-                                        n = tr.findChildren("span", class_="tooltip")[0].text.split("This is the basic aura")[0]
-                                        d = tr.findChildren("td")[0]
-                                        if aura == 1: data['aura'] = self.stripWikiStr(d)
-                                        elif aura == 2: data['subaura'] = self.stripWikiStr(d)
+                                        try:
+                                            if aura == 0: aura = 1
+                                            n = tr.findChildren("span", class_="tooltip")[0].text.split("This is the basic aura")[0]
+                                            d = tr.findChildren("td")[0]
+                                            if aura == 1: data['aura'] = self.stripWikiStr(d)
+                                            elif aura == 2: data['subaura'] = self.stripWikiStr(d)
+                                        except: pass
                                     elif content.find("This is the aura") != -1:
-                                        n = tr.findChildren("span", class_="tooltip")[0].text.split("This is the aura")[0]
-                                        d = tr.findChildren("td")[0]
-                                        if aura == 1: data['aura'] = self.stripWikiStr(d)
-                                        elif aura == 2: data['subaura'] = self.stripWikiStr(d)
+                                        try:
+                                            n = tr.findChildren("span", class_="tooltip")[0].text.split("This is the aura")[0]
+                                            d = tr.findChildren("td")[0]
+                                            if aura == 1: data['aura'] = self.stripWikiStr(d)
+                                            elif aura == 2: data['subaura'] = self.stripWikiStr(d)
+                                        except: pass
                             # final message
                             title = ""
                             title += "{}".format(self.bot.getEmote(data.get('element', '')))
@@ -294,7 +327,9 @@ class GBF_Utility(commands.Cog):
                             if 'aura' in data: desc += "{} **Aura**▫️{}\n".format(self.bot.getEmote('skill2'), data['aura'])
                             if 'subaura' in data: desc += "{} **Sub Aura**▫️{}\n".format(self.bot.getEmote('skill2'), data['subaura'])
 
-                            final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=desc, thumbnail=data.get('image', None), url=url, color=self.color))
+                            footer = data.get('id', None)
+
+                            final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=desc, thumbnail=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(80)
             await final_msg.delete()
