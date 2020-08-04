@@ -350,9 +350,10 @@ class GBF_Game(commands.Cog):
                         game_over = True
                         break
                     elif results[n][1] < 0:
-                        results[n][1] -= 1
-                        display_chest = False
-                        break
+                        if l == opened + 1:
+                            results[n][1] -= 1
+                            display_chest = False
+                            break
                     elif results[n][0] is None:
                         if l == opened:
                             results[n][1] = 1
