@@ -358,12 +358,6 @@ class GBF_Access(commands.Cog):
         if 'w' not in self.bot.gbfdata:
             self.bot.gbfdata['w'] = {"0": [[82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92], [74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84], [64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74], [42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52], [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61], [49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59], [69, 70, 80, 81, 82, 83, 84], [34, 35, 36, 37, 38, 39, 40, 41, 42, 44, 45], [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42], [25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35]], "1": [[191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201], [119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129], [138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148], [117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127], [161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171], [123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133], [120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130], [89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99], [118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128], [112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122]]}
             self.bot.savePending = True
-        if 'wd' not in self.bot.gbfdata:
-            self.bot.gbfdata['wd'] = [[62, 53, 46, 54, 48, 40], [35, 40, 40, 41, 37, 43], [42, 38, 40, 42, 41, 37], [39, 30, 43, 30, 36, 31], [47, 55, 46, 38, 48, 44], [35, 34, 30, 33, 36, 38], [39, 35, 49, 33, 35, 32], [21, 26, 23, 30, 30, 18], [22, 28, 29, 30, 34, 30], [30, 23, 25, 23, 27, 34]]
-            self.bot.savePending = True
-        if 'sd' not in self.bot.gbfdata:
-            self.bot.gbfdata['sd'] = [56, 53, 54, 63, 54, 52]
-            self.bot.savePending = True
 
         try:
             num = self.bot.gbfwatch['num']
@@ -423,21 +417,6 @@ class GBF_Access(commands.Cog):
                 id += 1
             await asyncio.sleep(0.001)
 
-        for e in range(6):
-            try:
-                r = await self.bot.sendRequest(ic[2].format(e+1), account=self.bot.gbfcurrent, decompress=True, load_json=True)
-                l = r['last']
-                r = await self.bot.sendRequest(ic[3].format(l, e+1), account=self.bot.gbfcurrent, decompress=True, load_json=True)
-                n = (l - 1) * 20 + len(r[ss[3]])
-                if n != self.bot.gbfdata['sd'][e]:
-                    found[ss[1].format(self.bot.getEmote(ee[str(e+1)]), self.bot.gbfdata['sd'][e], n)] = ""
-                    self.bot.gbfdata['sd'][e] = n
-                    self.bot.savePending = True
-            except Exception as abc:
-                await self.bot.send('debug', str(abc))
-                pass
-        await asyncio.sleep(0.001)
-
         if nc is not None:
             if self.bot.gbfdata['count'][2] != nc['archive']['weapon_num']['max']: found[ns[2].format(self.bot.gbfdata['count'][2], nc['archive']['weapon_num']['max'])] = ""
             self.bot.gbfdata['count'] = [nc['archive']['npc_num']['max'], nc['archive']['summon_num']['max'], nc['archive']['weapon_num']['max']]
@@ -492,23 +471,6 @@ class GBF_Access(commands.Cog):
                 self.bot.gbfdata['w'][k][i].sort()
                 if len(self.bot.gbfdata['w'][k][i]) > 11: self.bot.gbfdata['w'][k][i] = self.bot.gbfdata['w'][k][i][-11:]
                 self.bot.savePending = True
-
-        for t in range(10):
-            for e in range(6):
-                try:
-                    r = await self.bot.sendRequest(ic[0].format(t+1, e+1), account=self.bot.gbfcurrent, decompress=True, load_json=True)
-                    l = r['last']
-                    r = await self.bot.sendRequest(ic[1].format(l, t+1, e+1), account=self.bot.gbfcurrent, decompress=True, load_json=True)
-                    n = (l - 1) * 20 + len(r[ss[2]])
-                    if n != self.bot.gbfdata['wd'][t][e]:
-                        found[ss[0].format(self.bot.getEmote(ee[str(e+1)]), self.bot.getEmote(wt[str(t+1)]), self.bot.gbfdata['wd'][t][e], n)] = ""
-                        self.bot.gbfdata['wd'][t][e] = n
-                        self.bot.savePending = True
-                        await asyncio.sleep(0.001)
-                except Exception as abc:
-                    await self.bot.send('debug', str(abc))
-                    pass
-                await asyncio.sleep(0.001)
 
         return found
 
