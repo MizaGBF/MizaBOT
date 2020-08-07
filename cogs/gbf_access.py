@@ -109,12 +109,32 @@ class GBF_Access(commands.Cog):
             except Exception as e:
                 await self.bot.sendError('gbfwatch A', str(e))
 
+            try: # news checker
+                news = await self.checkNews()
+                if 'news_url' in self.bot.gbfdata:
+                    foundNew = False
+                    for url in news:
+                        if url not in self.bot.gbfdata['news_url']:
+                            await self.bot.sendMulti(['debug', 'private_update', 'gbfg_teasing'], embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="[{}]({})".format(url[1], url[0]), image=url[2], color=self.color))
+                            foundNew = True
+                    if foundNew:
+                        self.bot.gbfdata['news_url'] = news
+                        self.bot.savePending = True
+                else:
+                    self.bot.gbfdata['news_url'] = news
+                    self.bot.savePending = True
+            except asyncio.CancelledError:
+                await self.bot.sendError('gbfwatch', 'cancelled')
+                return
+            except Exception as e:
+                await self.bot.sendError('gbfwatch B', str(e))
+
             try:
                 # update check
                 v = await self.bot.getGameversion()
                 s = self.bot.updateGameversion(v)
                 if s == 3:
-                    react = await self.bot.sendMulti(['debug', 'private_update'], embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version updated to `{}` (`{}`)".format(v, self.bot.versionToDateStr(v)) , color=self.color))
+                    react = await self.bot.sendMulti(['debug', 'private_update'], embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version updated to `{}` (`{}`)".format(v, self.bot.versionToDateStr(v)), color=self.color))
                     try:
                         for r in react: await self.bot.react(r, 'time')
                     except:
@@ -161,7 +181,37 @@ class GBF_Access(commands.Cog):
                 await self.bot.sendError('gbfwatch', 'cancelled')
                 return
             except Exception as e:
-                await self.bot.sendError('gbfwatch B', str(e))
+                await self.bot.sendError('gbfwatch C', str(e))
+
+    async def checkNews(self):
+        res = []
+        async with aiohttp.ClientSession() as session:
+            async with session.get("https://granbluefantasy.jp/news/index.php") as r:
+                if r.status != 200:
+                    raise Exception("HTTP Error 404: Not Found")
+                else:
+                    x = await r.text()
+                    x = x.encode('utf-8').decode('utf-8','ignore')
+                    soup = BeautifulSoup(x, 'html.parser')
+                    at = soup.find_all("article", class_="scroll_show_box")
+                    try:
+                        for a in at:
+                            inner = a.findChildren("div", class_="inner", recursive=False)[0]
+                            section = inner.findChildren("section", class_="content", recursive=False)[0]
+                            h1 = section.findChildren("h1", recursive=False)[0]
+                            url = h1.findChildren("a", class_="change_news_trigger", recursive=False)[0]
+
+                            try:
+                                mb25 = section.findChildren("div", class_="mb25", recursive=False)[0]
+                                href = mb25.findChildren("a", class_="change_news_trigger", recursive=False)[0]
+                                img = href.findChildren("img", recursive=False)[0].attrs['src']
+                            except:
+                                img = None
+
+                            res.append([url.attrs['href'], url.text, img])
+                    except:
+                        pass
+        return res
 
     def postPastebin(self, title, paste, duration = '1D'): # to send informations on a pastebin, requires dev and user keys
         try:
@@ -1415,10 +1465,27 @@ class GBF_Access(commands.Cog):
                 fields[-1]['value'] += "#**{}** \▫️ {} \▫️ **{}**\n".format(self.honorFormat(sorted[i][3]), sorted[i][1], self.honorFormat(sorted[i][2]))
         await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ GW{} Ranking".format(self.bot.getEmote('gw'), gwid), fields=fields, inline=True, color=self.color))
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 30, commands.BucketType.guild)
+    async def news(self, ctx):
+        """Post the latest new posts gacha(s)"""
+        if 'news_url' not in self.bot.gbfdata:
+            self.bot.gbfdata['news_url'] = []
+            self.bot.savePending = True
+        msg = ""
+        for n in self.bot.gbfdata['news_url']:
+            msg += "▫️ [{}]({})\n".format(n[1], n[0])
+        try: thumb = self.bot.gbfdata['news_url'][0][2]
+        except: thumb = None
+        if msg == "":
+            await ctx.send(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))
+        else:
+            await ctx.send(embed=self.bot.buildEmbed(author={'name':"Latest Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, image=thumb, color=self.color))
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['ticket'])
     @commands.cooldown(1, 30, commands.BucketType.guild)
     async def upcoming(self, ctx):
-        """Post the upcoming gacha(s)"""
+        """Post the upcoming gacha(s) and current version data"""
         try:
             if 'new_ticket' not in self.bot.gbfdata:
                 self.bot.gbfdata['new_ticket'] = []
