@@ -726,13 +726,13 @@ class Mizabot(commands.Bot):
             data = None
             headers = {}
             if not options.get('no_base_headers', False):
-                if 'Accept' not in headers: headers['Accept'] = 'application/json, text/javascript, */*; q=0.01'
-                if 'Accept-Encoding' not in headers: headers['Accept-Encoding'] = 'gzip, deflate'
-                if 'Accept-Language' not in headers: headers['Accept-Language'] = 'en'
-                if 'Connection' not in headers: headers['Connection'] = 'keep-alive'
-                if 'Host' not in headers: headers['Host'] = 'game.granbluefantasy.jp'
-                if 'Origin' not in headers: headers['Origin'] = 'http://game.granbluefantasy.jp'
-                if 'Referer' not in headers: headers['Referer'] = 'http://game.granbluefantasy.jp/'
+                headers['Accept'] = 'application/json, text/javascript, */*; q=0.01'
+                headers['Accept-Encoding'] = 'gzip, deflate'
+                headers['Accept-Language'] = 'en'
+                headers['Connection'] = 'keep-alive'
+                headers['Host'] = 'game.granbluefantasy.jp'
+                headers['Origin'] = 'http://game.granbluefantasy.jp'
+                headers['Referer'] = 'http://game.granbluefantasy.jp/'
             if "headers" in options:
                 headers = {**headers, **options["headers"]}
             id = options.get('account', None)
@@ -757,7 +757,10 @@ class Mizabot(commands.Bot):
                 if 'X-VERSION' not in headers: headers['X-VERSION'] = ver
             payload = options.get('payload', None)
             if payload is None: req = request.Request(url, headers=headers)
-            else: req = request.Request(url, headers=headers, data=str(json.dumps(payload)).encode('utf-8'))
+            else:
+                if not options.get('no_base_headers', False) and 'Content-Type' not in headers: headers['Content-Type'] = 'application/json'
+                if 'user_id' in payload and payload['user_id'] == "ID": payload['user_id'] = acc[0]
+                req = request.Request(url, headers=headers, data=json.dumps(payload).encode('utf-8'))
             url_handle = request.urlopen(req)
             if id is not None:
                 self.refreshGBFAccount(id, url_handle.info()['Set-Cookie'])

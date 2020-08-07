@@ -54,7 +54,7 @@ class GBF_Access(commands.Cog):
 
     async def gbfwatch(self): # watch GBF state
         self.bot.setChannel('private_update', 'you_private')
-        self.bot.setChannel('gbfg_teasing', 'gbfg_general')
+        self.bot.setChannel('gbfg_update', 'gbfg_general')
         maintenance_time = self.bot.getJST()
         while True:
             if self.bot.exit_flag: return
@@ -115,7 +115,7 @@ class GBF_Access(commands.Cog):
                     foundNew = False
                     for url in news:
                         if url not in self.bot.gbfdata['news_url']:
-                            await self.bot.sendMulti(['debug', 'private_update', 'gbfg_teasing'], embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="[{}]({})".format(url[1], url[0]), image=url[2], color=self.color))
+                            await self.bot.sendMulti(['debug', 'private_update', 'gbfg_update'], embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="[{}]({})".format(url[1], url[0]), image=url[2], color=self.color))
                             foundNew = True
                     if foundNew:
                         self.bot.gbfdata['news_url'] = news
@@ -159,12 +159,6 @@ class GBF_Access(commands.Cog):
                         msg += "**Content update**\n"
                         for k in news:
                             msg += "{} {}\n".format(news[k], k)
-                            if len(msg) > 1800: # limit at 2000 characters
-                                await self.bot.sendMulti(['debug', 'private_update'], embed=self.bot.buildEmbed(title="Latest Update", description=msg, thumbnail=thumb, color=self.color))
-                                msg = msg.split("\n")
-                                for m in msg:
-                                    if m.find(" to ") != -1: gbfg_msg += m + "\n"
-                                msg = ""
                     if msg != "":
                         await self.bot.sendMulti(['debug', 'private_update'], embed=self.bot.buildEmbed(title="Latest Update", description=msg, thumbnail=thumb, color=self.color))
                         await self.bot.send('debug', embed=self.bot.buildEmbed(title="Reminder", description="Keep it private", color=self.color))
@@ -173,7 +167,7 @@ class GBF_Access(commands.Cog):
                         msg = msg.split("\n")
                         for m in msg:
                             if m.find(" to ") != -1: gbfg_msg += m + "\n"
-                        await self.bot.send('gbfg_teasing', embed=self.bot.buildEmbed(title="Latest Update", description=gbfg_msg, thumbnail=thumb, color=self.color))
+                        await self.bot.send('gbfg_update', embed=self.bot.buildEmbed(title="Latest Update", description=gbfg_msg, thumbnail=thumb, color=self.color))
                 elif s == 2:
                     await self.bot.send('debug', embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version set to `{}` (`{}`)".format(v, self.bot.versionToDateStr(v)) , color=self.color))
                 await asyncio.sleep(60)
@@ -792,9 +786,12 @@ class GBF_Access(commands.Cog):
     async def getProfileData(self, id : int): # get player data
         if not await self.bot.isGameAvailable():
             return "Maintenance"
-        res = await self.bot.sendRequest("http://game.granbluefantasy.jp/profile/content/index/{}?_=TS1&t=TS2&uid=ID".format(id), account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
+        res = await self.bot.sendRequest("http://game.granbluefantasy.jp/profile/content/index/{}?_=TS1&t=TS2&uid=ID".format(id), account=self.bot.gbfcurrent, decompress=True, load_json=True)
         if res is not None: return unquote(res['data'])
         else: return res
+
+    async def getScoutData(self, id : int): # get player scout data
+        return await self.bot.sendRequest("http://game.granbluefantasy.jp/forum/search_users_id?_=TS1&t=TS2&uid=ID", account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True, payload={"special_token":None,"user_id":id})
 
     async def requestRanking(self, page, crew = True): # get gw ranking data
         if not await self.bot.isGameAvailable():
@@ -1218,6 +1215,37 @@ class GBF_Access(commands.Cog):
                 await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} ▫️ Lvl {} and more".format(name.capitalize(), level), 'icon_url':thumbnail}, description=msg, fields=fields, footer="Auto updated once per week", color=self.color))
             else:
                 await ctx.send(embed=self.bot.buildEmbed(author={'name':"{}".format(name.capitalize()), 'icon_url':thumbnail}, description=msg, fields=fields, footer="Auto updated once per week", color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['badboi', 'branded', 'restricted'])
+    @commands.cooldown(5, 30, commands.BucketType.guild)
+    async def brand(self, ctx, id : int):
+        """Check if a GBF profile is restricted"""
+        try:
+            if id < 0 or id >= 100000000:
+                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
+                return
+            if id in self.badprofilecache:
+                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
+                return
+            data = await self.getScoutData(id)
+            if data == "Maintenance":
+                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Game is in maintenance", color=self.color))
+                return
+            elif len(data['user']) == 0:
+                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="In game message:\n`{}`".format(data['no_member_msg'].replace("<br>", " ")), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                return
+            try:
+                if data['user']["restriction_flag_list"]["event_point_deny_flag"]:
+                    status = "Account is restricted"
+                else:
+                    status = "Account isn't restricted"
+            except:
+                status = "Account isn't restricted"
+            await ctx.send(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('gw'), data['user']['nickname']), description=status, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/leader/talk/{}.png".format(data['user']['image']), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+
+        except Exception as e:
+            await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Unavailable", color=self.color))
+            await self.bot.sendError("brand", str(e))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['id'])
     @commands.cooldown(5, 30, commands.BucketType.guild)
