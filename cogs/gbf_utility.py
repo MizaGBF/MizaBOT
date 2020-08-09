@@ -587,7 +587,7 @@ class GBF_Utility(commands.Cog):
     @commands.cooldown(1, 15, commands.BucketType.guild)
     async def bubs(self, ctx):
         """Post the Beelzebub HL Triggers"""
-        await ctx.send(embed=self.bot.buildEmbed(title="Long Live the King", url="https://gbf.wiki/Beelzebub_(Raid)", description="**100% & OD**▫️ Chaoscaliber (party, stun) [30 hits]\n**N **▫️ Unisonic (multi, counter) [10M]\n**75, 60% & OD**▫️ Karma (summonless) [ChainBurst]\n**N **▫️ Black Flies (multi, slashed) [10M]\n**50%**{} Langelaan Field (4T, reflect 2K, doesn't attack) [5M+20M/death]\n**OD**▫️ Chaoscaliber (party x2, stun) [ChainBurst]\n**N **▫️ Just Execution (24 hits, -1T to buff/hit) [ChainBurst]\n**30 & 15%**▫️ Black Spear (party, defenless) [ChainBurst]\n**25 & 10%**▫️ Chaos Legion (party, not guardable) [ChainBurst]\n**King's Religion**{} Total turns reached 30xPlayer Count".format(self.bot.getEmote('misc'), self.bot.getEmote('misc')), footer="Qilin Fantasy", color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="Long Live the King", url="https://gbf.wiki/Beelzebub_(Raid)", description="**100% & OD**▫️ Chaoscaliber (party, stun) [30 hits]\n**N **▫️ Unisonic (multi, counter) [10M]\n**75, 60% & OD**▫️ Karma (summonless) [ChainBurst]\n**N **▫️ Black Flies (multi, slashed) [10M]\n**50%**{} Langelaan Field (4T, reflect 2K, doesn't attack) [5M+20M/death]\n**OD**▫️ Chaoscaliber (party x2, stun) [ChainBurst]\n**N **▫️ Just Execution (24 hits, -1T to buff/hit) [ChainBurst]\n**30 & 15%**▫️ Black Spear (party, defenless) [ChainBurst]\n**25 & 10%**▫️ Chaos Legion (party, maybe guardable) [ChainBurst]\n**King's Religion**{} Total turns reached 30xPlayer Count".format(self.bot.getEmote('misc'), self.bot.getEmote('misc')), footer="Qilin Fantasy", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["christmas", "anniversary", "anniv", "summer"])
     @commands.cooldown(3, 30, commands.BucketType.guild)
@@ -1049,8 +1049,8 @@ class GBF_Utility(commands.Cog):
 
             # calculate estimation
             # note: those numbers are from my own experimentation
-            month_min = [80, 80, 140, 95, 80, 75, 75, 210, 70, 80, 80, 150]
-            month_max = [60, 50, 100, 70, 55, 50, 50, 180, 50, 60, 60, 110]
+            month_min = [80, 80, 140, 95, 80, 75, 75, 250, 70, 80, 80, 150]
+            month_max = [60, 50, 100, 70, 55, 50, 50, 200, 50, 60, 60, 110]
             month_day = [31.0, 28.25, 31.0, 30.0, 31.0, 30.0, 31.0, 31.0, 30.0, 31.0, 30.0, 31.0]
 
             # get current day
@@ -1078,6 +1078,8 @@ class GBF_Utility(commands.Cog):
             if s is None:
                 final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':title, 'icon_url':member.avatar_url}, description="Update your rolls with the `setRoll` command", footer="Next spark between {} and {} from 0 rolls".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), color=self.color))
             else:
+                title += " / {} skin roll".format(s[0] // 200)
+                if  s[0] >= 200: title += "s"
                 final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':title, 'icon_url':member.avatar_url}, description="**{} {} {} {} {} {}**\n*Expecting {} to {} rolls in {}*".format(self.bot.getEmote("crystal"), s[0], self.bot.getEmote("singledraw"), s[1], self.bot.getEmote("tendraw"), s[2], expected[0], expected[1], now.strftime("%B")), footer="Next spark between {} and {}".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), timestamp=timestamp, color=self.color))
         except Exception as e:
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I warned my owner", color=self.color, footer=str(e)))

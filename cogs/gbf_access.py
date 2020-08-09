@@ -1178,20 +1178,6 @@ class GBF_Access(commands.Cog):
         count = 0
         fields = []
 
-        # get thumbnail from the wiki
-        try:
-            terms = name.split(" ")
-            for i in range(0, len(terms)): terms[i] = self.fixCase(terms[i])
-            async with aiohttp.ClientSession() as session:
-                async with session.get("http://gbf.wiki/{}".format("_".join(terms))) as r:
-                    if r.status != 200:
-                        raise Exception("HTTP Error 404: Not Found")
-                    else:
-                        soup = BeautifulSoup(await r.read(), 'html.parser')
-                        thumbnail = "http://game-a1.granbluefantasy.jp/assets_en/img_low/sp/assets/summon/m/{}.jpg".format(soup.find_all("div", class_="mw-parser-output")[0].findChildren("div" , recursive=False)[0].findChildren("div" , recursive=False)[0].findChildren("div" , recursive=False)[1].findChildren("div" , recursive=False)[0].findChildren("div" , recursive=False)[1].findChildren("table" , recursive=False)[0].findChildren("tbody" , recursive=False)[0].findChildren("tr" , recursive=False)[1].findChildren("td" , recursive=False)[0].text.replace(" ", ""))
-        except:
-            thumbnail = ""
-
         history = []
         for u in data:
             if u[0] not in history:
@@ -1209,12 +1195,12 @@ class GBF_Access(commands.Cog):
                     break
 
         if count == 0:
-            await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="`{}` ▫️ No one has this summon above level {}".format(name, level), footer="Be sure to type the full name", thumbnail=thumbnail, color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="`{}` ▫️ No one has this summon above level {}".format(name, level), footer="Be sure to type the full name", color=self.color))
         else:
             if level > 0:
-                await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} ▫️ Lvl {} and more".format(name.capitalize(), level), 'icon_url':thumbnail}, description=msg, fields=fields, footer="Auto updated once per week", color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} ▫️ Lvl {} and more".format(name.capitalize(), level)}, description=msg, fields=fields, footer="Auto updated once per week", color=self.color))
             else:
-                await ctx.send(embed=self.bot.buildEmbed(author={'name':"{}".format(name.capitalize()), 'icon_url':thumbnail}, description=msg, fields=fields, footer="Auto updated once per week", color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(author={'name':"{}".format(name.capitalize())}, description=msg, fields=fields, footer="Auto updated once per week", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['badboi', 'branded', 'restricted'])
     @commands.cooldown(5, 30, commands.BucketType.guild)
