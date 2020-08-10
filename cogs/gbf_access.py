@@ -17,6 +17,7 @@ import sqlite3
 from bs4 import BeautifulSoup
 from xml.sax import saxutils as su
 from PIL import Image, ImageFont, ImageDraw
+from googletrans import Translator
 
 class GBF_Access(commands.Cog):
     """GBF advanced commands."""
@@ -42,6 +43,7 @@ class GBF_Access(commands.Cog):
         }
         self.loadinggw = False
         self.loadinggacha = False
+        self.translator = Translator()
 
     def startTasks(self):
         self.bot.runTask('gbfwatch', self.gbfwatch)
@@ -115,7 +117,7 @@ class GBF_Access(commands.Cog):
                     foundNew = False
                     for url in news:
                         if url not in self.bot.gbfdata['news_url']:
-                            await self.bot.sendMulti(['debug', 'private_update', 'gbfg_update'], embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="[{}]({})".format(url[1], url[0]), image=url[2], color=self.color))
+                            await self.bot.sendMulti(['debug', 'private_update', 'gbfg_update'], embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="[{}]({})".format(self.translate(url[1]), url[0]), image=url[2], color=self.color))
                             foundNew = True
                     if foundNew:
                         self.bot.gbfdata['news_url'] = news
@@ -206,6 +208,21 @@ class GBF_Access(commands.Cog):
                     except:
                         pass
         return res
+
+    def translate(self, text):
+        try:
+            text = text.replace('「', '」').replace('！', '!').split('」')
+            msg = ""
+            count = 0
+            for t in text:
+                if t != '': msg += self.translator.translate(t, src='ja').text
+                if t is not text[-1]:
+                    msg += '"'
+                    count += 1
+                    if (count % 2) == 0: msg += " "
+            return msg
+        except:
+            return text
 
     def postPastebin(self, title, paste, duration = '1D'): # to send informations on a pastebin, requires dev and user keys
         try:
@@ -1487,8 +1504,8 @@ class GBF_Access(commands.Cog):
             self.bot.gbfdata['news_url'] = []
             self.bot.savePending = True
         msg = ""
-        for n in self.bot.gbfdata['news_url']:
-            msg += "▫️ [{}]({})\n".format(n[1], n[0])
+        for i in range(len(self.bot.gbfdata['news_url'])):
+            msg += "{} [{}]({})\n".format(self.bot.getEmote(str(i+1)), self.translate(self.bot.gbfdata['news_url'][i][1]), self.bot.gbfdata['news_url'][i][0])
         try: thumb = self.bot.gbfdata['news_url'][0][2]
         except: thumb = None
         if msg == "":

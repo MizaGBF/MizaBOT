@@ -270,9 +270,9 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.17" # version number
+        self.botversion = "6.18" # version number
         self.saveversion = 0 # save version
-        self.botchangelog = ["Added `$news`"] # bot changelog
+        self.botchangelog = ["Added `$news` and automatic translation"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
