@@ -41,7 +41,7 @@ class GBF_Game(commands.Cog):
         return result
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(60, 60, commands.BucketType.guild)
+    @commands.cooldown(1, 10, commands.BucketType.user)
     async def single(self, ctx, double : str = ""):
         """Do a single roll
         6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
@@ -55,14 +55,14 @@ class GBF_Game(commands.Cog):
         elif r == 1: msg = "It's a {}".format(self.bot.getEmote('SR'))
         else: msg = "It's a {}, too bad!".format(self.bot.getEmote('R'))
 
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} did a single roll".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did a single roll".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, color=self.color, footer=footer))
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(25)
             await final_msg.delete()
             await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(30, 30, commands.BucketType.guild)
+    @commands.cooldown(1, 10, commands.BucketType.user)
     async def ten(self, ctx, double : str = ""):
         """Do ten gacha rolls
         6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
@@ -80,7 +80,7 @@ class GBF_Game(commands.Cog):
             else: msg += '{}'.format(self.bot.getEmote('R'))
             i += 1
 
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} did ten rolls".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did ten rolls".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(25)
             await final_msg.delete()
