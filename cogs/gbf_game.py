@@ -55,7 +55,7 @@ class GBF_Game(commands.Cog):
         elif r == 1: msg = "It's a {}".format(self.bot.getEmote('SR'))
         else: msg = "It's a {}, too bad!".format(self.bot.getEmote('R'))
 
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did a single roll".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, color=self.color, footer=footer))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did a single roll".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(25)
             await final_msg.delete()
