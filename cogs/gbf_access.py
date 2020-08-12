@@ -56,6 +56,7 @@ class GBF_Access(commands.Cog):
 
     async def gbfwatch(self): # watch GBF state
         self.bot.setChannel('private_update', 'you_private')
+        self.bot.setChannel('public_update', 'you_general')
         self.bot.setChannel('gbfg_update', 'gbfg_general')
         maintenance_time = self.bot.getJST()
         while True:
@@ -105,6 +106,7 @@ class GBF_Access(commands.Cog):
                                 self.bot.gbfaccounts[i][3] = 1
                                 self.bot.gbfaccounts[i][5] = current_time
                             self.bot.savePending = True
+                await asyncio.sleep(0.001)
             except asyncio.CancelledError:
                 await self.bot.sendError('gbfwatch', 'cancelled')
                 return
@@ -117,7 +119,7 @@ class GBF_Access(commands.Cog):
                     foundNew = False
                     for url in news:
                         if url not in self.bot.gbfdata['news_url']:
-                            await self.bot.sendMulti(['debug', 'private_update', 'gbfg_update'], embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="[{}]({})".format(self.translate(url[1]), url[0]), image=url[2], color=self.color))
+                            await self.bot.sendMulti(['debug', 'public_update', 'gbfg_update'], embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="[{}]({})".format(self.translate(url[1]), url[0]), image=url[2], color=self.color))
                             foundNew = True
                     if foundNew:
                         self.bot.gbfdata['news_url'] = news
@@ -125,6 +127,7 @@ class GBF_Access(commands.Cog):
                 else:
                     self.bot.gbfdata['news_url'] = news
                     self.bot.savePending = True
+                await asyncio.sleep(0.001)
             except asyncio.CancelledError:
                 await self.bot.sendError('gbfwatch', 'cancelled')
                 return
@@ -308,6 +311,7 @@ class GBF_Access(commands.Cog):
         counter = 0
         font = ImageFont.truetype("assets/font.ttf", 16)
         for f in files[type]:
+            await asyncio.sleep(0.001)
             if mode == 1: ff = f[0] + id + f[1] + '_s2'
             else: ff = f[0] + id + f[1]
             uu = self.bot.gbfwatch["base"].format(ff)
@@ -1509,9 +1513,13 @@ class GBF_Access(commands.Cog):
         try: thumb = self.bot.gbfdata['news_url'][0][2]
         except: thumb = None
         if msg == "":
-            await ctx.send(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))
         else:
-            await ctx.send(embed=self.bot.buildEmbed(author={'name':"Latest Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, image=thumb, color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"Latest Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, image=thumb, color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(45)
+            await final_msg.delete()
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['ticket'])
     @commands.cooldown(1, 30, commands.BucketType.guild)
