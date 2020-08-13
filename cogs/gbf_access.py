@@ -750,8 +750,8 @@ class GBF_Access(commands.Cog):
 
     async def updateSummon(self): # update summon.sql
         self.bot.drive.delFiles(["summon.sql"], self.bot.tokens['files'])
+        self.sql['summon'] = [None, None, True]
         self.bot.delFile('summon.sql')
-        self.sql['summon'][2] = True
         conn = sqlite3.connect('summon.sql')
         c = conn.cursor()
         c.execute('CREATE TABLE players (id int, name text)')
@@ -784,10 +784,10 @@ class GBF_Access(commands.Cog):
         conn.close()
         self.sql['summon'][2] = False
         if self.bot.drive.saveDiskFile("summon.sql", "application/sql", "summon.sql", self.bot.tokens['files']):
-            self.sql['summon'][0] = sqlite3.connect("summon.sql")
-            self.sql['summon'][1] = self.sql['summon'][0].cursor()
-        self.bot.summonlast = self.bot.getJST()
-        self.bot.savePending = True
+            self.bot.summonlast = self.bot.getJST()
+            self.bot.savePending = True
+        self.sql['summon'][0] = sqlite3.connect("summon.sql")
+        self.sql['summon'][1] = self.sql['summon'][0].cursor()
 
     def honorFormat(self, h): # convert honor number to a shorter string version
         if h is None: return "n/a"
