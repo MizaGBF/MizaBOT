@@ -270,7 +270,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.18" # version number
+        self.botversion = "6.19" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Added `$news` and automatic translation"] # bot changelog
         self.running = True # if True, the bot is running

@@ -1082,6 +1082,59 @@ class GBF_Access(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid parameter {}".format(ua), color=self.color))
         await self.bot.react(ctx.message, '✅') # white check mark
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isOwner()
+    async def item(self, ctx, id : int):
+        """Retrieve an item description"""
+        try:
+            data = await self.bot.sendRequest('http://game.granbluefantasy.jp/rest/quest/droplist/drop_item_detail?_=TS1&t=TS2&uid=ID', account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True, payload={"special_token":None,"item_id":id,"item_kind":10})
+            await ctx.send(embed=self.bot.buildEmbed(title=data['name'], description=data['comment'], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/item/article/s/{}.jpg".format(id), footer=data['id'], color=self.color))
+        except:
+            await self.bot.react(ctx.message, '❎') # white negative mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isOwner()
+    async def loot(self, ctx, id : str):
+        """Retrieve a weapon or summon description"""
+        try:
+            type = int(id[0])
+            id = int(id)
+            if type not in [1, 2]: raise Exception()
+            data = await self.bot.sendRequest('http://game.granbluefantasy.jp/result/detail?_=TS1&t=TS2&uid=ID', account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True, payload={"special_token":None,"item_id":id,"item_kind":type})
+            data = data['data']
+
+            rarity = "{}".format(self.bot.getEmote({"2":"R", "3":"SR", "4":"SSR"}.get(data['rarity'], '')))
+            msg = '{} {} {} {}\n'.format(self.bot.getEmote('hp'), data['max_hp'], self.bot.getEmote('atk'), data['max_attack'])
+            if type == 1:
+                kind = "{}".format(self.bot.getEmote({'1': 'sword','2': 'dagger','3': 'spear','4': 'axe','5': 'staff','6': 'gun','7': 'melee','8': 'bow','9': 'harp','10': 'katana'}.get(data.get('kind', ''), '')))
+                if 'special_skill' in data:
+                    msg += "{} **{}**\n".format(self.bot.getEmote('skill1'), data['special_skill']['name'])
+                    msg += "{}\n".format(data['special_skill']['comment'].replace('<span class=text-blue>', '').replace('</span>', ''))
+                for i in range(1, 4):
+                    key = 'skill{}'.format(i)
+                    if len(data.get(key, [])) > 0:
+                        msg += "{} **{}**".format(self.bot.getEmote('skill2'), data[key]['name'])
+                        if 'masterable_level' in data[key] and data[key]['masterable_level'] != '1':
+                            msg += " (at lvl {})".format(data[key]['masterable_level'])
+                        msg += "\n{}\n".format(data[key]['comment'].replace('<span class=text-blue>', '').replace('</span>', ''))
+                url = 'http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/weapon/m/{}.jpg'.format(data['id'])
+            elif type == 2:
+                kind = '{}'.format(self.bot.getEmote('summon'))
+                msg += "{} **{}**\n".format(self.bot.getEmote('skill1'), data['special_skill']['name'])
+                msg += "{}\n".format(data['special_skill']['comment'])
+                if 'recast_comment' in data['special_skill']:
+                    msg += "{}\n".format(data['special_skill']['recast_comment'])
+                msg += "{} **{}**\n".format(self.bot.getEmote('skill2'), data['skill1']['name'])
+                msg += "{}\n".format(data['skill1']['comment'])
+                if 'sub_skill' in data:
+                    msg += "{} **Sub Aura**\n".format(self.bot.getEmote('skill2'))
+                    msg += "{}\n".format(data['sub_skill']['comment'])
+                url = 'http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/summon/m/{}.jpg'.format(data['id'])
+
+            await ctx.send(embed=self.bot.buildEmbed(title="{}{}{}".format(rarity, kind, data['name']), description=msg, thumbnail=url, footer=data['id'], color=self.color))
+        except:
+            await self.bot.react(ctx.message, '❎') # white negative mark
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rateup', 'banner'])
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def gacha(self, ctx):
