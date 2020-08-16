@@ -1,0 +1,504 @@
+* 2.25
+- Automatic installation of pyperclip and tweepy
+
+* 2.24
+- A developper Twitter account isn't required anymore
+
+* 2.23
+- Reworked the Stream Listener
+
+* 2.22
+- Changed the filters
+- Fixed a small typo causing issues with the multi threading
+
+* 2.21
+- Fixed STARTUPINFO causing a crash on non-windows OS
+
+* 2.20
+- Pinging won't open command prompts anymore
+
+* 2.19
+- Added a setting to toggle the tooltips
+
+* 2.18
+- Added Tool Tips for the various settings and statistics.
+- Lowered HTTP 500 error reconnection delays to 60 seconds
+- Reconnection delays following a high tweet delay detection lowered to 5 x number of detections (from 10 before)
+
+* 2.17
+- Fixed the twitter author handle settings doing NOTHING (dumb me)
+
+* 2.16
+- Fixed the raid reception time showing with the wrong timezone in the log box
+- "Use Tweet Timestamp" setting renamed "Tweet Creation Time"
+- Added an option to force all timestamps/clocks to JST
+
+* 2.15
+- Removed the stream timeout
+- Removed the skip settings for tweet older than 3 minutes (and the corresponding stat)
+- Added a new setting causing an automatic stream restart when reaching a specific twitter delay (which can also be modified in the advanced settings). The delay between each restart will increase by 10 seconds, capping at 120 seconds. The setting is turned off by default. (If the doesn't work in a satisfying way, it will be rolled back)
+- Other minor changes
+
+* 2.14
+- Added a way to ping Granblue Fantasy and Mobage
+- All ping buttons will play the alert sounds when the ping process starts, if the setting is turned on
+
+* 2.13
+- Minor changes and fixed a typo in the ping system
+
+* 2.12
+- The ping to twitter isn't automatic anymore (I didn't like making a system call every second) and the corresponding stat has been removed
+- Added a ping button under advanced settings. It will be done in the background and a window will pop up with the results
+
+* 2.11
+- Added a ping stat (stream.twitter.com is pinged every second or so. 'Down' means packet loss)
+- Minor changes
+
+* 2.10
+- Removed an useless call to the twitter API, leftover from the pre-2.0 version
+- The Tweepy stream now use a default timeout of 4 seconds
+- Reworked the tweet processing threads
+- Mutexes are now used in a more pythonic way
+- More mutexes are now used to reduce threads blocking each others as much as possible
+- Added UTC when using the tweet timestamp
+- Added a stat showing the delay between a tweet creation and its processing
+- Fixed the wrong number of processing threads being started
+- Fixed the connection timer increasing even when disconnected
+- Minor changes
+
+* 2.9
+- Fixed an error making impossible to change the advanced settings
+- Added a setting to skip 'old tweets' (currently set to 3 minutes or older)
+- Added a stat showing the number of skipped tweets
+- Added a setting to use the tweet creation time (instead of the current time) in the log. You can have an idea of the twitter API delay that way
+- Minor changes
+
+* 2.8
+- Fixed a crash happening when certain out-of-range unicode characters are written to the log
+
+* 2.7
+- Fixed tweets not being processed if they contain another tweet in the field
+- Fixed some characters being encoded (like the '&' in the HL Huanglong & Qilin english raid code) and, as a result, causing the tweet to not be processed
+
+* 2.6
+- Fixed the English and Japanese settings not working as intended
+
+* 2.5
+- Fixed the dupe feature blocking the thread
+- Fixed the number of thread not being updated properly
+
+* 2.4
+- Fixed stat labels
+
+* 2.3
+- Fixed on_exception() causing issues with the error "('Connection broken: IncompleteRead(0 bytes read)', IncompleteRead(0 bytes read))". Also return properly now
+- Minor changes
+
+* 2.2
+- Keyboard shortcut disabled while inputting directly a new thread count
+- Minor changes
+
+* 2.1
+- Added multithreading to the tweet processing function
+- Added a new setting to change the number of thread on the fly
+- Minor changes and fixes
+
+* 2.0
+- Major rewrite of the raidfinder and changed the way the version number if incremented, as a result
+- Removed the Show, Copy and Alert individual buttons, the raid list is more compact as a result
+- Tweepy filter is now way smaller, which should result in better performance
+- Moved the most import settings under the raid list
+- The setting to disable the log has been removed
+- The mute setting has been replaced with the sound setting
+- The raid queue has been removed. Give me feedback if you want it back
+- raid.json format has been improved. Old raid.json aren't compatible (if you made a custom one, please use the new one as base)
+- The raid list can now be reloaded at runtime (it's now easier to test your custom raid.json)
+- Fixed a few mistakes in the raid codes (Xeno raid english codes were incorrect)
+- Custom raid limit up to 30
+- Editing a Custom raid doesn't require to restart the twitter stream anymore
+- The urllib error "('Connection broken: IncompleteRead(0 bytes read)', IncompleteRead(0 bytes read))" is now handled differently. It shouldn't interrupt the stream anymore
+- The twitter stream now behave differently on error, which will hopefully avoid the infinite twitter reconnection issue
+- Increased the log box height
+- Lot of minor changes and fixes
+
+* rev 94
+- added Beelzebub
+
+* rev 93
+- added Lindwyrm HL
+
+* rev 92
+- added new HL raids
+
+* rev 91
+- added the Magna+ raids
+
+* rev 90
+- updated the Kirin & Huanglong HL code to the new one
+
+* rev 89
+- fixed the Four Primarchs raid codes
+
+* rev 88
+- better (hopefully) handling of the reconnection to twitter
+- added the Four Primarchs raid
+
+* rev 87
+- added Lucilius raids
+
+* rev 86
+- removed the extension, RIP Viramate
+
+* rev 85
+- added an icon
+- fixed the last tab not being remembered properly
+
+* rev 84
+- ported the raidfinder to python3
+- automatic install is disabled for now
+- the python2 version will be bundled with, for now
+- update_modules.py is removed, for now
+- README has been updated
+
+* rev 83
+- added a warning when the user has multiple raids with the same code
+- increased the cooldown on the twitter limit to 90 seconds
+
+* rev 82
+- reordered raids.json and added Tiamat Malice and Akasha
+
+* rev 81
+- added the Huanglong & Kirin (Impossible) raid on the extra tab
+- rearranged the raids
+
+* rev 80
+- fixed a mistake causing custom raids to not be loaded
+
+* rev 79
+- minor fixes
+
+* rev 78
+- fixed the "online" indicator being invisible
+
+* rev 77
+- fixed a crash happening when loading a higher tab index than the number of tab on the ui.
+
+* rev 76
+- removed the startup message concerning the twitter API changes
+- removed backward compatibility with .cfg from old versions
+- the raid list is now loaded from another file ('raid.json') to make it easier to modify. Check the README for more information.
+- updated the README
+
+* rev 75
+- updated the README
+- updated the error messages for wrong/missing twitter keys
+- updated the startup message concerning the twitter API changes
+
+* rev 74
+- added a message concerning the twitter API changes
+- extension updated to 1.2.1
+- extension: bug fix (the javascript won't be stuck if it encounters an image in the clipboard)
+
+* rev 73
+- minor changes
+- extension updated to 1.2
+- extension: lower case characters in code are now supported
+- extension: minor changes
+
+* rev 72
+- fixed an issue with pyperclip 1.6.2. strings are now converted to ascii before being copied.
+- updated update_modules.py
+
+* rev 71
+- updated the README
+- extension updated to 1.1
+- extension: updated the manual content.
+- extension: changed the various page colors to grey/black to not kill your eyes.
+- extension: a text alert will notify you if you must refill your BP
+- extension: the textarea used to read the clipboard has been hidden to avoid leaking your clipboard content to a third-party near your computer ;).
+- extension: minor changes
+
+* rev 70
+- added a chrome extension for the viramate auto-join support. Refer to the manual.html in the extension folder. Version 1.0.
+- no change to the python app
+
+* rev 69
+- small optimizations
+- the Queue doesn't check for duplicate codes anymore (the 'Ignore duplicates' setting will still filter them)
+- small bugfixes and changes
+
+* rev 68
+- fixed a bug with winsound.PlaySound()
+
+* rev 67
+- the sound file 'alert.wav' is preloaded again (it was rolled back in rev 20) and should stay that way
+- fixed an error related to the new omega character in the magna raid names, the strings weren't unicode encoded
+- custom raids strings are converted to unicode during the loading, to avoid the same issue (it was maybe unnecessary)
+
+* rev 66
+- added an omega character to magna raid names
+- minor changes
+
+* rev 65
+- changed the raid disposition
+- added xeno raids
+- the last active tab is now saved
+
+* rev 64
+- added hard+ raids
+
+* rev 63
+- added a button to open the link to the latest version in your browser
+
+* rev 62
+- added a reload button for the blacklist feature (settings tab)
+- removed the version number from the settings tab (it's in the title of the application anyway)
+
+* rev 61
+- added some colors
+- minor changes and fix
+
+* rev 60
+- minor changes
+- added a new script to update the used python packages, for casual users
+- updated the README
+
+* rev 59
+- changed the way the "enable log" setting works. Now only system messages will be ignored. Errors, informations and raids will still appear.
+- more stats
+
+* rev 58
+- added a setting to ignore duplicate tweets, limited to the last 100 raids (shortcut key is 8)
+- pause setting is now tied to key 9
+- minor changes
+
+* rev 57
+- tweets are now processed in a separate thread from the tweepy listener, to avoid the "incomplete read" issue when there is a high amount of tweets going in (causing twitter to cut the connection when they aren't processed fast enough).
+- very small optimizations and code cleaning
+- added a clock (because why not ?)
+
+* rev 56
+- updated the import and installation parts (in the rare case where pip doesn't work/isn't installed)
+- slight update in the README
+
+* rev 55
+- fixed Alexiel code
+
+* rev 54
+- fixed the queue not working
+
+* rev 53
+- fixed the wrong number on page 2 or more (on the queue tab) on the left of each button
+
+* rev 52
+- queue now has a dynamic size (default 30, minimum 1, maximum 150) and can be changed on the settings tab
+
+* rev 51
+- added the shiva series (will update again if the tweetdeck codes change)
+- moved some raids in the Additional tab
+- added a blacklist system
+- added a setting to toggle the blacklist (shortcut key is 7)
+- pause setting is now tied to key 8
+- minor changes
+- slight update in the README
+
+* rev 50
+- changed the author's username position in the log
+- small fix
+
+* rev 49
+- added a new setting to show the tweet author (key shortcut is '6', pause is now the '7' key)
+- slighty improved the tweet parsing
+- fixed a mistake in the tweet parsing
+
+* rev 48
+- fixed the language settings being ignored
+
+* rev 47
+- rewrote the on_data() function, it should be lighter on the cpu usage overall
+
+* rev 46
+- added the winsound package to the self install process
+
+* rev 45
+- fixed the self install
+
+* rev 44
+- missing packages are now installed automatically
+
+* rev 43
+- added warning messages for japanese and english settings
+- updated the parser for the new tweet format
+
+* rev 42
+- the watchdog will now die after receiving the error 420
+
+* rev 41
+- fixed the log box scrolling
+
+* rev 40
+- minor change
+
+* rev 39
+- fixed english tweets being ignored if the japanese name wasn't found
+
+* rev 38
+- moved the saved custom raids in a new section, in the .cfg file (backward compatibility was added for rev 37 cfg files)
+- added/changed some error checks
+- more comments
+- bugfixes
+
+* rev 37
+- custom raid replaced with a whole tab containing 18 slots
+- previous user custom raid will be inserted in the first slot by default
+- now useless functions are removed
+- the stream restarts after a code change (to ensure the filter is 'ok')
+- minor changes
+
+* rev 36
+- added the revision number in the setting tab and in the window title
+- an empty .cfg is now created if none is found
+- small changes (more useless stuff on the statistics tab)
+- more comments
+- bugfixes
+
+* rev 35
+- bug fixes
+
+* rev 34
+- minor change
+- Ultimate Bahamut added
+
+* rev 33
+- Beginner tab added with Normal/Hard raids
+- Placeholder added for Ultimate Bahamut
+
+* rev 32
+- message box added for the Reset Stream button
+- added two buttons in the settings to change the color of a clicked button in the queue
+- the color is saved in the .cfg file
+
+* rev 31
+- added color to queue buttons
+
+* rev 30
+- UI updated
+
+* rev 29
+- added a "Reset Stream" button on the settings tab.
+- added a "Reset" button on the statistics tab
+
+* rev 28
+- fixed the % not displaying correctly on the statistics tab
+
+* rev 27
+- added the statistics tab
+
+* rev 26
+- made the log thread-safe
+
+* rev 25
+- bugfixes
+
+* rev 24
+- bugfixes
+
+* rev 23
+- minor changes
+- fixed the numpad shortcuts not working properly
+
+* rev 22
+- minor fix
+- added keyboard shortcuts for settings (key 1 to 6)
+
+* rev 21
+- bug/crash fix related to the threading (the button queue is updated in the main thread now)
+- it window has a fixed size now (it could cause some crashes, not sure why/how)
+
+* rev 20
+- minor fixes/changes/opzimizations
+- added more logging
+- (Windows) switched winsound.PlaySound() to asynchronous mode. The function won't block anymore, so raid code fetching should be faster. As a result, it now loads from the file again instead of using a preloaded file (SND_ASYNC and SND_MEMORY are incompatible)
+
+* rev 19
+- fixed the rev 18 changelog (forgot the timestamp)
+- visual changes : the bottom part is set into tabs now
+- raid queue is now bigger (20 raids)
+- minor code changes
+
+* rev 18
+- removed the "Copy Last Code" button and added a multiple ones to replace it. They will fill with the 8 last raids (if you set either show, copy or alert)
+- added the "pause stream" option
+- added a timestamp
+
+* rev 17
+- cleaned the code
+- visual change : "Auto Copy" is now "Copy" (It still does the same thing).
+- added a button to copy the latest code in the log
+
+* rev 16
+- settings are now saved in the config file
+- small tweaks
+- removed the <empty> word to make a blank space in the layout
+- added a custom entry where you can set your own tweetdeck code (mostly for events, etc...). Last input will be saved in the config file, in base64 (because I have no utf-8 support for ConfigParser)
+
+* rev 15
+- removed xeno raids (considering they are rarely running), I'll put them back in later (they are still in the script if you want to manually add them)
+- added the super buncle impossible raids
+
+* rev 14
+- added some error checks for twitter keys and sound file loading
+- added a sound alternative for linux (need testing, require beep)
+- minor adjustments
+
+* rev 13
+- added a line limit system to the log box (to avoid a possible crash after a long period ot time)
+- added another thread to restart the twitter stream if an exception occurs
+
+* rev 12
+- added some error checks
+
+* rev 11
+- sound.wav file is now preloaded
+
+* rev 10
+- added more settings
+- changed a bit the way the UI look
+
+* rev 9
+- added language filters
+
+* rev 8
+- fixed the scrollbar
+
+* rev 7
+- more clean up
+
+* rev 6
+- added japanese and english detection
+- it now shows the backup request message
+- cleaned up the code a bit
+- fixed a bug/typo
+
+* rev 5
+- minor changes
+
+* rev 4
+- added seraphic raids
+- now more fancy
+- added comments in the code
+- reduced the 'all' button log text to one line
+
+* rev 3
+- bugfix
+
+* rev2
+- added xeno raids
+- changed some minor things
+
+* rev1
+- changed the sound file for a shorter one
+- added a basic anti-troll solution
+
+* rev0
+- original mod of https://github.com/UmaiCake
