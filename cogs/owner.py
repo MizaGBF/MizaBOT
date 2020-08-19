@@ -360,6 +360,7 @@ class Owner(commands.Cog):
         self.bot.gbfdata['gachacontent'] = None
         self.bot.gbfdata['gachatime'] = None
         self.bot.gbfdata['gachatimesub'] = None
+        self.bot.gbfdata['rateup'] = None
         self.bot.savePending = True
         await self.bot.react(ctx.message, '✅') # white check mark
 

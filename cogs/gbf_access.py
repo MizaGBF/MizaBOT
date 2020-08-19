@@ -832,6 +832,7 @@ class GBF_Access(commands.Cog):
         if self.loadinggacha:
             return False
         self.loadinggacha = True
+        self.bot.gbfdata['rateup'] = None
         self.bot.gbfdata['gachatime'] = None
         self.bot.gbfdata['gachatimesub'] = None
         self.bot.gbfdata['gachabanner'] = None
@@ -863,17 +864,25 @@ class GBF_Access(commands.Cog):
                 banner_msg += " ▫️ **Premium Gala**"
             banner_msg += "\n"
             possible_zodiac_wpn = ['Ramulus', 'Dormius', 'Gallinarius', 'Canisius', 'Porculius', 'Rodentius']
-            rateuplist = {'zodiac':[]}
+            rateuplist = {'zodiac':[]} # SSR list
+            rateup = [{'rate':0, 'list':{}}, {'rate':0, 'list':{}}, {'rate':0, 'list':{}}] # to store the gacha (for GBF_Game cog)
             for appear in data['appear']:
-                if appear['rarity'] == 4: # ssr rarity only
-                    if appear['category_name'] not in rateuplist: rateuplist[appear['category_name']] = {}
-                    for item in appear['item']:
+                rarity = appear['rarity'] - 2
+                if rarity < 0 or rarity > 2: continue # eliminate possible N rarity
+                rateup[rarity]['rate'] = float(data['ratio'][2 - rarity]['ratio'][:-1])
+                for item in appear['item']:
+                    if item['drop_rate'] not in rateup[rarity]['list']: rateup[rarity]['list'][item['drop_rate']] = []
+                    rateup[rarity]['list'][item['drop_rate']].append(item['name'])
+
+                    if rarity == 2: # ssr
+                        if appear['category_name'] not in rateuplist: rateuplist[appear['category_name']] = {}
                         if 'character_name' in item and item.get('name', '') in possible_zodiac_wpn:
                             rateuplist['zodiac'].append(item['character_name'])
                         if item['incidence'] is not None:
                             if item['drop_rate'] not in rateuplist[appear['category_name']]: rateuplist[appear['category_name']][item['drop_rate']] = []
                             if 'character_name' in item and item['character_name'] is not None: rateuplist[appear['category_name']][item['drop_rate']].append(item['character_name'])
                             else: rateuplist[appear['category_name']][item['drop_rate']].append(item['name'])
+            self.bot.gbfdata['rateup'] = rateup
 
             # build message
             for k in rateuplist:
@@ -926,7 +935,7 @@ class GBF_Access(commands.Cog):
     async def getCurrentGacha(self):
         c = self.bot.getJST().replace(microsecond=0) - timedelta(seconds=80)
         if ('gachatime' not in self.bot.gbfdata or self.bot.gbfdata['gachatime'] is None or c >= self.bot.gbfdata['gachatime']) and not await self.getGacha():
-            return None
+            return []
         if self.bot.gbfdata['gachatime'] is None:
             return []
         return [self.bot.gbfdata['gachatime'] - c, self.bot.gbfdata['gachatimesub'] - c, self.bot.gbfdata['gachacontent'], self.bot.gbfdata['gachabanner']]

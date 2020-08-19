@@ -5,6 +5,7 @@ import random
 from datetime import datetime, timedelta
 import math
 import string
+import sys
 
 class GBF_Game(commands.Cog):
     """GBF-themed Game commands."""
@@ -19,11 +20,37 @@ class GBF_Game(commands.Cog):
         elif (not sr_mode and d < 1500 + ssr) or sr_mode: return 1
         return 2
 
+    def getRollExtended(self, ssr, sr_mode = False): # use the real gacha
+        d = random.randint(1, 10000) / 100
+        if d < ssr:
+            r = 2
+            if ssr == self.bot.gbfdata['rateup'][r]['rate'] * 2:
+                d = d * 2
+            elif ssr * 2 == self.bot.gbfdata['rateup'][r]['rate']:
+                d = d / 2
+        elif (not sr_mode and d < 15 + ssr) or sr_mode:
+            r = 1
+            d -= ssr
+            while d >= 15: d -= 15
+        else:
+            r = 0
+            d -= ssr + 15
+        for rate in self.bot.gbfdata['rateup'][r]['list']:
+            fr = float(rate)
+            for item in self.bot.gbfdata['rateup'][r]['list'][rate]:
+                if d < fr: return [r, item]
+                d -= fr
+                last = item
+        return [r, last]
+
     legfestWord = {"double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2"}
     notfestWord = {"normal", "x1", "3%", "gacha", "1"}
     def isLegfest(self, word):
         word = word.lower()
-        if word not in self.notfestWord and (word in self.legfestWord or self.bot.gbfdata.get('gachacontent', '').find("**Premium Gala**") != -1): return 2 # 2 because the rates are doubled
+        s = self.bot.gbfdata.get('gachacontent', '') # check the real gacha
+        if s is None or s.find("**Premium Gala**") == -1: isleg = False
+        else: isleg = True
+        if word not in self.notfestWord and (word in self.legfestWord or isleg): return 2 # 2 because the rates are doubled
         return 1
 
     def tenDraws(self, rate, draw, mode = 0):
@@ -49,11 +76,15 @@ class GBF_Game(commands.Cog):
         l = self.isLegfest(double)
         if l == 2: footer = "6% SSR rate"
         else: footer = "3% SSR rate"
-        r = self.getRoll(300*l)
-
-        if r == 0: msg = "Luckshitter! It's a {}".format(self.bot.getEmote('SSR'))
-        elif r == 1: msg = "It's a {}".format(self.bot.getEmote('SR'))
-        else: msg = "It's a {}, too bad!".format(self.bot.getEmote('R'))
+        try:
+            if self.bot.gbfdata.get('rateup', None) is None: raise Exception()
+            r = self.getRollExtended(3*l)
+            msg = "{} {}".format(self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
+        except: # legacy mode
+            r = self.getRoll(300*l)
+            if r == 0: msg = "Luckshitter! It's a {}".format(self.bot.getEmote('SSR'))
+            elif r == 1: msg = "It's a {}".format(self.bot.getEmote('SR'))
+            else: msg = "It's a {}, too bad!".format(self.bot.getEmote('R'))
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did a single roll".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         if not self.bot.isAuthorized(ctx):
@@ -70,15 +101,25 @@ class GBF_Game(commands.Cog):
         l = self.isLegfest(double)
         if l == 2: footer = "6% SSR rate"
         else: footer = "3% SSR rate"
-        msg = ""
-        i = 0
-        while i < 10:
-            r = self.getRoll(300*l, i == 9)
-            if i == 5: msg += '\n'
-            if r == 0: msg += '{}'.format(self.bot.getEmote('SSR'))
-            elif r == 1: msg += '{}'.format(self.bot.getEmote('SR'))
-            else: msg += '{}'.format(self.bot.getEmote('R'))
-            i += 1
+        try:
+            if self.bot.gbfdata.get('rateup', None) is None: raise Exception()
+            msg = ""
+            i = 0
+            while i < 10:
+                r = self.getRollExtended(3*l, i == 9)
+                msg += "{} {} ".format(self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
+                if i % 2 == 1: msg += "\n"
+                i += 1
+        except: #legacy mode
+            msg = ""
+            i = 0
+            while i < 10:
+                r = self.getRoll(300*l, i == 9)
+                if i == 5: msg += '\n'
+                if r == 0: msg += '{}'.format(self.bot.getEmote('SSR'))
+                elif r == 1: msg += '{}'.format(self.bot.getEmote('SR'))
+                else: msg += '{}'.format(self.bot.getEmote('R'))
+                i += 1
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did ten rolls".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         if not self.bot.isAuthorized(ctx):

@@ -270,9 +270,9 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.19" # version number
+        self.botversion = "6.20" # version number
         self.saveversion = 0 # save version
-        self.botchangelog = ["Added `$news` and automatic translation"] # bot changelog
+        self.botchangelog = ["Added `$news` and automatic translation", "Upgraded $single and $ten, it will use the real gacha (and fallback to the old version in case of errors)"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
@@ -1093,6 +1093,7 @@ async def on_command_error(ctx, error):
     elif msg.find('Member "') == 0 or msg.find('Command "') == 0 or msg.startswith('Command raised an exception: Forbidden: 403'):
         return
     else:
+        await bot.react(ctx.message, '❎')
         bot.errn += 1
         await bot.send('debug', embed=bot.buildEmbed(title="⚠ Error caused by {}".format(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=datetime.utcnow()))
 
