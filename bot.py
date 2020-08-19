@@ -272,7 +272,7 @@ class Mizabot(commands.Bot):
     def __init__(self):
         self.botversion = "6.20" # version number
         self.saveversion = 0 # save version
-        self.botchangelog = ["Added `$news` and automatic translation", "Upgraded $single and $ten, it will use the real gacha (and fallback to the old version in case of errors)"] # bot changelog
+        self.botchangelog = ["Added `$news` and automatic translation", "Upgraded roll commands (`$single`, `$ten`, etc...), it will use the real gacha (and fallback to the old version in case of errors)"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
         self.boot_msg = "" # msg to be displayed on the debug channel after boot

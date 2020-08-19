@@ -5,7 +5,6 @@ import random
 from datetime import datetime, timedelta
 import math
 import string
-import sys
 
 class GBF_Game(commands.Cog):
     """GBF-themed Game commands."""
@@ -21,13 +20,11 @@ class GBF_Game(commands.Cog):
         return 2
 
     def getRollExtended(self, ssr, sr_mode = False): # use the real gacha
-        d = random.randint(1, 10000) / 100
+        d = random.randint(1, 100000) / 1000
         if d < ssr:
             r = 2
-            if ssr == self.bot.gbfdata['rateup'][r]['rate'] * 2:
-                d = d * 2
-            elif ssr * 2 == self.bot.gbfdata['rateup'][r]['rate']:
-                d = d / 2
+            if ssr != self.bot.gbfdata['rateup'][r]['rate']:
+                d = d * (self.bot.gbfdata['rateup'][r]['rate'] / ssr)
         elif (not sr_mode and d < 15 + ssr) or sr_mode:
             r = 1
             d -= ssr
@@ -64,6 +61,21 @@ class GBF_Game(commands.Cog):
                 i += 1
             if mode == 1 and result[0] > 0: break # gachapin / mukku
             elif mode == 2 and result[0] >= 5: break # super mukku
+            x += 1
+        return result
+
+    def tenDrawsExtended(self, rate, draw, mode = 0):
+        result = [0, 0, 0, {}]
+        x = 0
+        while mode > 0 or (mode == 0 and x < draw):
+            i = 0
+            while i < 10:
+                r = self.getRollExtended(rate, i == 9)
+                result[r[0]] += 1
+                if r[0] == 2: result[3][r[1]] = result[3].get(r[1], 0) + 1
+                i += 1
+            if mode == 1 and result[2] > 0: break # gachapin / mukku
+            elif mode == 2 and result[2] >= 5: break # super mukku
             x += 1
         return result
 
@@ -136,10 +148,20 @@ class GBF_Game(commands.Cog):
         l = self.isLegfest(double)
         if l == 2: footer = "6% SSR rate"
         else: footer = "3% SSR rate"
-        result = self.tenDraws(300*l, 30)
-        msg = "{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/300)
+        try:
+            result = self.tenDrawsExtended(3*l, 30)
+            msg = "{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
+            for i in result[3]:
+                msg += i
+                if result[3][i] > 1: msg += " x{}".format(result[3][i])
+                msg += ", "
+            if len(result[3]) > 0: msg = msg[:-2]
+            msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/300)
+        except: #legacy mode
+            result = self.tenDraws(300*l, 30)
+            msg = "{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate".format(result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/300)
 
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} sparked".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} sparked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(25)
             await final_msg.delete()
@@ -154,11 +176,22 @@ class GBF_Game(commands.Cog):
         l = self.isLegfest(double)
         if l == 2: footer = "6% SSR rate"
         else: footer = "3% SSR rate"
-        result = self.tenDraws(300*l, 0, 1)
-        count = result[0]+result[1]+result[2]
-        msg = "Gachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
+        try:
+            result = self.tenDrawsExtended(3*l, 0, 1)
+            count = result[0]+result[1]+result[2]
+            msg = "Gachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
+            for i in result[3]:
+                msg += i
+                if result[3][i] > 1: msg += " x{}".format(result[3][i])
+                msg += ", "
+            if len(result[3]) > 0: msg = msg[:-2]
+            msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/count)
+        except: #legacy mode
+            result = self.tenDraws(300*l, 0, 1)
+            count = result[0]+result[1]+result[2]
+            msg = "Gachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
 
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} rolled the Gachapin".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} rolled the Gachapin".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(25)
             await final_msg.delete()
@@ -171,14 +204,28 @@ class GBF_Game(commands.Cog):
         You can add "super" for a 9% rate and 5 ssr mukku"""
         if super.lower() == "super":
             footer = "Super Mukku ▫️ 15% SSR Rate and at least 5 SSRs"
-            result = self.tenDraws(1500, 0, 2)
+            rate = 1500
+            mode = 2
         else:
             footer = "9% SSR rate"
-            result = self.tenDraws(900, 0, 1)
-        count = result[0]+result[1]+result[2]
-        msg = "Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
+            rate = 900
+            mode = 1
+        try:
+            result = self.tenDrawsExtended(rate//100, 0, mode)
+            count = result[0]+result[1]+result[2]
+            msg = "Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
+            for i in result[3]:
+                msg += i
+                if result[3][i] > 1: msg += " x{}".format(result[3][i])
+                msg += ", "
+            if len(result[3]) > 0: msg = msg[:-2]
+            msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/count)
+        except: #legacy mode
+            result = self.tenDraws(rate, 0, mode)
+            count = result[0]+result[1]+result[2]
+            msg = "Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
 
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} rolled the Mukku".format(ctx.author.display_name), description=msg, color=self.color, thumbnail=ctx.author.avatar_url, footer=footer))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} rolled the Mukku".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(25)
             await final_msg.delete()
