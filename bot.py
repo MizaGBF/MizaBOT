@@ -224,16 +224,24 @@ class MizabotDrive():
             return False
 
     def saveFile(self, data, name, folder): # write a json file to a folder
-        drive = self.login()
-        s = drive.CreateFile({'title':name, 'mimeType':'text/JSON', "parents": [{"kind": "drive#file", "id": folder}]})
-        s.SetContentString(data)
-        s.Upload()
+        try:
+            drive = self.login()
+            s = drive.CreateFile({'title':name, 'mimeType':'text/JSON', "parents": [{"kind": "drive#file", "id": folder}]})
+            s.SetContentString(data)
+            s.Upload()
+            return True
+        except:
+            return False
 
     def saveDiskFile(self, target, mime, name, folder): # write a file from the local storage to a drive folder
-        drive = self.login()
-        s = drive.CreateFile({'title':name, 'mimeType':mime, "parents": [{"kind": "drive#file", "id": folder}]})
-        s.SetContentFile(target)
-        s.Upload()
+        try:
+            drive = self.login()
+            s = drive.CreateFile({'title':name, 'mimeType':mime, "parents": [{"kind": "drive#file", "id": folder}]})
+            s.SetContentFile(target)
+            s.Upload()
+            return True
+        except:
+            return False
 
     def dlFile(self, name, folder): # load a file from a folder
         drive = self.login()
