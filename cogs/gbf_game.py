@@ -20,6 +20,13 @@ class GBF_Game(commands.Cog):
         return 2
 
     def getRollExtended(self, ssr, sr_mode = False): # use the real gacha
+        try:
+            rateups = []
+            for rate in self.bot.gbfdata['rateup'][2]['list']:
+                rateups.append(rate)
+            rateups = sorted(rateups, key=float)[2:]
+        except:
+            rateups = []
         d = random.randint(1, 100000) / 1000
         if d < ssr:
             r = 2
@@ -35,9 +42,10 @@ class GBF_Game(commands.Cog):
         for rate in self.bot.gbfdata['rateup'][r]['list']:
             fr = float(rate)
             for item in self.bot.gbfdata['rateup'][r]['list'][rate]:
-                if d < fr: return [r, item]
+                if rate in rateups: last = "**" + item + "**"
+                else: last = item
+                if d < fr: return [r, last]
                 d -= fr
-                last = item
         return [r, last]
 
     legfestWord = {"double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2"}
@@ -163,7 +171,7 @@ class GBF_Game(commands.Cog):
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} sparked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(25)
+            await asyncio.sleep(45)
             await final_msg.delete()
             await self.bot.react(ctx.message, '✅') # white check mark
 
