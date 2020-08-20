@@ -24,7 +24,10 @@ class GBF_Game(commands.Cog):
             rateups = []
             for rate in self.bot.gbfdata['rateup'][2]['list']:
                 rateups.append(rate)
-            rateups = sorted(rateups, key=float)[2:]
+            l = len(rateups)
+            if l <= 1: rateups = sorted(rateups, key=float)
+            if l == 2: rateups = sorted(rateups, key=float)[1:]
+            else: rateups = sorted(rateups, key=float)[2:]
         except:
             rateups = []
         d = random.randint(1, 100000) / 1000

@@ -488,6 +488,7 @@ class GBF_Access(commands.Cog):
             self.bot.savePending = True
 
         for k in self.bot.gbfdata['w']:
+            await asyncio.sleep(0.001)
             try:
                 x = int(k)
             except:
