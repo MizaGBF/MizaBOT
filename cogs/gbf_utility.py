@@ -104,7 +104,10 @@ class GBF_Utility(commands.Cog):
                 if r.status != 200:
                     raise Exception("HTTP Error 404: Not Found")
                 else:
-                    soup = BeautifulSoup(await r.text(), 'html.parser') # parse the html
+                    cnt = await r.content.read()
+                    try: cnt = cnt.decode('utf-8')
+                    except: cnt = cnt.decode('iso-8859-1')
+                    soup = BeautifulSoup(cnt, 'html.parser') # parse the html
                     try: title = soup.find_all("h1", id="firstHeading", class_="firstHeading")[0].text # page title
                     except: title = ""
                     if search_mode and not title.startswith('Search results'): # handling rare cases of the search function redirecting the user directly to a page
@@ -155,13 +158,16 @@ class GBF_Utility(commands.Cog):
                         # retrieve ID
                         tables = soup.find_all("table", class_='wikitable') # iterate all wikitable
                         for t in tables:
-                            body = t.findChildren("tbody" , recursive=False)[0].findChildren("tr" , recursive=False) # check for tr tag
-                            for tr in body:
-                                if str(tr).find("ID") != -1:
-                                    try:
-                                        if tr.findChildren("th")[0].text.strip() == "ID":
-                                            data['id'] = tr.findChildren("td")[0].text
-                                    except: pass
+                            try:
+                                body = t.findChildren("tbody" , recursive=False)[0].findChildren("tr" , recursive=False) # check for tr tag
+                                for tr in body:
+                                    if str(tr).find("ID") != -1:
+                                        try:
+                                            if tr.findChildren("th")[0].text.strip() == "ID":
+                                                data['id'] = tr.findChildren("td")[0].text
+                                        except: pass
+                            except:
+                                pass
 
                         # retrieve description
                         try: data['description'] = soup.find_all("meta", {'name' : 'description'})[0].attrs['content']
@@ -355,7 +361,7 @@ class GBF_Utility(commands.Cog):
                 url = "https://gbf.wiki/index.php?title=Special:Search&search={}".format(parse.quote_plus(terms))
                 if str(e) != "HTTP Error 404: Not Found": # unknown error, we stop here
                     await self.bot.sendError("wiki", str(e))
-                    await ctx.send(embed=self.bot.buildEmbed(title="Not Found, click here to refine", url=url, color=self.color))
+                    await ctx.send(embed=self.bot.buildEmbed(title="Unexpected error, click here to search", url=url, footer=str(e), color=self.color))
                 else: # failed, we try the search function
                     try:
                         await self.requestWiki(ctx, url, True) # try
