@@ -29,6 +29,13 @@ class GBF_Utility(commands.Cog):
             return ctx.bot.isOwner(ctx)
         return commands.check(predicate)
 
+    def honorFormat(self, h): # convert honor number to a shorter string version
+        if h is None: return "n/a"
+        elif h >= 1000000000: return "{:.1f}B".format(h/1000000000)
+        elif h >= 1000000: return "{:.1f}M".format(h/1000000)
+        elif h >= 1000: return "{:.1f}K".format(h/1000)
+        return h
+
     def getMaintenanceStatus(self): # check the gbf maintenance status, empty string returned = no maintenance
         current_time = self.bot.getJST()
         msg = ""
@@ -776,7 +783,7 @@ class GBF_Utility(commands.Cog):
                         honor[i+1] += honor_per_nm[i]
 
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} Honor Planning ▫️ {} honors".format(self.bot.getEmote('gw'), self.honorFormat(target)), description="Preliminaries & Interlude ▫️ **{:,}** meats (around **{:,}** EX+ and **{:}** honors)\nDay 1 and 2 total ▫️ **{:,}** NM95 (**{:}** honors)\nDay 3 and 4 total ▫️ **{:,}** NM150 (**{:}** honors)".format(math.ceil(total_meat*2), ex*2, self.honorFormat(honor[0]*2), nm[0]*2, self.honorFormat(honor[1]*2), nm[1]*2, self.honorFormat(honor[2]*2)), footer="Assuming {} meats / EX+ on average".format(meat_per_ex_average), color=self.color))
-        except Exception:
+        except:
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid honor number", color=self.color))
         if not self.bot.isAuthorized(ctx):
             await asyncio.sleep(60)
