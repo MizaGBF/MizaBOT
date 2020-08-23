@@ -243,6 +243,23 @@ class MizabotDrive():
         except:
             return False
 
+    def mvFile(self, name, folder, new): # rename a file from a folder
+        drive = self.login()
+        if not drive:
+            print("Can't login into Google Drive")
+            return False
+        try:
+            file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
+            for s in file_list:
+                if s['title'] == name:
+                    s['title'] = new # iterate until we find the file and change name
+                    s.Upload()
+                    return True
+            return False
+        except Exception as e:
+            print(e)
+            return False
+
     def dlFile(self, name, folder): # load a file from a folder
         drive = self.login()
         if not drive:
@@ -278,9 +295,9 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.20" # version number
+        self.botversion = "6.21" # version number
         self.saveversion = 0 # save version
-        self.botchangelog = ["Added `$news` and automatic translation", "Upgraded roll commands (`$single`, `$ten`, etc...), it will use the real gacha (and fallback to the old version in case of errors)"] # bot changelog
+        self.botchangelog = ["Added `$news` and automatic translation", "Upgraded roll commands (`$single`, `$ten`, etc...), it will use the real gacha (and fallback to the old version in case of errors)", "Added live GW ranking update"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
@@ -778,7 +795,59 @@ class Mizabot(commands.Bot):
             return data
         except Exception as e:
             if options.get('error', False):
-                await self.sendError('request', 'Request failed for url `{}`\nCause \▫️ {}'.format(url, e))
+                await self.sendError('sendRequest', 'Request failed for url `{}`\nCause \▫️ {}'.format(url, e))
+            try:
+                self.gbfaccounts[id][3] = 0
+                self.savePending = True
+            except: pass
+            return None
+
+    def sendRequestNoAsync(self, url, **options): # no asyncio version
+        try:
+            data = None
+            headers = {}
+            if not options.get('no_base_headers', False):
+                headers['Accept'] = 'application/json, text/javascript, */*; q=0.01'
+                headers['Accept-Encoding'] = 'gzip, deflate'
+                headers['Accept-Language'] = 'en'
+                headers['Connection'] = 'keep-alive'
+                headers['Host'] = 'game.granbluefantasy.jp'
+                headers['Origin'] = 'http://game.granbluefantasy.jp'
+                headers['Referer'] = 'http://game.granbluefantasy.jp/'
+            if "headers" in options:
+                headers = {**headers, **options["headers"]}
+            id = options.get('account', None)
+            if id is not None: acc = self.getGBFAccount(id)
+            ver = self.gbfversion
+            if ver is None: return None
+            url = url.replace("VER", "{}".format(ver))
+            ts = int(datetime.utcnow().timestamp() * 1000)
+            url = url.replace("TS1", "{}".format(ts))
+            url = url.replace("TS2", "{}".format(ts+300))
+            if id is not None:
+                if ver is None or acc is None:
+                    return None
+                url = url.replace("ID", "{}".format(acc[0]))
+                if 'Cookie' not in headers: headers['Cookie'] = acc[1]
+                if 'User-Agent' not in headers: headers['User-Agent'] = acc[2]
+                if 'X-Requested-With' not in headers: headers['X-Requested-With'] = 'XMLHttpRequest'
+                if 'X-VERSION' not in headers: headers['X-VERSION'] = ver
+            payload = options.get('payload', None)
+            if payload is None: req = request.Request(url, headers=headers)
+            else:
+                if not options.get('no_base_headers', False) and 'Content-Type' not in headers: headers['Content-Type'] = 'application/json'
+                if 'user_id' in payload and payload['user_id'] == "ID": payload['user_id'] = acc[0]
+                req = request.Request(url, headers=headers, data=json.dumps(payload).encode('utf-8'))
+            url_handle = request.urlopen(req)
+            if id is not None:
+                self.refreshGBFAccount(id, url_handle.info()['Set-Cookie'])
+            if options.get('decompress', False): data = zlib.decompress(url_handle.read(), 16+zlib.MAX_WBITS)
+            else: data = url_handle.read()
+            if options.get('load_json', False): data = json.loads(data)
+            return data
+        except Exception as e:
+            if options.get('error', False):
+                print('Exception in sendRequestNoAsync()\n', 'Request failed for url `{}`\nCause \▫️ {}'.format(url, e))
             try:
                 self.gbfaccounts[id][3] = 0
                 self.savePending = True

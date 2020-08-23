@@ -18,6 +18,8 @@ from bs4 import BeautifulSoup
 from xml.sax import saxutils as su
 from PIL import Image, ImageFont, ImageDraw
 from googletrans import Translator
+from queue import Queue
+from threading import Thread
 
 class GBF_Access(commands.Cog):
     """GBF advanced commands."""
@@ -45,14 +47,120 @@ class GBF_Access(commands.Cog):
         self.loadinggacha = False
         self.translator = Translator()
 
+        self.stoprankupdate = False
+
     def startTasks(self):
         self.bot.runTask('gbfwatch', self.gbfwatch)
         self.bot.runTask('summon', self.summontask)
+        self.bot.runTask('check_ranking', self.checkGWRanking)
 
     def isOwner(): # for decorators
         async def predicate(ctx):
             return ctx.bot.isOwner(ctx)
         return commands.check(predicate)
+
+    async def checkGWRanking(self):
+        cog = self.bot.get_cog('GuildWar')
+        if cog is None:
+            return
+        crewsA = [300, 1000, 2000, 8000, 19000, 30000]
+        crewsB = [2000, 5500, 9000, 14000, 18000, 30000]
+        players = [2000, 70000, 120000, 160000, 250000, 350000]
+
+        days = ["End", "Day 5", "Day 4", "Day 3", "Day 2", "Day 1", "Interlude", "Preliminaries"]
+        minute_update = [3, 23, 43]
+
+        while True:
+            cog.getGWState()
+            try:
+                if self.bot.gw['state'] == False:
+                    if 'ranking' not in self.bot.gw or self.bot.gw['ranking'] is not None:
+                        self.bot.gw['ranking'] = None
+                        self.bot.savePending = True
+                    await asyncio.sleep(3600)
+                elif self.bot.getJST() < self.bot.gw['dates']["Preliminaries"]:
+                    if 'ranking' not in self.bot.gw or self.bot.gw['ranking'] is not None:
+                        self.bot.gw['ranking'] = None
+                        self.bot.savePending = True
+                    d = self.bot.gw['dates']["Preliminaries"] - self.bot.getJST()
+                    await asyncio.sleep(d.seconds + 1)
+                elif self.bot.getJST() > self.bot.gw['dates']["Day 5"] - timedelta(seconds=21600):
+                    await asyncio.sleep(3600)
+                else:
+                    if await self.bot.isGameAvailable():
+                        current_time = self.bot.getJST()
+                        m = current_time.minute
+                        h = current_time.hour
+                        skip = False
+                        for d in days:
+                            if current_time < self.bot.gw['dates'][d]:
+                                continue
+                            elif(d == "Preliminaries" and current_time > self.bot.gw['dates']["Interlude"] - timedelta(seconds=24000)) or (d.startswith("Day") and h < 7 and h >= 2) or d == "Day 5":
+                                skip = True
+                            break
+                        if skip:
+                            await asyncio.sleep(600)
+                        elif m in minute_update:
+                            if d.startswith("Day "):
+                                crews = crewsB
+                            else:
+                                crews = crewsA
+                            # update $ranking and $estimation
+                            try:
+                                data = [{}, {}, {}, {}, current_time - timedelta(seconds=60 * (current_time.minute % 20))]
+                                if self.bot.gw['ranking'] is not None:
+                                    diff = data[4] - self.bot.gw['ranking'][4]
+                                    diff = round(diff.total_seconds() / 60.0)
+                                else: diff = 0
+                                for c in crews:
+                                    r = await self.requestRanking(c // 10, True)
+                                    if r is not None and 'list' in r and len(r['list']) > 0:
+                                        data[0][str(c)] = int(r['list'][-1]['point'])
+                                        if diff > 0 and self.bot.gw['ranking'] is not None and str(c) in self.bot.gw['ranking'][0]:
+                                            data[2][str(c)] = (data[0][str(c)] - self.bot.gw['ranking'][0][str(c)]) / diff
+                                    await asyncio.sleep(0.001)
+
+                                for p in players:
+                                    r = await self.requestRanking(p // 10, False)
+                                    if r is not None and 'list' in r and len(r['list']) > 0:
+                                        data[1][str(p)] = int(r['list'][-1]['point'])
+                                        if diff > 0 and self.bot.gw['ranking'] is not None and str(p) in self.bot.gw['ranking'][1]:
+                                            data[3][str(p)] = (data[1][str(p)] - self.bot.gw['ranking'][1][str(p)]) / diff
+                                    await asyncio.sleep(0.001)
+
+                                self.bot.gw['ranking'] = data
+                                self.bot.savePending = True
+                            except Exception as ex:
+                                await self.bot.sendError('checkgwranking', str(ex))
+                                self.bot.gw['ranking'] = None
+                                self.bot.savePending = True
+
+                            # update DB
+                            if await self.bot.loop.run_in_executor(None, self.gwscrap):
+                                data = await self.GWDBver()
+                                if data[1] is None:
+                                    pass
+                                else:
+                                    if self.bot.gw['id'] != data[1]['gw']: # different gw, we move
+                                        self.bot.drive.delFiles(["GW_old.sql"], self.bot.tokens['files'])
+                                        self.bot.drive.mvFile("GW.sql", self.bot.tokens['files'], "GW_old.sql")
+                                    else: # same gw, we delete
+                                        self.bot.drive.delFiles(["GW.sql"], self.bot.tokens['files'])
+                                self.bot.drive.saveDiskFile("temp.sql", "application/sql", "GW.sql", self.bot.tokens['files']) # upload
+                                self.bot.delFile('temp.sql')
+                                await self.loadGWDB()
+
+                            await asyncio.sleep(300)
+                        else:
+                            await asyncio.sleep(30)
+                    else:
+                        await asyncio.sleep(60)
+            except asyncio.CancelledError:
+                await self.bot.sendError('checkgwranking', 'cancelled')
+                await asyncio.sleep(30)
+            except Exception as e:
+                await self.bot.sendError('checkgwranking', str(e))
+                return
 
     async def gbfwatch(self): # watch GBF state
         self.bot.setChannel('private_update', 'you_private')
@@ -77,8 +185,8 @@ class GBF_Access(commands.Cog):
                         await asyncio.sleep(100)
                 else:
                     if self.bot.getJST() - maintenance_time >= timedelta(seconds=500):
-                        self.bot.maintenance["state"] == True
-                        self.bot.maintenance["duration"] == 0
+                        self.bot.maintenance["state"] = True
+                        self.bot.maintenance["duration"] = 0
                         self.bot.savePending = True
                         await self.bot.send('debug', embed=self.bot.buildEmbed(title="Maintenance check", description="Maintenance detected" , color=self.color))
                     await asyncio.sleep(100)
@@ -650,10 +758,15 @@ class GBF_Access(commands.Cog):
         if data is not None:
             for n in range(0, 2):
                 if data[n] is not None and 'result' in data[n] and len(data[n]['result']) == 1:
-                    possible = {11:"Total Day 4", 9:"Total Day 3", 7:"Total Day 2", 5:"Total Day 1", 3:"Total Prelim."}
+                    if data[n].get('ver', 0) == 2:
+                        possible = {7:"Total Day 4", 6:"Total Day 3", 5:"Total Day 2", 4:"Total Day 1", 3:"Total Prelim."}
+                        last_id = 7
+                    else:
+                        possible = {11:"Total Day 4", 9:"Total Day 3", 7:"Total Day 2", 5:"Total Day 1", 3:"Total Prelim."}
+                        last_id = 11
                     for ps in possible:
                         if data[n]['result'][0][ps] is not None:
-                            if ps == 11 and data[n]['result'][0][0] is not None:
+                            if ps == last_id and data[n]['result'][0][0] is not None:
                                 crew['scores'].append("{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors ".format(self.bot.getEmote('gw'), data[n].get('gw', ''), data[n]['result'][0][0], data[n]['result'][0][ps]))
                                 break
                             else:
@@ -1528,17 +1641,26 @@ class GBF_Access(commands.Cog):
             if self.bot.granblue['gbfgcrew'][e] in crews or self.bot.granblue['gbfgcrew'][e] in blacklist: continue
             crews.append(self.bot.granblue['gbfgcrew'][e])
         tosort = {}
-        possible = {11:"Total Day 4", 9:"Total Day 3", 7:"Total Day 2", 5:"Total Day 1", 3:"Total Prelim."}
-        gwid = None
+        data = await self.GWDBver(ctx)
+        if data is None or data[1] is None:
+            await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ GW{} Ranking".format(self.bot.getEmote('gw'), gwid), description="Unavailable", inline=True, color=self.color))
+            return
+        elif data[1].get('ver', 0) != 2:
+            possible = {11:"Total Day 4", 9:"Total Day 3", 7:"Total Day 2", 5:"Total Day 1", 3:"Total Prelim."}
+            last_id = 11
+            gwid = data[1].get('gw', None)
+        else:
+            possible = {7:"Total Day 4", 6:"Total Day 3", 5:"Total Day 2", 4:"Total Day 1", 3:"Total Prelim."}
+            last_id = 7
+            gwid = data[1].get('gw', None)
         for c in crews:
             data = await self.searchGWDBCrew(ctx, int(c), 2)
             if data is None or data[1] is None or 'result' not in data[1] or len(data[1]['result']) == 0:
                 continue
             result = data[1]['result'][0]
-            if gwid is None: gwid = data[1].get('gw', None)
             for ps in possible:
                 if result[ps] is not None:
-                    if ps == 11 and result[0] is not None:
+                    if ps == last_id and result[0] is not None:
                         tosort[c] = [c, result[2], int(result[ps]), str(result[0])] # id, name, honor, rank
                         break
                     else:
@@ -1695,44 +1817,37 @@ class GBF_Access(commands.Cog):
         self.loadinggw = False
         return self.sql
 
-    async def searchGWDBCrew(self, ctx, terms, mode):
+    async def GWDBver(self, ctx = None):
         while self.loadinggw: await asyncio.sleep(0.001)
         if self.sql['old_gw'][2] is None or self.sql['gw'][2] is None:
-            await self.bot.react(ctx.message, 'time')
+            if ctx is not None: await self.bot.react(ctx.message, 'time') 
             await self.loadGWDB()
-            await self.bot.unreact(ctx.message, 'time')
-
+            if ctx is not None: await self.bot.unreact(ctx.message, 'time') 
         data = [None, None]
-
         for n in range(2):
             if n == 0: k = 'old_gw'
             else: k = 'gw'
             if self.sql[k][2] is not None and self.sql[k][2] == True:
                 data[n] = {}
                 try:
-                    self.sql[k][1].execute("SELECT id FROM GW")
-                    for row in self.sql[k][1]:
-                        data[n]['gw'] = int(row[0])
-                        break
+                    self.sql[k][1].execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'")
+                    if self.sql[k][1].fetchone()[0] < 1:
+                        self.sql[k][1].execute("SELECT * FROM GW")
+                        for row in self.sql[k][1].fetchall():
+                            data[n]['gw'] = int(row[0])
+                            data[n]['ver'] = 1
+                            break
+                    else:
+                        self.sql[k][1].execute("SELECT * FROM info")
+                        for row in self.sql[k][1].fetchall():
+                            data[n]['gw'] = int(row[0])
+                            data[n]['ver'] = int(row[1])
+                            break
                 except:
-                    pass
-
-                try:
-                    if mode == 0:
-                        self.sql[k][1].execute("SELECT * FROM crews WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\%")))
-                    elif mode == 1:
-                        self.sql[k][1].execute("SELECT * FROM crews WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\%")))
-                    elif mode == 2:
-                        self.sql[k][1].execute("SELECT * FROM crews WHERE id = {}".format(terms))
-                    data[n]['result'] = self.sql[k][1].fetchall()
-                    random.shuffle(data[n]['result'])
-                except Exception as e:
-                    await self.bot.sendError('searchGWDBCrew {}'.format(n), str(e))
-                    data[n] = None
-
+                    data[n]['ver'] = 0
         return data
 
-    async def searchGWDBPlayer(self, ctx, terms, mode):
+    async def searchGWDB(self, ctx, terms, mode):
         while self.loadinggw: await asyncio.sleep(0.001)
         if self.sql['old_gw'][2] is None or self.sql['gw'][2] is None:
             await self.bot.react(ctx.message, 'time')
@@ -1747,15 +1862,30 @@ class GBF_Access(commands.Cog):
             if self.sql[k][2] is not None and self.sql[k][2] == True:
                 data[n] = {}
                 try:
-                    self.sql[k][1].execute("SELECT id FROM GW")
-                    for row in self.sql[k][1]:
-                        data[n]['gw'] = int(row[0])
-                        break
+                    self.sql[k][1].execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'")
+                    if self.sql[k][1].fetchone()[0] < 1:
+                        self.sql[k][1].execute("SELECT * FROM GW")
+                        for row in self.sql[k][1].fetchall():
+                            data[n]['gw'] = int(row[0])
+                            data[n]['ver'] = 1
+                            break
+                    else:
+                        self.sql[k][1].execute("SELECT * FROM info")
+                        for row in self.sql[k][1].fetchall():
+                            data[n]['gw'] = int(row[0])
+                            data[n]['ver'] = int(row[1])
+                            break
                 except:
-                    pass
+                    data[n]['ver'] = 0
 
                 try:
-                    if mode == 0:
+                    if mode == 10:
+                        self.sql[k][1].execute("SELECT * FROM crews WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\%")))
+                    elif mode == 11:
+                        self.sql[k][1].execute("SELECT * FROM crews WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\%")))
+                    elif mode == 12:
+                        self.sql[k][1].execute("SELECT * FROM crews WHERE id = {}".format(terms))
+                    elif mode == 0:
                         self.sql[k][1].execute("SELECT * FROM players WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\%")))
                     elif mode == 1:
                         self.sql[k][1].execute("SELECT * FROM players WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\%")))
@@ -1764,10 +1894,16 @@ class GBF_Access(commands.Cog):
                     data[n]['result'] = self.sql[k][1].fetchall()
                     random.shuffle(data[n]['result'])
                 except Exception as e:
-                    await self.bot.sendError('searchGWDBPlayer {}'.format(n), str(e))
+                    await self.bot.sendError('searchGWDB {} mode '.format(n, mode), str(e))
                     data[n] = None
 
         return data
+
+    async def searchGWDBCrew(self, ctx, terms, mode):
+        return await self.searchGWDB(ctx, terms, mode+10)
+
+    async def searchGWDBPlayer(self, ctx, terms, mode):
+        return await self.searchGWDB(ctx, terms, mode)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
@@ -1827,9 +1963,11 @@ class GBF_Access(commands.Cog):
         try:
             if data[1] is None or past:
                 gwnum = data[0].get('gw', '')
+                ver = data[0].get('ver', '')
                 result = data[0].get('result', [])
             else:
                 gwnum = data[1].get('gw', '')
+                ver = data[1].get('ver', '')
                 result = data[1].get('result', [])
         except:
             await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Database unavailable", color=self.color))
@@ -1852,10 +1990,16 @@ class GBF_Access(commands.Cog):
             if result[i][0] is not None: fields[-1]['value'] += "▫️**#{}**\n".format(result[i][0])
             else: fields[-1]['value'] += "\n"
             if result[i][3] is not None: fields[-1]['value'] += "**P.** ▫️{:,}\n".format(result[i][3])
-            if result[i][4] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('1'), result[i][4])
-            if result[i][6] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('2'), result[i][6])
-            if result[i][8] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('3'), result[i][8])
-            if result[i][10] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('4'), result[i][10])
+            if ver == 2:
+                if result[i][4] is not None and result[i][3] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('1'), result[i][4]-result[i][3])
+                if result[i][5] is not None and result[i][4] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('1'), result[i][5]-result[i][4])
+                if result[i][6] is not None and result[i][5] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('1'), result[i][6]-result[i][5])
+                if result[i][7] is not None and result[i][6] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('1'), result[i][7]-result[i][6])
+            else:
+                if result[i][4] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('1'), result[i][4])
+                if result[i][6] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('2'), result[i][6])
+                if result[i][8] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('3'), result[i][8])
+                if result[i][10] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.getEmote('4'), result[i][10])
             if fields[-1]['value'] == "": fields[-1]['value'] = "No data"
             fields[-1]['value'] = "[{}](http://game.granbluefantasy.jp/#guild/detail/{}){}".format(result[i][1], result[i][1], fields[-1]['value'])
             if all and ((i % 6) == 5 or i == x - 1):
@@ -1962,3 +2106,132 @@ class GBF_Access(commands.Cog):
         else: desc = ""
 
         await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), description=desc, fields=fields, inline=True, footer="help findplayer for details", color=self.color))
+
+    def getRanking(self, page, mode):
+        try:
+            if mode: return self.bot.sendRequestNoAsync("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/totalguild/detail/{}/0?_=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page), account=self.bot.gbfcurrent, decompress=True, load_json=True)
+            else: return self.bot.sendRequestNoAsync("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?_=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page), account=self.bot.gbfcurrent, decompress=True, load_json=True)
+        except:
+            return None
+
+    def scrapProcess(self, mode, qi, qo): # thread for ranking
+        while not qi.empty():
+            if self.bot.exit_flag: return
+            page = qi.get()
+            data = None
+            while data is None:
+                data = self.getRanking(page, mode)
+                if (self.bot.maintenance['state'] and self.bot.maintenance["duration"] == 0) or self.stoprankupdate: return
+            for item in data['list']:
+                qo.put(item)
+
+    def gwdbbuilder(self, mode, qo, count, res):
+        try:
+            day = None # calculate which day it is (0 being prelim, 1 being interlude/day 1, etc...)
+            current_time = self.bot.getJST()
+            if current_time < self.bot.gw['dates']["Preliminaries"]:
+                res.put(False)
+                return
+            elif current_time >= self.bot.gw['dates']["End"]:
+                res.put(False)
+                return
+            elif current_time > self.bot.gw['dates']["Day 5"]:
+                res.put(False)
+                return
+            elif current_time > self.bot.gw['dates']["Day 1"]:
+                it = ['Day 5', 'Day 4', 'Day 3', 'Day 2', 'Day 1']
+                for i in range(1, len(it)): # loop to not copy paste this 5 more times
+                    if current_time > self.bot.gw['dates'][it[i]]:
+                        d = self.bot.gw['dates'][it[i-1]] - current_time
+                        if d < timedelta(seconds=18000):
+                            res.put(False)
+                            return
+                        else: day = 5 - i
+            elif current_time > self.bot.gw['dates']["Interlude"]:
+                day = 1
+            elif current_time > self.bot.gw['dates']["Preliminaries"]:
+                d = self.bot.gw['dates']['Interlude'] - current_time
+                if d < timedelta(seconds=18000):
+                    res.put(False)
+                    return
+                else: day = 0
+            else:
+                res.put(False)
+                return
+
+            conn = sqlite3.connect('temp.sql')
+            c = conn.cursor()
+
+            c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'")
+            if c.fetchone()[0] < 1:
+                 c.execute('CREATE TABLE info (gw int, ver int)')
+                 c.execute('INSERT INTO info VALUES ({}, 2)'.format(self.bot.gw['id'])) # ver 2
+
+            if mode:
+                c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='crews'")
+                if c.fetchone()[0] < 1:
+                    c.execute('CREATE TABLE crews (ranking int, id int, name text, preliminaries int, total_1 int, total_2 int, total_3 int, total_4 int)')
+            else:
+                c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='players'")
+                if c.fetchone()[0] == 1:
+                    c.execute('DROP TABLE players')
+                c.execute('CREATE TABLE players (ranking int, id int, name text, current_total int)')
+            i = 0
+            while i < count:
+                if self.bot.exit_flag or (self.bot.maintenance['state'] and self.bot.maintenance["duration"] == 0):
+                    res.put(False)
+                    return
+                try: item = qo.get()
+                except: continue
+
+                if mode:
+                    c.execute("SELECT * FROM crews WHERE id == {}".format(int(item['id'])))
+                    if c.fetchone() is None:
+                        honor = {day: int(item['point'])}
+                        c.execute("INSERT INTO crews VALUES ({},{},'{}',{},{},{},{},{})".format(item.get('ranking', 'NULL'), int(item['id']), item['name'].replace("'", "''"), honor.get(0, 'NULL'), honor.get(1, 'NULL'), honor.get(2, 'NULL'), honor.get(3, 'NULL'), honor.get(4, 'NULL')))
+                    else:
+                        try:
+                            c.execute("UPDATE crews SET ranking = {}, name = '{}', {} = {} WHERE id = {}".format(int(item['ranking']), item['name'].replace("'", "''"), {0:'preliminaries', 1:'total_1', 2:'total_2', 3:'total_3', 4:'total_4'}.get(day, None), int(item['point']), int(item['id'])))
+                        except:
+                            pass
+                else:
+                    c.execute("INSERT INTO players VALUES ({},{},'{}',{})".format(item.get('rank', 'NULL'), int(item['user_id']), item['name'].replace("'", "''"), int(item['point'])))
+                i += 1
+                if i == count:
+                    conn.commit()
+                    conn.close()
+            res.put(True)
+        except:
+            self.stoprankupdate = True
+            res.put(False)
+
+    def gwscrap(self):
+        self.bot.delFile('temp.sql')
+
+        self.stoprankupdate = False
+        for n in [0, 1]:
+            data = self.getRanking(1, n == 0) # get the first page
+            if data is None:
+                print("Can't access the ranking")
+                return False
+            count = int(data['count']) # number of crews
+            last = data['last'] # number of pages
+
+            qi = Queue()
+            for i in range(2, last+1): # queue the pages to retrieve
+                qi.put(i)
+            qo = Queue()
+            for item in data['list']: # queue what we already retrieved
+                qo.put(item)
+
+            for i in range(100): # make lot of threads
+                worker = Thread(target=self.scrapProcess, args=(n == 0, qi, qo))
+                worker.setDaemon(True)
+                worker.start()
+
+            r = Queue() # return value
+            worker = Thread(target=self.gwdbbuilder, args=(n == 0, qo, count, r)) # sql builder thread
+            worker.setDaemon(True)
+            worker.start()
+            worker.join() # wait to finish
+        return r.get()
