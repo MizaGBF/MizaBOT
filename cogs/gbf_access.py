@@ -46,7 +46,7 @@ class GBF_Access(commands.Cog):
         self.loadinggw = False
         self.loadinggacha = False
         self.translator = Translator()
-
+        self.blacklist = ["677159", "147448"]
         self.stoprankupdate = False
 
     def startTasks(self):
@@ -95,7 +95,7 @@ class GBF_Access(commands.Cog):
                         for d in days:
                             if current_time < self.bot.gw['dates'][d]:
                                 continue
-                            elif(d == "Preliminaries" and current_time > self.bot.gw['dates']["Interlude"] - timedelta(seconds=24000)) or (d.startswith("Day") and h < 7 and h >= 2) or d == "Day 5":
+                            elif ((d == "Preliminaries" or d.startswith("Day")) and h < 7 and h >= 2) or d == "Day 5":
                                 skip = True
                             break
                         if skip:
@@ -692,10 +692,12 @@ class GBF_Access(commands.Cog):
             await self.bot.unreact(ctx.message, 'time')
             return r
 
-    async def getCrewData(self, ctx, target): # retrieve a crew data
+    async def getCrewData(self, ctx, target, lite=False): # retrieve a crew data
         if not await self.bot.isGameAvailable(): # check for maintenance
             return {'error':'Game is in maintenance'}
-        id = " ".join(target)
+        if isinstance(target, list) or isinstance(target, tuple): id = " ".join(target)
+        elif isinstance(target, int): id = str(target)
+        else: id = target
         id = self.bot.granblue['gbfgcrew'].get(id.lower(), id) # check if the id is a gbfgcrew
         # check id validityy
         try:
@@ -713,6 +715,7 @@ class GBF_Access(commands.Cog):
             crew = self.crewcache[id]
         else:
             for i in range(0, 4): # for each page (page 0 being the crew page, 1 to 3 being the crew page
+                if i > 0 and lite: return crew
                 get = await self.requestCrew(id, i)
                 if get == "Maintenance":
                     return {'error':'Maintenance'}
@@ -751,6 +754,7 @@ class GBF_Access(commands.Cog):
             if not crew['private']:
                 crew['average'] = round(crew['total_rank'] / (len(crew['player']) * 1.0))
             if not crew['private']: self.crewcache[id] = crew # only cache public crews
+
 
         # get the last gw score
         crew['scores'] = []
@@ -1631,19 +1635,61 @@ class GBF_Access(commands.Cog):
             await final_msg.delete()
             await self.bot.react(ctx.message, '✅') # white check mark
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["danchos", "captains", "captainranking", "capranking"])
+    @commands.cooldown(1, 500, commands.BucketType.guild)
+    async def danchoranking(self, ctx):
+        await self.bot.react(ctx.message, 'time')
+        crews = []
+        for e in self.bot.granblue['gbfgcrew']:
+            if self.bot.granblue['gbfgcrew'][e] in crews or self.bot.granblue['gbfgcrew'][e] in self.blacklist: continue
+            crews.append(self.bot.granblue['gbfgcrew'][e])
+        ranking = []
+        for c in crews:
+            crew = await self.getCrewData(None, c, True)
+            if 'error' in crew:
+                await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ Dancho Ranking".format(self.bot.getEmote('gw')), description="Unavailable", footer=crew['error'], color=self.color))
+                await self.bot.unreact(ctx.message, 'time')
+                return
+            
+            data = await self.searchGWDBPlayer(None, crew['leader_id'], 2)
+            if data is None or data[1] is None:
+                await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ Dancho Ranking".format(self.bot.getEmote('gw')), description="Unavailable", color=self.color))
+                await self.bot.unreact(ctx.message, 'time')
+                return
+            gwid = data[1].get('gw', None)
+            if len(data[1]['result']) == 0:
+                ranking.append([crew['name'], crew['leader'], None])
+            else:
+                ranking.append([crew['name'], crew['leader'], data[1]['result'][0][3]])
+        for i in range(len(ranking)):
+            for j in range(i+1, len(ranking)):
+                if ranking[j][2] is not None and (ranking[i][2] is None or ranking[i][2] < ranking[j][2]):
+                    tmp = ranking[i]
+                    ranking[i] = ranking[j]
+                    ranking[j] = tmp
+        fields = []
+        if gwid is None: gwid = ""
+        for i in range(0, len(ranking)):
+            if i % 15 == 0: fields.append({'name':'{}'.format(self.bot.getEmote(str(len(fields)+1))), 'value':''})
+            if ranking[i][2] is None:
+                fields[-1]['value'] += "{} \▫️ {} \▫️ {} \▫️ **n/a**\n".format(i+1, ranking[i][1], ranking[i][0])
+            else:
+                fields[-1]['value'] += "{} \▫️ {} \▫️ {} \▫️ **{}**\n".format(i+1, ranking[i][1], ranking[i][0], self.honorFormat(ranking[i][2]))
+        await self.bot.unreact(ctx.message, 'time')
+        await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ GW{} Dancho Ranking".format(self.bot.getEmote('gw'), gwid), fields=fields, inline=True, color=self.color))
+
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def gbfgranking(self, ctx):
         """Sort and post all /gbfg/ crew per contribution"""
         crews = []
-        blacklist = ["677159", "147448"]
         for e in self.bot.granblue['gbfgcrew']:
-            if self.bot.granblue['gbfgcrew'][e] in crews or self.bot.granblue['gbfgcrew'][e] in blacklist: continue
+            if self.bot.granblue['gbfgcrew'][e] in crews or self.bot.granblue['gbfgcrew'][e] in self.blacklist: continue
             crews.append(self.bot.granblue['gbfgcrew'][e])
         tosort = {}
         data = await self.GWDBver(ctx)
         if data is None or data[1] is None:
-            await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ GW{} Ranking".format(self.bot.getEmote('gw'), gwid), description="Unavailable", inline=True, color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ GW{} Ranking".format(self.bot.getEmote('gw'), gwid), description="Unavailable", color=self.color))
             return
         elif data[1].get('ver', 0) != 2:
             possible = {11:"Total Day 4", 9:"Total Day 3", 7:"Total Day 2", 5:"Total Day 1", 3:"Total Prelim."}
@@ -1850,9 +1896,9 @@ class GBF_Access(commands.Cog):
     async def searchGWDB(self, ctx, terms, mode):
         while self.loadinggw: await asyncio.sleep(0.001)
         if self.sql['old_gw'][2] is None or self.sql['gw'][2] is None:
-            await self.bot.react(ctx.message, 'time')
+            if ctx is not None: await self.bot.react(ctx.message, 'time')
             await self.loadGWDB()
-            await self.bot.unreact(ctx.message, 'time')
+            if ctx is not None: await self.bot.unreact(ctx.message, 'time')
 
         data = [None, None]
 
@@ -2209,6 +2255,7 @@ class GBF_Access(commands.Cog):
         self.bot.delFile('temp.sql')
 
         self.stoprankupdate = False
+        res = False
         for n in [0, 1]:
             data = self.getRanking(1, n == 0) # get the first page
             if data is None:
@@ -2234,4 +2281,11 @@ class GBF_Access(commands.Cog):
             worker.setDaemon(True)
             worker.start()
             worker.join() # wait to finish
-        return r.get()
+
+            qi.queue.clear()
+            qo.queue.clear()
+            if r.get():
+                res = True
+            else:
+                return False
+        return res
