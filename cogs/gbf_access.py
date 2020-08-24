@@ -145,6 +145,7 @@ class GBF_Access(commands.Cog):
                                 if not self.bot.drive.overwriteFile("temp.sql", "application/sql", "GW.sql", self.bot.tokens['files']): # upload
                                     await self.bot.sendError('gwscrap', 'Upload failed')
                                 self.bot.delFile('temp.sql')
+                                await self.loadGWDB() # reload db
                             else:
                                 await self.bot.sendError('gwscrap', 'Scrapping failed')
 
