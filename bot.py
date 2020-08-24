@@ -17,6 +17,7 @@ import psutil
 import time
 import re
 import os
+from shutil import copyfile
 import cogs # our cogs folder
 
 # ########################################################################################
@@ -254,6 +255,22 @@ class MizabotDrive():
                 if s['title'] == name:
                     s['title'] = new # iterate until we find the file and change name
                     s.Upload()
+                    return True
+            return False
+        except Exception as e:
+            print(e)
+            return False
+
+    def cpyFile(self, name, folder, new): # rename a file from a folder
+        drive = self.login()
+        if not drive:
+            print("Can't login into Google Drive")
+            return False
+        try:
+            file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
+            for s in file_list:
+                if s['title'] == name:
+                    drive.auth.service.files().copy(fileId=s['id'], body={"parents": [{"kind": "drive#fileLink", "id": folder}], 'title': new}).execute()
                     return True
             return False
         except Exception as e:
@@ -1080,6 +1097,10 @@ class Mizabot(commands.Bot):
 
     def delFile(self, filename):
         try: os.remove(filename)
+        except: pass
+
+    def cpyFile(self, src, dest):
+        try: copyfile(src, dst)
         except: pass
 
 # #####################################################################################

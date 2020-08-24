@@ -149,6 +149,8 @@ class GBF_Access(commands.Cog):
                                 self.bot.drive.saveDiskFile("temp.sql", "application/sql", "GW.sql", self.bot.tokens['files']) # upload
                                 self.bot.delFile('temp.sql')
                                 await self.loadGWDB()
+                            else:
+                                await self.bot.sendError('gwscrap', 'Failed')
 
                             await asyncio.sleep(300)
                         else:
@@ -1638,20 +1640,19 @@ class GBF_Access(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["danchos", "captains", "captainranking", "capranking"])
     @commands.cooldown(1, 500, commands.BucketType.guild)
     async def danchoranking(self, ctx):
-        await self.bot.react(ctx.message, 'time')
         crews = []
         for e in self.bot.granblue['gbfgcrew']:
             if self.bot.granblue['gbfgcrew'][e] in crews or self.bot.granblue['gbfgcrew'][e] in self.blacklist: continue
             crews.append(self.bot.granblue['gbfgcrew'][e])
         ranking = []
         for c in crews:
-            crew = await self.getCrewData(None, c, True)
+            crew = await self.getCrewData(ctx, c, True)
             if 'error' in crew:
                 await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ Dancho Ranking".format(self.bot.getEmote('gw')), description="Unavailable", footer=crew['error'], color=self.color))
                 await self.bot.unreact(ctx.message, 'time')
                 return
             
-            data = await self.searchGWDBPlayer(None, crew['leader_id'], 2)
+            data = await self.searchGWDBPlayer(ctx, crew['leader_id'], 2)
             if data is None or data[1] is None:
                 await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ Dancho Ranking".format(self.bot.getEmote('gw')), description="Unavailable", color=self.color))
                 await self.bot.unreact(ctx.message, 'time')
@@ -1675,8 +1676,11 @@ class GBF_Access(commands.Cog):
                 fields[-1]['value'] += "{} \▫️ {} \▫️ {} \▫️ **n/a**\n".format(i+1, ranking[i][1], ranking[i][0])
             else:
                 fields[-1]['value'] += "{} \▫️ {} \▫️ {} \▫️ **{}**\n".format(i+1, ranking[i][1], ranking[i][0], self.honorFormat(ranking[i][2]))
-        await self.bot.unreact(ctx.message, 'time')
-        await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ GW{} Dancho Ranking".format(self.bot.getEmote('gw'), gwid), fields=fields, inline=True, color=self.color))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ GW{} Dancho Ranking".format(self.bot.getEmote('gw'), gwid), fields=fields, inline=True, color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(60)
+            await final_msg.delete()
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 60, commands.BucketType.guild)
@@ -1729,7 +1733,11 @@ class GBF_Access(commands.Cog):
                 fields[-1]['value'] += "{} \▫️ {} \▫️ **{}**\n".format(i+1, sorted[i][1], self.honorFormat(sorted[i][2]))
             else:
                 fields[-1]['value'] += "#**{}** \▫️ {} \▫️ **{}**\n".format(self.honorFormat(sorted[i][3]), sorted[i][1], self.honorFormat(sorted[i][2]))
-        await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ GW{} Ranking".format(self.bot.getEmote('gw'), gwid), fields=fields, inline=True, color=self.color))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ GW{} Ranking".format(self.bot.getEmote('gw'), gwid), fields=fields, inline=True, color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(60)
+            await final_msg.delete()
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 30, commands.BucketType.guild)
@@ -2231,17 +2239,14 @@ class GBF_Access(commands.Cog):
                 except: continue
 
                 if mode:
-                    c.execute("SELECT * FROM crews WHERE id == {}".format(int(item['id'])))
-                    if c.fetchone() is None:
-                        honor = {day: int(item['point'])}
-                        c.execute("INSERT INTO crews VALUES ({},{},'{}',{},{},{},{},{})".format(item.get('ranking', 'NULL'), int(item['id']), item['name'].replace("'", "''"), honor.get(0, 'NULL'), honor.get(1, 'NULL'), honor.get(2, 'NULL'), honor.get(3, 'NULL'), honor.get(4, 'NULL')))
+                    c.execute("SELECT count(*) FROM crews WHERE id = {}".format(int(item['id'])))
+                    if c.fetchone()[0] != 0:
+                        c.execute("UPDATE crews SET ranking = {}, name = '{}', {} = {} WHERE id = {}".format(int(item['ranking']), item['name'].replace("'", "''"), {0:'preliminaries',1:'total_1',2:'total_2',3:'total_3',4:'total_4'}.get(day, 'undef'), int(item['point']), int(item['id'])))
                     else:
-                        try:
-                            c.execute("UPDATE crews SET ranking = {}, name = '{}', {} = {} WHERE id = {}".format(int(item['ranking']), item['name'].replace("'", "''"), {0:'preliminaries', 1:'total_1', 2:'total_2', 3:'total_3', 4:'total_4'}.get(day, None), int(item['point']), int(item['id'])))
-                        except:
-                            pass
+                        honor = {day: int(item['point'])}
+                        c.execute("INSERT INTO crews VALUES ({},{},'{}',{},{},{},{},{})".format(int(item['ranking']), int(item['id']), item['name'].replace("'", "''"), honor.get(0, 'NULL'), honor.get(1, 'NULL'), honor.get(2, 'NULL'), honor.get(3, 'NULL'), honor.get(4, 'NULL')))
                 else:
-                    c.execute("INSERT INTO players VALUES ({},{},'{}',{})".format(item.get('rank', 'NULL'), int(item['user_id']), item['name'].replace("'", "''"), int(item['point'])))
+                    c.execute("INSERT INTO players VALUES ({},{},'{}',{})".format(int(item['rank']), int(item['user_id']), item['name'].replace("'", "''"), int(item['point'])))
                 i += 1
                 if i == count:
                     conn.commit()
@@ -2252,7 +2257,23 @@ class GBF_Access(commands.Cog):
             res.put(False)
 
     def gwscrap(self):
+        self.bot.drive.delFiles(["temp.sql"], self.bot.tokens['files'])
         self.bot.delFile('temp.sql')
+        if self.bot.drive.cpyFile("GW.sql", self.bot.tokens['files'], "temp.sql"):
+            if not self.bot.drive.dlFile("temp.sql", self.bot.tokens['files']):
+                return False
+            conn = sqlite3.connect('temp.sql')
+            c = conn.cursor()
+            try:
+                c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'")
+                if c.fetchone()[0] == 1:
+                    conn.close()
+                else:
+                    conn.close()
+                    self.bot.delFile('temp.sql')
+            except:
+                conn.close()
+                self.bot.delFile('temp.sql')
 
         self.stoprankupdate = False
         res = False
