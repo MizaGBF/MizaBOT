@@ -2278,6 +2278,10 @@ class GBF_Access(commands.Cog):
         self.stoprankupdate = False
         res = False
         for n in [0, 1]:
+            current_time = self.bot.getJST()
+            if n == 0 and current_time >= self.bot.gw['dates']["Interlude"] and current_time < self.bot.gw['dates']["Day 1"]:
+                continue
+
             data = self.getRanking(1, n == 0) # get the first page
             if data is None:
                 print("Can't access the ranking")
