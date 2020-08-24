@@ -1099,7 +1099,7 @@ class Mizabot(commands.Bot):
         try: os.remove(filename)
         except: pass
 
-    def cpyFile(self, src, dest):
+    def cpyFile(self, src, dst):
         try: copyfile(src, dst)
         except: pass
 
