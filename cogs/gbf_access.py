@@ -137,20 +137,11 @@ class GBF_Access(commands.Cog):
 
                             # update DB
                             if await self.bot.loop.run_in_executor(None, self.gwscrap):
-                                data = await self.GWDBver()
-                                if data[1] is None:
-                                    pass
-                                else:
-                                    if self.bot.gw['id'] != data[1]['gw']: # different gw, we move
-                                        self.bot.drive.delFiles(["GW_old.sql"], self.bot.tokens['files'])
-                                        self.bot.drive.mvFile("GW.sql", self.bot.tokens['files'], "GW_old.sql")
-                                    else: # same gw, we delete
-                                        self.bot.drive.delFiles(["GW.sql"], self.bot.tokens['files'])
-                                self.bot.drive.saveDiskFile("temp.sql", "application/sql", "GW.sql", self.bot.tokens['files']) # upload
+                                if not self.bot.drive.overwriteFile("temp.sql", "application/sql", "GW.sql", self.bot.tokens['files']): # upload
+                                    await self.bot.sendError('gwscrap', 'Upload failed')
                                 self.bot.delFile('temp.sql')
-                                await self.loadGWDB()
                             else:
-                                await self.bot.sendError('gwscrap', 'Failed')
+                                await self.bot.sendError('gwscrap', 'Scrapping failed')
 
                             await asyncio.sleep(300)
                         else:

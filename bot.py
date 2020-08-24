@@ -244,6 +244,25 @@ class MizabotDrive():
         except:
             return False
 
+    def overwriteFile(self, target, mime, name, folder): # write a file from the local storage to a drive folder (replacing an existing one, if it exists)
+        drive = self.login()
+        if not drive:
+            print("Can't login into Google Drive")
+            return False
+        try:
+            file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
+            for s in file_list:
+                if s['title'] == name:
+                    new_file = drive.CreateFile({'id': s['id']})
+                    new_file.SetContentFile(target)
+                    new_file.Upload()
+                    return True
+            # not found
+            return self.saveDiskFile(target, mime, name, folder)
+        except Exception as e:
+            print(e)
+            return False
+
     def mvFile(self, name, folder, new): # rename a file from a folder
         drive = self.login()
         if not drive:
