@@ -296,7 +296,7 @@ class MizabotDrive():
             print(e)
             return False
 
-    def dlFile(self, name, folder): # load a file from a folder
+    def dlFile(self, name, folder): # load a file from a folder to the local storage
         drive = self.login()
         if not drive:
             print("Can't login into Google Drive")
@@ -838,7 +838,7 @@ class Mizabot(commands.Bot):
             except: pass
             return None
 
-    def sendRequestNoAsync(self, url, **options): # no asyncio version
+    def sendRequestNoAsync(self, url, **options): # no asyncio version, for threaded functions
         try:
             data = None
             headers = {}

@@ -48,6 +48,7 @@ class GBF_Access(commands.Cog):
         self.translator = Translator()
         self.blacklist = ["677159", "147448"]
         self.stoprankupdate = False
+        self.threadpool = [] # to store gwscrap threads
 
     def startTasks(self):
         self.bot.runTask('gbfwatch', self.gbfwatch)
@@ -136,6 +137,7 @@ class GBF_Access(commands.Cog):
                                 self.bot.savePending = True
 
                             # update DB
+                            self.threadpool = [] # empty the thread pool
                             if await self.bot.loop.run_in_executor(None, self.gwscrap):
                                 data = await self.GWDBver()
                                 if data is not None and data[1] is not None:
@@ -147,7 +149,8 @@ class GBF_Access(commands.Cog):
                                 self.bot.delFile('temp.sql')
                                 await self.loadGWDB() # reload db
                             else:
-                                await self.bot.sendError('gwscrap', 'Scrapping failed')
+                                await self.bot.sendError('gwscrap', 'Scraping failed')
+                            self.threadpool.clear() # clear after usage (to avoid a memory leak)
 
                             await asyncio.sleep(300)
                         else:
@@ -1578,11 +1581,13 @@ class GBF_Access(commands.Cog):
                 if trophy == "No Trophy Displayed": title = "\u202d{} **{}**".format(self.bot.getEmote(rarity), name)
                 else: title = "\u202d{} **{}**▫️{}".format(self.bot.getEmote(rarity), name, trophy)
 
-                await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}{}\n{} Crew ▫️ {}\n{}".format(rank, comment, self.bot.getEmote('gw'), crew, scores), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}{}\n{} Crew ▫️ {}\n{}".format(rank, comment, self.bot.getEmote('gw'), crew, scores), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             else:
-                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile is private", url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
-                return
-
+                final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile is private", url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+            if not self.bot.isAuthorized(ctx):
+                await asyncio.sleep(45)
+                await final_msg.delete()
+                await self.bot.react(ctx.message, '✅') # white check mark
         except Exception as e:
             await self.bot.sendError("profile", str(e))
 
@@ -2067,7 +2072,11 @@ class GBF_Access(commands.Cog):
         elif len(result) > 3: desc = "3/{} random result(s) shown".format(len(result))
         else: desc = ""
 
-        await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), description=desc, fields=fields, inline=True, footer="help findcrew for details", color=self.color))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), description=desc, fields=fields, inline=True, footer="help findcrew for details", color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(45)
+            await final_msg.delete()
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwplayer'])
     @commands.cooldown(2, 15, commands.BucketType.user)
@@ -2156,7 +2165,11 @@ class GBF_Access(commands.Cog):
         elif len(result) > 30: desc = "30/{} random result(s) shown".format(len(result))
         else: desc = ""
 
-        await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), description=desc, fields=fields, inline=True, footer="help findplayer for details", color=self.color))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), description=desc, fields=fields, inline=True, footer="help findplayer for details", color=self.color))
+        if not self.bot.isAuthorized(ctx):
+            await asyncio.sleep(45)
+            await final_msg.delete()
+            await self.bot.react(ctx.message, '✅') # white check mark
 
     def getRanking(self, page, mode):
         try:
@@ -2294,15 +2307,15 @@ class GBF_Access(commands.Cog):
                 qo.put(item)
 
             for i in range(100): # make lot of threads
-                worker = Thread(target=self.scrapProcess, args=(n == 0, qi, qo))
-                worker.setDaemon(True)
-                worker.start()
+                self.threadpool.append(Thread(target=self.scrapProcess, args=(n == 0, qi, qo)))
+                self.threadpool[-1].setDaemon(True)
+                self.threadpool[-1].start()
 
             r = Queue() # return value
-            worker = Thread(target=self.gwdbbuilder, args=(n == 0, qo, count, r)) # sql builder thread
-            worker.setDaemon(True)
-            worker.start()
-            worker.join() # wait to finish
+            self.threadpool.append(Thread(target=self.gwdbbuilder, args=(n == 0, qo, count, r))) # sql builder thread
+            self.threadpool[-1].setDaemon(True)
+            self.threadpool[-1].start()
+            self.threadpool[-1].join() # wait to finish
 
             qi.queue.clear()
             qo.queue.clear()

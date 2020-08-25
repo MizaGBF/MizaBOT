@@ -759,11 +759,11 @@ class GBF_Utility(commands.Cog):
             if target < 10000: raise Exception()
             honor = [0, 0, 0]
             ex = 0
-            meat_per_ex_average = 3
+            meat_per_ex_average = 3.8
             meat = 0
             total_meat = 0
             nm = [0, 0]
-            day_target = [target * 0.15, target * 0.35]
+            day_target = [target * 0.2, target * 0.3] # sum = 0.5
             meat_use = [10, 20]
             honor_per_nm = [910000, 4100000]
 
