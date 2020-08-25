@@ -2210,7 +2210,9 @@ class GBF_Access(commands.Cog):
                         if d < timedelta(seconds=18000):
                             res.put(False)
                             return
-                        else: day = 5 - i
+                        else:
+                            day = 5 - i
+                            break
             elif current_time > self.bot.gw['dates']["Interlude"]:
                 day = 1
             elif current_time > self.bot.gw['dates']["Preliminaries"]:
