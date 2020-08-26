@@ -2317,7 +2317,9 @@ class GBF_Access(commands.Cog):
             self.threadpool.append(Thread(target=self.gwdbbuilder, args=(n == 0, qo, count, r))) # sql builder thread
             self.threadpool[-1].setDaemon(True)
             self.threadpool[-1].start()
-            self.threadpool[-1].join() # wait to finish
+
+            for t in self.threadpool:
+                t.join() # wait to finish
 
             qi.queue.clear()
             qo.queue.clear()
