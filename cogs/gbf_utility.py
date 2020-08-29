@@ -572,12 +572,6 @@ class GBF_Utility(commands.Cog):
         """Post the custom Combat tracker"""
         await ctx.send(embed=self.bot.buildEmbed(title="GBF Combat Tracker", description=self.bot.strings["dps()"], color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['grid', 'pool'])
-    @commands.cooldown(1, 5, commands.BucketType.guild)
-    async def motocal(self, ctx):
-        """Post the motocal link"""
-        await ctx.send(embed=self.bot.buildEmbed(title="(You) Motocal", description=self.bot.strings["motocal()"], color=self.color))
-
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['raidfinder', 'python_raidfinder'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def pyfinder(self, ctx):

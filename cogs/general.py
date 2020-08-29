@@ -243,7 +243,7 @@ class General(commands.Cog):
                 for t in p["threads"]:
                     try:
                         if t.get("sub", "").lower().find(search) != -1 or t.get("com", "").lower().find(search) != -1:
-                            threads.append([t["no"], t["replies"], self.cleanhtml(t.get("com", ""))]) # store the thread ids matching our search word
+                            threads.append([t["no"], t["replies"], su.unescape(self.cleanhtml(t.get("com", "")))]) # store the thread ids matching our search word
                     except:
                         pass
             threads.sort(reverse=True)

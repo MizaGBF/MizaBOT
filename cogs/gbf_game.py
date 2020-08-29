@@ -45,7 +45,7 @@ class GBF_Game(commands.Cog):
         for rate in self.bot.gbfdata['rateup'][r]['list']:
             fr = float(rate)
             for item in self.bot.gbfdata['rateup'][r]['list'][rate]:
-                if rate in rateups: last = "**" + item + "**"
+                if r == 2 and rate in rateups: last = "**" + item + "**"
                 else: last = item
                 if d < fr: return [r, last]
                 d -= fr

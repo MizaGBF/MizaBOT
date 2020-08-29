@@ -331,9 +331,9 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.22" # version number
+        self.botversion = "6.23" # version number
         self.saveversion = 0 # save version
-        self.botchangelog = ["Added `$news` and automatic translation", "Upgraded roll commands (`$single`, `$ten`, etc...), it will use the real gacha (and fallback to the old version in case of errors)", "Added live GW ranking update", "Added `$danchoranking`"] # bot changelog
+        self.botchangelog = ["Added `$news` and automatic translation", "Upgraded roll commands (`$single`, `$ten`, etc...), it will use the real gacha (and fallback to the old version in case of errors)", "Added live GW ranking update", "Added `$danchoranking`, `$gwcmp/$lead`", "Removed `$upcoming`", "Removed the invitetracker"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
@@ -596,63 +596,6 @@ class Mizabot(commands.Bot):
                 return
             except Exception as e:
                 await self.sendError('statustask', str(e))
-
-    async def invitetracker(self): # background task to track the invites of the (You) and /gbfg/ servers
-        if 'you_server' not in self.ids or 'gbfg' not in self.ids: return
-
-        guilds = [self.get_guild(self.ids['you_server']), self.get_guild(self.ids['gbfg'])]
-        log_channels = {self.ids['you_server']:'youlog', self.ids['gbfg']:'gbfglog'}
-        
-        try:
-            invites = {}
-            for g in guilds:
-                res = await g.invites()
-                invites[g.id] = {}
-                for i in res:
-                    invites[g.id][i.code] = i
-        except:
-            await self.sendError('invitetracker', 'cancelled, failed to retrieve a guild data')
-            return
-
-        while True:
-            try:
-                await asyncio.sleep(150)
-                for g in guilds:
-                    res = await g.invites()
-                    currents = {}
-                    for i in res:
-                        currents[i.code] = i
-
-                    for i in currents:
-                        if i in invites[g.id]:
-                            if currents[i].uses is not None and currents[i].uses != invites[g.id][i].uses:
-                                await self.send(log_channels[g.id], embed=bot.buildEmbed(title="Invite `{}` used".format(i), description="**Uses:** {}".format(currents[i].uses), timestamp=datetime.utcnow(), color=0xfcba03))
-                        else:
-                            msg = ""
-                            if currents[i].max_uses != 0: msg += "**Max uses:** {}\n".format(currents[i].max_uses)
-                            if currents[i].inviter is not None:
-                                msg += "**Inviter:** {}\n".format(currents[i].inviter)
-                            if currents[i].max_age != 0:
-                                if currents[i].max_age < 3600: msg += "**Duration:** {} minutes\n".format(currents[i].max_age // 60)
-                                else: msg += "**Duration:** {} hours\n".format(currents[i].max_age // 3600)
-                            msg += "**Channel:** {}\n".format(currents[i].channel.name)
-                            msg += "**Url:** {}\n".format(currents[i].url)
-                            await self.send(log_channels[g.id], embed=bot.buildEmbed(title="New Invite ▫️ `{}`".format(i), description=msg, timestamp=datetime.utcnow(), color=0xfcba03))
-
-                    for i in invites[g.id]:
-                        if i not in currents:
-                            await self.send(log_channels[g.id], embed=bot.buildEmbed(title="Revoked Invite ▫️ `{}`".format(i), timestamp=datetime.utcnow(), color=0xfcba03))
-
-                    invites[g.id] = currents
-            except asyncio.CancelledError:
-                await self.sendError('invitetracker', 'cancelled')
-                return
-            except Exception as e:
-                await self.sendError('invitetracker', str(e))
-                try: invites[g.id] = currents
-                except: pass
-                if str(e).startswith('500 INTERNAL SERVER ERROR'): # assume discord server issues and sleep
-                    await asyncio.sleep(1000)
 
     async def cleansave(self): # background task to clean up the save data, once per boot
         await asyncio.sleep(1000) # after 1000 seconds
@@ -991,7 +934,6 @@ class Mizabot(commands.Bot):
 
     async def startTasks(self): # start our tasks
         self.runTask('status', self.statustask)
-        self.runTask('invitetracker', self.invitetracker)
         self.runTask('cleansave', self.cleansave)
         for c in self.cogs:
             try:
