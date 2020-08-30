@@ -481,6 +481,9 @@ class GBF_Access(commands.Cog):
                                     if n == "b":
                                         rcs[-1][-1] = 1
                                         if imc < 2: imc = 2
+                                    elif n == "c":
+                                        rcs[-1][-1] = 2
+                                        if imc < 3: imc = 3
                                 elif n != "" and (len(ref) == 0 or(len(ref) > 0 and ref[-1] != n)):
                                     ref.append(n)
                                     if n not in dupelist:
@@ -537,7 +540,7 @@ class GBF_Access(commands.Cog):
                         for q in it:
                             if fill is not None: break
                             for sfql in q[-1]:
-                                if sfql in rc[4]:
+                                if sfql in rc[4].lower():
                                     fill = (q[0],q[1],q[2])
                                     break
                         rc[0] += rc[5]*wd
