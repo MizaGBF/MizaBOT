@@ -462,6 +462,7 @@ class GBF_Access(commands.Cog):
                 dupelist = []
                 match = 0
                 rcs = []
+                imc = 1
                 wd = 0
                 ht = 0
                 current = data.find("{", 0) + 1
@@ -476,7 +477,11 @@ class GBF_Access(commands.Cog):
                                 while x < len(data) and (data[x] == '_' or data[x].isalnum()):
                                     x += 1
                                 n = data[current+2:x]
-                                if n != "" and (len(ref) == 0 or(len(ref) > 0 and ref[-1] != n)):
+                                if len(n) == 1:
+                                    if n == "b":
+                                        rcs[-1][-1] = 1
+                                        if imc < 2: imc = 2
+                                elif n != "" and (len(ref) == 0 or(len(ref) > 0 and ref[-1] != n)):
                                     ref.append(n)
                                     if n not in dupelist:
                                         dupelist.append(n)
@@ -517,12 +522,13 @@ class GBF_Access(commands.Cog):
                                     if rc[2] > wd: wd = rc[2]
                                     if rc[3] > ht: ht = rc[3]
                                     rc.append(stack[-1][-2])
+                                    rc.append(0)
                                     rcs.append(rc)
                                 except:
                                     pass
                     current += 1
                 paste += self.pa(root, 0)
-                i = Image.new('RGB', (wd+200,ht+200), "black")
+                i = Image.new('RGB', (wd*imc+200,ht+200), "black")
                 d = ImageDraw.Draw(i)
                 txcs = []
                 for rc in rcs:
@@ -534,6 +540,8 @@ class GBF_Access(commands.Cog):
                                 if sfql in rc[4]:
                                     fill = (q[0],q[1],q[2])
                                     break
+                        rc[0] += rc[5]*wd
+                        rc[2] += rc[5]*wd
                         d.rectangle(rc[:4],fill=fill,outline=(140,140,140))
                         txcs.append([rc[0], rc[1], rc[4]])
                     except:
