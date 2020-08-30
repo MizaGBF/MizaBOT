@@ -343,10 +343,7 @@ class GBF_Utility(commands.Cog):
                             footer = data.get('id', None)
 
                             final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=desc, thumbnail=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(80)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 80)
 
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gbfwiki'])
@@ -687,10 +684,7 @@ class GBF_Utility(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator ▫️ {}".format(self.bot.getEmote('gw'), t), description="**{:,}** box(s) and **{:,}** leftover tokens\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(b, tok, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
         except:
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid token number", color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(60)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -722,10 +716,7 @@ class GBF_Utility(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator ▫️ {}".format(self.bot.getEmote('gw'), b), description="**{:,}** tokens needed\n\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(t, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
         except:
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid box number", color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(60)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -740,10 +731,7 @@ class GBF_Utility(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} Meat Calculator ▫️ {}".format(self.bot.getEmote('gw'), meat), description="**{:,}** NM90 or **{:}** honors\n**{:,}** NM95 or **{:}** honors\n**{:}** NM100 or **{:}** honors\n**{:,}** NM150 or **{:}** honors\n".format(nm90, self.honorFormat(nm90*260000), nm95, self.honorFormat(nm95*910000), nm100, self.honorFormat(nm100*2650000), nm150, self.honorFormat(nm150*4100000)), color=self.color))
         except:
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid meat number", color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(60)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
@@ -779,10 +767,7 @@ class GBF_Utility(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} Honor Planning ▫️ {} honors".format(self.bot.getEmote('gw'), self.honorFormat(target)), description="Preliminaries & Interlude ▫️ **{:,}** meats (around **{:,}** EX+ and **{:}** honors)\nDay 1 and 2 total ▫️ **{:,}** NM95 (**{:}** honors)\nDay 3 and 4 total ▫️ **{:,}** NM150 (**{:}** honors)".format(math.ceil(total_meat*2), ex*2, self.honorFormat(honor[0]*2), nm[0]*2, self.honorFormat(honor[1]*2), nm[1]*2, self.honorFormat(honor[2]*2)), footer="Assuming {} meats / EX+ on average".format(meat_per_ex_average), color=self.color))
         except:
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid honor number", color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(60)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['friday'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -959,20 +944,14 @@ class GBF_Utility(commands.Cog):
             else: msg += ", "
             msg += "{} {}".format(total[k], k)
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg, url="https://gbf.wiki/Raising_Weapon_Skills", fields=fields, inline=True, footer="type: {}".format(type), color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(60)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['cb'])
     @commands.cooldown(1, 15, commands.BucketType.guild)
     async def chainburst(self, ctx):
         """Give the Battle 2.0 chain burst gain"""
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="v2.0 Chain Burst", description="1 ▫️ **10%**\n2 ▫️ **23%**\n3 ▫️ **36%**\n4 ▫️ **50%**\n5 ▫️ **60%**", url="https://gbf.wiki/Battle_System_2.0#Chain_Burst", footer="chain size x 10 + chain size bonus", color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(30)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 30)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["doom", "doompost", "magnafest", "magnafes", "campaign", "brick", "bar", "sunlight", "stone", "suptix", "surprise", "evolite", "fugdidmagnafeststart", "alivegame", "alive"])
     @commands.cooldown(1, 60, commands.BucketType.guild)
@@ -996,10 +975,7 @@ class GBF_Utility(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))
         else:
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Unavailable", color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(30)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 30)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setcrystal', 'setspark'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
@@ -1025,10 +1001,7 @@ class GBF_Utility(commands.Cog):
         except Exception as e:
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color, footer="setRoll <crystal> [single] [ten]"))
         try:
-            if not self.bot.isAuthorized(ctx):
-                await asyncio.sleep(30)
-                await final_msg.delete()
-                await self.bot.react(ctx.message, '✅') # white check mark
+            await self.bot.cleanMessage(ctx, final_msg, 30)
         except:
             pass
 
@@ -1091,10 +1064,7 @@ class GBF_Utility(commands.Cog):
         except Exception as e:
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I warned my owner", color=self.color, footer=str(e)))
             await self.bot.sendError('seeRoll', str(e))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(30)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 30)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["sparkranking", "hoarders"])
     @commands.cooldown(1, 3, commands.BucketType.guild)
@@ -1143,7 +1113,4 @@ class GBF_Utility(commands.Cog):
         except Exception as e:
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Sorry, something went wrong :bow:", footer=str(e)))
             await self.bot.sendError("rollRanking", str(e))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(30)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 30)

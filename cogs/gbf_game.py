@@ -110,10 +110,7 @@ class GBF_Game(commands.Cog):
             else: msg = "It's a {}, too bad!".format(self.bot.getEmote('R'))
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did a single roll".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(25)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
@@ -145,10 +142,7 @@ class GBF_Game(commands.Cog):
                 i += 1
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did ten rolls".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(25)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(30, 30, commands.BucketType.guild)
@@ -173,10 +167,7 @@ class GBF_Game(commands.Cog):
             msg = "{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate".format(result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/300)
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} sparked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(45)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 45)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['frenzy'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
@@ -203,10 +194,7 @@ class GBF_Game(commands.Cog):
             msg = "Gachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} rolled the Gachapin".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(25)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['mook'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
@@ -237,10 +225,7 @@ class GBF_Game(commands.Cog):
             msg = "Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} rolled the Mukku".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(25)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['scratcher'])
     @commands.cooldown(1, 300, commands.BucketType.user)
@@ -550,10 +535,7 @@ class GBF_Game(commands.Cog):
             msg += "\n:confetti_ball: :confetti_ball: **Super Mukku** stopped after **{}** rolls :confetti_ball: :confetti_ball:\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(30)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 30)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 600, commands.BucketType.user)
@@ -584,10 +566,7 @@ class GBF_Game(commands.Cog):
                 final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} {}'s daily quota".format(self.bot.getEmote('gw'), ctx.author.display_name), description="You got a **Relief Ace Pass** 😈\nPrepare to relieve carries of their 'stress' after the day!!!", footer="wuv wuv", thumbnail=ctx.author.avatar_url ,color=self.color))
             else:
                 final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} {}'s daily quota".format(self.bot.getEmote('gw'), ctx.author.display_name), description="You got a **Free Leech Pass** 👍\nCongratulations!!!", thumbnail=ctx.author.avatar_url ,color=self.color))
-            if not self.bot.isAuthorized(ctx):
-                await asyncio.sleep(40)
-                await final_msg.delete()
-                await self.bot.react(ctx.message, '✅') # white check mark
+            await self.bot.cleanMessage(ctx, final_msg, 40)
             return
         elif c == 3:
             h = h * random.randint(50, 80)
@@ -625,10 +604,7 @@ class GBF_Game(commands.Cog):
             elif c == 4: m = 6666
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} {}'s daily quota".format(self.bot.getEmote('gw'), ctx.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.avatar_url ,color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(40)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 40)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 7, commands.BucketType.user)
@@ -640,10 +616,7 @@ class GBF_Game(commands.Cog):
         element = ['fire', 'water', 'earth', 'wind', 'light', 'dark']
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="**Rarity** ▫️ {}\n**Race** ▫️ {}\n**Element** ▫️ {}\n**Rating** ▫️ {:.1f}".format(self.bot.getEmote(rarity[seed % 3]), race[(seed - 1) % 6], self.bot.getEmote(element[(seed - 3) % 6]), ((seed % 41) * 0.1) + 6.0 - (seed % 3) * 1.5), inline=True, color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(30)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 30)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 30, commands.BucketType.guild)
@@ -655,10 +628,7 @@ class GBF_Game(commands.Cog):
         e = g.choice(elems)
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Today, Xil's main element is", description="{} **{}**".format(self.bot.getEmote(e), e.capitalize()), color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(30)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 30)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 30, commands.BucketType.guild)
@@ -674,10 +644,7 @@ class GBF_Game(commands.Cog):
         ]
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{}'s daily dragons are".format(ctx.author.display_name), description="{} {}\n{} {}".format(self.bot.getEmote('1'), random.choice(possible), self.bot.getEmote('2'), random.choice(possible)), thumbnail=ctx.author.avatar_url, color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(30)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 30)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True, aliases=['leaks', 'leek'])
     @commands.cooldown(1, 300, commands.BucketType.user)

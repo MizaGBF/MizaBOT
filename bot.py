@@ -331,7 +331,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.23" # version number
+        self.botversion = "6.24" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Added `$news` and automatic translation", "Upgraded roll commands (`$single`, `$ten`, etc...), it will use the real gacha (and fallback to the old version in case of errors)", "Added live GW ranking update", "Added `$danchoranking`, `$gwcmp/$lead`", "Removed `$upcoming`", "Removed the invitetracker"] # bot changelog
         self.running = True # if True, the bot is running
@@ -695,6 +695,12 @@ class Mizabot(commands.Bot):
         except Exception as e:
             await self.sendError('unreact', str(e))
             return False
+
+    async def cleanMessage(self, ctx, msg, timeout, all=False):
+         if all or not self.isAuthorized(ctx):
+            if timeout is None or timeout > 0: await asyncio.sleep(timeout)
+            await msg.delete()
+            await self.react(ctx.message, '✅') # white check mark
 
     def buildEmbed(self, **options): # make a full embed
         embed = discord.Embed(title=options.get('title'), description=options.pop('description', ""), url=options.pop('url', ""), color=options.pop('color', random.randint(0, 16777216)))

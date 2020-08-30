@@ -251,38 +251,6 @@ class General(commands.Cog):
         except:
             return []
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(2, 10, commands.BucketType.guild)
-    async def roll(self, ctx, dice : str = ""):
-        """Rolls a dice in NdN format."""
-        try:
-            rolls, limit = map(int, dice.split('d'))
-            result = ", ".join(str(random.randint(1, limit)) for r in range(rolls))
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{}'s dice Roll(s)".format(ctx.message.author.display_name), description=result, color=self.color))
-        except:
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Format has to be in NdN", footer="example: roll 2d6", color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(20)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['choice'])
-    @commands.cooldown(2, 10, commands.BucketType.guild)
-    async def choose(self, ctx, *, choices : str ):
-        """Chooses between multiple choices.
-        Use quotes if one of your choices contains spaces.
-        Example: $choose I'm Alice ; Bob"""
-        try:
-            possible = choices.split(";")
-            if len(possible) < 2: raise Exception()
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{}, I choose".format(ctx.message.author.display_name), description=random.choice(possible), color=self.color))
-        except:
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Give me a list of something to choose from 😔, separated by ';'", color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(20)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
-
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['math'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def calc(self, ctx, *terms : str):
@@ -334,10 +302,7 @@ class General(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Roles containing: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon_url, footer="on server {}".format(g.name), color=self.color))
         else:
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Roles matching: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon_url, footer="on server {}".format(g.name), color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(20)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 20)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['hgg2d'])
     @commands.cooldown(1, 10, commands.BucketType.default)
@@ -545,10 +510,7 @@ class General(commands.Cog):
             count += 1
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Self Assignable Roles", fields=fields, footer="Page {}/{}".format(page, 1+len(roles)//20), color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(30)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 30)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['nitro', 'here'])
     @commands.cooldown(1, 30, commands.BucketType.guild)

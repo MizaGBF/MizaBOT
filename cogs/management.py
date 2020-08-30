@@ -289,10 +289,7 @@ class Management(commands.Cog):
     async def status(self, ctx):
         """Post the bot status"""
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} ▫️ v{}".format(ctx.guild.me.display_name, self.bot.botversion), description="**Uptime**▫️{}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Save Pending**▫️{}\n**Errors since boot**▫️{}\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}\n**Twitter**▫️{}".format(self.bot.uptime(), self.bot.process.cpu_percent(), self.bot.process.memory_full_info().uss >> 20, self.bot.savePending, self.bot.errn, len(asyncio.all_tasks()), len(self.bot.guilds), len(self.bot.guilddata['pending']), len(self.bot.cogs), self.bot.cogn, (self.bot.twitter_api is not None)), thumbnail=ctx.guild.me.avatar_url, color=self.color))
-        if not self.bot.isAuthorized(ctx):
-            await asyncio.sleep(40)
-            await final_msg.delete()
-            await self.bot.react(ctx.message, '✅') # white check mark
+        await self.bot.cleanMessage(ctx, final_msg, 40)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -303,10 +300,7 @@ class Management(commands.Cog):
             msg += "▫️ {}\n".format(c)
         if msg != "":
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} ▫️ v{}".format(ctx.guild.me.display_name, self.bot.botversion), description="**Changelog**\n" + msg, thumbnail=ctx.guild.me.avatar_url, color=self.color))
-            if not self.bot.isAuthorized(ctx):
-                await asyncio.sleep(40)
-                await final_msg.delete()
-                await self.bot.react(ctx.message, '✅') # white check mark
+            await self.bot.cleanMessage(ctx, final_msg, 40)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isMod()
