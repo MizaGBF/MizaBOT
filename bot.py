@@ -331,7 +331,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.24" # version number
+        self.botversion = "6.25" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Added `$news` and automatic translation", "Upgraded roll commands (`$single`, `$ten`, etc...), it will use the real gacha (and fallback to the old version in case of errors)", "Added live GW ranking update", "Added `$danchoranking`, `$gwcmp/$lead`", "Removed `$upcoming`", "Removed the invitetracker"] # bot changelog
         self.running = True # if True, the bot is running
@@ -397,6 +397,7 @@ class Mizabot(commands.Bot):
             auth = tweepy.OAuthHandler(self.twitter['key'], self.twitter['secret'])
             auth.set_access_token(self.twitter['access'], self.twitter['access_secret'])
             self.twitter_api = tweepy.API(auth)
+            if self.twitter_api.verify_credentials() is None: raise Exception()
         except:
             self.twitter_api = None
         # init bot
@@ -601,42 +602,68 @@ class Mizabot(commands.Bot):
         await asyncio.sleep(1000) # after 1000 seconds
         if self.exit_flag: return
         try:
-            change = False
             # clean up spark data
+            count = 0
             c = datetime.utcnow()
             for id in list(self.spark[0].keys()):
                 if len(self.spark[0][id]) == 3: # backward compatibility
                     self.spark[0][id].append(c)
-                    change = True
+                    self.savePending = True
                 else:
                     d = c - self.spark[0][id][3]
                     if d.days >= 30:
                         del self.spark[0][id]
-                        change = True
+                        count += 1
+            if count > 0:
+                self.savePending = True
+                await self.send('debug', embed=self.buildEmbed(title="cleansave()", description="Cleaned {} unused spark saves".format(count), timestamp=datetime.utcnow()))
+
+            # clean up profiles
+            count = 0
+            for uid in list(self.gbfids.keys()):
+                found = False
+                for g in self.guilds:
+                     if g.get_member(int(uid)) is not None:
+                        found = True
+                        break
+                if not found:
+                    count += 1
+                    self.gbfids.pop(uid)
+            if count > 0:
+                self.savePending = True
+                await self.send('debug', embed=self.buildEmbed(title="cleansave()", description="Cleaned {} unused profiles".format(count), timestamp=datetime.utcnow()))
 
             # clean up schedule
             c = self.getJST()
             new_schedule = []
-            for i in range(0, len(self.schedule), 2):
-                try:
-                    date = self.schedule[i].replace(" ", "").split("-")[-1].split("/")
-                    x = c.replace(month=int(date[0]), day=int(date[1])+1, microsecond=0)
-                    if c - x > timedelta(days=160):
-                        x = x.replace(year=x.year+1)
-                    if c >= x:
-                        continue
-                except:
-                    pass
-                new_schedule.append(self.schedule[i])
-                new_schedule.append(self.schedule[i+1])
+            if len(self.schedule) <= 2 and self.twitter_api is not None and c.date().day == 1: # retrive schedule from @granblue_en on first day of month
+                tw = self.bot.getTwitterTimeline('granblue_en')
+                if tw is not None:
+                    for t in tw:
+                        txt = t.full_text
+                        if txt.find(" = ") != -1 and txt.find("chedule") != -1:
+                            s = txt.find("https://t.co/")
+                            if s != -1: txt = txt[:s]
+                            try: new_schedule = txt.replace('\n', ' = ').split(' = ')[1:]
+                            except: pass
+            else: # clean up old entries
+                for i in range(0, len(self.schedule), 2):
+                    try:
+                        date = self.schedule[i].replace(" ", "").split("-")[-1].split("/")
+                        x = c.replace(month=int(date[0]), day=int(date[1])+1, microsecond=0)
+                        if c - x > timedelta(days=160):
+                            x = x.replace(year=x.year+1)
+                        if c >= x:
+                            continue
+                    except:
+                        pass
+                    new_schedule.append(self.schedule[i])
+                    new_schedule.append(self.schedule[i+1])
 
             if len(new_schedule) != len(self.schedule):
                 self.schedule = new_schedule
-                change = True
+                self.savePending = True
                 await self.send('debug', embed=self.buildEmbed(title="cleansave()", description="The schedule has been cleaned up", timestamp=datetime.utcnow()))
-
-            # raise save flag
-            if change: self.savePending = True
         except asyncio.CancelledError:
             await self.sendError('cleansave', 'cancelled')
             return
@@ -697,10 +724,13 @@ class Mizabot(commands.Bot):
             return False
 
     async def cleanMessage(self, ctx, msg, timeout, all=False):
-         if all or not self.isAuthorized(ctx):
-            if timeout is None or timeout > 0: await asyncio.sleep(timeout)
-            await msg.delete()
-            await self.react(ctx.message, '✅') # white check mark
+        try:
+            if all or not self.isAuthorized(ctx):
+                if timeout is None or timeout > 0: await asyncio.sleep(timeout)
+                await msg.delete()
+                await self.react(ctx.message, '✅') # white check mark
+        except:
+            pass
 
     def buildEmbed(self, **options): # make a full embed
         embed = discord.Embed(title=options.get('title'), description=options.pop('description', ""), url=options.pop('url', ""), color=options.pop('color', random.randint(0, 16777216)))

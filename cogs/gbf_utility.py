@@ -350,8 +350,9 @@ class GBF_Utility(commands.Cog):
     @commands.cooldown(3, 4, commands.BucketType.guild)
     async def wiki(self, ctx, *, terms : str = ""):
         """Search the GBF wiki"""
+        final_msg = None
         if terms == "":
-            await ctx.send(embed=self.bot.buildEmbed(title="Tell me what to search on the wiki", footer="wiki [search terms]", color=self.color))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Tell me what to search on the wiki", footer="wiki [search terms]", color=self.color))
         else:
             # build the url (the wiki is case sensitive)
             arr = []
@@ -365,15 +366,16 @@ class GBF_Utility(commands.Cog):
                 url = "https://gbf.wiki/index.php?title=Special:Search&search={}".format(parse.quote_plus(terms))
                 if str(e) != "HTTP Error 404: Not Found": # unknown error, we stop here
                     await self.bot.sendError("wiki", str(e))
-                    await ctx.send(embed=self.bot.buildEmbed(title="Unexpected error, click here to search", url=url, footer=str(e), color=self.color))
+                    final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Unexpected error, click here to search", url=url, footer=str(e), color=self.color))
                 else: # failed, we try the search function
                     try:
                         await self.requestWiki(ctx, url, True) # try
                     except Exception as f:
                         if str(f) == "No results":
-                            await ctx.send(embed=self.bot.buildEmbed(title="No matches found", color=self.color)) # no results
+                            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="No matches found", color=self.color)) # no results
                         else:
-                            await ctx.send(embed=self.bot.buildEmbed(title="Not Found, click here to refine", url=url, color=self.color)) # no results
+                            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Not Found, click here to refine", url=url, color=self.color)) # no results
+        await self.bot.cleanMessage(ctx, final_msg, 45)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tweet'])
     @commands.cooldown(1, 2, commands.BucketType.default)

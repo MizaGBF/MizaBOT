@@ -248,6 +248,25 @@ class GBF_Access(commands.Cog):
             except Exception as e:
                 await self.bot.sendError('gbfwatch B', str(e))
 
+            try: # 4koma checker
+                last = await self.check4koma()
+                if '4koma' in self.bot.gbfdata:
+                    if last['id'] != self.bot.gbfdata['4koma']:
+                        self.bot.gbfdata['4koma'] = last['id']
+                        self.bot.savePending = True
+                        title = last['title_en']
+                        if title == "": title = self.translate(last['title'])
+                        await self.bot.sendMulti(['debug', 'public_update', 'gbfg_update'], embed=self.bot.buildEmbed(title=title, url="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/comic/episode/episode_{}.jpg".format(last['id']), image="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/comic/thumbnail/thum_{}.png".format(last['id'].zfill(5)), color=self.color))
+                else:
+                    self.bot.gbfdata['4koma'] = last['id']
+                    self.bot.savePending = True
+                await asyncio.sleep(0.001)
+            except asyncio.CancelledError:
+                await self.bot.sendError('gbfwatch', 'cancelled')
+                return
+            except Exception as e:
+                await self.bot.sendError('gbfwatch C', str(e))
+
             try:
                 # update check
                 v = await self.bot.getGameversion()
@@ -288,7 +307,7 @@ class GBF_Access(commands.Cog):
                 await self.bot.sendError('gbfwatch', 'cancelled')
                 return
             except Exception as e:
-                await self.bot.sendError('gbfwatch C', str(e))
+                await self.bot.sendError('gbfwatch D', str(e))
 
     async def checkNews(self):
         res = []
@@ -319,6 +338,10 @@ class GBF_Access(commands.Cog):
                     except:
                         pass
         return res
+
+    async def check4koma(self):
+        data = await self.bot.sendRequest('http://game.granbluefantasy.jp/comic/list/1?_=TS1&t=TS2&uid=ID', account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
+        return data['list'][0]
 
     def translate(self, text):
         try:
