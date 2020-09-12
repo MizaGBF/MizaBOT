@@ -948,11 +948,11 @@ class GBF_Utility(commands.Cog):
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg, url="https://gbf.wiki/Raising_Weapon_Skills", fields=fields, inline=True, footer="type: {}".format(type), color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 60)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['cb'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['fc'])
     @commands.cooldown(1, 15, commands.BucketType.guild)
-    async def chainburst(self, ctx):
-        """Give the Battle 2.0 chain burst gain"""
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="v2.0 Chain Burst", description="1 ▫️ **10%**\n2 ▫️ **23%**\n3 ▫️ **36%**\n4 ▫️ **50%**\n5 ▫️ **60%**", url="https://gbf.wiki/Battle_System_2.0#Chain_Burst", footer="chain size x 10 + chain size bonus", color=self.color))
+    async def fatedchain(self, ctx):
+        """Give the Battle 2.0 Fated Chain gain"""
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Fated Chain gain", description="1 ▫️ **10%**\n2 ▫️ **23%**\n3 ▫️ **36%**\n4 ▫️ **50%**\n5 ▫️ **60%**", url="https://gbf.wiki/Battle_System_2.0#Fated_Chains", footer="chain size x 10 + chain size bonus", color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 30)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["doom", "doompost", "magnafest", "magnafes", "campaign", "brick", "bar", "sunlight", "stone", "suptix", "surprise", "evolite", "fugdidmagnafeststart", "alivegame", "alive"])
