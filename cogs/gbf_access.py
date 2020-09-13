@@ -331,6 +331,9 @@ class GBF_Access(commands.Cog):
                                 mb25 = section.findChildren("div", class_="mb25", recursive=False)[0]
                                 href = mb25.findChildren("a", class_="change_news_trigger", recursive=False)[0]
                                 img = href.findChildren("img", recursive=False)[0].attrs['src']
+                                if not img.startswith('http://granbluefantasy.jp'):
+                                    if img.startswith('/'): img = 'http://granbluefantasy.jp' + img
+                                    else: img = 'http://granbluefantasy.jp/' + img
                             except:
                                 img = None
 
@@ -1832,7 +1835,11 @@ class GBF_Access(commands.Cog):
         msg = ""
         for i in range(len(self.bot.gbfdata['news_url'])):
             msg += "{} [{}]({})\n".format(self.bot.getEmote(str(i+1)), self.translate(self.bot.gbfdata['news_url'][i][1]), self.bot.gbfdata['news_url'][i][0])
-        try: thumb = self.bot.gbfdata['news_url'][0][2]
+        try:
+            thumb = self.bot.gbfdata['news_url'][0][2]
+            if not thumb.startswith('http://granbluefantasy.jp'):
+                if thumb.startswith('/'): thumb = 'http://granbluefantasy.jp' + thumb
+                else: thumb = 'http://granbluefantasy.jp/' + thumb
         except: thumb = None
         if msg == "":
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))
