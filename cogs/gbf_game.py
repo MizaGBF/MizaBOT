@@ -645,23 +645,3 @@ class GBF_Game(commands.Cog):
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{}'s daily dragons are".format(ctx.author.display_name), description="{} {}\n{} {}".format(self.bot.getEmote('1'), random.choice(possible), self.bot.getEmote('2'), random.choice(possible)), thumbnail=ctx.author.avatar_url, color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 30)
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True, aliases=['leaks', 'leek'])
-    @commands.cooldown(1, 300, commands.BucketType.user)
-    async def leak(self, ctx):
-        if random.randint(1, 1000) == 1:
-            r = 365
-            bingo = True
-        else:
-            r = random.randint(1, 5)
-            bingo = False
-        if not isinstance(self.bot.extra, dict): self.bot.extra = {}
-        self.bot.extra['leak'] = self.bot.extra.get('leak', 0) + r
-        self.bot.savePending = True
-        title = "Alliah has been delayed by {} day".format(r)
-        if r != 1: title += "s"
-        if bingo: title = ":confetti_ball: :partying_face: " + title + " :partying_face: :confetti_ball:"
-        msg = await ctx.send(embed=self.bot.buildEmbed(title=title, footer="{} days total".format(self.bot.extra['leak']), color=self.color))
-        if not bingo:
-            await asyncio.sleep(30)
-            await msg.delete()

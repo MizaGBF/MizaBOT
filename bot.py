@@ -331,7 +331,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.26" # version number
+        self.botversion = "6.27" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Added `$news` and automatic translation", "Upgraded roll commands (`$single`, `$ten`, etc...), it will use the real gacha (and fallback to the old version in case of errors)", "Added live GW ranking update", "Added `$danchoranking`, `$gwcmp/$lead`", "Removed `$upcoming`", "Removed the invitetracker"] # bot changelog
         self.running = True # if True, the bot is running

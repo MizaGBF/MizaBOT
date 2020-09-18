@@ -331,9 +331,9 @@ class GBF_Access(commands.Cog):
                                 mb25 = section.findChildren("div", class_="mb25", recursive=False)[0]
                                 href = mb25.findChildren("a", class_="change_news_trigger", recursive=False)[0]
                                 img = href.findChildren("img", recursive=False)[0].attrs['src']
-                                if not img.startswith('http://granbluefantasy.jp'):
-                                    if img.startswith('/'): img = 'http://granbluefantasy.jp' + img
-                                    else: img = 'http://granbluefantasy.jp/' + img
+                                if not img.startswith('http'):
+                                    if img.startswith('/'): img = 'https://granbluefantasy.jp' + img
+                                    else: img = 'https://granbluefantasy.jp/' + img
                             except:
                                 img = None
 
@@ -1347,6 +1347,28 @@ class GBF_Access(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="{}{}{}".format(rarity, kind, data['name']), description=msg, thumbnail=url, footer=data['id'], color=self.color))
         except:
             await self.bot.react(ctx.message, '❎') # white negative mark
+            
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 60, commands.BucketType.guild)
+    async def coop(self, ctx):
+        """Retrieve the current coop daily missions"""
+        try:
+            data = (await self.bot.sendRequest('http://game.granbluefantasy.jp/coopraid/daily_mission?_=TS1&t=TS2&uid=ID', account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True))['daily_mission']
+            msg = ""
+            for i in range(len(data)):
+                if data[i]['category'] == '2':
+                    items = {20011:'fire', 20012:'fire', 20111:'fire', 20021:'water', 20022:'water', 20121:'water', 20031:'earth', 20032:'earth', 20131:'earth', 20041:'wind', 20042:'wind', 20141:'wind'}
+                    id = int(data[i]['image'].split('/')[-1])
+                    msg += '{} {}\n'.format(self.bot.getEmote(items.get(id, 'misc')), data[i]['description'])
+                elif data[i]['category'] == '1':
+                    quests = {'s00101':'wind', 's00104':'wind', 's00204':'wind', 's00206':'wind', 's00301':'fire', 's00303':'fire', 's00405':'fire', 's00406':'fire', 's00601':'water', 's00602':'water', 's00604':'water', 's00606':'water', 's00802':'earth', 's00704':'earth', 's00705':'earth', 's00806':'earth', 's01005':'wind', 's00905':'wind', 's00906':'wind', 's01006':'wind', 's01105':'fire', 's01403':'fire', 's01106':'fire', 's01206':'fire', 's01001':'water', 's01502':'water', 's01306':'water', 's01406':'water', 's01601':'earth', 's01405':'earth', 's01506':'earth', 's01606':'earth'}
+                    id = data[i]['image'].split('/')[-1]
+                    msg += '{} {}\n'.format(self.bot.getEmote(quests.get(id, 'misc')), data[i]['description'])
+                else:
+                    msg += '{} {}\n'.format(self.bot.getEmote(str(i+1)), data[i]['description'])
+            await ctx.send(embed=self.bot.buildEmbed(author={'name':"Daily Coop Missions", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))
+        except:
+            await self.bot.react(ctx.message, '❎') # white negative mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rateup', 'banner'])
     @commands.cooldown(1, 60, commands.BucketType.guild)
@@ -1846,6 +1868,18 @@ class GBF_Access(commands.Cog):
         else:
             final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"Latest Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, image=thumb, color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 45)
+
+    @commands.command(no_pm=True, name='4koma', cooldown_after_parsing=True, aliases=['granblues'])
+    @commands.cooldown(2, 40, commands.BucketType.guild)
+    async def _4koma(self, ctx, id : int = -123456789):
+        """Post a Granblues Episode"""
+        try:
+            if id == -123456789: id = int(self.bot.gbfdata['4koma'])
+            if id < 0 or id > int(self.bot.gbfdata['4koma']): raise Exception()
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Granblue Episode {}".format(id), url="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/comic/episode/episode_{}.jpg".format(id), image="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/comic/thumbnail/thum_{}.png".format(str(id).zfill(5)), color=self.color))
+            await self.bot.cleanMessage(ctx, final_msg, 45)
+        except:
+            await self.bot.react(ctx.message, '❎') # white negative mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()

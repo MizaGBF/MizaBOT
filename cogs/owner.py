@@ -19,13 +19,6 @@ class Owner(commands.Cog):
             return ctx.bot.isOwner(ctx)
         return commands.check(predicate)
 
-    # get the general channel of a server, if any
-    def getGeneral(self, guild):
-        for c in guild.text_channels:
-            if c.name.lower() == 'general':
-                return c
-        return None
-
     async def guildList(self):
         msg = ""
         for s in self.bot.guilds:
