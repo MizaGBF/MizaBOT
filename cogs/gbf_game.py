@@ -103,13 +103,17 @@ class GBF_Game(commands.Cog):
             if self.bot.gbfdata.get('rateup', None) is None: raise Exception()
             r = self.getRollExtended(3*l)
             msg = "{} {}".format(self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
+            if r[0] == 2: crystal = random.randint(1, 2)
+            else: crystal = r[0]
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did a single roll...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description='{}'.format(self.bot.getEmote('crystal{}'.format(crystal))), color=self.color, footer=footer))
+            await asyncio.sleep(3)
+            await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} did a single roll".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         except: # legacy mode
             r = self.getRoll(300*l)
             if r == 0: msg = "Luckshitter! It's a {}".format(self.bot.getEmote('SSR'))
             elif r == 1: msg = "It's a {}".format(self.bot.getEmote('SR'))
             else: msg = "It's a {}, too bad!".format(self.bot.getEmote('R'))
-
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did a single roll".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did a single roll".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         await self.bot.cleanMessage(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -123,13 +127,27 @@ class GBF_Game(commands.Cog):
         else: footer = "3% SSR rate"
         try:
             if self.bot.gbfdata.get('rateup', None) is None: raise Exception()
-            msg = ""
-            i = 0
-            while i < 10:
-                r = self.getRollExtended(3*l, i == 9)
-                msg += "{} {} ".format(self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
-                if i % 2 == 1: msg += "\n"
-                i += 1
+            hasSSR = False
+            rolls = []
+            while len(rolls) < 10:
+                rolls.append(self.getRollExtended(3*l, len(rolls) == 9))
+                if rolls[-1][0] == 2: hasSSR = True
+            if hasSSR: crystal = random.randint(1, 2)
+            else: crystal = 1
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did ten rolls...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description='{}'.format(self.bot.getEmote('crystal{}'.format(crystal))), color=self.color, footer=footer))
+            await asyncio.sleep(2)
+            for i in range(0, 11):
+                msg = ""
+                for j in range(0, i):
+                    if j == 11: break
+                    msg += "{} {} ".format(self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(rolls[j][0])), rolls[j][1])
+                    if j % 2 == 1: msg += "\n"
+                for j in range(i, 10):
+                    if j == 11: break
+                    msg += '{}'.format(self.bot.getEmote('crystal{}'.format(rolls[j][0])))
+                    if j % 2 == 1: msg += "\n"
+                await asyncio.sleep(1)
+                await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} did ten rolls".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         except: #legacy mode
             msg = ""
             i = 0
@@ -140,8 +158,7 @@ class GBF_Game(commands.Cog):
                 elif r == 1: msg += '{}'.format(self.bot.getEmote('SR'))
                 else: msg += '{}'.format(self.bot.getEmote('R'))
                 i += 1
-
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did ten rolls".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did ten rolls".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         await self.bot.cleanMessage(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
