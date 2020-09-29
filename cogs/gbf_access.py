@@ -198,8 +198,8 @@ class GBF_Access(commands.Cog):
                     self.bot.maintenance = {"state" : False, "time" : None, "duration" : 0}
                     self.bot.savePending = True
 
-            try:
-                # account refresh
+            try: # account refresh
+                await asyncio.sleep(0.001)
                 if 'test' in self.bot.gbfdata:
                     current_time = self.bot.getJST()
                     for i in range(0, len(self.bot.gbfaccounts)):
@@ -215,7 +215,6 @@ class GBF_Access(commands.Cog):
                                 self.bot.gbfaccounts[i][3] = 1
                                 self.bot.gbfaccounts[i][5] = current_time
                             self.bot.savePending = True
-                await asyncio.sleep(0.001)
             except asyncio.CancelledError:
                 await self.bot.sendError('gbfwatch', 'cancelled')
                 return
@@ -223,6 +222,7 @@ class GBF_Access(commands.Cog):
                 await self.bot.sendError('gbfwatch A', str(e))
 
             try: # news checker
+                await asyncio.sleep(0.001)
                 news = await self.checkNews()
                 if 'news_url' in self.bot.gbfdata:
                     foundNew = False
@@ -241,7 +241,6 @@ class GBF_Access(commands.Cog):
                 else:
                     self.bot.gbfdata['news_url'] = news
                     self.bot.savePending = True
-                await asyncio.sleep(0.001)
             except asyncio.CancelledError:
                 await self.bot.sendError('gbfwatch', 'cancelled')
                 return
@@ -249,6 +248,7 @@ class GBF_Access(commands.Cog):
                 await self.bot.sendError('gbfwatch B', str(e))
 
             try: # 4koma checker
+                await asyncio.sleep(0.001)
                 last = await self.check4koma()
                 if '4koma' in self.bot.gbfdata:
                     if last['id'] != self.bot.gbfdata['4koma']:
@@ -260,15 +260,14 @@ class GBF_Access(commands.Cog):
                 else:
                     self.bot.gbfdata['4koma'] = last['id']
                     self.bot.savePending = True
-                await asyncio.sleep(0.001)
             except asyncio.CancelledError:
                 await self.bot.sendError('gbfwatch', 'cancelled')
                 return
             except Exception as e:
                 await self.bot.sendError('gbfwatch C', str(e))
 
-            try:
-                # update check
+            try: # update check
+                await asyncio.sleep(0.001)
                 v = await self.bot.getGameversion()
                 s = self.bot.updateGameversion(v)
                 if s == 3:
@@ -556,6 +555,7 @@ class GBF_Access(commands.Cog):
                                 except:
                                     pass
                     current += 1
+                await asyncio.sleep(0.001)
                 paste += self.pa(root, 0)
                 i = Image.new('RGB', (wd*imc+200,ht+200), "black")
                 d = ImageDraw.Draw(i)
@@ -611,13 +611,8 @@ class GBF_Access(commands.Cog):
         found = {}
         silent = False
 
-        if 'c' not in self.bot.gbfdata:
-            self.bot.gbfdata['c'] = [282, 280, 371]
-            silent = True
-            self.bot.savePending = True
-        if 'w' not in self.bot.gbfdata:
-            self.bot.gbfdata['w'] = {"0": [[82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92], [74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84], [64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74], [42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52], [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61], [49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59], [69, 70, 80, 81, 82, 83, 84], [34, 35, 36, 37, 38, 39, 40, 41, 42, 44, 45], [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42], [25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35]], "1": [[191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201], [119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129], [138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148], [117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127], [161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171], [123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133], [120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130], [89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99], [118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128], [112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122]]}
-            self.bot.savePending = True
+        if 'c' not in self.bot.gbfdata or 'w' not in self.bot.gbfdata:
+            return found
 
         try:
             num = self.bot.gbfwatch['num']
@@ -675,7 +670,6 @@ class GBF_Access(commands.Cog):
 
                         await self.bot.send('debug', embed=self.bot.buildEmbed(title=crt[i][0], description=data[0], fields=fields, color=self.color))
                 id += 1
-            await asyncio.sleep(0.001)
 
         if nc is not None:
             if self.bot.gbfdata['count'][2] != nc['archive']['weapon_num']['max']: found[ns[2].format(self.bot.gbfdata['count'][2], nc['archive']['weapon_num']['max'])] = ""
@@ -683,12 +677,12 @@ class GBF_Access(commands.Cog):
             self.bot.savePending = True
 
         for k in self.bot.gbfdata['w']:
-            await asyncio.sleep(0.001)
             try:
                 x = int(k)
             except:
                 continue
             for i in range(0, len(self.bot.gbfdata['w'][k])):
+                await asyncio.sleep(0.001)
                 errc = 0
                 if len(self.bot.gbfdata['w'][k][i]) == 0 or self.bot.gbfdata['w'][k][i][-1] < 10:
                     stid = 0
@@ -697,19 +691,19 @@ class GBF_Access(commands.Cog):
                     stid = self.bot.gbfdata['w'][k][i][-1] - 10
                     max = self.bot.gbfdata['w'][k][i][-1]
                 id = (103 + x) * 10000000 + i * 100000 + stid * 100
-                await asyncio.sleep(0.001)
                 while errc < 4 or stid <= max:
                     if stid in self.bot.gbfdata['w'][k][i]:
                         stid += 1
                         continue
-
                     id = (103 + x) * 10000000 + i * 100000 + stid * 100
                     wfound = False
                     for wul in wl:
+                        await asyncio.sleep(0.001)
                         data = await self.bot.sendRequest(wul.format(id), no_base_headers=True)
                         if data is not None:
                             wfound = True
                             break
+                        await asyncio.sleep(0.001)
                     if not wfound:
                         errc += 1
                         stid += 1

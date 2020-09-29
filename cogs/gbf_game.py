@@ -647,6 +647,11 @@ class GBF_Game(commands.Cog):
         final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Today, Xil's main element is", description="{} **{}**".format(self.bot.getEmote(e), e.capitalize()), color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 30)
 
+    @commands.command(no_pm=True, hidden=True, cooldown_after_parsing=True, aliases=['leek', 'leaks', 'leeks'])
+    async def leak(self, ctx):
+        """Do nothing"""
+        await self.bot.react(ctx.message, '✅') # white check mark
+
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 30, commands.BucketType.guild)
     async def dragon(self, ctx):

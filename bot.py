@@ -331,7 +331,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.27" # version number
+        self.botversion = "6.28" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Added `$4koma`", "Upgraded roll commands again (`$single` and `$ten`)"] # bot changelog
         self.running = True # if True, the bot is running
