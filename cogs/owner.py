@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import random
 import json
 import re
+import html
 
 # Owner only command
 class Owner(commands.Cog):
@@ -261,7 +262,7 @@ class Owner(commands.Cog):
         tw = self.bot.getTwitterTimeline('granblue_en')
         if tw is not None:
             for t in tw:
-                txt = t.full_text
+                txt = html.unescape(t.full_text)
                 if txt.find(" = ") != -1 and txt.find("chedule") != -1:
                     s = txt.find("https://t.co/")
                     if s != -1: txt = txt[:s]
