@@ -331,9 +331,9 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.28" # version number
+        self.botversion = "6.29" # version number
         self.saveversion = 0 # save version
-        self.botchangelog = ["Added `$4koma`", "Upgraded roll commands again (`$single` and `$ten`)"] # bot changelog
+        self.botchangelog = ["Added `$valiant`, it's a placeholder, take it with a grain of salt"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
@@ -350,6 +350,7 @@ class Mizabot(commands.Bot):
         self.channels = {} # store my channels
         self.guilddata = {'banned':[], 'owners':[], 'pending':{}} # banned servers, banned owners, pending servers
         self.gw = {'state':False} # guild war data
+        self.valiant = {'state':False} # march of valiant data
         self.maintenance = {"state" : False, "time" : None, "duration" : "0"} # gbf maintenance data
         self.spark = [{}, []] # user spark data, banned users
         self.stream = {'time':None, 'content':[]} # stream command content
@@ -509,7 +510,8 @@ class Mizabot(commands.Bot):
                 self.schedule = data.get('schedule', [])
                 self.st = data.get('st', {})
                 self.spark = data.get('spark', [{}, []])
-                self.gw = data.get('gw', {})
+                self.gw = data.get('gw', {'state':False})
+                self.valiant = data.get('valiant', {'state':False})
                 self.reminders = data.get('reminders', {})
                 self.permitted = data.get('permitted', {})
                 self.news = data.get('news', {})
@@ -541,6 +543,7 @@ class Mizabot(commands.Bot):
                 data['st'] = self.st
                 data['spark'] = self.spark
                 data['gw'] = self.gw
+                data['valiant'] = self.valiant
                 data['reminders'] = self.reminders
                 data['news'] = self.news
                 data['permitted'] = self.permitted

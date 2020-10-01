@@ -88,11 +88,6 @@ class GuildWar(commands.Cog):
         # add the RLO character before
         return '\u202d' + s.replace('\\', '\\\\').replace('`', '\\`').replace('*', '\\*').replace('_', '\\_').replace('{', '\\{').replace('}', '\\}').replace('[', '').replace(']', '').replace('(', '\\(').replace(')', '\\)').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('.', '\\.').replace('!', '\\!').replace('|', '\\|')
 
-    def isAuthorized(): # for decorators
-        async def predicate(ctx):
-            return ctx.bot.isAuthorized(ctx)
-        return commands.check(predicate)
-
     def isDisabled(): # for decorators
         async def predicate(ctx):
             return False
@@ -106,11 +101,6 @@ class GuildWar(commands.Cog):
     def isYouServer(): # for decorators
         async def predicate(ctx):
             return ctx.bot.isServer(ctx, 'you_server')
-        return commands.check(predicate)
-
-    def isAuthorizedSpecial(): # for decorators
-        async def predicate(ctx):
-            return (ctx.bot.isServer(ctx, 'you_server') or ctx.bot.isAuthorized(ctx))
         return commands.check(predicate)
 
     def honorFormat(self, h): # convert honor number to a shorter string version

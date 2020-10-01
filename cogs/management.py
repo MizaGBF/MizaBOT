@@ -229,6 +229,63 @@ class Management(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="No buff skip is currently set", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isAuthorizedSpecial()
+    async def setValiant(self, ctx, id : int, element : str, day : int, month : int, year : int):
+        """Set the Valiant date ((You) Mod only)"""
+        try:
+            # stop the task
+            self.bot.valiant['state'] = False
+            self.bot.valiant['id'] = id
+            self.bot.valiant['element'] = element.lower()
+            self.bot.valiant['BETA'] = True
+            # build the calendar
+            # ### PLACEHOLDER ###
+            self.bot.valiant['dates'] = {}
+            self.bot.valiant['dates']["Day 1"] = datetime.utcnow().replace(year=year, month=month, day=day, hour=19, minute=0, second=0, microsecond=0)
+            self.bot.valiant['dates']["Day 2"] = self.bot.valiant['dates']["Day 1"] + timedelta(days=1)
+            self.bot.valiant['dates']["Day 3"] = self.bot.valiant['dates']["Day 2"] + timedelta(days=1)
+            self.bot.valiant['dates']["Day 4"] = self.bot.valiant['dates']["Day 3"] + timedelta(days=1)
+            self.bot.valiant['dates']["Day 5"] = self.bot.valiant['dates']["Day 4"] + timedelta(days=1)
+            self.bot.valiant['dates']["Day 6"] = self.bot.valiant['dates']["Day 5"] + timedelta(days=1)
+            self.bot.valiant['dates']["Day 7"] = self.bot.valiant['dates']["Day 6"] + timedelta(days=1)
+            self.bot.valiant['dates']["Day 8"] = self.bot.valiant['dates']["Day 7"] + timedelta(days=1)
+            self.bot.valiant['dates']["End"] = self.bot.valiant['dates']["Day 8"] + timedelta(days=1)
+            # set the valiant state to true
+            self.bot.valiant['state'] = True
+            self.bot.savePending = True
+            await ctx.send(embed=self.bot.buildEmbed(title="{} March of the Valiant Mode".format(self.bot.getEmote('gw')), description="Set to : **{:%m/%d %H:%M}**".format(self.bot.valiant['dates']["Day 1"]), color=self.color))
+        except Exception as e:
+            self.bot.cancelTask('check_buff')
+            self.bot.valiant['dates'] = {}
+            self.bot.valiant['buffs'] = []
+            self.bot.valiant['state'] = False
+            self.bot.savePending = True
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="An unexpected error occured", footer=str(e), color=self.color))
+            await self.bot.sendError('setgw', str(e))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isAuthorizedSpecial()
+    async def disableValiant(self, ctx):
+        """Disable the Valiant mode ((You) Mod only)
+        It doesn't delete the Valiant settings"""
+        self.bot.valiant['state'] = False
+        self.bot.savePending = True
+        await self.bot.react(ctx.message, '✅') # white check mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isAuthorizedSpecial()
+    async def enableValiant(self, ctx):
+        """Enable the Valiant mode ((You) Mod only)"""
+        if self.bot.valiant['state'] == True:
+            await ctx.send(embed=self.bot.buildEmbed(title="{} March of the Valiant Mode".format(self.bot.getEmote('gw')), description="Already enabled", color=self.color))
+        elif len(self.bot.valiant['dates']) == 8:
+            self.bot.valiant['state'] = True
+            self.bot.savePending = True
+            await self.bot.react(ctx.message, '✅') # white check mark
+        else:
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="No Guild War available in my memory", color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isMod()
     async def toggleFullBot(self, ctx):
         """Allow or not this channel to use all commands (Mod only)
