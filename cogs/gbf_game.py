@@ -173,8 +173,11 @@ class GBF_Game(commands.Cog):
         footer = "{}% SSR rate".format(base_rate)
         try:
             result = self.tenDrawsExtended(3*l, 30)
-            if (100*result[2]/300) > base_rate: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
-            else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
+            rate = (100*result[2]/300)
+            if rate >= base_rate * 1.2: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'
+            elif rate >= base_rate: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
+            elif rate >= base_rate * 0.9: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
+            else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761976275706445844/1_s.png'
             final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} is sparking...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
             await asyncio.sleep(5)
             msg = "{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
@@ -182,7 +185,7 @@ class GBF_Game(commands.Cog):
                 msg += i
                 if result[3][i] > 1: msg += " x{}".format(result[3][i])
                 msg += ", "
-                if i is list(result[3])[-1]: msg = msg[:-2] + "\n**{:.2f}%** SSR rate".format(100*result[2]/300)
+                if i is list(result[3])[-1]: msg = msg[:-2] + "\n**{:.2f}%** SSR rate".format(rate)
                 await asyncio.sleep(0.75)
                 await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} sparked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         except: #legacy mode
