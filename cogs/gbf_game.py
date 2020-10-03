@@ -103,10 +103,10 @@ class GBF_Game(commands.Cog):
             if self.bot.gbfdata.get('rateup', None) is None: raise Exception()
             r = self.getRollExtended(3*l)
             msg = "{} {}".format(self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
-            if r[0] == 2: crystal = random.randint(1, 2)
-            else: crystal = r[0]
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did a single roll...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description='{}'.format(self.bot.getEmote('crystal{}'.format(crystal))), color=self.color, footer=footer))
-            await asyncio.sleep(3)
+            if r[0] == 2: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
+            else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969231323070494/0_s.png'
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did a single roll...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
+            await asyncio.sleep(5)
             await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} did a single roll".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         except: # legacy mode
             r = self.getRoll(300*l)
@@ -132,10 +132,10 @@ class GBF_Game(commands.Cog):
             while len(rolls) < 10:
                 rolls.append(self.getRollExtended(3*l, len(rolls) == 9))
                 if rolls[-1][0] == 2: hasSSR = True
-            if hasSSR: crystal = random.randint(1, 2)
-            else: crystal = 1
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did ten rolls...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description='{}'.format(self.bot.getEmote('crystal{}'.format(crystal))), color=self.color, footer=footer))
-            await asyncio.sleep(2)
+            if hasSSR: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
+            else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969231323070494/0_s.png'
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did ten rolls...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
+            await asyncio.sleep(5)
             for i in range(0, 11):
                 msg = ""
                 for j in range(0, i):
@@ -146,7 +146,7 @@ class GBF_Game(commands.Cog):
                     if j == 11: break
                     msg += '{}'.format(self.bot.getEmote('crystal{}'.format(rolls[j][0])))
                     if j % 2 == 1: msg += "\n"
-                await asyncio.sleep(1)
+                await asyncio.sleep(0.75)
                 await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} did ten rolls".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         except: #legacy mode
             msg = ""
@@ -168,23 +168,28 @@ class GBF_Game(commands.Cog):
         6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
         3% keywords: "normal", "x1", "3%", "gacha", "1"."""
         l = self.isLegfest(double)
-        if l == 2: footer = "6% SSR rate"
-        else: footer = "3% SSR rate"
+        if l == 2: base_rate = 6
+        else: base_rate = 3
+        footer = "{}% SSR rate".format(base_rate)
         try:
             result = self.tenDrawsExtended(3*l, 30)
+            if (100*result[2]/300) > base_rate: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
+            else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} is sparking...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
+            await asyncio.sleep(5)
             msg = "{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
             for i in result[3]:
                 msg += i
                 if result[3][i] > 1: msg += " x{}".format(result[3][i])
                 msg += ", "
-            if len(result[3]) > 0: msg = msg[:-2]
-            msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/300)
+                if i is list(result[3])[-1]: msg = msg[:-2] + "\n**{:.2f}%** SSR rate".format(100*result[2]/300)
+                await asyncio.sleep(0.75)
+                await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} sparked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         except: #legacy mode
             result = self.tenDraws(300*l, 30)
             msg = "{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate".format(result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/300)
-
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} sparked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        await self.bot.cleanMessage(ctx, final_msg, 45)
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} sparked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        await self.bot.cleanMessage(ctx, final_msg, 30)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['frenzy'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
