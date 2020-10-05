@@ -8,7 +8,7 @@ import json
 import sqlite3
 from xml.sax import saxutils as su
 
-class Valiant(commands.Cog):
+class MarchOfTheValiant(commands.Cog):
     """March of the Valiant related commands."""
     def __init__(self, bot):
         self.bot = bot

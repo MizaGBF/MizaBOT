@@ -503,7 +503,7 @@ class GBF_Utility(commands.Cog):
             await self.bot.sendError("getgwstate", str(e))
 
         try:
-            buf = self.bot.get_cog('Valiant').getValiantState()
+            buf = self.bot.get_cog('MarchOfTheValiant').getValiantState()
             if len(buf) > 0: description += "\n" + buf
         except Exception as e:
             await self.bot.sendError("getvaliantstate", str(e))
