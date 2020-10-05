@@ -134,7 +134,7 @@ class GBF_Game(commands.Cog):
                 rolls.append(self.getRollExtended(3*l, len(rolls) == 9))
                 if rolls[-1][0] == 2: hasSSR = True
             if hasSSR: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
-            else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969231323070494/0_s.png'
+            else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
             final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did ten rolls...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
             await asyncio.sleep(5)
             for i in range(0, 11):
