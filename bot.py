@@ -384,6 +384,11 @@ class Mizabot(commands.Bot):
         self.on_message_low = {} # on message callback
         self.memmonitor = {0, None} # for monitoring the memory
         self.vregex = re.compile("Game\.version = \"(\d+)\";") # for the gbf version check
+
+        # enable intents
+        intents = discord.Intents.default()
+        intents.members = True
+        
         # load
         self.loadConfig() # load the config
         for i in range(0, 100): # try multiple times in case google drive is unresponsive
@@ -402,7 +407,7 @@ class Mizabot(commands.Bot):
         except:
             self.twitter_api = None
         # init bot
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\nSource code: https://github.com/MizaGBF/MizaBOT.\nDefault command prefix is '$', use $setPrefix to change it on your server.".format(self.botversion), help_command=MizabotHelp(), owner=self.ids['owner'], max_messages=None)
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\nSource code: https://github.com/MizaGBF/MizaBOT.\nDefault command prefix is '$', use $setPrefix to change it on your server.".format(self.botversion), help_command=MizabotHelp(), owner=self.ids['owner'], max_messages=None, intents=intents)
 
     def mainLoop(self): # main loop of the bot
         while self.running:

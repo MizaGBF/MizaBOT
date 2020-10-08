@@ -16,6 +16,7 @@ Here are a few instructions to set it up in its current state:
 * On the [Heroku](https://www.heroku.com) side, you only need to create a new app. The [CLI](https://devcenter.heroku.com/articles/heroku-cli) might help if you intend to do a git push since your own computer.   
 * The bot uses [Google Drive](https://www.google.com/drive/) to read and save its data. You'll need to get API keys from [Google](https://developers.google.com/drive) and fill the `settings.yaml` you can find in the [example folder](https://github.com/MizaGBF/MizaBOT/tree/master/example).  
 * Finally, you also need your [Discord token](https://discordapp.com/developers/applications/).  
+* On the [bot application page](https://discord.com/developers/applications), you want to enable the *PRESENCE INTENT* and *SERVER MEMBERS INTENT* settings for a better experience. [See here](https://discordpy.readthedocs.io/en/latest/intents.html#privileged-intents).  
 * Other files in the [example folder](https://github.com/MizaGBF/MizaBOT/tree/master/example) are:  
 * `config.json` must be edited with a notepad (follow the instructions inside) and placed with the bot code (your discord token must be inserted inside).  
 * `save.json` can be used as it is and must be placed in the [Google Drive](https://www.google.com/drive/) folder used to save the bot data. The bot can't start without a valid save file, it will create one if needed.  
@@ -23,7 +24,6 @@ Here are a few instructions to set it up in its current state:
 Check the [wiki](https://github.com/MizaGBF/MizaBOT/wiki/Setup) if you have questions.  
 This [issue](https://github.com/MizaGBF/MizaBOT/issues/1) might help if you encounter a problem.  
 Example files might be a bit outdated. I'll do my best to update them as much as possible.  
-* (Optional) On the [bot application page](https://discord.com/developers/applications), you might want to enable the *PRESENCE INTENT* and *SERVER MEMBERS INTENT* settings for a better experience. [See here](https://discordpy.readthedocs.io/en/latest/intents.html#privileged-intents).  
 ### Code Overview  
 * [asyncio](https://docs.python.org/3/library/asyncio.html) is used by [discord.py](https://github.com/Rapptz/discord.py), there is no multithreading involved in this bot as a result. Which means a function must not hog all the cpu time.  
 * Data (from the config or save file) is centralized on the Bot instance and accessible by the Cogs at any time.  
