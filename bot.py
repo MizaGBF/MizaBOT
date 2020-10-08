@@ -10,8 +10,8 @@ from datetime import datetime, timedelta
 from urllib.request import urlopen
 from urllib import request, parse
 from urllib.parse import unquote
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
+from pydrive2.auth import GoogleAuth
+from pydrive2.drive import GoogleDrive
 import itertools
 import psutil
 import time
@@ -331,7 +331,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.29" # version number
+        self.botversion = "6.30" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Added `$valiant`, it's a placeholder, take it with a grain of salt"] # bot changelog
         self.running = True # if True, the bot is running

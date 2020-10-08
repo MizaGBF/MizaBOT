@@ -3,7 +3,7 @@
 #### Requirements  
 * Python 3.8.  
 * [discord.py](https://github.com/Rapptz/discord.py) (formerly the rewrite branch).  
-* [PyDrive](https://pythonhosted.org/PyDrive/) to access the google drive where the save file is stored.  
+* [PyDrive2](https://github.com/iterative/PyDrive2) to access the google drive where the save file is stored.  
 * [psutil](https://psutil.readthedocs.io/en/latest/).  
 * [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/).  
 * [Tweepy](https://github.com/tweepy/tweepy).  
@@ -23,6 +23,7 @@ Here are a few instructions to set it up in its current state:
 Check the [wiki](https://github.com/MizaGBF/MizaBOT/wiki/Setup) if you have questions.  
 This [issue](https://github.com/MizaGBF/MizaBOT/issues/1) might help if you encounter a problem.  
 Example files might be a bit outdated. I'll do my best to update them as much as possible.  
+* (Optional) On the [bot application page](https://discord.com/developers/applications), you might want to enable the *PRESENCE INTENT* and *SERVER MEMBERS INTENT* settings for a better experience. [See here](https://discordpy.readthedocs.io/en/latest/intents.html#privileged-intents).  
 ### Code Overview  
 * [asyncio](https://docs.python.org/3/library/asyncio.html) is used by [discord.py](https://github.com/Rapptz/discord.py), there is no multithreading involved in this bot as a result. Which means a function must not hog all the cpu time.  
 * Data (from the config or save file) is centralized on the Bot instance and accessible by the Cogs at any time.  
