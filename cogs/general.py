@@ -8,6 +8,7 @@ import math
 import json
 import re
 from xml.sax import saxutils as su
+from collections import defaultdict
 
 # #####################################################################################
 # math parser used by $calc
@@ -531,3 +532,139 @@ class General(commands.Cog):
         """Get informations on the current guild (Owner only)"""
         guild = ctx.guild
         await ctx.send(embed=self.bot.buildEmbed(title=guild.name + " status", description="**ID** ▫️ {}\n**Owner** ▫️ {}\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon_url, timestamp=guild.created_at, color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['poker'])
+    @commands.cooldown(30, 30, commands.BucketType.guild)
+    async def deal(self, ctx):
+        """Deal a random poker hand"""
+        hand = []
+        while len(hand) < 5:
+            card = str(random.randint(2, 14)) + random.choice(["D", "S", "H", "C"])
+            if card not in hand:
+                hand.append(card)
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{}'s hand".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="🎴, 🎴, 🎴, 🎴, 🎴", color=self.color))
+        for x in range(0, 5):
+            await asyncio.sleep(1)
+            # check result
+            msg = ""
+            for i in range(len(hand)):
+                if i > x: msg += "🎴"
+                else: msg += hand[i].replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
+                if i < 4: msg += ", "
+                else: msg += "\n"
+            if x == 4:
+                await asyncio.sleep(2)
+                if self.check_royal_straight_flush(hand): msg += "**Royal Straight Flush**"
+                elif self.check_straight_flush(hand): msg += "**Straight Flush**"
+                elif self.check_four_of_a_kind(hand): msg += "**Four of a Kind**"
+                elif self.check_full_house(hand): msg += "**Full House**"
+                elif self.check_flush(hand): msg += "**Flush**"
+                elif self.check_straight(hand): msg += "**Straight**"
+                elif self.check_three_of_a_kind(hand): msg += "**Three of a Kind**"
+                elif self.check_two_pairs(hand): msg += "**Two Pairs**"
+                elif self.check_pair(hand): msg += "**Pair**"
+                else:
+                    # sort
+                    for i in range(0, len(hand)-1):
+                        for j in range(i+1, len(hand)):
+                            if int(hand[i][:-1]) > int(hand[j][:-1]):
+                                tmp = hand[i]
+                                hand[i] = hand[j]
+                                hand[j] = tmp
+                    msg += "**Highest card is {}**".format(hand[-1].replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
+            await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{}'s hand".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color))
+        await self.bot.cleanMessage(ctx, final_msg, 45)
+
+    def check_flush(self, hand):
+        suits = [h[-1] for h in hand]
+        if len(set(suits)) == 1:
+          return True
+        else:
+          return False
+
+    def check_royal_straight_flush(self, hand):
+        if self.check_flush(hand) and self.check_royal_straight(hand):
+            return True
+        else:
+            return False
+
+    def check_straight_flush(self, hand):
+        if self.check_flush(hand) and self.check_straight(hand):
+            return True
+        else:
+            return False
+
+    def check_four_of_a_kind(self, hand):
+        values = [i[:-1] for i in hand]
+        value_counts = defaultdict(lambda:0)
+        for v in values:
+            value_counts[v]+=1
+        if sorted(value_counts.values()) == [1,4]:
+            return True
+        return False
+
+    def check_full_house(self, hand):
+        values = [i[:-1] for i in hand]
+        value_counts = defaultdict(lambda:0)
+        for v in values:
+            value_counts[v]+=1
+        if sorted(value_counts.values()) == [2,3]:
+            return True
+        return False
+
+    def check_flush(self, hand):
+        suits = [i[-1] for i in hand]
+        if len(set(suits))==1:
+            return True
+        else:
+            return False
+
+    def check_royal_straight(self, hand):
+        values = [i[:-1] for i in hand]
+        if set(values) == set(["10", "11", "12", "13", "14"]):
+            return True
+        return False
+
+    def check_straight(self, hand):
+        values = [i[:-1] for i in hand]
+        value_counts = defaultdict(lambda:0)
+        for v in values:
+            value_counts[v] += 1
+        rank_values = [int(i) for i in values]
+        value_range = max(rank_values) - min(rank_values)
+        if len(set(value_counts.values())) == 1 and (value_range==4):
+            return True
+        else:
+            if set(values) == set(["14", "2", "3", "4", "5"]):
+                return True
+            return False
+
+    def check_three_of_a_kind(self, hand):
+        values = [i[:-1] for i in hand]
+        value_counts = defaultdict(lambda:0)
+        for v in values:
+            value_counts[v]+=1
+        if set(value_counts.values()) == set([3,1]):
+            return True
+        else:
+            return False
+
+    def check_two_pairs(self, hand):
+        values = [i[:-1] for i in hand]
+        value_counts = defaultdict(lambda:0)
+        for v in values:
+            value_counts[v]+=1
+        if sorted(value_counts.values())==[1,2,2]:
+            return True
+        else:
+            return False
+
+    def check_pair(self, hand):
+        values = [i[:-1] for i in hand]
+        value_counts = defaultdict(lambda:0)
+        for v in values:
+            value_counts[v]+=1
+        if 2 in value_counts.values():
+            return True
+        else:
+            return False
