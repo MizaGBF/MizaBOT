@@ -587,6 +587,12 @@ class General(commands.Cog):
             await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{}'s hand".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 45)
 
+    def pokerNameStrip(self, name):
+        if len(name) > 10:
+            if len(name.split(" ")[0]) < 10: return name.split(" ")[0]
+            else: return name[:9] + "…"
+        return name
+
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def poker(self, ctx):
@@ -608,7 +614,7 @@ class General(commands.Cog):
             self.pokergames[id] = {'state':'waiting', 'players':[ctx.author.id]}
             msg = await ctx.send(embed=self.bot.buildEmbed(title="♠️ Multiplayer Poker ♥️", description="Starting in 30s\n1/6 players", footer="Use the poker command to join", color=self.color))
             cd = 29
-            while cd > 0:
+            while cd >= 0:
                 await asyncio.sleep(1)
                 await msg.edit(embed=self.bot.buildEmbed(title="♠️ Multiplayer Poker ♥️", description="Starting in {}s\n{}/6 players".format(cd, len(self.pokergames[id]['players'])), footer="Use the poker command to join", color=self.color))
                 cd -= 1
@@ -616,7 +622,7 @@ class General(commands.Cog):
                     break
             self.pokergames[id]['state'] = "playing"
             if len(self.pokergames[id]['players']) > 6: self.pokergames[id]['players'] = self.pokergames[id]['players'][:6]
-            await self.bot.cleanMessage(ctx, msg, 0)
+            await self.bot.cleanMessage(ctx, msg, 0, True)
             # game start
             draws = []
             final_msg = None
@@ -625,7 +631,7 @@ class General(commands.Cog):
                 if card not in draws:
                     draws.append(card)
             for s in range(-1, 5):
-                msg = ctx.guild.me.display_name + " \▫️ "
+                msg = ":spy: Dealer \▫️ "
                 n = s - 2
                 for j in range(0, 3):
                     if j > n: msg += "🎴"
@@ -635,7 +641,7 @@ class General(commands.Cog):
                 n = max(1, s)
                 for x in range(0, len(self.pokergames[id]['players'])):
                     pid = self.pokergames[id]['players'][x]
-                    msg += "{} \▫️ ".format(ctx.guild.get_member(pid).display_name[:10])
+                    msg += "{} {} \▫️ ".format(self.bot.getEmote(str(x+1)), self.pokerNameStrip(ctx.guild.get_member(pid).display_name))
                     for j in range(0, 2):
                         if j > s: msg += "🎴"
                         else: msg += draws[3+j+2*x].replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
