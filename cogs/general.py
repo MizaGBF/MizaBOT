@@ -187,6 +187,7 @@ class General(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.color = 0x8fe3e8
+        self.pokergames = {}
 
     def startTasks(self):
         self.bot.runTask('reminder', self.remindertask)
@@ -533,7 +534,35 @@ class General(commands.Cog):
         guild = ctx.guild
         await ctx.send(embed=self.bot.buildEmbed(title=guild.name + " status", description="**ID** ▫️ {}\n**Owner** ▫️ {}\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon_url, timestamp=guild.created_at, color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['poker'])
+    def checkPokerHand(self, hand):
+        flush = False
+        # flush
+        suits = [h[-1] for h in hand]
+        if len(set(suits)) == 1: flush = True
+        # others
+        values = [i[:-1] for i in hand]
+        value_counts = defaultdict(lambda:0)
+        for v in values:
+            value_counts[v] += 1
+        rank_values = [int(i) for i in values]
+        value_range = max(rank_values) - min(rank_values)
+        if flush and set(values) == set(["10", "11", "12", "13", "14"]): return "**Royal Straight Flush**"
+        elif flush and ((len(set(value_counts.values())) == 1 and (value_range==4)) or set(values) == set(["14", "2", "3", "4", "5"])): return "**Straight Flush**"
+        elif sorted(value_counts.values()) == [1,4]: return "**Four of a Kind**"
+        elif sorted(value_counts.values()) == [2,3]: return "**Full House**"
+        elif flush: return "**Flush**"
+        elif (len(set(value_counts.values())) == 1 and (value_range==4)) or set(values) == set(["14", "2", "3", "4", "5"]): return "**Straight**"
+        elif set(value_counts.values()) == set([3,1]): return "**Three of a Kind**"
+        elif sorted(value_counts.values())==[1,2,2]: return "**Two Pairs**"
+        elif 2 in value_counts.values(): return "**Pair**"
+        else:
+            # highest card
+            for i in range(0, len(hand)): hand[i] = '0'+hand[i] if len(hand[i]) == 2 else hand[i]
+            last = sorted(hand)[-1]
+            if last[0] == '0': last = last[1:]
+            return "**Highest card is {}**".format(last.replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def deal(self, ctx):
         """Deal a random poker hand"""
@@ -554,31 +583,71 @@ class General(commands.Cog):
                 else: msg += "\n"
             if x == 4:
                 await asyncio.sleep(2)
-                flush = False
-                # flush
-                suits = [h[-1] for h in hand]
-                if len(set(suits)) == 1: flush = True
-                # others
-                values = [i[:-1] for i in hand]
-                value_counts = defaultdict(lambda:0)
-                for v in values:
-                    value_counts[v] += 1
-                rank_values = [int(i) for i in values]
-                value_range = max(rank_values) - min(rank_values)
-                if flush and set(values) == set(["10", "11", "12", "13", "14"]): msg += "**Royal Straight Flush**"
-                elif flush and ((len(set(value_counts.values())) == 1 and (value_range==4)) or set(values) == set(["14", "2", "3", "4", "5"])): msg += "**Straight Flush**"
-                elif sorted(value_counts.values()) == [1,4]: msg += "**Four of a Kind**"
-                elif sorted(value_counts.values()) == [2,3]: msg += "**Full House**"
-                elif flush: msg += "**Flush**"
-                elif (len(set(value_counts.values())) == 1 and (value_range==4)) or set(values) == set(["14", "2", "3", "4", "5"]): msg += "**Straight**"
-                elif set(value_counts.values()) == set([3,1]): msg += "**Three of a Kind**"
-                elif sorted(value_counts.values())==[1,2,2]: msg += "**Two Pairs**"
-                elif 2 in value_counts.values(): msg += "**Pair**"
-                else:
-                    # highest card
-                    for i in range(0, len(hand)): hand[i] = '0'+hand[i] if len(hand[i]) == 2 else hand[i]
-                    last = sorted(hand)[-1]
-                    if last[0] == '0': last = last[1:]
-                    msg += "**Highest card is {}**".format(last.replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
+                msg += self.checkPokerHand(hand)
             await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{}'s hand".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 45)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(30, 30, commands.BucketType.guild)
+    async def poker(self, ctx):
+        """Play a poker mini-game with other people"""
+        # search game
+        id = ctx.channel.id
+        if id in self.pokergames:
+            if self.pokergames[id]['state'] == 'waiting':
+                if len(self.pokergames[id]['players']) >= 6:
+                    await self.bot.cleanMessage(ctx, (await ctx.send(embed=self.bot.buildEmbed(title="Error", description="This game is full", color=self.color))), 6)
+                elif ctx.author.id not in self.pokergames[id]['players']:
+                    self.pokergames[id]['players'].append(ctx.author.id)
+                    await self.bot.react(ctx.message, '✅') # white check mark
+                else:
+                    await self.bot.cleanMessage(ctx, (await ctx.send(embed=self.bot.buildEmbed(title="Error", description="You are already in the next game", color=self.color))), 10)
+            else:
+                await self.bot.cleanMessage(ctx, (await ctx.send(embed=self.bot.buildEmbed(title="Error", description="This game started", color=self.color))), 10)
+        else:
+            self.pokergames[id] = {'state':'waiting', 'players':[ctx.author.id]}
+            msg = await ctx.send(embed=self.bot.buildEmbed(title="♠️ Multiplayer Poker ♥️", description="Starting in 30s\n1/6 players", footer="Use the poker command to join", color=self.color))
+            cd = 29
+            while cd > 0:
+                await asyncio.sleep(1)
+                await msg.edit(embed=self.bot.buildEmbed(title="♠️ Multiplayer Poker ♥️", description="Starting in {}s\n{}/6 players".format(cd, len(self.pokergames[id]['players'])), footer="Use the poker command to join", color=self.color))
+                cd -= 1
+                if len(self.pokergames[id]['players']) >= 6:
+                    break
+            self.pokergames[id]['state'] = "playing"
+            if len(self.pokergames[id]['players']) > 6: self.pokergames[id]['players'] = self.pokergames[id]['players'][:6]
+            await self.bot.cleanMessage(ctx, msg, 0)
+            # game start
+            draws = []
+            final_msg = None
+            while len(draws) < 3 + 2 * len(self.pokergames[id]['players']):
+                card = str(random.randint(2, 14)) + random.choice(["D", "S", "H", "C"])
+                if card not in draws:
+                    draws.append(card)
+            for s in range(-1, 5):
+                msg = ctx.guild.me.display_name + " \▫️ "
+                n = s - 2
+                for j in range(0, 3):
+                    if j > n: msg += "🎴"
+                    else: msg += draws[j].replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
+                    if j < 2: msg += ", "
+                    else: msg += "\n\n"
+                n = max(1, s)
+                for x in range(0, len(self.pokergames[id]['players'])):
+                    pid = self.pokergames[id]['players'][x]
+                    msg += "{} \▫️ ".format(ctx.guild.get_member(pid).display_name[:10])
+                    for j in range(0, 2):
+                        if j > s: msg += "🎴"
+                        else: msg += draws[3+j+2*x].replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
+                        if j == 0: msg += ", "
+                        else:
+                            if s == 4:
+                                msg += " \▫️ "
+                                hand = draws[0:3] + draws[3+2*x:5+2*x]
+                                msg += self.checkPokerHand(hand)
+                            msg += "\n"
+                if final_msg is None: final_msg = await ctx.send(embed=self.bot.buildEmbed(title="♠️ Multiplayer Poker ♥️", description=msg, color=self.color))
+                else: await final_msg.edit(embed=self.bot.buildEmbed(title="♠️ Multiplayer Poker ♥️", description=msg, color=self.color))
+                await asyncio.sleep(2)
+            self.pokergames.pop(id)
+            await self.bot.cleanMessage(ctx, final_msg, 45)
