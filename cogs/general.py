@@ -536,34 +536,43 @@ class General(commands.Cog):
 
     def checkPokerHand(self, hand):
         flush = False
-        # flush
+        # flush detection
         suits = [h[-1] for h in hand]
         if len(set(suits)) == 1: flush = True
-        # others
-        values = [i[:-1] for i in hand]
+        # other checks
+        values = [i[:-1] for i in hand] # get card values
         value_counts = defaultdict(lambda:0)
         for v in values:
-            value_counts[v] += 1
-        rank_values = [int(i) for i in values]
-        value_range = max(rank_values) - min(rank_values)
+            value_counts[v] += 1 # count each match
+        rank_values = [int(i) for i in values] # rank them
+        value_range = max(rank_values) - min(rank_values) # and get the difference
+        # determinate hand from their
         if flush and set(values) == set(["10", "11", "12", "13", "14"]): return "**Royal Straight Flush**"
-        elif flush and ((len(set(value_counts.values())) == 1 and (value_range==4)) or set(values) == set(["14", "2", "3", "4", "5"])): return "**Straight Flush**"
-        elif sorted(value_counts.values()) == [1,4]: return "**Four of a Kind**"
-        elif sorted(value_counts.values()) == [2,3]: return "**Full House**"
+        elif flush and ((len(set(value_counts.values())) == 1 and (value_range==4)) or set(values) == set(["14", "2", "3", "4", "5"])): return "**Straight Flush, high {}**".format(self.highestCardStripped(list(value_counts.keys())).replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
+        elif sorted(value_counts.values()) == [1,4]: return "**Four of a Kind of {}**".format(list(value_counts.keys())[list(value_counts.values()).index(4)].replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
+        elif sorted(value_counts.values()) == [2,3]: return "**Full House, high {}**".format(list(value_counts.keys())[list(value_counts.values()).index(3)].replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
         elif flush: return "**Flush**"
-        elif (len(set(value_counts.values())) == 1 and (value_range==4)) or set(values) == set(["14", "2", "3", "4", "5"]): return "**Straight**"
-        elif set(value_counts.values()) == set([3,1]): return "**Three of a Kind**"
-        elif sorted(value_counts.values())==[1,2,2]: return "**Two Pairs**"
-        elif 2 in value_counts.values(): return "**Pair**"
-        else:
-            # highest card
-            for i in range(0, len(hand)): hand[i] = '0'+hand[i] if len(hand[i]) == 2 else hand[i]
-            last = sorted(hand)[-1]
-            if last[0] == '0': last = last[1:]
-            return "**Highest card is {}**".format(last.replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
+        elif (len(set(value_counts.values())) == 1 and (value_range==4)) or set(values) == set(["14", "2", "3", "4", "5"]): return "**Straight, high {}**".format(self.highestCardStripped(list(value_counts.keys())).replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
+        elif set(value_counts.values()) == set([3,1]): return "**Three of a Kind of {}**".format(list(value_counts.keys())[list(value_counts.values()).index(3)].replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
+        elif sorted(value_counts.values())==[1,2,2]:
+            k = list(value_counts.keys())
+            k.pop(list(value_counts.values()).index(1))
+            return "**Two Pairs, high {}**".format(self.highestCardStripped(k).replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
+        elif 2 in value_counts.values(): return "**Pair of {}**".format(list(value_counts.keys())[list(value_counts.values()).index(2)].replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
+        else: return "**Highest card is {}**".format(self.highestCard(hand).replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
+
+    def highestCardStripped(self, selection):
+        ic = [int(i) for i in selection]
+        return str(sorted(ic)[-1])
+
+    def highestCard(self, selection):
+        for i in range(0, len(selection)): selection[i] = '0'+selection[i] if len(selection[i]) == 2 else selection[i]
+        last = sorted(selection)[-1]
+        if last[0] == '0': last = last[1:]
+        return last
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(30, 30, commands.BucketType.guild)
+    @commands.cooldown(15, 30, commands.BucketType.guild)
     async def deal(self, ctx):
         """Deal a random poker hand"""
         hand = []
@@ -594,7 +603,7 @@ class General(commands.Cog):
         return name
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(30, 30, commands.BucketType.guild)
+    @commands.cooldown(10, 30, commands.BucketType.guild)
     async def poker(self, ctx):
         """Play a poker mini-game with other people"""
         # search game
