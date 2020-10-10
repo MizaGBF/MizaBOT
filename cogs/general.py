@@ -659,7 +659,11 @@ class General(commands.Cog):
                             if s == 4:
                                 msg += " \▫️ "
                                 hand = draws[0:3] + draws[3+2*x:5+2*x]
-                                msg += self.checkPokerHand(hand)
+                                hstr = self.checkPokerHand(hand)
+                                if hstr.startswith("**Highest"):
+                                    msg += "**Highest card is {}**".format(self.highestCard(draws[3+2*x:5+2*x]).replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
+                                else:
+                                    msg += hstr
                             msg += "\n"
                 if final_msg is None: final_msg = await ctx.send(embed=self.bot.buildEmbed(title="♠️ Multiplayer Poker ♥️", description=msg, color=self.color))
                 else: await final_msg.edit(embed=self.bot.buildEmbed(title="♠️ Multiplayer Poker ♥️", description=msg, color=self.color))
