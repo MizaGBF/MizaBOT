@@ -651,8 +651,11 @@ class General(commands.Cog):
                 for x in range(0, len(self.pokergames[id]['players'])):
                     pid = self.pokergames[id]['players'][x]
                     msg += "{} {} \▫️ ".format(self.bot.getEmote(str(x+1)), self.pokerNameStrip(ctx.guild.get_member(pid).display_name))
+                    if s == 4:
+                        highest = self.highestCard(draws[3+2*x:5+2*x])
                     for j in range(0, 2):
                         if j > s: msg += "🎴"
+                        elif s == 4 and draws[3+j+2*x] == highest: msg += "__" + draws[3+j+2*x].replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A") + "__"
                         else: msg += draws[3+j+2*x].replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
                         if j == 0: msg += ", "
                         else:
