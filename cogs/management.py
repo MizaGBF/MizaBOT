@@ -262,7 +262,7 @@ class Management(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="An unexpected error occured", footer=str(e), color=self.color))
             await self.bot.sendError('setgw', str(e))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['disableDread', 'disableBarrage', 'disableDreadBarrage'])
     @isAuthorizedSpecial()
     async def disableValiant(self, ctx):
         """Disable the Valiant mode ((You) Mod only)
@@ -271,7 +271,7 @@ class Management(commands.Cog):
         self.bot.savePending = True
         await self.bot.react(ctx.message, '✅') # white check mark
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['enableDread', 'enableBarrage', 'enableDreadBarrage'])
     @isAuthorizedSpecial()
     async def enableValiant(self, ctx):
         """Enable the Valiant mode ((You) Mod only)"""
@@ -282,7 +282,7 @@ class Management(commands.Cog):
             self.bot.savePending = True
             await self.bot.react(ctx.message, '✅') # white check mark
         else:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="No Guild War available in my memory", color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="No Dread Barrage available in my memory", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isMod()
