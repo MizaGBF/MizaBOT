@@ -228,7 +228,7 @@ class Management(commands.Cog):
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="No buff skip is currently set", color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setDread', 'setDreadBarrage', 'setBarrage'])
     @isAuthorizedSpecial()
     async def setValiant(self, ctx, id : int, element : str, day : int, month : int, year : int):
         """Set the Valiant date ((You) Mod only)"""
@@ -253,9 +253,8 @@ class Management(commands.Cog):
             # set the valiant state to true
             self.bot.valiant['state'] = True
             self.bot.savePending = True
-            await ctx.send(embed=self.bot.buildEmbed(title="{} March of the Valiant Mode".format(self.bot.getEmote('gw')), description="Set to : **{:%m/%d %H:%M}**".format(self.bot.valiant['dates']["Day 1"]), color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} Dread Barrage Mode".format(self.bot.getEmote('gw')), description="Set to : **{:%m/%d %H:%M}**".format(self.bot.valiant['dates']["Day 1"]), color=self.color))
         except Exception as e:
-            self.bot.cancelTask('check_buff')
             self.bot.valiant['dates'] = {}
             self.bot.valiant['buffs'] = []
             self.bot.valiant['state'] = False
@@ -277,7 +276,7 @@ class Management(commands.Cog):
     async def enableValiant(self, ctx):
         """Enable the Valiant mode ((You) Mod only)"""
         if self.bot.valiant['state'] == True:
-            await ctx.send(embed=self.bot.buildEmbed(title="{} March of the Valiant Mode".format(self.bot.getEmote('gw')), description="Already enabled", color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} Dread Barrage Mode".format(self.bot.getEmote('gw')), description="Already enabled", color=self.color))
         elif len(self.bot.valiant['dates']) == 8:
             self.bot.valiant['state'] = True
             self.bot.savePending = True
