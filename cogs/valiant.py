@@ -54,7 +54,7 @@ class DreadBarrage(commands.Cog):
                 for i in range(1, len(it)): # loop to not copy paste this 5 more times
                     if current_time > self.bot.valiant['dates'][it[i]]:
                         d = self.bot.valiant['dates'][it[i-1]] - current_time
-                        msg = "{} Barrage {} is on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.valiant['dates'][it[i-1]] - current_time))
+                        return "{} Barrage {} is on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.valiant['dates'][it[i-1]] - current_time))
             else:
                 return ""
         else:
