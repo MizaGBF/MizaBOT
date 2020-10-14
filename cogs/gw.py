@@ -142,7 +142,7 @@ class GuildWar(commands.Cog):
                     if current_time > self.bot.gw['dates'][it[i]]:
                         d = self.bot.gw['dates'][it[i-1]] - current_time
                         if d < timedelta(seconds=25200): msg = "{} {} ended".format(self.bot.getEmote('mark_a'), it[i])
-                        else: msg = "{} {} is on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.gw['dates'][it[i]] + timedelta(seconds=61200) - current_time))
+                        else: msg = "{} GW {} is on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.gw['dates'][it[i]] + timedelta(seconds=61200) - current_time))
                         if i == 1: return "{}\n{} {} starts in **{}**".format(msg, self.bot.getEmote('time'), it[i-1].replace('Day 5', 'Final Rally'), self.bot.getTimedeltaStr(d))
                         else: return "{}\n{} {} starts in **{}**".format(msg, self.bot.getEmote('time'), it[i-1], self.bot.getTimedeltaStr(d))
             elif current_time > self.bot.gw['dates']["Interlude"]:
