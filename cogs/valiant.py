@@ -56,7 +56,8 @@ class DreadBarrage(commands.Cog):
                         msg = "{} Barrage {} is on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.valiant['dates'][it[i-1]] - current_time))
                         if current_time < self.bot.valiant['dates']['New Foes'] and current_time >= self.bot.valiant['dates']['Day 1']:
                             msg += "\n{} New foes available in **{}**".format(self.bot.getEmote('mark'), self.bot.getTimedeltaStr(self.bot.valiant['dates']['New Foes'] - current_time, True))
-                        msg += "\n{} Barrage is ending in **{}**".format(self.bot.getEmote('time'), self.bot.getTimedeltaStr(self.bot.valiant['dates'][it[0]] - current_time, True))
+                        else:
+                            msg += "\n{} Barrage is ending in **{}**".format(self.bot.getEmote('time'), self.bot.getTimedeltaStr(self.bot.valiant['dates'][it[0]] - current_time, True))
                         return msg
             else:
                 return ""
