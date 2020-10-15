@@ -53,10 +53,9 @@ class DreadBarrage(commands.Cog):
                 it = ['End', 'Day 9', 'Day 8', 'Day 7', 'Day 6', 'Day 5', 'Day 4', 'Day 3', 'Day 2', 'Day 1']
                 for i in range(1, len(it)):
                     if current_time > self.bot.valiant['dates'][it[i]]:
-                        if it[i] == 'Day 3' and current < self.bot.valiant['dates']['New Foes']:
-                            msg = "{} Barrage {} is on going (**New foes in {}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.valiant['dates']['New Foes'] - current_time))
-                        else:
-                            msg = "{} Barrage {} is on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.valiant['dates'][it[i-1]] - current_time))
+                        msg = "{} Barrage {} is on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.valiant['dates'][it[i-1]] - current_time))
+                        if current_time < self.bot.valiant['dates']['New Foes'] and current_time >= self.bot.valiant['dates']['Day 1']:
+                            msg += "\n{} New foes available in **{}**".format(self.bot.getEmote('mark'), self.bot.getTimedeltaStr(self.bot.valiant['dates']['New Foes'] - current_time, True))
                         msg += "\n{} Barrage is ending in **{}**".format(self.bot.getEmote('time'), self.bot.getTimedeltaStr(self.bot.valiant['dates'][it[0]] - current_time, True))
                         return msg
             else:
@@ -102,7 +101,7 @@ class DreadBarrage(commands.Cog):
         else:
             await ctx.send(embed=self.bot.buildEmbed(title="{} **Dread Barrage**".format(self.bot.getEmote('crew')), description="Not available", color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['fugdiddreadstart', 'fugdidvaliantstart', 'fugdiddbstart'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['fugdiddreadstart', 'fugdidvaliantstart', 'fugdiddbstart', 'valianttime', 'dreadtime', 'barragetime'])
     @commands.cooldown(10, 10, commands.BucketType.guild)
     async def fugdidbarragestart(self, ctx):
         """Check if Dread Barrage started"""
