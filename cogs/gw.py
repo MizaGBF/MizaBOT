@@ -126,7 +126,7 @@ class GuildWar(commands.Cog):
             current_time = self.bot.getJST()
             if current_time < self.bot.gw['dates']["Preliminaries"]:
                 d = self.bot.gw['dates']["Preliminaries"] - current_time
-                return "{} Guild War starts in **{}**".format(self.bot.getEmote('time'), self.bot.getTimedeltaStr(d, True))
+                return "{} Guild War starts in **{}**".format(self.bot.getEmote('gw'), self.bot.getTimedeltaStr(d, True))
             elif current_time >= self.bot.gw['dates']["End"]:
                 self.bot.gw['state'] = False
                 self.bot.gw['dates'] = {}

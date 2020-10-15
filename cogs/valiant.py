@@ -43,7 +43,7 @@ class DreadBarrage(commands.Cog):
             current_time = self.bot.getJST()
             if current_time < self.bot.valiant['dates']["Day 1"]:
                 d = self.bot.valiant['dates']["Day 1"] - current_time
-                return "{} Dread Barrage starts in **{}**".format(self.bot.getEmote('time'), self.bot.getTimedeltaStr(d, True))
+                return "{} Dread Barrage starts in **{}**".format(self.bot.getEmote('crew'), self.bot.getTimedeltaStr(d, True))
             elif current_time >= self.bot.valiant['dates']["End"]:
                 self.bot.valiant['state'] = False
                 self.bot.valiant['dates'] = {}
@@ -54,9 +54,11 @@ class DreadBarrage(commands.Cog):
                 for i in range(1, len(it)):
                     if current_time > self.bot.valiant['dates'][it[i]]:
                         if it[i] == 'Day 3' and current < self.bot.valiant['dates']['New Foes']:
-                            return "{} Barrage {} is on going (**New foes in {}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.valiant['dates']['New Foes'] - current_time))
+                            msg = "{} Barrage {} is on going (**New foes in {}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.valiant['dates']['New Foes'] - current_time))
                         else:
-                            return "{} Barrage {} is on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.valiant['dates'][it[i-1]] - current_time))
+                            msg = "{} Barrage {} is on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.valiant['dates'][it[i-1]] - current_time))
+                        msg += "\n{} Barrage is ending in **{}**".format(self.bot.getEmote('time'), self.bot.getTimedeltaStr(self.bot.valiant['dates'][it[0]] - current_time, True))
+                        return msg
             else:
                 return ""
         else:
@@ -72,7 +74,7 @@ class DreadBarrage(commands.Cog):
                 current_time = self.bot.getJST()
                 em = self.bot.getEmote(self.bot.valiant.get('element', ''))
                 if em == "": em = ":white_small_square:"
-                title = "{} **Dread Barrage {}** {} **{:%a. %m/%d %H:%M} TZ**\n".format(self.bot.getEmote('gw'), self.bot.valiant['id'], em, current_time + timedelta(seconds=3600*(gmt-9)))
+                title = "{} **Dread Barrage {}** {} **{:%a. %m/%d %H:%M} TZ**\n".format(self.bot.getEmote('crew'), self.bot.valiant['id'], em, current_time + timedelta(seconds=3600*(gmt-9)))
                 if gmt == 9: title = title.replace('TZ', 'JST')
                 elif gmt == 0: title = title.replace('TZ', 'GMT')
                 else: title = title.replace('TZ', 'GMT{0:+}'.format(gmt))
@@ -84,12 +86,11 @@ class DreadBarrage(commands.Cog):
                         description += "▫️ New Foes: **{:%a. %m/%d %H:%M}**\n".format(self.bot.valiant['dates']['New Foes'] + timedelta(seconds=3600*(gmt-9)))
                     description += "▫️ Last day: **{:%a. %m/%d %H:%M}**\n".format(self.bot.valiant['dates']['Day 9'] + timedelta(seconds=3600*(gmt-9)))
                 else:
-                    await ctx.send(embed=self.bot.buildEmbed(title="{} **Dread Barrage**".format(self.bot.getEmote('gw')), description="Not available", color=self.color))
+                    await ctx.send(embed=self.bot.buildEmbed(title="{} **Dread Barrage**".format(self.bot.getEmote('crew')), description="Not available", color=self.color))
                     self.bot.valiant['state'] = False
                     self.bot.valiant['dates'] = {}
                     self.bot.savePending = True
                     return
-
                 try:
                     description += self.getBarrageState()
                 except Exception as e:
@@ -99,4 +100,18 @@ class DreadBarrage(commands.Cog):
             except Exception as e:
                 await self.bot.sendError("valiant", str(e))
         else:
-            await ctx.send(embed=self.bot.buildEmbed(title="{} **Dread Barrage**".format(self.bot.getEmote('gw')), description="Not available", color=self.color))
+            await ctx.send(embed=self.bot.buildEmbed(title="{} **Dread Barrage**".format(self.bot.getEmote('crew')), description="Not available", color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['fugdiddreadstart', 'fugdidvaliantstart', 'fugdiddbstart'])
+    @commands.cooldown(10, 10, commands.BucketType.guild)
+    async def fugdidbarragestart(self, ctx):
+        """Check if Dread Barrage started"""
+        try:
+            d = self.getBarrageState()
+            if d != "":
+                em = self.bot.getEmote(self.bot.valiant.get('element', ''))
+                if em == "": em = ":white_small_square:"
+                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {} status".format(self.bot.getEmote('crew'), self.bot.valiant['id'], em), description=d, color=self.color))
+        except Exception as e:
+            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
+            await self.bot.sendError("fugdidbarragestart", str(e))
