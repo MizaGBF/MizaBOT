@@ -237,19 +237,19 @@ class Management(commands.Cog):
             self.bot.valiant['state'] = False
             self.bot.valiant['id'] = id
             self.bot.valiant['element'] = element.lower()
-            self.bot.valiant['BETA'] = True
             # build the calendar
-            # ### PLACEHOLDER ###
             self.bot.valiant['dates'] = {}
             self.bot.valiant['dates']["Day 1"] = datetime.utcnow().replace(year=year, month=month, day=day, hour=19, minute=0, second=0, microsecond=0)
-            self.bot.valiant['dates']["Day 2"] = self.bot.valiant['dates']["Day 1"] + timedelta(days=1)
+            self.bot.valiant['dates']["Day 2"] = self.bot.valiant['dates']["Day 1"] + timedelta(seconds=36000)
             self.bot.valiant['dates']["Day 3"] = self.bot.valiant['dates']["Day 2"] + timedelta(days=1)
+            self.bot.valiant['dates']["New Foes"] = self.bot.valiant['dates']["Day 3"] + timedelta(seconds=50400)
             self.bot.valiant['dates']["Day 4"] = self.bot.valiant['dates']["Day 3"] + timedelta(days=1)
             self.bot.valiant['dates']["Day 5"] = self.bot.valiant['dates']["Day 4"] + timedelta(days=1)
             self.bot.valiant['dates']["Day 6"] = self.bot.valiant['dates']["Day 5"] + timedelta(days=1)
             self.bot.valiant['dates']["Day 7"] = self.bot.valiant['dates']["Day 6"] + timedelta(days=1)
             self.bot.valiant['dates']["Day 8"] = self.bot.valiant['dates']["Day 7"] + timedelta(days=1)
-            self.bot.valiant['dates']["End"] = self.bot.valiant['dates']["Day 8"] + timedelta(days=1)
+            self.bot.valiant['dates']["Day 9"] = self.bot.valiant['dates']["Day 8"] + timedelta(days=1)
+            self.bot.valiant['dates']["End"] = self.bot.valiant['dates']["Day 9"] + timedelta(seconds=50400)
             # set the valiant state to true
             self.bot.valiant['state'] = True
             self.bot.savePending = True

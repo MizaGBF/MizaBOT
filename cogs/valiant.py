@@ -50,11 +50,13 @@ class DreadBarrage(commands.Cog):
                 self.bot.savePending = True
                 return ""
             elif current_time > self.bot.valiant['dates']["Day 1"]:
-                it = ['End', 'Day 8', 'Day 7', 'Day 6', 'Day 5', 'Day 4', 'Day 3', 'Day 2', 'Day 1']
-                for i in range(1, len(it)): # loop to not copy paste this 5 more times
+                it = ['End', 'Day 9', 'Day 8', 'Day 7', 'Day 6', 'Day 5', 'Day 4', 'Day 3', 'Day 2', 'Day 1']
+                for i in range(1, len(it)):
                     if current_time > self.bot.valiant['dates'][it[i]]:
-                        d = self.bot.valiant['dates'][it[i-1]] - current_time
-                        return "{} Barrage {} is on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.valiant['dates'][it[i-1]] - current_time))
+                        if it[i] == 'Day 3' and current < self.bot.valiant['dates']['New Foes']:
+                            return "{} Barrage {} is on going (**New foes in {}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.valiant['dates']['New Foes'] - current_time))
+                        else:
+                            return "{} Barrage {} is on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.valiant['dates'][it[i-1]] - current_time))
             else:
                 return ""
         else:
@@ -76,13 +78,11 @@ class DreadBarrage(commands.Cog):
                 else: title = title.replace('TZ', 'GMT{0:+}'.format(gmt))
                 description = ""
                 if current_time < self.bot.valiant['dates']["End"]:
-                    day_list = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7', 'Day 8', 'End']
-                    table = {'Day 1':'Start', 'Day 3':'New enemies', 'Day 8':'Last Day'}
-                    for i in range(len(day_list)):
-                        if day_list[i] == 'End': break
-                        elif current_time < self.bot.valiant['dates'][day_list[i+1]]:
-                            if day_list[i] in table:
-                                description += "▫️ {:}: **{:%a. %m/%d %H:%M}**\n".format(table[day_list[i]], self.bot.valiant['dates'][day_list[i]] + timedelta(seconds=3600*(gmt-9)))
+                    if current_time < self.bot.valiant['dates']["Day 2"]:
+                        description += "▫️ Start: **{:%a. %m/%d %H:%M}**\n".format(self.bot.valiant['dates']['Day 1'] + timedelta(seconds=3600*(gmt-9)))
+                    if current_time < self.bot.valiant['dates']["Day 4"]:
+                        description += "▫️ New Foes: **{:%a. %m/%d %H:%M}**\n".format(self.bot.valiant['dates']['New Foes'] + timedelta(seconds=3600*(gmt-9)))
+                    description += "▫️ Last day: **{:%a. %m/%d %H:%M}**\n".format(self.bot.valiant['dates']['Day 9'] + timedelta(seconds=3600*(gmt-9)))
                 else:
                     await ctx.send(embed=self.bot.buildEmbed(title="{} **Dread Barrage**".format(self.bot.getEmote('gw')), description="Not available", color=self.color))
                     self.bot.valiant['state'] = False
@@ -95,7 +95,7 @@ class DreadBarrage(commands.Cog):
                 except Exception as e:
                     await self.bot.sendError("getBarrageState", str(e))
 
-                await ctx.send(embed=self.bot.buildEmbed(title=title, description=description, color=self.color, footer="(BETA) This is placeholder, subject to change"))
+                await ctx.send(embed=self.bot.buildEmbed(title=title, description=description, color=self.color))
             except Exception as e:
                 await self.bot.sendError("valiant", str(e))
         else:
