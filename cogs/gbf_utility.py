@@ -170,7 +170,7 @@ class GBF_Utility(commands.Cog):
                                 for tr in body:
                                     if str(tr).find("ID") != -1:
                                         try:
-                                            if tr.findChildren("th")[0].text.strip() == "ID":
+                                            if tr.findChildren("th")[0].text.strip() == "ID" and 'id' not in data:
                                                 data['id'] = tr.findChildren("td")[0].text
                                         except: pass
                             except:

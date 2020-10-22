@@ -1853,9 +1853,9 @@ class GBF_Access(commands.Cog):
             msg += "{} [{}]({})\n".format(self.bot.getEmote(str(i+1)), self.translate(self.bot.gbfdata['news_url'][i][1]), self.bot.gbfdata['news_url'][i][0])
         try:
             thumb = self.bot.gbfdata['news_url'][0][2]
-            if not thumb.startswith('http://granbluefantasy.jp'):
-                if thumb.startswith('/'): thumb = 'http://granbluefantasy.jp' + thumb
-                else: thumb = 'http://granbluefantasy.jp/' + thumb
+            if not thumb.startswith('http://granbluefantasy.jp') and not thumb.startswith('https://granbluefantasy.jp'):
+                if thumb.startswith('/'): thumb = 'https://granbluefantasy.jp' + thumb
+                else: thumb = 'https://granbluefantasy.jp/' + thumb
         except: thumb = None
         if msg == "":
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))

@@ -331,7 +331,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.32" # version number
+        self.botversion = "6.33" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["`$valiant` renamed to `$barrage` (alternative names are available", "Added `$deal` to get a poker hand and `$poker` for the multiplayer version"] # bot changelog
         self.running = True # if True, the bot is running
