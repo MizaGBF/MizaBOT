@@ -333,7 +333,7 @@ class Mizabot(commands.Bot):
     def __init__(self):
         self.botversion = "6.33" # version number
         self.saveversion = 0 # save version
-        self.botchangelog = ["`$mizatube` now available.", "Pinboard now enabled on /gbfg/", "`$valiant` renamed to `$barrage` (alternative names are available"] # bot changelog
+        self.botchangelog = ["`$mizatube` is now available", "Pinboard now enabled on /gbfg/", "`$valiant` renamed to `$barrage` (alternative names are available)"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
