@@ -1159,7 +1159,7 @@ class GBF_Utility(commands.Cog):
                         b = s.find('"}}', a)
                         if b == -1: break
                         cur = b
-                        name = s[a:b].replace('\\\\u', '\\u').encode('utf-8').decode('unicode-escape')
+                        name = s[a:b].replace('\\\\u', '\\u').encode('utf-8').decode('unicode-escape').encode('latin1').decode('utf-8')
                         if not name.startswith('[GBF]'): continue
                         c = name.find(separator)
                         if c != -1: name = name[:c]
