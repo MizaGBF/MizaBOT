@@ -333,7 +333,7 @@ class Mizabot(commands.Bot):
     def __init__(self):
         self.botversion = "6.33" # version number
         self.saveversion = 0 # save version
-        self.botchangelog = ["`$valiant` renamed to `$barrage` (alternative names are available", "Added `$deal` to get a poker hand and `$poker` for the multiplayer version"] # bot changelog
+        self.botchangelog = ["`$mizatube` now available.", "Pinboard now enabled on /gbfg/", "`$valiant` renamed to `$barrage` (alternative names are available"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
@@ -1137,8 +1137,9 @@ async def on_ready(): # when the bot starts or reconnects
     if not bot.boot_flag:
         # send a pretty message
         bot.setChannel('debug', 'debug_channel') # set our debug channel
-        bot.setChannel('pinned', 'you_pinned') # set (you) pinned channel
-        bot.setChannel('gbfglog', 'gbfg_log') # set /gbfg/ lucilius log channel
+        bot.setChannel('you_pinned', 'you_pinned') # set (you) pinned channel
+        bot.setChannel('gbfg_pinned', 'gbfg_pinned') # set /gbfg/ starboard
+        bot.setChannel('gbfglog', 'gbfg_log') # set /gbfg/ log channel
         bot.setChannel('youlog', 'you_log') # set (you) log channel
         await bot.send('debug', embed=bot.buildEmbed(title="{} is Ready".format(bot.user.display_name), description="**Version** {}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}\n**Twitter**▫️{}".format(bot.botversion, bot.process.cpu_percent(), bot.process.memory_full_info().uss >> 20, len(asyncio.all_tasks()), len(bot.guilds), len(bot.guilddata['pending']), len(bot.cogs), bot.cogn, (bot.twitter_api is not None)), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
         await bot.startTasks() # start the tasks
@@ -1200,11 +1201,20 @@ async def on_command_error(ctx, error):
         bot.errn += 1
         await bot.send('debug', embed=bot.buildEmbed(title="⚠ Error caused by {}".format(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=datetime.utcnow()))
 
-# (You) pin board system
+# (You) & /gbfg/ pin board system
 @bot.event
 async def on_raw_reaction_add(payload):
+    servers = [
+        {'tracked' : [bot.ids.get('you_general', -1)], 'emoji': '📌', 'mod_bypass':True, 'threshold':3, 'output': 'you_pinned'},
+        {'tracked' : [bot.ids.get('gbfg_general', -1)], 'emoji': '⭐', 'mod_bypass':False, 'threshold':5, 'output': 'gbfg_pinned'}
+    ]
     try:
-        if payload.channel_id != bot.ids.get('you_general', -1):
+        idx = None
+        for i in range(0, len(servers)):
+            if payload.channel_id in servers[i]['tracked']:
+                idx = i
+                break
+        if idx is None:
             return
         message = await bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
         reactions = message.reactions
@@ -1212,10 +1222,8 @@ async def on_raw_reaction_add(payload):
         await bot.sendError('raw_react', str(e))
         return
     me = message.guild.me
-    role = message.guild.get_role(bot.ids.get('you_member', 0))
-    if role is None: return
     for reaction in reactions:
-        if reaction.emoji == '📌':
+        if reaction.emoji == servers[idx]['emoji']:
             users = await reaction.users().flatten()
             guild = message.guild
             content = message.content
@@ -1224,16 +1232,19 @@ async def on_raw_reaction_add(payload):
             for u in users:
                 if u.id == me.id:
                     return
-                m = guild.get_member(u.id)
-                if m.guild_permissions.manage_messages:
-                    isMod = True
-                    break
-                elif role in m.roles:
+                if servers[idx]['mod_bypass']: # mod check
+                    m = guild.get_member(u.id)
+                    if m.guild_permissions.manage_messages: 
+                        isMod = True
+                        break
+                    else:
+                        count += 1
+                else:
                     count += 1
-            if not isMod and count < 3:
+            if not isMod and count < servers[idx]['threshold']:
                 return
 
-            await message.add_reaction('📌')
+            await message.add_reaction(servers[idx]['emoji'])
 
             dict = {}
             dict['color'] = 0xf20252
@@ -1265,7 +1276,7 @@ async def on_raw_reaction_add(payload):
                     dict['image'] = {'url':content[s:e]}
             embed = discord.Embed.from_dict(dict)
             embed.timestamp=message.created_at
-            await bot.send('pinned', embed=embed)
+            await bot.send(servers[idx]['output'], embed=embed)
             return
 
 # used by /gbfg/ and (You)

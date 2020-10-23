@@ -1122,3 +1122,58 @@ class GBF_Utility(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Sorry, something went wrong :bow:", footer=str(e)))
             await self.bot.sendError("rollRanking", str(e))
         await self.bot.cleanMessage(ctx, final_msg, 30)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 4, commands.BucketType.guild)
+    async def mizatube(self, ctx, *, query : str = ""):
+        """Search 'Mizatube'.
+        If nothing is specified, the latest entries are shown."""
+        url1 = self.bot.strings.get("mizatube() A", None)
+        url2 = self.bot.strings.get("mizatube() B", None)
+        separator = self.bot.strings.get("mizatube() C", None)
+        if url1 is None or url2 is None or separator is None: return
+        if query == "": url = url2
+        else: url = url1.format(query)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                if r.status != 200:
+                    raise Exception("HTTP Error 404: Not Found")
+                else:
+                    s = str(await r.content.read())
+                    running = True
+                    cur = 0
+                    out = []
+                    while running:
+                        a = s.find('ideoRenderer":{"videoId":"', cur)
+                        if a == -1: break
+                        a += len('ideoRenderer":{"videoId":"')
+                        b = s.find('"', a)
+                        if b == -1: break
+                        code = s[a:b]
+                        cur = b
+                        
+                        c = s.find('ideoRenderer":{"videoId":"', cur)
+                        a = s.find('"accessibility":{"accessibilityData":{"label":"', cur)
+                        if a == -1 or a > c: continue
+                        a += len('"accessibility":{"accessibilityData":{"label":"')
+                        b = s.find('"}}', a)
+                        if b == -1: break
+                        cur = b
+                        name = s[a:b].replace('\\\\u', '\\u').encode('utf-8').decode('unicode-escape')
+                        if not name.startswith('[GBF]'): continue
+                        c = name.find(separator)
+                        if c != -1: name = name[:c]
+                        name = name[6:]
+                        out.append([code, name])
+                        if len(out) == 5: break
+                    
+                    if len(out) == 0:
+                        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="No matches found", color=self.color))
+                    elif len(out) == 1:
+                        final_msg = await ctx.send(embed=self.bot.buildEmbed(title=out[0][1], url='https://youtu.be/{}'.format(out[0][0]), image='https://i.ytimg.com/vi/{}/hqdefault.jpg'.format(out[0][0]), color=self.color))
+                    else:
+                        msg = ""
+                        for r in out:
+                            msg += ":white_small_square: [{}](https://youtu.be/{})\n".format(r[1], r[0])
+                        final_msg = await ctx.send(embed=self.bot.buildEmbed(title=("Search results" if url != url2 else "Latest videos"), description=msg, image='https://i.ytimg.com/vi/{}/hqdefault.jpg'.format(out[0][0]), color=self.color))
+                    await self.bot.cleanMessage(ctx, final_msg, 30)
