@@ -118,12 +118,12 @@ class GBF_Game(commands.Cog):
         await self.bot.cleanMessage(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['memerolls'])
-    @commands.cooldown(1, 10, commands.BucketType.user)
+    @commands.cooldown(1, 30, commands.BucketType.user)
     async def memeroll(self, ctx, double : str = ""):
         """Do single rolls until a SSR
         6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
         3% keywords: "normal", "x1", "3%", "gacha", "1".
-        Add R at the end of the keyword to target rate up SSRs (example: doubleR)"""
+        Add R at the end of the keyword to target rate up SSRs (example: doubleR, it's not compatible with the legacy mode)."""
         if len(double) > 0 and double[-1] in ['r', 'R']:
             rateup = True
             double = double[:-1]
@@ -139,9 +139,17 @@ class GBF_Game(commands.Cog):
             while True:
                 r = self.getRollExtended(3*l)
                 result[r[0]] += 1
-                msg = "{} {} ▫️ {} {} ▫️ {} {}\n{} {}".format(result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
+                msg = "{} {} ▫️ {} {} ▫️ {} {}\n" + "{} {}".format(self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
+                if rateup and l == 1 and (r[0] != 2 or not r[1].startswith('**')): # roll twice for slower modes if no rate up ssr
+                    r = self.getRollExtended(3*l)
+                    result[r[0]] += 1
+                    msg += "\n{} {}".format(self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
+                msg = msg.format(result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'))
                 if sum(result) == 300 or (r[0] == 2 and (not rateup or (rateup and r[1].startswith('**')))): msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/sum(result))
-                await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} {}".format(ctx.author.display_name, ("is memerolling..." if r[0] != 2 else "memerolled until a SSR")), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+                if sum(result) == 300: title = "sparked"
+                elif r[0] == 2: title = "memerolled until a SSR"
+                else: title = "is memerolling..."
+                await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} {}".format(ctx.author.display_name, title), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
                 if sum(result) == 300 or (r[0] == 2 and (not rateup or (rateup and r[1].startswith('**')))): break
                 await asyncio.sleep(0.5*l)
         except: # legacy mode
