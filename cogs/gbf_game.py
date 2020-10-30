@@ -140,7 +140,7 @@ class GBF_Game(commands.Cog):
                 r = self.getRollExtended(3*l)
                 result[r[0]] += 1
                 msg = "{} {} ▫️ {} {} ▫️ {} {}\n" + "{} {}".format(self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
-                if rateup and l == 1 and (r[0] != 2 or not r[1].startswith('**')): # roll twice for slower modes if no rate up ssr
+                while rateup and l == 1 and (r[0] != 2 or not r[1].startswith('**')) and sum(result) % 5 != 0: # roll twice for slower modes if no rate up ssr
                     r = self.getRollExtended(3*l)
                     result[r[0]] += 1
                     msg += "\n{} {}".format(self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
