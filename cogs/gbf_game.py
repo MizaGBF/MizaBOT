@@ -122,10 +122,16 @@ class GBF_Game(commands.Cog):
     async def memeroll(self, ctx, double : str = ""):
         """Do single rolls until a SSR
         6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
-        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
+        3% keywords: "normal", "x1", "3%", "gacha", "1".
+        Add R at the end of the keyword to target rate up SSRs (example: doubleR)"""
+        if len(double) > 0 and double[-1] in ['r', 'R']:
+            rateup = True
+            double = double[:-1]
+        else: rateup = False
         l = self.isLegfest(double)
         if l == 2: footer = "6% SSR rate"
         else: footer = "3% SSR rate"
+        if rateup: footer += " - stopping at rate up"
         try:
             result = [0, 0, 0]
             final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} is memerolling...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="0 {} ▫️ 0 {} ▫️ 0 {}".format(self.bot.getEmote('SSR'), self.bot.getEmote('SR'), self.bot.getEmote('R')), color=self.color, footer=footer))
@@ -134,9 +140,9 @@ class GBF_Game(commands.Cog):
                 r = self.getRollExtended(3*l)
                 result[r[0]] += 1
                 msg = "{} {} ▫️ {} {} ▫️ {} {}\n{} {}".format(result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
-                if r[0] == 2: msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/(result[0]+result[1]+result[2]))
+                if sum(result) == 300 or (r[0] == 2 and (not rateup or (rateup and r[1].startswith('**')))): msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/sum(result))
                 await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} {}".format(ctx.author.display_name, ("is memerolling..." if r[0] != 2 else "memerolled until a SSR")), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-                if r[0] == 2: break
+                if sum(result) == 300 or (r[0] == 2 and (not rateup or (rateup and r[1].startswith('**')))): break
                 await asyncio.sleep(0.5*l)
         except: # legacy mode
             result = [0, 0, 0]
@@ -237,7 +243,7 @@ class GBF_Game(commands.Cog):
         else: footer = "3% SSR rate"
         try:
             result = self.tenDrawsExtended(3*l, 0, 1)
-            count = result[0]+result[1]+result[2]
+            count = sum(result[:3])
             msg = "Gachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
             for i in result[3]:
                 msg += i
@@ -247,7 +253,7 @@ class GBF_Game(commands.Cog):
             msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/count)
         except: #legacy mode
             result = self.tenDraws(300*l, 0, 1)
-            count = result[0]+result[1]+result[2]
+            count = sum(result)
             msg = "Gachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} rolled the Gachapin".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
@@ -268,7 +274,7 @@ class GBF_Game(commands.Cog):
             mode = 1
         try:
             result = self.tenDrawsExtended(rate//100, 0, mode)
-            count = result[0]+result[1]+result[2]
+            count = sum(result[:3])
             msg = "Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
             for i in result[3]:
                 msg += i
@@ -278,7 +284,7 @@ class GBF_Game(commands.Cog):
             msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/count)
         except: #legacy mode
             result = self.tenDraws(rate, 0, mode)
-            count = result[0]+result[1]+result[2]
+            count = sum(result)
             msg = "Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} rolled the Mukku".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
