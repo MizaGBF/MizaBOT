@@ -13,13 +13,13 @@ class GBF_Game(commands.Cog):
         self.color = 0xfce746
 
     # used by the gacha games
-    def getRoll(self, ssr, sr_mode = False):
+    def getRoll(self, ssr, sr_mode = False): # return 0 for ssr, 1 for sr, 2 for r
         d = random.randint(1, 10000)
         if d < ssr: return 0
         elif (not sr_mode and d < 1500 + ssr) or sr_mode: return 1
         return 2
 
-    def getRollExtended(self, ssr, sr_mode = False): # use the real gacha
+    def getRollExtended(self, ssr, sr_mode = False): # use the real gacha, return 2 for ssr, 1 for sr, 0 for r
         try:
             rateups = []
             for rate in self.bot.gbfdata['rateup'][2]['list']:
@@ -115,6 +115,37 @@ class GBF_Game(commands.Cog):
             elif r == 1: msg = "It's a {}".format(self.bot.getEmote('SR'))
             else: msg = "It's a {}, too bad!".format(self.bot.getEmote('R'))
             final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} did a single roll".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        await self.bot.cleanMessage(ctx, final_msg, 25)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['memerolls'])
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    async def memeroll(self, ctx, double : str = ""):
+        """Do single rolls until a SSR
+        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
+        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
+        l = self.isLegfest(double)
+        if l == 2: footer = "6% SSR rate"
+        else: footer = "3% SSR rate"
+        try:
+            result = [0, 0, 0]
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} is memerolling...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="0 {} ▫️ 0 {} ▫️ 0 {}".format(self.bot.getEmote('SSR'), self.bot.getEmote('SR'), self.bot.getEmote('R')), color=self.color, footer=footer))
+            msg = ""
+            while True:
+                r = self.getRollExtended(3*l)
+                result[r[0]] += 1
+                msg = "{} {} ▫️ {} {} ▫️ {} {}\n{} {}".format(result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
+                if r[0] == 2: msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/(result[0]+result[1]+result[2]))
+                await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} {}".format(ctx.author.display_name, ("is memerolling..." if r[0] != 2 else "memerolled until a SSR")), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+                if r[0] == 2: break
+                await asyncio.sleep(0.5*l)
+        except: # legacy mode
+            result = [0, 0, 0]
+            while True:
+                r = self.getRoll(300*l)
+                result[r] += 1
+                if r == 0: break
+            msg = "{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate".format(result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/(result[0]+result[1]+result[2]))
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} memerolled until a SSR".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         await self.bot.cleanMessage(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)

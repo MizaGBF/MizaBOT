@@ -331,9 +331,9 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.33" # version number
+        self.botversion = "6.34" # version number
         self.saveversion = 0 # save version
-        self.botchangelog = ["`$mizatube` is now available", "Pinboard now enabled on /gbfg/", "`$valiant` renamed to `$barrage` (alternative names are available)"] # bot changelog
+        self.botchangelog = ["`$memeroll` added", "`$mizatube` is now available", "Pinboard now enabled on /gbfg/", "`$valiant` renamed to `$barrage` (alternative names are available)"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
@@ -1201,7 +1201,7 @@ async def on_command_error(ctx, error):
         bot.errn += 1
         await bot.send('debug', embed=bot.buildEmbed(title="⚠ Error caused by {}".format(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=datetime.utcnow()))
 
-# (You) & /gbfg/ pin board system
+# (You) & /gbfg/ pinboard system
 @bot.event
 async def on_raw_reaction_add(payload):
     servers = [
@@ -1246,37 +1246,46 @@ async def on_raw_reaction_add(payload):
 
             await message.add_reaction(servers[idx]['emoji'])
 
-            dict = {}
-            dict['color'] = 0xf20252
-            dict['title'] = str(message.author)
-            if len(content) != 0: dict['description'] = content + "\n\n"
-            else: dict['description'] = ""
-            dict['description'] += ":earth_asia: [**Link**](https://discordapp.com/channels/{}/{}/{})\n".format(message.guild.id, message.channel.id, message.id)
-            dict['thumbnail'] = {'url':str(message.author.avatar_url)}
-            dict['fields'] = []
-
-            # for attachments
-            if message.attachments:
-                for file in message.attachments:
-                    if file.is_spoiler():
-                        dict['fields'].append({'inline': True, 'name':'Attachment', 'value':f'[{file.filename}]({file.url})'})
-                    elif file.url.lower().endswith(('.png', '.jpeg', '.jpg', '.gif', '.webp')) and 'image' not in dict:
-                        dict['image'] = {'url':file.url}
-                    else:
-                        dict['fields'].append({'inline': True, 'name':'Attachment', 'value':f'[{file.filename}]({file.url})'})
-            # search for image url if no attachment
-            if 'image' not in dict:
-                s = content.find("http")
-                for ext in ['.png', '.jpeg', '.jpg', '.gif', '.webp']:
-                    e = content.find(ext, s)
-                    if e != -1:
-                        e += len(ext)
-                        break
-                if content.find(' ', s, e) == -1 and s != -1:
-                    dict['image'] = {'url':content[s:e]}
-            embed = discord.Embed.from_dict(dict)
-            embed.timestamp=message.created_at
-            await bot.send(servers[idx]['output'], embed=embed)
+            try:
+                dict = {}
+                dict['color'] = 0xf20252
+                dict['title'] = str(message.author)
+                if len(content) > 0: dict['description'] = content + "\n\n"
+                else: dict['description'] = ""
+                dict['thumbnail'] = {'url':str(message.author.avatar_url)}
+                dict['fields'] = []
+                # for attachments
+                if message.attachments:
+                    for file in message.attachments:
+                        if file.is_spoiler():
+                            dict['fields'].append({'inline': True, 'name':'Attachment', 'value':f'[{file.filename}]({file.url})'})
+                        elif file.url.lower().endswith(('.png', '.jpeg', '.jpg', '.gif', '.webp')) and 'image' not in dict:
+                            dict['image'] = {'url':file.url}
+                        else:
+                            dict['fields'].append({'inline': True, 'name':'Attachment', 'value':f'[{file.filename}]({file.url})'})
+                # search for image url if no attachment
+                if 'image' not in dict:
+                    s = content.find("http")
+                    for ext in ['.png', '.jpeg', '.jpg', '.gif', '.webp']:
+                        e = content.find(ext, s)
+                        if e != -1:
+                            e += len(ext)
+                            break
+                    if content.find(' ', s, e) == -1 and s != -1:
+                        dict['image'] = {'url':content[s:e]}
+                # check embed
+                if len(message.embeds) > 0:
+                    if dict['description'] == "" and len(message.embeds[0].description) > 0: dict['description'] = message.embeds[0].description + "\n\n"
+                    if 'image' not in dict and message.embeds[0].image.url != discord.Embed.Empty: dict['image'] = {'url':message.embeds[0].image.url}
+                    if len(message.embeds[0].title) > 0: dict['title'] += " :white_small_square: " + message.embeds[0].title
+                    elif message.embeds[0].author.name != discord.Embed.Empty: dict['title'] += " :white_small_square: " + message.embeds[0].author.name
+                # add link to description
+                dict['description'] += ":earth_asia: [**Link**](https://discordapp.com/channels/{}/{}/{})\n".format(message.guild.id, message.channel.id, message.id)
+                embed = discord.Embed.from_dict(dict)
+                embed.timestamp=message.created_at
+                await bot.send(servers[idx]['output'], embed=embed)
+            except Exception as x:
+                await bot.sendError("on_raw_reaction_add", str(x))
             return
 
 # used by /gbfg/ and (You)
