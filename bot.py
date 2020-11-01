@@ -644,7 +644,10 @@ class Mizabot(commands.Bot):
             # clean up schedule
             c = self.getJST()
             new_schedule = []
-            if len(self.schedule) <= 2 and self.twitter_api is not None and c.date().day == 1: # retrive schedule from @granblue_en on first day of month
+            if len(self.schedule) <= 2 and self.twitter_api is not None and c.date().day == 1: # retrieve schedule from @granblue_en on first day of month
+                if c.date().hour < 12:
+                    d = c.replace(hour=12, minute=0, second=0, microsecond=0) - c
+                    await asyncio.sleep(d.seconds) # wait until koregra to try to get the schedule
                 tw = self.bot.getTwitterTimeline('granblue_en')
                 if tw is not None:
                     for t in tw:
