@@ -643,11 +643,14 @@ class Mizabot(commands.Bot):
 
             # clean up schedule
             c = self.getJST()
+            fd = c.replace(day=1, hour=12, minute=15, second=0, microsecond=0) # day of the next schedule drop, 15min after
+            if fd < c:
+                if fd.month == 12: fd = fd.replace(year=fd.year+1, month=1)
+                else: fd = fd.replace(month=fd.month)
+            d = fd - c
             new_schedule = []
-            if len(self.schedule) <= 2 and self.twitter_api is not None and c.date().day == 1: # retrieve schedule from @granblue_en on first day of month
-                if c.date().hour < 12:
-                    d = c.replace(hour=12, minute=0, second=0, microsecond=0) - c
-                    await asyncio.sleep(d.seconds) # wait until koregra to try to get the schedule
+            if self.twitter_api is not None and d.days < 1: # retrieve schedule from @granblue_en if we are close to the date
+                await asyncio.sleep(d.seconds) # wait until koregra to try to get the schedule
                 tw = self.bot.getTwitterTimeline('granblue_en')
                 if tw is not None:
                     for t in tw:
@@ -657,7 +660,7 @@ class Mizabot(commands.Bot):
                             if s != -1: txt = txt[:s]
                             try: new_schedule = txt.replace('\n', ' = ').split(' = ')[1:]
                             except: pass
-            else: # clean up old entries
+            else: # else, just clean up old entries
                 for i in range(0, len(self.schedule), 2):
                     try:
                         date = self.schedule[i].replace(" ", "").split("-")[-1].split("/")
