@@ -1867,7 +1867,7 @@ class GBF_Access(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ GW{} Ranking".format(self.bot.getEmote('gw'), gwid), fields=fields, inline=True, color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 60)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['recruiting', 'opencrew', 'opencrews'])
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def recruit(self, ctx):
         """Post all recruiting /gbfg/ crew"""
