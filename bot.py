@@ -646,12 +646,12 @@ class Mizabot(commands.Bot):
             fd = c.replace(day=1, hour=12, minute=15, second=0, microsecond=0) # day of the next schedule drop, 15min after
             if fd < c:
                 if fd.month == 12: fd = fd.replace(year=fd.year+1, month=1)
-                else: fd = fd.replace(month=fd.month)
+                else: fd = fd.replace(month=fd.month+1)
             d = fd - c
             new_schedule = []
             if self.twitter_api is not None and d.days < 1: # retrieve schedule from @granblue_en if we are close to the date
                 await asyncio.sleep(d.seconds) # wait until koregra to try to get the schedule
-                tw = self.bot.getTwitterTimeline('granblue_en')
+                tw = self.getTwitterTimeline('granblue_en')
                 if tw is not None:
                     for t in tw:
                         txt = t.full_text
