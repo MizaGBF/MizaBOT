@@ -1900,7 +1900,7 @@ class GBF_Access(commands.Cog):
                 if i % 15 == 0: fields.append({'name':'{}'.format(self.bot.getEmote(str(len(fields)+1))), 'value':''})
                 fields[-1]['value'] += "{} **{}** \▫️ r**{}** \▫️ **{}** slot\n".format(self.bot.getEmote(sortedcrew[i]['ship_element']), sortedcrew[i]['name'], sortedcrew[i]['average'], 30-sortedcrew[i]['count'])
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ recruiting crews".format(self.bot.getEmote('crew')), fields=fields, inline=True, color=self.color))
-        await self.bot.cleanMessage(ctx, final_msg, 60)
+        await self.bot.cleanMessage(ctx, final_msg, 90)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 30, commands.BucketType.guild)
