@@ -773,7 +773,23 @@ class GBF_Access(commands.Cog):
             await self.bot.unreact(ctx.message, 'time')
             return r
 
-    async def getCrewData(self, ctx, target, lite=False): # retrieve a crew data
+    async def getCrewSummary(self, id):
+        res = await self.bot.sendRequest("http://game.granbluefantasy.jp/guild_main/content/detail/{}?_=TS1&t=TS2&uid=ID".format(id), account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
+        if res is None: return None
+        else:
+            soup = BeautifulSoup(unquote(res['data']), 'html.parser')
+            try:
+                summary = soup.find_all("div", class_="prt-status-summary")[0].findChildren("div", class_="prt-status-value", recursive=True)
+                data = {}
+                data['count'] = int(summary[0].string)
+                data['average'] = int(summary[1].string)
+                data['online'] = int(summary[2].string)
+                return data
+            except Exception as e:
+                await self.bot.send('debug', str(e))
+                return None
+
+    async def getCrewData(self, ctx, target, mode=0): # retrieve a crew data (mode=0 - all, 1 - main page data only, 2 - main page and summary | add 10 to skip the cache check)
         if not await self.bot.isGameAvailable(): # check for maintenance
             return {'error':'Game is in maintenance'}
         if isinstance(target, list) or isinstance(target, tuple): id = " ".join(target)
@@ -791,13 +807,18 @@ class GBF_Access(commands.Cog):
         if id in self.badcrewcache: # if already searched (to limit bad requests)
             return {'error':'Crew not found'}
 
+        if mode >= 10:
+            skipcache = True
+            mode -= 10
+        else: skipcache = False
+
         crew = {'scores':[], 'id':id}
-        if id in self.crewcache: # public crews are stored until next reboot (to limit the request amount)
+        if not skipcache and id in self.crewcache: # public crews are stored until next reboot (to limit the request amount)
             crew = self.crewcache[id]
-            if lite: return crew
+            if mode > 0: return crew
         else:
             for i in range(0, 4): # for each page (page 0 being the crew page, 1 to 3 being the crew page
-                if i > 0 and lite: return crew
+                if i > 0 and mode > 0: break
                 get = await self.requestCrew(id, i)
                 if get == "Maintenance":
                     return {'error':'Maintenance'}
@@ -824,17 +845,21 @@ class GBF_Access(commands.Cog):
                         crew['donator_id'] = get['most_donated_id']
                         crew['donator_amount'] = get['most_donated_lupi']
                         crew['message'] = su.unescape(get['introduction'])
-                        crew['total_rank'] = 0
                     else:
                         if 'player' not in crew: crew['player'] = []
                         for p in get['list']:
-                            crew['total_rank'] += int(p['level'])
                             crew['player'].append({'id':p['id'], 'name':su.unescape(p['name']), 'level':p['level'], 'is_leader':p['is_leader'], 'member_position':p['member_position'], 'honor':None}) # honor is a placeholder
+            
+            if mode == 1: return crew
+            
+            data = await self.getCrewSummary(id)
+            if data is not None:
+                crew = {**crew, **data}
+
+            if mode > 0: return crew
 
             # prepare the member list
             fields = []
-            if not crew['private']:
-                crew['average'] = round(crew['total_rank'] / (len(crew['player']) * 1.0))
             if not crew['private']: self.crewcache[id] = crew # only cache public crews
 
 
@@ -873,6 +898,9 @@ class GBF_Access(commands.Cog):
 
             # embed initialization
             title = "\u202d{} **{}**".format(self.bot.getEmote(crew['ship_element']), crew['name'])
+            if 'count' in crew: title += "▫️{}/30".format(crew['count'])
+            if 'average' in crew: title += "▫️Rank {}".format(crew['average'])
+            if 'online' in crew: title += "▫️{} online".format(crew['online'])
             description = "💬 ``{}``".format(self.escape(crew['message']))
             footer = ""
             fields = []
@@ -884,8 +912,6 @@ class GBF_Access(commands.Cog):
             if crew['private']:
                 description += '\n{} [{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ *Crew is private*'.format(self.bot.getEmote('captain'), crew['leader'], crew['leader_id'])
             else:
-                # set title and footer
-                title += " ▫️ {}/30 ▫️ Rank {}".format(len(crew['player']), crew['average'])
                 footer = "Public crews are updated once per day"
                 # get GW data
                 if mode == 2: gwstate = True
@@ -1739,7 +1765,7 @@ class GBF_Access(commands.Cog):
             leaders = {}
             for c in crews:
                 if len(leaders) % 3 == 1: await asyncio.sleep(0.001) # to not overload the bot
-                crew = await self.getCrewData(None, c, True)
+                crew = await self.getCrewData(None, c, 1)
                 if 'error' in crew:
                     continue
                 leaders[str(c)] = [crew['name'], crew['leader'], crew['leader_id']]
@@ -1839,6 +1865,41 @@ class GBF_Access(commands.Cog):
                 else:
                     fields[-1]['value'] += "#**{}** \▫️ {} \▫️ **{}**\n".format(self.honorFormat(sorted[i][3]), sorted[i][1], self.honorFormat(sorted[i][2]))
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ GW{} Ranking".format(self.bot.getEmote('gw'), gwid), fields=fields, inline=True, color=self.color))
+        await self.bot.cleanMessage(ctx, final_msg, 60)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 60, commands.BucketType.guild)
+    async def recruit(self, ctx):
+        """Post all recruiting /gbfg/ crew"""
+        if not await self.bot.isGameAvailable():
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ recruiting crews".format(self.bot.getEmote('crew')), description="Unavailable", color=self.color))
+        else:
+            await self.bot.react(ctx.message, 'time')
+            crews = []
+            for e in self.bot.granblue['gbfgcrew']:
+                if self.bot.granblue['gbfgcrew'][e] in crews or self.bot.granblue['gbfgcrew'][e] in self.blacklist: continue
+                crews.append(self.bot.granblue['gbfgcrew'][e])
+
+            sortedcrew = []
+            for c in crews:
+                data = await self.getCrewData(ctx, int(c), 2)
+                await asyncio.sleep(0.001)
+                if 'error' not in data and data['count'] != 30:
+                    if len(sortedcrew) == 0: sortedcrew.append(data)
+                    else:
+                        inserted = False
+                        for i in range(len(sortedcrew)):
+                            if data['average'] >= sortedcrew[i]['average']:
+                                sortedcrew.insert(i, data)
+                                inserted = True
+                                break
+                        if not inserted: sortedcrew.append(data)
+            await self.bot.unreact(ctx.message, 'time')
+            fields = []
+            for i in range(0, len(sortedcrew)):
+                if i % 15 == 0: fields.append({'name':'{}'.format(self.bot.getEmote(str(len(fields)+1))), 'value':''})
+                fields[-1]['value'] += "{} **{}** \▫️ r**{}** \▫️ **{}** slot\n".format(self.bot.getEmote(sortedcrew[i]['ship_element']), sortedcrew[i]['name'], sortedcrew[i]['average'], 30-sortedcrew[i]['count'])
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ recruiting crews".format(self.bot.getEmote('crew')), fields=fields, inline=True, color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
