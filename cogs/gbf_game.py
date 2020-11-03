@@ -19,6 +19,10 @@ class GBF_Game(commands.Cog):
         elif (not sr_mode and d < 1500 + ssr) or sr_mode: return 1
         return 2
 
+    async def checkGacha(self): # no exception check on purpose
+        await (self.bot.get_cog('GBF_Access')).getCurrentGacha()
+        if self.bot.gbfdata.get('rateup', None) is None: raise Exception()
+
     def getRollExtended(self, ssr, sr_mode = False): # use the real gacha, return 2 for ssr, 1 for sr, 0 for r
         try:
             rateups = []
@@ -100,7 +104,7 @@ class GBF_Game(commands.Cog):
         if l == 2: footer = "6% SSR rate"
         else: footer = "3% SSR rate"
         try:
-            if self.bot.gbfdata.get('rateup', None) is None: raise Exception()
+            self.checkGacha()
             r = self.getRollExtended(3*l)
             msg = "{} {}".format(self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
             if r[0] == 2: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
@@ -133,6 +137,7 @@ class GBF_Game(commands.Cog):
         else: footer = "3% SSR rate"
         if rateup: footer += " - stopping at rate up"
         try:
+            self.checkGacha()
             result = [0, 0, 0]
             final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} is memerolling...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="0 {} ▫️ 0 {} ▫️ 0 {}".format(self.bot.getEmote('SSR'), self.bot.getEmote('SR'), self.bot.getEmote('R')), color=self.color, footer=footer))
             msg = ""
@@ -172,7 +177,7 @@ class GBF_Game(commands.Cog):
         if l == 2: footer = "6% SSR rate"
         else: footer = "3% SSR rate"
         try:
-            if self.bot.gbfdata.get('rateup', None) is None: raise Exception()
+            self.checkGacha()
             hasSSR = False
             rolls = []
             while len(rolls) < 10:
@@ -218,6 +223,7 @@ class GBF_Game(commands.Cog):
         else: base_rate = 3
         footer = "{}% SSR rate".format(base_rate)
         try:
+            self.checkGacha()
             result = self.tenDrawsExtended(3*l, 30)
             rate = (100*result[2]/300)
             if rate >= base_rate * 1.2: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'
@@ -250,6 +256,7 @@ class GBF_Game(commands.Cog):
         if l == 2: footer = "6% SSR rate"
         else: footer = "3% SSR rate"
         try:
+            self.checkGacha()
             result = self.tenDrawsExtended(3*l, 0, 1)
             count = sum(result[:3])
             msg = "Gachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
@@ -281,6 +288,7 @@ class GBF_Game(commands.Cog):
             rate = 900
             mode = 1
         try:
+            self.checkGacha()
             result = self.tenDrawsExtended(rate//100, 0, mode)
             count = sum(result[:3])
             msg = "Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
