@@ -11,17 +11,12 @@ class Management(commands.Cog):
         self.bot = bot
         self.color = 0xf49242
 
-    def isAuthorized(): # for decorators
-        async def predicate(ctx):
-            return ctx.bot.isAuthorized(ctx)
-        return commands.check(predicate)
-
     def isMod(): # for decorators
         async def predicate(ctx):
             return ctx.bot.isMod(ctx)
         return commands.check(predicate)
 
-    def isAuthorizedSpecial(): # for decorators
+    def isYouModOrOwner(): # for decorators
         async def predicate(ctx):
             return (ctx.bot.isServer(ctx, 'debug_server') or (ctx.bot.isServer(ctx, 'you_server') and ctx.bot.isMod(ctx)))
         return commands.check(predicate)
@@ -52,16 +47,17 @@ class Management(commands.Cog):
         await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isAuthorized()
     async def joined(self, ctx, member : discord.Member):
         """Says when a member joined."""
-        await ctx.send(embed=self.bot.buildEmbed(title=ctx.guild.name, description="Joined at {0.joined_at}".format(member), thumbnail=member.avatar_url, color=self.color))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(title=ctx.guild.name, description="Joined at {0.joined_at}".format(member), thumbnail=member.avatar_url, color=self.color))
+        await self.bot.cleanMessage(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['source'])
     @commands.cooldown(1, 20, commands.BucketType.guild)
     async def github(self, ctx):
         """Post the bot.py file running right now"""
-        await ctx.send(embed=self.bot.buildEmbed(title=self.bot.description.splitlines()[0], description="Code source at https://github.com/MizaGBF/MizaBOT", thumbnail=ctx.guild.me.avatar_url, color=self.color))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(title=self.bot.description.splitlines()[0], description="Code source at https://github.com/MizaGBF/MizaBOT", thumbnail=ctx.guild.me.avatar_url, color=self.color))
+        await self.bot.cleanMessage(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isMod()
@@ -102,7 +98,7 @@ class Management(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title=member.display_name, description="Already banned", thumbnail=member.avatar_url, color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isAuthorizedSpecial()
+    @isYouModOrOwner()
     async def setGW(self, ctx, id : int, element : str, day : int, month : int, year : int):
         """Set the GW date ((You) Mod only)"""
         try:
@@ -183,7 +179,7 @@ class Management(commands.Cog):
             await self.bot.sendError('setgw', str(e))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isAuthorizedSpecial()
+    @isYouModOrOwner()
     async def disableGW(self, ctx):
         """Disable the GW mode ((You) Mod only)
         It doesn't delete the GW settings"""
@@ -193,7 +189,7 @@ class Management(commands.Cog):
         await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isAuthorizedSpecial()
+    @isYouModOrOwner()
     async def enableGW(self, ctx):
         """Enable the GW mode ((You) Mod only)"""
         if self.bot.gw['state'] == True:
@@ -207,7 +203,7 @@ class Management(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="No Guild War available in my memory", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['skipGW'])
-    @isAuthorizedSpecial()
+    @isYouModOrOwner()
     async def skipGWBuff(self, ctx):
         """The bot will skip the next GW buff call ((You) Mod only)"""
         if not self.bot.gw['skip']:
@@ -218,7 +214,7 @@ class Management(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I'm already skipping the next set of buffs", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isAuthorizedSpecial()
+    @isYouModOrOwner()
     async def cancelSkipGWBuff(self, ctx):
         """Cancel the GW buff call skipping ((You) Mod only)"""
         if self.bot.gw['skip']:
@@ -229,7 +225,7 @@ class Management(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="No buff skip is currently set", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setDread', 'setDreadBarrage', 'setBarrage'])
-    @isAuthorizedSpecial()
+    @isYouModOrOwner()
     async def setValiant(self, ctx, id : int, element : str, day : int, month : int, year : int):
         """Set the Valiant date ((You) Mod only)"""
         try:
@@ -263,7 +259,7 @@ class Management(commands.Cog):
             await self.bot.sendError('setgw', str(e))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['disableDread', 'disableBarrage', 'disableDreadBarrage'])
-    @isAuthorizedSpecial()
+    @isYouModOrOwner()
     async def disableValiant(self, ctx):
         """Disable the Valiant mode ((You) Mod only)
         It doesn't delete the Valiant settings"""
@@ -272,7 +268,7 @@ class Management(commands.Cog):
         await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['enableDread', 'enableBarrage', 'enableDreadBarrage'])
-    @isAuthorizedSpecial()
+    @isYouModOrOwner()
     async def enableValiant(self, ctx):
         """Enable the Valiant mode ((You) Mod only)"""
         if self.bot.valiant['state'] == True:
