@@ -1896,10 +1896,13 @@ class GBF_Access(commands.Cog):
                         if not inserted: sortedcrew.append(data)
             await self.bot.unreact(ctx.message, 'time')
             fields = []
+            if len(sortedcrew) > 20: size = 15
+            elif len(sortedcrew) > 10: size = 10
+            else: size = 5
             for i in range(0, len(sortedcrew)):
-                if i % 15 == 0: fields.append({'name':'{}'.format(self.bot.getEmote(str(len(fields)+1))), 'value':''})
-                fields[-1]['value'] += "{} **{}** \▫️ r**{}** \▫️ **{}** slot\n".format(self.bot.getEmote(sortedcrew[i]['ship_element']), sortedcrew[i]['name'], sortedcrew[i]['average'], 30-sortedcrew[i]['count'])
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ recruiting crews".format(self.bot.getEmote('crew')), fields=fields, inline=True, color=self.color))
+                if i % size == 0: fields.append({'name':'{}'.format(self.bot.getEmote(str(len(fields)+1))), 'value':''})
+                fields[-1]['value'] += "Rank **{}** \▫️  **{}** \▫️ **{}** slot\n".format(sortedcrew[i]['average'], sortedcrew[i]['name'], 30-sortedcrew[i]['count'])
+            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ recruiting crews".format(self.bot.getEmote('crew')), fields=fields, inline=True, color=self.color, timestamp=datetime.utcnow()))
         await self.bot.cleanMessage(ctx, final_msg, 90)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
