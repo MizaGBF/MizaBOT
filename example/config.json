@@ -131,6 +131,7 @@
         "crew": 0
     },
     "granblue": {
-        "gbfgcrew" : {}
+        "gbfgcrew" : {},
+        "othercrew" : {}
     }
 }
