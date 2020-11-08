@@ -1,4 +1,4 @@
-discord.py==1.5.0
+discord.py==1.5.1
 pydrive2==1.6.2
 psutil==5.6.6
 beautifulsoup4==4.8.1
