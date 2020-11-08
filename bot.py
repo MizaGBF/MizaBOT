@@ -331,11 +331,11 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "6.35" # version number
+        self.botversion = "7.0" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Added `$recruit` to check recruiting /gbfg/ crews", "Updated `$crew` with more infos", "`$memeroll` added", "`$mizatube` is now available", "Pinboard now enabled on /gbfg/", "`$valiant` renamed to `$barrage` (alternative names are available)"] # bot changelog
         self.running = True # if True, the bot is running
-        self.boot_flag = False # if True, the bot has booted
+        self.boot_flag = False # if True, the bot has booted before
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
         self.starttime = datetime.utcnow() # used to check the uptime
         self.process = psutil.Process() # script process
@@ -385,7 +385,10 @@ class Mizabot(commands.Bot):
         self.memmonitor = {0, None} # for monitoring the memory
         self.vregex = re.compile("Game\.version = \"(\d+)\";") # for the gbf version check
 
-        # enable intents
+        # graceful exit
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
+
+        # enable intents - see https://github.com/Rapptz/discord.py/issues/5867
         intents = discord.Intents.default()
         intents.members = True
         
@@ -405,11 +408,22 @@ class Mizabot(commands.Bot):
             self.twitter_api = tweepy.API(auth)
             if self.twitter_api.verify_credentials() is None: raise Exception()
         except:
-            self.twitter_api = None
+            self.twitter_api = None # disable if error
         # init bot
         super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\nSource code: https://github.com/MizaGBF/MizaBOT.\nDefault command prefix is '$', use $setPrefix to change it on your server.".format(self.botversion), help_command=MizabotHelp(), owner=self.ids['owner'], max_messages=None, intents=intents)
 
+    def exit_gracefully(self, signum, frame): # graceful exit (when SIGTERM is received)
+        self.exit_flag = True
+        if self.savePending:
+            self.autosaving = False
+            if self.save():
+                print('Autosave Success')
+            else:
+                print('Autosave Failed')
+        exit(0)
+
     def mainLoop(self): # main loop of the bot
+        self.cogn = cogs.load(self) # load cogs
         while self.running:
             try:
                 self.loop.run_until_complete(self.start(self.tokens['discord']))
@@ -702,8 +716,8 @@ class Mizabot(commands.Bot):
             return True
         return False
 
-    def isOwner(self, ctx):
-        if ctx.message.author.id == self.ids.get('owner', -1):
+    def isOwner(self, ctx): # return true if the author is the bot owner
+        if ctx.message.author.id == self.ids.get('owner', -1): # must be defined in config.json
             return True
         return False
 
@@ -737,7 +751,7 @@ class Mizabot(commands.Bot):
             await self.sendError('unreact', str(e))
             return False
 
-    async def cleanMessage(self, ctx, msg, timeout, all=False):
+    async def cleanMessage(self, ctx, msg, timeout, all=False): # delete a message after X amount of time if posted in an unauthorized channel (all = False) or everywhere (all = True)
         try:
             if all or not self.isAuthorized(ctx):
                 if timeout is None or timeout > 0: await asyncio.sleep(timeout)
@@ -767,15 +781,15 @@ class Mizabot(commands.Bot):
             embed.set_author(name=options['author'].pop('name', ""), url=options['author'].pop('url', ""), icon_url=options['author'].pop('icon_url', ""))
         return embed
 
-    def getTwitterUser(self, screen_name : str):
+    def getTwitterUser(self, screen_name : str): # return twitter profile (api must be enabled)
         try: return self.twitter_api.get_user(screen_name)
         except: return None
 
-    def getTwitterTimeline(self, screen_name : str):
+    def getTwitterTimeline(self, screen_name : str): # return twitter user timeline (api must be enabled)
         try: return self.twitter_api.user_timeline(screen_name, tweet_mode='extended')
         except: return None
 
-    async def sendRequest(self, url, **options): # to send a request over the internet
+    async def sendRequest(self, url, **options): # to send a complicated request over the internet
         try:
             data = None
             headers = {}
@@ -1002,7 +1016,7 @@ class Mizabot(commands.Bot):
         else:
             self.on_message_low[name] = callback
 
-    async def runOnMessageCallback(self, message):
+    async def runOnMessageCallback(self, message): # dynamic callback system for on_message
         for name in self.on_message_high:
             try:
                 if not await self.on_message_high[name](message): return False
@@ -1030,6 +1044,12 @@ class Mizabot(commands.Bot):
         except:
             self.errn += 1
             print("Invalid ID: {}".format(id))
+
+    def setChannels(self, channel_list: list): # the above, all in one, format is [[channel_name, channel_id], ...]
+        for c in channel_list:
+            if len(c) == 2 and isinstance(c[0], str):
+                if isinstance(c[1], str): self.setChannel(c[0], c[1])
+                elif isinstance(c[1], int): self.setChannelID(c[0], c[1])
 
     async def callCommand(self, ctx, command, *args, **kwargs): #call a command in a cog
         for cn in self.cogs:
@@ -1115,23 +1135,6 @@ class Mizabot(commands.Bot):
         except: pass
 
 # #####################################################################################
-# GracefulExit
-class GracefulExit: # when heroku force the bot to shutdown
-  def __init__(self, bot):
-    self.bot = bot
-    signal.signal(signal.SIGTERM, self.exit_gracefully)
-
-  def exit_gracefully(self,signum, frame):
-    self.bot.exit_flag = True
-    if self.bot.savePending:
-        self.bot.autosaving = False
-        if self.bot.save():
-            print('Autosave Success')
-        else:
-            print('Autosave Failed')
-    exit(0)
-
-# #####################################################################################
 # Prepare the bot
 bot = Mizabot()
 
@@ -1142,11 +1145,7 @@ async def on_ready(): # when the bot starts or reconnects
     await bot.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=random.choice(bot.games)))
     if not bot.boot_flag:
         # send a pretty message
-        bot.setChannel('debug', 'debug_channel') # set our debug channel
-        bot.setChannel('you_pinned', 'you_pinned') # set (you) pinned channel
-        bot.setChannel('gbfg_pinned', 'gbfg_pinned') # set /gbfg/ starboard
-        bot.setChannel('gbfglog', 'gbfg_log') # set /gbfg/ log channel
-        bot.setChannel('youlog', 'you_log') # set (you) log channel
+        bot.setChannels([['debug', 'debug_channel'], ['you_pinned', 'you_pinned'], ['gbfg_pinned', 'gbfg_pinned'], ['gbfglog', 'gbfg_log'], ['youlog', 'you_log']]) # register to-be-used channels for the send function
         await bot.send('debug', embed=bot.buildEmbed(title="{} is Ready".format(bot.user.display_name), description="**Version** {}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}\n**Twitter**▫️{}".format(bot.botversion, bot.process.cpu_percent(), bot.process.memory_full_info().uss >> 20, len(asyncio.all_tasks()), len(bot.guilds), len(bot.guilddata['pending']), len(bot.cogs), bot.cogn, (bot.twitter_api is not None)), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
         await bot.startTasks() # start the tasks
         bot.boot_flag = True
@@ -1413,7 +1412,4 @@ async def on_guild_channel_delete(channel):
 
 # #####################################################################################
 # Start the bot
-# load cogs
-grace = GracefulExit(bot)
-bot.cogn = cogs.load(bot)
 bot.mainLoop()

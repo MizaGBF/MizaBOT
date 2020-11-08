@@ -164,9 +164,7 @@ class GBF_Access(commands.Cog):
                 return
 
     async def gbfwatch(self): # watch GBF state
-        self.bot.setChannel('private_update', 'you_private')
-        self.bot.setChannel('public_update', 'you_general')
-        self.bot.setChannel('gbfg_update', 'gbfg_general')
+        self.bot.setChannels([['private_update', 'you_private'], ['public_update', 'you_general'], ['gbfg_update', 'gbfg_general']])
         maintenance_time = self.bot.getJST()
         while True:
             if self.bot.exit_flag: return
@@ -251,7 +249,7 @@ class GBF_Access(commands.Cog):
                 await asyncio.sleep(0.001)
                 last = await self.check4koma()
                 if '4koma' in self.bot.gbfdata:
-                    if last['id'] != self.bot.gbfdata['4koma']:
+                    if last is not None and last['id'] != self.bot.gbfdata['4koma']:
                         self.bot.gbfdata['4koma'] = last['id']
                         self.bot.savePending = True
                         title = last['title_en']
@@ -2129,7 +2127,7 @@ class GBF_Access(commands.Cog):
         else:
             await self.bot.react(ctx.message, '✅') # white check mark
 
-    async def findranking(self, ctx, type, terms):
+    async def findranking(self, ctx, type, terms): # it's a mess, I won't comment it
         if type: txt = "crew"
         else: txt = "player"
         if terms == "":
@@ -2331,14 +2329,14 @@ class GBF_Access(commands.Cog):
         await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.getEmote('gw'), gwnum, day - 1), description=msg, timestamp=datetime.utcnow(), color=self.color))
 
     def scrapProcess(self, mode, qi, qo): # thread for ranking
-        while not qi.empty():
-            if self.bot.exit_flag: return
-            page = qi.get()
+        while not qi.empty(): # until the input queue is empty
+            if self.bot.exit_flag or self.stoprankupdate: return 
+            page = qi.get() # retrieve the page number
             data = None
             while data is None:
-                data = self.getRanking(page, mode)
+                data = self.getRanking(page, mode) # request the page
                 if (self.bot.maintenance['state'] and self.bot.maintenance["duration"] == 0) or self.stoprankupdate: return
-            for item in data['list']:
+            for item in data['list']: # put the entries in the list
                 qo.put(item)
 
     def gwdbbuilder(self, mode, qo, count, res):
@@ -2349,71 +2347,72 @@ class GBF_Access(commands.Cog):
                 return
             if day > 1: day -= 1
 
-            conn = sqlite3.connect('temp.sql')
+            conn = sqlite3.connect('temp.sql') # open temp.sql
             c = conn.cursor()
 
-            c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'")
+            c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'") # create info table (contains gw id and db version)
             if c.fetchone()[0] < 1:
                  c.execute('CREATE TABLE info (gw int, ver int)')
                  c.execute('INSERT INTO info VALUES ({}, 2)'.format(self.bot.gw['id'])) # ver 2
 
-            if mode:
+            if mode: # crew table creation (IF it doesn't exist)
                 c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='crews'")
                 if c.fetchone()[0] < 1:
                     c.execute('CREATE TABLE crews (ranking int, id int, name text, preliminaries int, total_1 int, total_2 int, total_3 int, total_4 int)')
-            else:
+            else: # player table creation (delete an existing one, we want the file to keep a small size)
                 c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='players'")
                 if c.fetchone()[0] == 1:
                     c.execute('DROP TABLE players')
                 c.execute('CREATE TABLE players (ranking int, id int, name text, current_total int)')
             i = 0
-            while i < count:
-                if self.bot.exit_flag or (self.bot.maintenance['state'] and self.bot.maintenance["duration"] == 0):
+            while i < count: # count is the number of entries to process
+                if self.bot.exit_flag or (self.bot.maintenance['state'] and self.bot.maintenance["duration"] == 0): # stop if the bot is stopping
                     res.put(False)
                     return
-                try: item = qo.get()
-                except: continue
+                try: item = qo.get() # retrieve an item
+                except: continue # skip if error or no item in the queue
 
-                if mode:
+                if mode: # if crew, update the existing crew (if it exists) or create a new entry
                     c.execute("SELECT count(*) FROM crews WHERE id = {}".format(int(item['id'])))
                     if c.fetchone()[0] != 0:
                         c.execute("UPDATE crews SET ranking = {}, name = '{}', {} = {} WHERE id = {}".format(int(item['ranking']), item['name'].replace("'", "''"), {0:'preliminaries',1:'total_1',2:'total_2',3:'total_3',4:'total_4'}.get(day, 'undef'), int(item['point']), int(item['id'])))
                     else:
                         honor = {day: int(item['point'])}
                         c.execute("INSERT INTO crews VALUES ({},{},'{}',{},{},{},{},{})".format(int(item['ranking']), int(item['id']), item['name'].replace("'", "''"), honor.get(0, 'NULL'), honor.get(1, 'NULL'), honor.get(2, 'NULL'), honor.get(3, 'NULL'), honor.get(4, 'NULL')))
-                else:
+                else: # if player, just add to the table
                     c.execute("INSERT INTO players VALUES ({},{},'{}',{})".format(int(item['rank']), int(item['user_id']), item['name'].replace("'", "''"), int(item['point'])))
                 i += 1
-                if i == count:
+                if i == count: # if we reached the end, commit
                     conn.commit()
                     conn.close()
             res.put(True)
-        except:
-            self.stoprankupdate = True
+        except Exception as err:
+            print(err)
+            self.stoprankupdate = True # send the stop signal if a critical error happened
             res.put(False)
 
     def gwscrap(self):
-        self.bot.drive.delFiles(["temp.sql"], self.bot.tokens['files'])
-        self.bot.delFile('temp.sql')
-        if self.bot.drive.cpyFile("GW.sql", self.bot.tokens['files'], "temp.sql"):
-            if not self.bot.drive.dlFile("temp.sql", self.bot.tokens['files']):
+        self.bot.drive.delFiles(["temp.sql"], self.bot.tokens['files']) # delete previous temp file (if any)
+        self.bot.delFile('temp.sql') # locally too
+        if self.bot.drive.cpyFile("GW.sql", self.bot.tokens['files'], "temp.sql"): # copy existing gw.sql to temp.sql
+            if not self.bot.drive.dlFile("temp.sql", self.bot.tokens['files']): # retrieve it
                 return False
-            conn = sqlite3.connect('temp.sql')
+            conn = sqlite3.connect('temp.sql') # open
             c = conn.cursor()
             try:
-                c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'")
+                c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'") # check if "info" table exists (backward compatibility with the old format)
                 if c.fetchone()[0] == 1:
                     conn.close()
                 else:
                     conn.close()
-                    self.bot.delFile('temp.sql')
+                    self.bot.delFile('temp.sql') # delete if it doesn't (we'll make a clear db instead)
             except:
                 conn.close()
-                self.bot.delFile('temp.sql')
+                self.bot.delFile('temp.sql') # delete if an error happened too
 
-        self.stoprankupdate = False
-        res = False
-        for n in [0, 1]:
+        self.stoprankupdate = False # if true, this flag will stop the threads
+        res = False # return value
+        for n in [0, 1]: # n == 0 (crews) or 1 (players)
             current_time = self.bot.getJST()
             if n == 0 and current_time >= self.bot.gw['dates']["Interlude"] and current_time < self.bot.gw['dates']["Day 1"]:
                 continue # disabled during interlude for crews
@@ -2422,34 +2421,34 @@ class GBF_Access(commands.Cog):
             if data is None:
                 print("Can't access the ranking")
                 return False
-            count = int(data['count']) # number of crews
+            count = int(data['count']) # number of crews/players
             last = data['last'] # number of pages
 
-            qi = Queue()
+            qi = Queue() # input queue (contains id of each page not processed yet)
             for i in range(2, last+1): # queue the pages to retrieve
                 qi.put(i)
-            qo = Queue()
-            for item in data['list']: # queue what we already retrieved
+            qo = Queue() # output queue (contains json-data for each crew/player not processed yet)
+            for item in data['list']: # queue what we already retrieved on the first page
                 qo.put(item)
 
             threadpool = []
             for i in range(100): # make lot of threads
-                threadpool.append(Thread(target=self.scrapProcess, args=(n == 0, qi, qo)))
+                threadpool.append(Thread(target=self.scrapProcess, args=(n == 0, qi, qo))) # will request the ranking
                 threadpool[-1].setDaemon(True)
                 threadpool[-1].start()
 
-            r = Queue() # return value
-            threadpool.append(Thread(target=self.gwdbbuilder, args=(n == 0, qo, count, r))) # sql builder thread
+            r = Queue() # return value for self.gwdbbuilder
+            threadpool.append(Thread(target=self.gwdbbuilder, args=(n == 0, qo, count, r))) # sql builder thread (just need one, not more)
             threadpool[-1].setDaemon(True)
             threadpool[-1].start()
 
             for t in threadpool:
-                t.join() # wait to finish
+                t.join() # wait for ALL 100+1 threads to finish (or the garbage collector will mess up)
 
-            threadpool.clear()
-            qi.queue.clear()
+            threadpool.clear() # delete our finished threads
+            qi.queue.clear() # clear the queues
             qo.queue.clear()
-            if r.get():
+            if r.get(): # check if self.gwdbbuilder put True in the queue
                 res = True
             else:
                 return False
