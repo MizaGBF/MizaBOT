@@ -793,7 +793,8 @@ class GBF_Access(commands.Cog):
         if isinstance(target, list) or isinstance(target, tuple): id = " ".join(target)
         elif isinstance(target, int): id = str(target)
         else: id = target
-        id = self.bot.granblue['gbfgcrew'].get(id.lower(), id) # check if the id is a gbfgcrew
+        crew_id_list = {**(self.bot.granblue['gbfgcrew']), **(self.bot.granblue.get('othercrew', {}))}
+        id = crew_id_list.get(id.lower(), id) # check if the id is a gbfgcrew
         # check id validityy
         try:
             id = int(id)
@@ -2291,9 +2292,10 @@ class GBF_Access(commands.Cog):
         ver = None
         msg = ""
         lead = None
+        crew_id_list = {**(self.bot.granblue['gbfgcrew']), **(self.bot.granblue.get('othercrew', {}))}
         for sid in [IDcrewA, IDcrewB]:
-            if sid.lower() in self.bot.granblue['gbfgcrew']:
-                id = self.bot.granblue['gbfgcrew'][sid.lower()]
+            if sid.lower() in crew_id_list:
+                id = crew_id_list[sid.lower()]
             else:
                 try: id = int(sid)
                 except:
