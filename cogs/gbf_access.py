@@ -345,12 +345,12 @@ class GBF_Access(commands.Cog):
 
     def translate(self, text):
         try:
-            text = text.replace('「', '」').replace('！', '!').split('」')
+            split = text.replace('「', '」').replace('！', '!').split('」')
             msg = ""
             count = 0
-            for t in text:
+            for t in split:
                 if t != '': msg += self.translator.translate(t, src='ja').text
-                if t is not text[-1]:
+                if t is not split[-1]:
                     msg += '"'
                     count += 1
                     if (count % 2) == 0: msg += " "
