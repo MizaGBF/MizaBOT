@@ -334,7 +334,7 @@ class GBF_Access(commands.Cog):
                             except:
                                 img = None
 
-                            res.append([url.attrs['href'], url.text, img])
+                            res.append([url.attrs['href'], self.translate(url.text), img])
                     except:
                         pass
         return res
@@ -345,7 +345,7 @@ class GBF_Access(commands.Cog):
 
     def translate(self, text):
         try:
-            split = text.replace('「', '」').replace('！', '!').split('」')
+            split = text.replace('「', '」').replace('『', '」').replace('』', '」').replace('！', '!').split('」')
             msg = ""
             count = 0
             for t in split:
@@ -1913,7 +1913,7 @@ class GBF_Access(commands.Cog):
             self.bot.savePending = True
         msg = ""
         for i in range(len(self.bot.gbfdata['news_url'])):
-            msg += "{} [{}]({})\n".format(self.bot.getEmote(str(i+1)), self.translate(self.bot.gbfdata['news_url'][i][1]), self.bot.gbfdata['news_url'][i][0])
+            msg += "{} [{}]({})\n".format(self.bot.getEmote(str(i+1)), self.bot.gbfdata['news_url'][i][1], self.bot.gbfdata['news_url'][i][0])
         try:
             thumb = self.bot.gbfdata['news_url'][0][2]
             if not thumb.startswith('http://granbluefantasy.jp') and not thumb.startswith('https://granbluefantasy.jp'):

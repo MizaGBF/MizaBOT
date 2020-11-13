@@ -331,7 +331,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "7.0" # version number
+        self.botversion = "7.1" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Added `$recruit` to check recruiting /gbfg/ crews", "Updated `$crew` with more infos", "`$memeroll` added", "`$mizatube` is now available", "Pinboard now enabled on /gbfg/", "`$valiant` renamed to `$barrage` (alternative names are available)"] # bot changelog
         self.running = True # if True, the bot is running
