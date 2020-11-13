@@ -17,7 +17,7 @@ import sqlite3
 from bs4 import BeautifulSoup
 from xml.sax import saxutils as su
 from PIL import Image, ImageFont, ImageDraw
-from googletrans import Translator
+from translate import Translator
 from queue import Queue
 import concurrent.futures
 from threading import Thread
@@ -46,7 +46,7 @@ class GBF_Access(commands.Cog):
         }
         self.loadinggw = False
         self.loadinggacha = False
-        self.translator = Translator()
+        self.translator = Translator(from_lang='ja', to_lang='en')
         self.blacklist = ["677159", "147448"]
         self.stoprankupdate = False
 
@@ -254,7 +254,7 @@ class GBF_Access(commands.Cog):
                         self.bot.savePending = True
                         title = last['title_en']
                         if title == "": title = self.translate(last['title'])
-                        await self.bot.sendMulti(['debug', 'public_update', 'gbfg_update'], embed=self.bot.buildEmbed(title=title, url="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/comic/episode/episode_{}.jpg".format(last['id']), image="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/comic/thumbnail/thum_{}.png".format(last['id'].zfill(5)), color=self.color))
+                        await self.bot.sendMulti(['debug', 'public_update', 'gbfg_update'], embed=self.bot.buildEmbed(title=title, url="http://game-a1.granbluefantasy.jp/assets/img/sp/assets/comic/episode/episode_{}.jpg".format(last['id']), image="http://game-a1.granbluefantasy.jp/assets/img/sp/assets/comic/thumbnail/thum_{}.png".format(last['id'].zfill(5)), color=self.color))
                 else:
                     self.bot.gbfdata['4koma'] = last['id']
                     self.bot.savePending = True
@@ -349,7 +349,7 @@ class GBF_Access(commands.Cog):
             msg = ""
             count = 0
             for t in split:
-                if t != '': msg += self.translator.translate(t, src='ja').text
+                if t != '': msg += self.translator.translate(t)
                 if t is not split[-1]:
                     msg += '"'
                     count += 1
