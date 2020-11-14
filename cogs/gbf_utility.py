@@ -659,7 +659,7 @@ class GBF_Utility(commands.Cog):
             if raw == 'raw': msg += "`"
             await ctx.send(embed=self.bot.buildEmbed(title="🗓 Event Schedule {} {:%Y/%m/%d %H:%M} JST".format(self.bot.getEmote('clock'), self.bot.getJST()), url="https://twitter.com/granblue_en", color=self.color, description=msg))
 
-    def strToInt(self, s): # convrt string such as 1.2B to 1200000000
+    def strToInt(self, s): # convert string such as 1.2B to 1200000000
         try:
             return int(s)
         except:

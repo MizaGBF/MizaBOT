@@ -96,7 +96,11 @@ class GBF_Access(commands.Cog):
                         for d in days:
                             if current_time < self.bot.gw['dates'][d]:
                                 continue
-                            elif ((d == "Preliminaries" or d.startswith("Day")) and h < 7 and h >= 2) or d == "Day 5":
+                            if d == "Preliminaries":
+                                diff = current_time - self.bot.gw['dates'][d]
+                                if diff.days == 1 and diff.hours >= 5:
+                                    skip = True
+                            elif ((d.startswith("Day") and h < 7 and h >= 2) or d == "Day 5"):
                                 skip = True
                             break
                         if skip:
@@ -1483,6 +1487,7 @@ class GBF_Access(commands.Cog):
         """Search a summon
         <summon name> or <level min> <summon name>
          or <summon name> <level min>"""
+        await self.bot.send('debug', '$summon called')
         if not await self.checkSumDB(ctx):
             await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="Currently unavailable".format(name), color=self.color))
             return
