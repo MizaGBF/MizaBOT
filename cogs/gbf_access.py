@@ -2403,12 +2403,12 @@ class GBF_Access(commands.Cog):
             conn = sqlite3.connect('temp.sql') # open
             c = conn.cursor()
             try:
-                self.sql[k][1].execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'") # check info table
-                if self.sql[k][1].fetchone()[0] < 1:
+                c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'") # check info table
+                if c.fetchone()[0] < 1:
                     raise Exception() # not found, old version
                 else:
-                    self.sql[k][1].execute("SELECT * FROM info") # retrieve version and gw id
-                    for row in self.sql[k][1].fetchall():
+                    c.execute("SELECT * FROM info") # retrieve version and gw id
+                    for row in c.fetchall():
                         gw = int(row[0])
                         ver = int(row[1])
                         break
