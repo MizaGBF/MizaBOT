@@ -142,7 +142,8 @@ class GBF_Access(commands.Cog):
                                     data = await self.GWDBver()
                                     if data is not None and data[1] is not None:
                                         if self.bot.gw['id'] != data[1]['gw']: # different gw, we move
-                                            self.bot.drive.delFiles(["GW_old.sql"], self.bot.tokens['files'])
+                                            if data[0] is not None:
+                                                self.bot.drive.mvFile("GW_old.sql", self.bot.tokens['files'], "GW{}_backup.sql".format(data[0]['gw']))
                                             self.bot.drive.mvFile("GW.sql", self.bot.tokens['files'], "GW_old.sql")
                                     if not self.bot.drive.overwriteFile("temp.sql", "application/sql", "GW.sql", self.bot.tokens['files']): # upload
                                         await self.bot.sendError('gwscrap', 'Upload failed')
@@ -2402,15 +2403,19 @@ class GBF_Access(commands.Cog):
             conn = sqlite3.connect('temp.sql') # open
             c = conn.cursor()
             try:
-                c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'") # check if "info" table exists (backward compatibility with the old format)
-                if c.fetchone()[0] == 1:
-                    conn.close()
+                self.sql[k][1].execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'") # check info table
+                if self.sql[k][1].fetchone()[0] < 1:
+                    raise Exception() # not found, old version
                 else:
-                    conn.close()
-                    self.bot.delFile('temp.sql') # delete if it doesn't (we'll make a clear db instead)
+                    self.sql[k][1].execute("SELECT * FROM info") # retrieve version and gw id
+                    for row in self.sql[k][1].fetchall():
+                        gw = int(row[0])
+                        ver = int(row[1])
+                        break
+                    if gw != self.bot.gw['id'] or ver != 2: raise Exception()
             except:
-                conn.close()
-                self.bot.delFile('temp.sql') # delete if an error happened too
+                self.bot.delFile('temp.sql')
+            conn.close()
 
         self.stoprankupdate = False # if true, this flag will stop the threads
         res = False # return value
