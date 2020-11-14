@@ -752,7 +752,7 @@ class GBF_Utility(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid meat number", color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 60)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['honors'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def honor(self, ctx, target : str):
         """Calculate how many NM95 and 150 you need for your targeted honor"""
