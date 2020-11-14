@@ -659,11 +659,21 @@ class GBF_Utility(commands.Cog):
             if raw == 'raw': msg += "`"
             await ctx.send(embed=self.bot.buildEmbed(title="🗓 Event Schedule {} {:%Y/%m/%d %H:%M} JST".format(self.bot.getEmote('clock'), self.bot.getJST()), url="https://twitter.com/granblue_en", color=self.color, description=msg))
 
+    def strToInt(self, s): # convrt string such as 1.2B to 1200000000
+        try:
+            return int(s)
+        except:
+            n = float(s[:-1]) # float to support for example 1.2B
+            m = s[-1].lower()
+            l = {'k':1000, 'm':1000000, 'b':1000000000}
+            return int(n * l[m])
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tokens'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
-    async def token(self, ctx, tok : int):
+    async def token(self, ctx, tok : str):
         """Calculate how many GW box you get from X tokens"""
         try:
+            tok = self.strToInt(tok)
             if tok < 1 or tok > 9999999999: raise Exception()
             b = 0
             t = tok
@@ -728,9 +738,10 @@ class GBF_Utility(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
-    async def meat(self, ctx, meat : int):
+    async def meat(self, ctx, meat : str):
         """Calculate how many GW honors you get"""
         try:
+            meat = self.strToInt(meat)
             if meat < 5 or meat > 100000: raise Exception()
             nm90 = meat // 5
             nm95 = meat // 10
@@ -743,9 +754,10 @@ class GBF_Utility(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
-    async def honor(self, ctx, target : int):
+    async def honor(self, ctx, target : str):
         """Calculate how many NM95 and 150 you need for your targeted honor"""
         try:
+            target = self.strToInt(target)
             if target < 10000: raise Exception()
             honor = [0, 0, 0]
             ex = 0
