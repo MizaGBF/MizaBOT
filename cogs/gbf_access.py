@@ -142,7 +142,7 @@ class GBF_Access(commands.Cog):
                                     data = await self.GWDBver()
                                     if data is not None and data[1] is not None:
                                         if self.bot.gw['id'] != data[1]['gw']: # different gw, we move
-                                            if data[0] is not None:
+                                            if data[0] is not None: # backup old gw if it exists
                                                 self.bot.drive.mvFile("GW_old.sql", self.bot.tokens['files'], "GW{}_backup.sql".format(data[0]['gw']))
                                             self.bot.drive.mvFile("GW.sql", self.bot.tokens['files'], "GW_old.sql")
                                     if not self.bot.drive.overwriteFile("temp.sql", "application/sql", "GW.sql", self.bot.tokens['files']): # upload
@@ -901,7 +901,7 @@ class GBF_Access(commands.Cog):
             if 'count' in crew: title += "▫️{}/30".format(crew['count'])
             if 'average' in crew: title += "▫️Rank {}".format(crew['average'])
             if 'online' in crew: title += "▫️{} online".format(crew['online'])
-            description = "💬 ``{}``".format(self.escape(crew['message']))
+            description = "💬 ``{}``".format(self.escape(crew['message'], True))
             footer = ""
             fields = []
 
@@ -1020,9 +1020,10 @@ class GBF_Access(commands.Cog):
         elif h >= 1000: return "{:.1f}K".format(h/1000)
         return h
 
-    def escape(self, s): # escape markdown string
+    def escape(self, s, lite=False): # escape markdown string
         # add the RLO character before
-        return '\u202d' + s.replace('\\', '\\\\').replace('`', '\\`').replace('*', '\\*').replace('_', '\\_').replace('{', '\\{').replace('}', '\\}').replace('[', '').replace(']', '').replace('(', '\\(').replace(')', '\\)').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('.', '\\.').replace('!', '\\!').replace('|', '\\|')
+        if lite: return '\u202d' + s.replace('\\', '\\\\').replace('`', '\\`')
+        else: return '\u202d' + s.replace('\\', '\\\\').replace('`', '\\`').replace('*', '\\*').replace('_', '\\_').replace('{', '\\{').replace('}', '\\}').replace('[', '').replace(']', '').replace('(', '\\(').replace(')', '\\)').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('.', '\\.').replace('!', '\\!').replace('|', '\\|')
 
     async def requestCrew(self, id : int, page : int): # get crew data
         if page == 0: return await self.bot.sendRequest("http://game.granbluefantasy.jp/guild_other/guild_info/{}?_=TS1&t=TS2&uid=ID".format(id), account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
