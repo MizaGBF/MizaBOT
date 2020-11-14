@@ -2420,9 +2420,10 @@ class GBF_Access(commands.Cog):
                 continue # disabled during interlude for crews
 
             data = self.getRanking(1, n == 0) # get the first page
-            if data is None:
+            if data is None or data['count'] == False:
                 print("Can't access the ranking")
-                return False
+                res = False
+                break
             count = int(data['count']) # number of crews/players
             last = data['last'] # number of pages
 
