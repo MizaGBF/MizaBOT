@@ -2355,10 +2355,11 @@ class GBF_Access(commands.Cog):
     def gwdbbuilder(self, mode, qo, count, res):
         try:
             day = self.getCurrentGWDayID() # calculate which day it is (0 being prelim, 1 being interlude/day 1, etc...)
-            if day is None or day >= 10 or day == 1:
+            if day is None or day >= 10:
                 res.put(False)
+                self.stoprankupdate = True # send the stop signal
                 return
-            if day > 1: day -= 1
+            if day > 0: day -= 1 # interlude is put into prelims
 
             conn = sqlite3.connect('temp.sql') # open temp.sql
             c = conn.cursor()
@@ -2381,6 +2382,7 @@ class GBF_Access(commands.Cog):
             while i < count: # count is the number of entries to process
                 if self.bot.exit_flag or (self.bot.maintenance['state'] and self.bot.maintenance["duration"] == 0): # stop if the bot is stopping
                     res.put(False)
+                    self.stoprankupdate = True # send the stop signal
                     return
                 try: item = qo.get() # retrieve an item
                 except: continue # skip if error or no item in the queue
@@ -2400,7 +2402,7 @@ class GBF_Access(commands.Cog):
                     conn.close()
             res.put(True)
         except Exception as err:
-            print(err)
+            print('gwdbbuilder', err)
             self.stoprankupdate = True # send the stop signal if a critical error happened
             res.put(False)
 
