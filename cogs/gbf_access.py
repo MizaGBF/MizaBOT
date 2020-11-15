@@ -98,7 +98,7 @@ class GBF_Access(commands.Cog):
                                 continue
                             if d == "Preliminaries":
                                 diff = current_time - self.bot.gw['dates'][d]
-                                if diff.days == 1 and diff.hours >= 5:
+                                if diff.days == 1 and diff.seconds >= 18000:
                                     skip = True
                             elif ((d.startswith("Day") and h < 7 and h >= 2) or d == "Day 5"):
                                 skip = True
