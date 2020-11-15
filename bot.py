@@ -331,7 +331,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "7.1" # version number
+        self.botversion = "7.2" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Added `$recruit` to check recruiting /gbfg/ crews", "Updated `$crew` with more infos", "`$memeroll` added", "`$mizatube` is now available", "Pinboard now enabled on /gbfg/", "`$valiant` renamed to `$barrage` (alternative names are available)"] # bot changelog
         self.running = True # if True, the bot is running
@@ -1091,13 +1091,14 @@ class Mizabot(commands.Bot):
 
     def uptime(self, string=True): # get the uptime
         delta = datetime.utcnow() - self.starttime
-        if string: return "{}".format(self.getTimedeltaStr(delta, None))
+        if string: return "{}".format(self.getTimedeltaStr(delta, 3))
         else: return delta
 
-    def getTimedeltaStr(self, delta, day=False):
-        if day is None: return "{}d{}h{}m{}s".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60, delta.seconds % 60)
-        elif day: return "{}d{}h{}m".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60)
-        else: return "{}h{}m".format(delta.seconds // 3600, (delta.seconds // 60) % 60)
+    def getTimedeltaStr(self, delta, mode=1):
+        if mode == 3: return "{}d{}h{}m{}s".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60, delta.seconds % 60)
+        elif mode == 2: return "{}d{}h{}m".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60)
+        elif mode == 1: return "{}h{}m".format(delta.seconds // 3600, (delta.seconds // 60) % 60)
+        elif mode == 0: return "{}m".format(delta.seconds // 60)
 
     # function to build a timedelta from a string (for $remind)
     def makeTimedelta(self, d): # return None if error

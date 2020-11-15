@@ -1402,9 +1402,9 @@ class GBF_Access(commands.Cog):
         try:
             content = await self.getCurrentGacha()
             if len(content) > 0:
-                description = "{} Current gacha ends in **{}**".format(self.bot.getEmote('clock'), self.bot.getTimedeltaStr(content[0], True))
+                description = "{} Current gacha ends in **{}**".format(self.bot.getEmote('clock'), self.bot.getTimedeltaStr(content[0], 2))
                 if content[0] != content[1]:
-                    description += "\n{} Spark period ends in **{}**".format(self.bot.getEmote('mark'), self.bot.getTimedeltaStr(content[1], True))
+                    description += "\n{} Spark period ends in **{}**".format(self.bot.getEmote('mark'), self.bot.getTimedeltaStr(content[1], 2))
                 description += "\n" + content[2]
                 await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, thumbnail=content[3], color=self.color))
         except Exception as e:

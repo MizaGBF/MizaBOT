@@ -126,7 +126,7 @@ class GuildWar(commands.Cog):
             current_time = self.bot.getJST()
             if current_time < self.bot.gw['dates']["Preliminaries"]:
                 d = self.bot.gw['dates']["Preliminaries"] - current_time
-                return "{} Guild War starts in **{}**".format(self.bot.getEmote('gw'), self.bot.getTimedeltaStr(d, True))
+                return "{} Guild War starts in **{}**".format(self.bot.getEmote('gw'), self.bot.getTimedeltaStr(d, 2))
             elif current_time >= self.bot.gw['dates']["End"]:
                 self.bot.gw['state'] = False
                 self.bot.gw['dates'] = {}
@@ -151,8 +151,8 @@ class GuildWar(commands.Cog):
             elif current_time > self.bot.gw['dates']["Preliminaries"]:
                 d = self.bot.gw['dates']['Interlude'] - current_time
                 if d < timedelta(seconds=25200): msg = "{} Preliminaries ended".format(self.bot.getEmote('mark_a'))
-                else: msg = "{} Preliminaries are on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), self.bot.getTimedeltaStr(self.bot.gw['dates']["Preliminaries"] + timedelta(seconds=104400) - current_time, True))
-                return "{}\n{} Interlude starts in **{}**".format(msg, self.bot.getEmote('time'), self.bot.getTimedeltaStr(d, True))
+                else: msg = "{} Preliminaries are on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), self.bot.getTimedeltaStr(self.bot.gw['dates']["Preliminaries"] + timedelta(seconds=104400) - current_time, 2))
+                return "{}\n{} Interlude starts in **{}**".format(msg, self.bot.getEmote('time'), self.bot.getTimedeltaStr(d, 2))
             else:
                 return ""
         else:
@@ -185,7 +185,7 @@ class GuildWar(commands.Cog):
                 return ""
             for b in self.bot.gw['buffs']:
                 if not b[3] and current_time < b[0]:
-                    msg = "{} Next buffs in **{}** (".format(self.bot.getEmote('question'), self.bot.getTimedeltaStr(b[0] - current_time, True))
+                    msg = "{} Next buffs in **{}** (".format(self.bot.getEmote('question'), self.bot.getTimedeltaStr(b[0] - current_time, 2))
                     if b[1]:
                         msg += "Attack {}, Defense {}".format(self.bot.getEmote('atkace'), self.bot.getEmote('deface'))
                         if b[2]:
@@ -305,7 +305,8 @@ class GuildWar(commands.Cog):
 
                 em = self.bot.getEmote(self.bot.gw.get('element', ''))
                 if em == "": em = ""
-                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), fields=fields, footer="Last Update ▫️ {:%a. %m/%d %H:%M} JST ▫️ Update on minute 5, 25 and 45".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
+                d = self.bot.getJST() - self.bot.gw['ranking'][4]
+                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Updated: **{}** ago".format(self.bot.getTimedeltaStr(d, 0)), fields=fields, footer="Update on minute 5, 25 and 45", inline=True, color=self.color))
         except Exception as e:
             await self.bot.sendError("ranking", str(e))
 
@@ -376,7 +377,7 @@ class GuildWar(commands.Cog):
                                 fields[x]['value'] += "**#{}K** \▫️ Unavailable".format(int(c)//1000)
                             fields[x]['value'] += '\n'
                     if fields[x]['value'] == '': fields[x]['value'] = 'Unavailable'
-                        
-                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Time left: **{}**\nThis is a simple estimation, take it with a grain of salt.".format(self.bot.getTimedeltaStr(current_time_left)), fields=fields, footer="Last Update ▫️ {:%a. %m/%d %H:%M} JST ▫️ Update on minute 5, 25 and 45".format(self.bot.gw['ranking'][4]), inline=True, color=self.color))
+                d = self.bot.getJST() - self.bot.gw['ranking'][4]
+                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Time left: **{}** \▫️ Updated: **{}** ago\nThis is a simple estimation, take it with a grain of salt.".format(self.bot.getTimedeltaStr(current_time_left), self.bot.getTimedeltaStr(d, 0)), fields=fields, footer="Update on minute 5, 25 and 45", timestamp=datetime.utcnow(), inline=True, color=self.color))
         except Exception as e:
             await self.bot.sendError("estimation", str(e))

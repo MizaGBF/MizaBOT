@@ -43,9 +43,9 @@ class GBF_Utility(commands.Cog):
             if current_time < self.bot.maintenance['time']:
                 d = self.bot.maintenance['time'] - current_time
                 if self.bot.maintenance['duration'] == 0:
-                    msg = "{} Maintenance starts in **{}**".format(self.bot.getEmote('cog'), self.bot.getTimedeltaStr(d, True))
+                    msg = "{} Maintenance starts in **{}**".format(self.bot.getEmote('cog'), self.bot.getTimedeltaStr(d, 2))
                 else:
-                    msg = "{} Maintenance starts in **{}**, for **{} hour(s)**".format(self.bot.getEmote('cog'), self.bot.getTimedeltaStr(d, True), self.bot.maintenance['duration'])
+                    msg = "{} Maintenance starts in **{}**, for **{} hour(s)**".format(self.bot.getEmote('cog'), self.bot.getTimedeltaStr(d, 2), self.bot.maintenance['duration'])
             else:
                 d = current_time - self.bot.maintenance['time']
                 if self.bot.maintenance['duration'] <= 0:
@@ -56,7 +56,7 @@ class GBF_Utility(commands.Cog):
                 else:
                     e = self.bot.maintenance['time'] + timedelta(seconds=3600*self.bot.maintenance['duration'])
                     d = e - current_time
-                    msg = "{} Maintenance ends in **{}**".format(self.bot.getEmote('cog'), self.bot.getTimedeltaStr(d, True))
+                    msg = "{} Maintenance ends in **{}**".format(self.bot.getEmote('cog'), self.bot.getTimedeltaStr(d, 2))
         return msg
 
     # function to fix the case (for $wiki)
@@ -490,9 +490,9 @@ class GBF_Utility(commands.Cog):
             if cog is not None:
                 buf = await cog.getCurrentGacha()
                 if len(buf) > 0:
-                    description += "\n{} Current gacha ends in **{}**".format(self.bot.getEmote('SSR'), self.bot.getTimedeltaStr(buf[0], True))
+                    description += "\n{} Current gacha ends in **{}**".format(self.bot.getEmote('SSR'), self.bot.getTimedeltaStr(buf[0], 2))
                     if buf[0] != buf[1]:
-                        description += " (Spark period ends in **{}**)".format(self.bot.getTimedeltaStr(buf[1], True))
+                        description += " (Spark period ends in **{}**)".format(self.bot.getTimedeltaStr(buf[1], 2))
         except Exception as e:
             await self.bot.sendError("getgachatime", str(e))
 
@@ -619,7 +619,7 @@ class GBF_Utility(commands.Cog):
             if self.bot.stream['time'] is not None:
                 if current_time < self.bot.stream['time']:
                     d = self.bot.stream['time'] - current_time
-                    cd = "{}".format(self.bot.getTimedeltaStr(d, True))
+                    cd = "{}".format(self.bot.getTimedeltaStr(d, 2))
                 else:
                     cd = "On going!!"
             else:
@@ -808,7 +808,7 @@ class GBF_Utility(commands.Cog):
                     end = c.replace(hour=23, minute=59, second=59) + timedelta(days=2, seconds=1)
                     if c >= beg and c < end:
                         end = end - c
-                        await ctx.send(embed=self.bot.buildEmbed(title="{} Premium Friday".format(self.bot.getEmote('clock')), description="Premium Friday ends in **{}**".format(self.bot.getTimedeltaStr(end, True)), url="http://game.granbluefantasy.jp", thumbnail=thumbnail, color=self.color))
+                        await ctx.send(embed=self.bot.buildEmbed(title="{} Premium Friday".format(self.bot.getEmote('clock')), description="Premium Friday ends in **{}**".format(self.bot.getTimedeltaStr(end, 2)), url="http://game.granbluefantasy.jp", thumbnail=thumbnail, color=self.color))
                         return
                     elif c >= end:
                         pass
@@ -818,7 +818,7 @@ class GBF_Utility(commands.Cog):
                 else:
                     searching = False
         last = last.replace(hour=15, minute=00, second=00) - c
-        await ctx.send(embed=self.bot.buildEmbed(title="{} Premium Friday".format(self.bot.getEmote('clock')), description="Premium Friday starts in **{}**".format(self.bot.getTimedeltaStr(last, True)),  url="http://game.granbluefantasy.jp", thumbnail=thumbnail, color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="{} Premium Friday".format(self.bot.getEmote('clock')), description="Premium Friday starts in **{}**".format(self.bot.getTimedeltaStr(last, 2)),  url="http://game.granbluefantasy.jp", thumbnail=thumbnail, color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['koregura', 'koregra'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -834,7 +834,7 @@ class GBF_Utility(commands.Cog):
             if c.month == 12: target = datetime(year=c.year+1, month=1, day=1, hour=12, minute=0, second=0, microsecond=0)
             else: target = datetime(year=c.year, month=c.month+1, day=1, hour=12, minute=0, second=0, microsecond=0)
         delta = target - c
-        await ctx.send(embed=self.bot.buildEmbed(title="{} Kore Kara".format(self.bot.getEmote('clock')), description="Release approximately in **{}**".format(self.bot.getTimedeltaStr(delta, True)),  url="https://granbluefantasy.jp/news/index.php", thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="{} Kore Kara".format(self.bot.getEmote('clock')), description="Release approximately in **{}**".format(self.bot.getTimedeltaStr(delta, 2)),  url="https://granbluefantasy.jp/news/index.php", thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
 
     def getSkillUpValue(self, type, sl): # calculate what's needed to raise a weapon skill level from a given skill level. return a list containing two dicts: first one contains the summary, second contains the details
         use = {}
