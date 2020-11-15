@@ -69,7 +69,7 @@ class GBF_Access(commands.Cog):
         players = [2000, 70000, 120000, 160000, 250000, 350000]
 
         days = ["End", "Day 5", "Day 4", "Day 3", "Day 2", "Day 1", "Interlude", "Preliminaries"]
-        minute_update = [3, 23, 43]
+        minute_update = [3, 23, 49]
 
         while True:
             cog.getGWState()
@@ -98,7 +98,7 @@ class GBF_Access(commands.Cog):
                                 continue
                             if d == "Preliminaries":
                                 diff = current_time - self.bot.gw['dates'][d]
-                                if diff.days == 1 and diff.seconds >= 17000:
+                                if diff.days == 1 and diff.seconds >= 25200:
                                     skip = True
                             elif ((d.startswith("Day") and h < 7 and h >= 2) or d == "Day 5"):
                                 skip = True

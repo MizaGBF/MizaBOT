@@ -280,7 +280,7 @@ class General(commands.Cog):
                 x = m[i].replace(" ", "").split("=")
                 if len(x) == 2: d[x[0]] = float(x[1])
                 else: raise Exception('')
-            msg = "{} = **{}**".format(m[0], MathParser().evaluate(m[0], d))
+            msg = "`{}` = **{}**".format(m[0], MathParser().evaluate(m[0], d))
             if len(d) > 0:
                 msg += "\nwith:\n"
                 for k in d:
