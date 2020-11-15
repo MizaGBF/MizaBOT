@@ -69,7 +69,7 @@ class GBF_Access(commands.Cog):
         players = [2000, 70000, 120000, 160000, 250000, 350000]
 
         days = ["End", "Day 5", "Day 4", "Day 3", "Day 2", "Day 1", "Interlude", "Preliminaries"]
-        minute_update = [3, 23, 49]
+        minute_update = [3, 23, 43]
 
         while True:
             cog.getGWState()
