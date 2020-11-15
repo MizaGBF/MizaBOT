@@ -64,7 +64,7 @@ class GBF_Access(commands.Cog):
         cog = self.bot.get_cog('GuildWar')
         if cog is None:
             return
-        crewsA = [300, 1000, 2000, 8000, 19000, 30000]
+        crewsA = [300, 1000, 2000, 8000, 19000, 36000]
         crewsB = [2000, 5500, 9000, 14000, 18000, 30000]
         players = [2000, 70000, 120000, 160000, 250000, 350000]
 
@@ -98,7 +98,7 @@ class GBF_Access(commands.Cog):
                                 continue
                             if d == "Preliminaries":
                                 diff = current_time - self.bot.gw['dates'][d]
-                                if diff.days == 1 and diff.seconds >= 18000:
+                                if diff.days == 1 and diff.seconds >= 17000:
                                     skip = True
                             elif ((d.startswith("Day") and h < 7 and h >= 2) or d == "Day 5"):
                                 skip = True
@@ -108,8 +108,10 @@ class GBF_Access(commands.Cog):
                         elif m in minute_update:
                             if d.startswith("Day "):
                                 crews = crewsB
+                                mode = 0
                             else:
                                 crews = crewsA
+                                mode = 1
                             # update $ranking and $estimation
                             try:
                                 data = [{}, {}, {}, {}, current_time - timedelta(seconds=60 * (current_time.minute % 20))]
@@ -118,7 +120,7 @@ class GBF_Access(commands.Cog):
                                     diff = round(diff.total_seconds() / 60.0)
                                 else: diff = 0
                                 for c in crews:
-                                    r = await self.requestRanking(c // 10, True)
+                                    r = await self.requestRanking(c // 10, mode)
                                     if r is not None and 'list' in r and len(r['list']) > 0:
                                         data[0][str(c)] = int(r['list'][-1]['point'])
                                         if diff > 0 and self.bot.gw['ranking'] is not None and str(c) in self.bot.gw['ranking'][0]:
@@ -126,7 +128,7 @@ class GBF_Access(commands.Cog):
                                     await asyncio.sleep(0.001)
 
                                 for p in players:
-                                    r = await self.requestRanking(p // 10, False)
+                                    r = await self.requestRanking(p // 10, 2)
                                     if r is not None and 'list' in r and len(r['list']) > 0:
                                         data[1][str(p)] = int(r['list'][-1]['point'])
                                         if diff > 0 and self.bot.gw['ranking'] is not None and str(p) in self.bot.gw['ranking'][1]:
@@ -1043,15 +1045,17 @@ class GBF_Access(commands.Cog):
     async def getScoutData(self, id : int): # get player scout data
         return await self.bot.sendRequest("http://game.granbluefantasy.jp/forum/search_users_id?_=TS1&t=TS2&uid=ID", account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True, payload={"special_token":None,"user_id":id})
 
-    async def requestRanking(self, page, crew = True): # get gw ranking data
+    async def requestRanking(self, page, mode = 0): # get gw ranking data
         if not await self.bot.isGameAvailable():
             return None
         if self.bot.gw['state'] == False or self.bot.getJST() <= self.bot.gw['dates']["Preliminaries"]:
             return None
 
-        if crew:
+        if mode == 0: # crew
             res = await self.bot.sendRequest("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/totalguild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page), account=self.bot.gbfcurrent, decompress=True, load_json=True)
-        else:
+        elif mode == 1: # prelim crew
+            res = await self.bot.sendRequest("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/guild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page), account=self.bot.gbfcurrent, decompress=True, load_json=True)
+        elif mode == 2: # player
             res = await self.bot.sendRequest("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page), account=self.bot.gbfcurrent, decompress=True, load_json=True)
         return res
 
