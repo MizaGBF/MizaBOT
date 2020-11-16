@@ -17,7 +17,6 @@ import sqlite3
 from bs4 import BeautifulSoup
 from xml.sax import saxutils as su
 from PIL import Image, ImageFont, ImageDraw
-from translate import Translator
 from queue import Queue
 import concurrent.futures
 from threading import Thread
@@ -46,7 +45,6 @@ class GBF_Access(commands.Cog):
         }
         self.loadinggw = False
         self.loadinggacha = False
-        self.translator = Translator(from_lang='ja', to_lang='en')
         self.blacklist = ["677159", "147448"]
         self.stoprankupdate = False
 
@@ -238,7 +236,7 @@ class GBF_Access(commands.Cog):
                                 found = True
                                 break
                         if not found:
-                            await self.bot.sendMulti(['debug', 'public_update', 'gbfg_update'], embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="[{}]({})".format(self.translate(news[i][1]), news[i][0]), image=news[i][2], color=self.color))
+                            await self.bot.sendMulti(['debug', 'public_update', 'gbfg_update'], embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="[{}]({})".format(news[i][1], news[i][0]), image=news[i][2], color=self.color))
                             foundNew = True
                     if foundNew:
                         self.bot.gbfdata['news_url'] = news
@@ -260,7 +258,7 @@ class GBF_Access(commands.Cog):
                         self.bot.gbfdata['4koma'] = last['id']
                         self.bot.savePending = True
                         title = last['title_en']
-                        if title == "": title = self.translate(last['title'])
+                        if title == "": title = last['title']
                         await self.bot.sendMulti(['debug', 'public_update', 'gbfg_update'], embed=self.bot.buildEmbed(title=title, url="http://game-a1.granbluefantasy.jp/assets/img/sp/assets/comic/episode/episode_{}.jpg".format(last['id']), image="http://game-a1.granbluefantasy.jp/assets/img/sp/assets/comic/thumbnail/thum_{}.png".format(last['id'].zfill(5)), color=self.color))
                 else:
                     self.bot.gbfdata['4koma'] = last['id']
@@ -341,7 +339,7 @@ class GBF_Access(commands.Cog):
                             except:
                                 img = None
 
-                            res.append([url.attrs['href'], self.translate(url.text), img])
+                            res.append([url.attrs['href'], url.text, img])
                     except:
                         pass
         return res
@@ -349,21 +347,6 @@ class GBF_Access(commands.Cog):
     async def check4koma(self):
         data = await self.bot.sendRequest('http://game.granbluefantasy.jp/comic/list/1?_=TS1&t=TS2&uid=ID', account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
         return data['list'][0]
-
-    def translate(self, text):
-        try:
-            split = text.replace('「', '」').replace('『', '」').replace('』', '」').replace('！', '!').split('」')
-            msg = ""
-            count = 0
-            for t in split:
-                if t != '': msg += self.translator.translate(t)
-                if t is not split[-1]:
-                    msg += '"'
-                    count += 1
-                    if (count % 2) == 0: msg += " "
-            return msg
-        except:
-            return text
 
     def getCurrentGWDayID(self):
         if self.bot.gw['state'] == False: return None
