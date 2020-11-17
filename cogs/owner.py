@@ -462,29 +462,12 @@ class Owner(commands.Cog):
 
     @commands.command(no_pm=True)
     @isOwner()
-    async def purgeLucilius(self, ctx):
-        """Remove inactive users from the /gbfg/ lucilius-hard channel (Owner only)"""
-        luci_c = self.bot.get_channel(bot.lucilius['main'])
+    async def gbfg_invite(self, ctx):
+        """Generate an invite for the /gbfg/ server (Owner only)"""
+        c = self.bot.get_channel(self.bot.ids['gbfg_new'])
         gbfg_g = self.bot.get_guild(self.bot.ids['gbfg'])
-        whitelist = {}
-        await self.bot.react(ctx.message, 'time')
-        async for message in luci_c.history(limit=10000): 
-            if message.author.id in whitelist:
-                continue
-            else:
-                whitelist[str(message.author)] = 0
-        i = 0
-        for member in gbfg_g.members:
-            for r in member.roles:
-                if r.name == 'Lucilius HL':
-                    if str(member) in whitelist:
-                        pass
-                    else:
-                        await member.remove_roles(r)
-                        i += 1
-                    break
-        await self.bot.unreact(ctx.message, 'time')
-        await ctx.send(embed=self.bot.buildEmbed(title="*ubaha-hl* purge results", description="{} inactive user(s)".format(i), color=self.color))
+        link = await c.create_invite(max_age = 3600)
+        await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ invite", description="`{}`".format(link), color=self.color))
 
     @commands.command(no_pm=True)
     @isOwner()

@@ -331,7 +331,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "7.2" # version number
+        self.botversion = "7.3" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Added `$recruit` to check recruiting /gbfg/ crews", "Updated `$crew` with more infos", "`$memeroll` added", "`$mizatube` is now available", "Pinboard now enabled on /gbfg/", "`$valiant` renamed to `$barrage` (alternative names are available)"] # bot changelog
         self.running = True # if True, the bot is running
@@ -376,6 +376,8 @@ class Mizabot(commands.Bot):
         self.strings = {} # bot strings
         self.emotes = {} # bot custom emote ids
         self.emote_cache = {} # store used emotes
+        self.pinned_cache = {} # store pinned messages
+        self.matchtracker = None # to store gw data for match against our crew
         self.granblue = {} # store player/crew ids
         self.assignablerole = {} # self assignable role
         self.bannedusers = [] # user banned from using the bot
@@ -538,6 +540,7 @@ class Mizabot(commands.Bot):
                 self.gbfids = data.get('gbfids', {})
                 self.summonlast = data.get('summonlast', None)
                 self.assignablerole = data.get('assignablerole', {})
+                self.matchtracker = data.get('youtracker', None)
                 return True
         except Exception as e:
             self.errn += 1
@@ -570,6 +573,7 @@ class Mizabot(commands.Bot):
                 data['gbfids'] = self.gbfids
                 data['summonlast'] = self.summonlast
                 data['assignablerole'] = self.assignablerole
+                data['youtracker'] = self.matchtracker
                 json.dump(data, outfile, default=self.json_serial) # locally first
                 if not self.drive.save(json.dumps(data, default=self.json_serial)): # sending to the google drive
                     raise Exception("Couldn't save to google drive")
@@ -1223,21 +1227,23 @@ async def on_raw_reaction_add(payload):
         if idx is None:
             return
         message = await bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+        if message.id in bot.pinned_cache: return
         reactions = message.reactions
     except Exception as e:
         await bot.sendError('raw_react', str(e))
         return
     me = message.guild.me
+    count = 0
     for reaction in reactions:
         if reaction.emoji == servers[idx]['emoji']:
             users = await reaction.users().flatten()
+            count = len(users)
             guild = message.guild
             content = message.content
             isMod = False
             count = 0
+            if me in users: return
             for u in users:
-                if u.id == me.id:
-                    return
                 if servers[idx]['mod_bypass']: # mod check
                     m = guild.get_member(u.id)
                     if m.guild_permissions.manage_messages: 
@@ -1250,7 +1256,11 @@ async def on_raw_reaction_add(payload):
             if not isMod and count < servers[idx]['threshold']:
                 return
 
+            if message.id in bot.pinned_cache: return # anti dupe safety
+            bot.pinned_cache.append(message.id)
+            if len(bot.pinned_cache) > 20: bot.pinned_cache = bot.pinned_cache[-20:] # limited to 20 entries
             await message.add_reaction(servers[idx]['emoji'])
+            if message.id in bot.pinned_cache: return # anti dupe safety
 
             try:
                 dict = {}

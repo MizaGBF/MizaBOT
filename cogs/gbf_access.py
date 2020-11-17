@@ -58,6 +58,11 @@ class GBF_Access(commands.Cog):
             return ctx.bot.isOwner(ctx)
         return commands.check(predicate)
 
+    def isYou(): # for decorators
+        async def predicate(ctx):
+            return ctx.bot.isServer(ctx, 'you_server')
+        return commands.check(predicate)
+
     async def checkGWRanking(self):
         cog = self.bot.get_cog('GuildWar')
         if cog is None:
@@ -153,6 +158,12 @@ class GBF_Access(commands.Cog):
                                         await self.bot.sendError('gwscrap', 'Upload failed')
                                     self.bot.delFile('temp.sql')
                                     await self.loadGWDB() # reload db
+                                    
+                                    # update match tracker for our crew
+                                    try:
+                                        await self.updateYouTracker(current_time - timedelta(seconds=60 * (current_time.minute % 20)))
+                                    except Exception as ue:
+                                        await self.bot.sendError('updateyoutracker', str(ue))
                                 else:
                                     await self.bot.sendError('gwscrap', 'Scraping failed')
 
@@ -934,7 +945,7 @@ class GBF_Access(commands.Cog):
                                     players[j] = players[i]
                                     players[i] = tmp
                     if gwid and len(players) - unranked > 0:
-                        description += "\n{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.getEmote('question'), gwid, self.honorFormat(total), self.honorFormat(total // (len(players) - unranked)))
+                        description += "\n{} GW**{}** ▫️ Player Sum **{}** ▫️ Average **{}**".format(self.bot.getEmote('question'), gwid, self.honorFormat(total), self.honorFormat(total // (len(players) - unranked)))
                         if unranked > 0:
                             description += " ▫️ {} Unranked".format(unranked)
                             if unranked > 1: description += "s"
@@ -2282,7 +2293,6 @@ class GBF_Access(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Unavailable", color=self.color))
             return
         if day >= 10: day = day % 10
-        infos = [None, None]
         ver = None
         msg = ""
         lead = None
@@ -2323,6 +2333,105 @@ class GBF_Access(commands.Cog):
         if lead is not None and lead >= 0:
             msg += "**Difference** ▫️ {:,}\n".format(lead)
         await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.getEmote('gw'), gwnum, day - 1), description=msg, timestamp=datetime.utcnow(), color=self.color))
+
+    async def updateYouTracker(self, t):
+        day = self.getCurrentGWDayID()
+        if day is None or day <= 1 or day >= 10:
+            return
+        you_id = self.bot.granblue['gbfgcrew'].get('you', None)
+        
+        if you_id is None: return
+        if self.bot.matchtracker is None: return
+        if self.bot.matchtracker['day'] != day:
+            self.bot.matchtracker = {
+                'day':day,
+                'init':False,
+                'id':self.bot.matchtracker['id']
+            }
+            
+        infos = []
+
+        for sid in [you_id, self.bot.matchtracker['id']]:
+            data = await self.searchGWDBCrew(None, sid, 2)
+            if data is None: return
+            else:
+                if data[1] is None or data[1].get('gw', '') != self.bot.gw['id']: return
+                result = data[1].get('result', [])
+                ver = data[1].get('ver', 0)
+                gwnum = data[1].get('gw', '')
+                if len(result) == 0: return
+                elif ver == 2:
+                    d = [4, 5, 6, 7]
+                    infos.append([result[0][2], result[0][d[day-2]]-result[0][d[day-2]-1]])
+                else:
+                    d = [4, 6, 8, 10]
+                    infos.append([result[0][2], result[0][d[day-2]]])
+
+        if self.bot.matchtracker['init']:
+            d = t - self.bot.matchtracker['last']
+            speed = [(infos[0][1] - self.bot.matchtracker['scores'][0]) / (d.seconds//60), (infos[1][1] - self.bot.matchtracker['scores'][1]) / (d.seconds//60)]
+            if speed[0] > self.bot.matchtracker['top_speed'][0]: self.bot.matchtracker['top_speed'][0] = speed[0]
+            if speed[1] > self.bot.matchtracker['top_speed'][1]: self.bot.matchtracker['top_speed'][1] = speed[1]
+            self.bot.matchtracker['speed'] = speed
+        else:
+            self.bot.matchtracker['init'] = True
+            self.bot.matchtracker['speed'] = None
+            self.bot.matchtracker['top_speed'] = [0, 0]
+        self.bot.matchtracker['names'] = [infos[0][0], infos[1][0]]
+        self.bot.matchtracker['scores'] = [infos[0][1], infos[1][1]]
+        self.bot.matchtracker['last'] = t
+        self.bot.matchtracker['gwid'] = gwnum
+        self.bot.savePending = True
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isYou()
+    @commands.cooldown(2, 10, commands.BucketType.guild)
+    async def youlead(self, ctx, opponent : str = ""):
+        """Show the current match of (You)"""
+        if opponent != "":
+            if not self.bot.isMod(ctx):
+                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Only moderators can set the opponent", color=self.color))
+                return
+            crew_id_list = {**(self.bot.granblue['gbfgcrew']), **(self.bot.granblue.get('othercrew', {}))}
+            if opponent.lower() in crew_id_list:
+                id = crew_id_list[opponent.lower()]
+            else:
+                try: id = int(opponent)
+                except:
+                    await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Invalid name `{}`".format(opponent), color=self.color))
+                    return
+            if self.bot.matchtracker is None or self.bot.matchtracker['id'] != id:
+                self.bot.matchtracker = {
+                    'day':None,
+                    'init':False,
+                    'id':id
+                }
+            await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Opponent set to id `{}`, please wait the next ranking update".format(id), color=self.color))
+        else:
+            if self.bot.matchtracker is None or not self.bot.matchtracker['init']:
+                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Unavailable, either wait the next ranking update or add the opponent id after the command to initialize it", color=self.color))
+            else:
+                you_id = self.bot.granblue['gbfgcrew'].get('you', None)
+                msg = "Updated: **{}** ago\n".format(self.bot.getTimedeltaStr(self.bot.getJST() - self.bot.matchtracker['last'], 0))
+                end_time = self.bot.matchtracker['last'].replace(day=self.bot.matchtracker['last'].day+1, hour=0, minute=0, second=0, microsecond=0)
+                remaining = end_time - self.bot.matchtracker['last']
+                msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ **{:,}**\n".format(self.bot.matchtracker['names'][0], you_id, self.bot.matchtracker['scores'][0])
+                if self.bot.matchtracker['speed'] is not None:
+                    msg += "**Speed** ▫ Now +{}/m ▫️ Top +{}/m".format(self.honorFormat(self.bot.matchtracker['speed'][0]), self.honorFormat(self.bot.matchtracker['top_speed'][0]))
+                    if end_time > self.bot.matchtracker['last']:
+                        msg += "\n**Estimation** ▫ Now {} ▫️ Top {}".format(self.honorFormat(self.bot.matchtracker['scores'][0] + self.bot.matchtracker['speed'][0] * remaining.seconds//60), self.honorFormat(self.bot.matchtracker['scores'][0] + self.bot.matchtracker['top_speed'][0] * remaining.seconds//60))
+                msg += "\n\n"
+                msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ **{:,}**\n".format(self.bot.matchtracker['names'][1], self.bot.matchtracker['id'], self.bot.matchtracker['scores'][1])
+                if self.bot.matchtracker['speed'] is not None:
+                    msg += "**Speed** ▫️ Now +{}/m ▫️ Top +{}/m".format(self.honorFormat(self.bot.matchtracker['speed'][1]), self.honorFormat(self.bot.matchtracker['top_speed'][1]))
+                    if end_time > self.bot.matchtracker['last']:
+                        msg += "\n**Estimation** ▫ Now {} ▫️ Top {}".format(self.honorFormat(self.bot.matchtracker['scores'][1] + self.bot.matchtracker['speed'][1] * remaining.seconds//60), self.honorFormat(self.bot.matchtracker['scores'][1] + self.bot.matchtracker['top_speed'][1] * remaining.seconds//60))
+                msg += "\n"
+                lead = abs(self.bot.matchtracker['scores'][0] - self.bot.matchtracker['scores'][1])
+                if lead >= 0:
+                    msg += "\n**Difference** ▫️ {:,}\n".format(lead)
+
+                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.getEmote('gw'), self.bot.matchtracker['gwid'], self.bot.matchtracker['day']-1), description=msg, timestamp=datetime.utcnow(), color=self.color))
 
     def scrapProcess(self, mode, qi, qo): # thread for ranking
         while not qi.empty(): # until the input queue is empty
