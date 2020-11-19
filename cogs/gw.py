@@ -131,6 +131,7 @@ class GuildWar(commands.Cog):
                 self.bot.gw['state'] = False
                 self.bot.gw['dates'] = {}
                 self.bot.cancelTask('gwtask')
+                self.bot.matchtracker = None
                 self.bot.savePending = True
                 return ""
             elif current_time > self.bot.gw['dates']["Day 5"]:
@@ -226,6 +227,7 @@ class GuildWar(commands.Cog):
                     self.bot.gw['state'] = False
                     self.bot.gw['dates'] = {}
                     self.bot.cancelTask('gwtask')
+                    self.bot.matchtracker = None
                     self.bot.savePending = True
                     return
 
