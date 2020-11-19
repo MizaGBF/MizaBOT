@@ -20,6 +20,8 @@ from PIL import Image, ImageFont, ImageDraw
 from queue import Queue
 import concurrent.futures
 from threading import Thread
+import leather
+import cairosvg
 
 class GBF_Access(commands.Cog):
     """GBF advanced commands."""
@@ -2334,6 +2336,15 @@ class GBF_Access(commands.Cog):
             msg += "**Difference** ▫️ {:,}\n".format(lead)
         await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.getEmote('gw'), gwnum, day - 1), description=msg, timestamp=datetime.utcnow(), color=self.color))
 
+    def x(self, row, index):
+        return row['x']
+
+    def yA(self, row, index):
+        return row['q']['y'][0]
+
+    def yB(self, row, index):
+        return row['q']['y'][1]
+
     async def updateYouTracker(self, t):
         day = self.getCurrentGWDayID()
         if day is None or day <= 1 or day >= 10:
@@ -2346,7 +2357,8 @@ class GBF_Access(commands.Cog):
             self.bot.matchtracker = {
                 'day':day,
                 'init':False,
-                'id':self.bot.matchtracker['id']
+                'id':self.bot.matchtracker['id'],
+                'plot':[]
             }
             
         infos = []
@@ -2382,6 +2394,19 @@ class GBF_Access(commands.Cog):
         self.bot.matchtracker['last'] = t
         self.bot.matchtracker['gwid'] = gwnum
         self.bot.savePending = True
+        if self.bot.matchtracker['speed'] is not None: # save chart data
+            self.bot.matchtracker['plot'].append({'x': t, 'q': { 'y': [self.bot.matchtracker['speed'][0] / 1000000, self.bot.matchtracker['speed'][1] / 1000000] }})
+            self.bot.savePending = True # just in case
+        if len(self.bot.matchtracker['plot']) > 0: # generate chart
+            chart = leather.Chart('Speed Chart')
+            chart.add_line(self.bot.matchtracker['plot'], x=self.x, y=self.yA, name=infos[0][0])
+            chart.add_line(self.bot.matchtracker['plot'], x=self.x, y=self.yB, name=infos[1][0])
+            chart.to_svg('chart.svg')
+            cairosvg.svg2png(url="chart.svg", write_to="chart.png")
+            with open("chart.png", "rb") as f:
+                message = await self.bot.send('image', file=discord.File(f))
+                self.bot.matchtracker['chart'] = message.attachments[0].url
+                self.bot.savePending = True
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isYou()
@@ -2404,7 +2429,8 @@ class GBF_Access(commands.Cog):
                 self.bot.matchtracker = {
                     'day':None,
                     'init':False,
-                    'id':id
+                    'id':id,
+                    'plot':[]
                 }
             await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Opponent set to id `{}`, please wait the next ranking update".format(id), color=self.color))
         else:
@@ -2412,26 +2438,35 @@ class GBF_Access(commands.Cog):
                 await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Unavailable, either wait the next ranking update or add the opponent id after the command to initialize it", color=self.color))
             else:
                 you_id = self.bot.granblue['gbfgcrew'].get('you', None)
-                msg = "Updated: **{}** ago\n".format(self.bot.getTimedeltaStr(self.bot.getJST() - self.bot.matchtracker['last'], 0))
+                d = self.bot.getJST() - self.bot.matchtracker['last']
+                msg = "Updated: **{}** ago".format(self.bot.getTimedeltaStr(d, 0))
+                if d.seconds >= 1200 and d.seconds <= 1800: msg += " ▫ *updating*"
+                msg += "\n"
                 end_time = self.bot.matchtracker['last'].replace(day=self.bot.matchtracker['last'].day+1, hour=0, minute=0, second=0, microsecond=0)
                 remaining = end_time - self.bot.matchtracker['last']
-                msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ **{:,}**\n".format(self.bot.matchtracker['names'][0], you_id, self.bot.matchtracker['scores'][0])
+                msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ **{:,}**".format(self.bot.matchtracker['names'][0], you_id, self.bot.matchtracker['scores'][0])
                 if self.bot.matchtracker['speed'] is not None:
-                    msg += "**Speed** ▫ Now +{}/m ▫️ Top +{}/m".format(self.honorFormat(self.bot.matchtracker['speed'][0]), self.honorFormat(self.bot.matchtracker['top_speed'][0]))
+                    if self.bot.matchtracker['speed'][0] == self.bot.matchtracker['top_speed'][0]:
+                        msg += "\n**Speed** ▫️ **Now {}/m** ▫️ **Top {}/m**".format(self.honorFormat(self.bot.matchtracker['speed'][0]), self.honorFormat(self.bot.matchtracker['top_speed'][0]))
+                    else:
+                        msg += "\n**Speed** ▫ Now {}/m ▫️ Top {}/m".format(self.honorFormat(self.bot.matchtracker['speed'][0]), self.honorFormat(self.bot.matchtracker['top_speed'][0]))
                     if end_time > self.bot.matchtracker['last']:
                         msg += "\n**Estimation** ▫ Now {} ▫️ Top {}".format(self.honorFormat(self.bot.matchtracker['scores'][0] + self.bot.matchtracker['speed'][0] * remaining.seconds//60), self.honorFormat(self.bot.matchtracker['scores'][0] + self.bot.matchtracker['top_speed'][0] * remaining.seconds//60))
                 msg += "\n\n"
-                msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ **{:,}**\n".format(self.bot.matchtracker['names'][1], self.bot.matchtracker['id'], self.bot.matchtracker['scores'][1])
+                msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ **{:,}**".format(self.bot.matchtracker['names'][1], self.bot.matchtracker['id'], self.bot.matchtracker['scores'][1])
                 if self.bot.matchtracker['speed'] is not None:
-                    msg += "**Speed** ▫️ Now +{}/m ▫️ Top +{}/m".format(self.honorFormat(self.bot.matchtracker['speed'][1]), self.honorFormat(self.bot.matchtracker['top_speed'][1]))
+                    if self.bot.matchtracker['speed'][1] == self.bot.matchtracker['top_speed'][1]:
+                        msg += "\n**Speed** ▫️ **Now {}/m** ▫️ **Top {}/m**".format(self.honorFormat(self.bot.matchtracker['speed'][1]), self.honorFormat(self.bot.matchtracker['top_speed'][1]))
+                    else:
+                        msg += "\n**Speed** ▫️ Now {}/m ▫️ Top {}/m".format(self.honorFormat(self.bot.matchtracker['speed'][1]), self.honorFormat(self.bot.matchtracker['top_speed'][1]))
                     if end_time > self.bot.matchtracker['last']:
                         msg += "\n**Estimation** ▫ Now {} ▫️ Top {}".format(self.honorFormat(self.bot.matchtracker['scores'][1] + self.bot.matchtracker['speed'][1] * remaining.seconds//60), self.honorFormat(self.bot.matchtracker['scores'][1] + self.bot.matchtracker['top_speed'][1] * remaining.seconds//60))
-                msg += "\n"
+                msg += "\n\n"
                 lead = abs(self.bot.matchtracker['scores'][0] - self.bot.matchtracker['scores'][1])
                 if lead >= 0:
-                    msg += "\n**Difference** ▫️ {:,}\n".format(lead)
+                    msg += "**Difference** ▫️ {:,}\n".format(lead)
 
-                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.getEmote('gw'), self.bot.matchtracker['gwid'], self.bot.matchtracker['day']-1), description=msg, timestamp=datetime.utcnow(), color=self.color))
+                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.getEmote('gw'), self.bot.matchtracker['gwid'], self.bot.matchtracker['day']-1), description=msg, timestamp=datetime.utcnow(), image=self.bot.matchtracker.get('chart', None), color=self.color))
 
     def scrapProcess(self, mode, qi, qo): # thread for ranking
         while not qi.empty(): # until the input queue is empty

@@ -255,6 +255,14 @@ class Owner(commands.Cog):
         self.bot.savePending = True
         await self.bot.react(ctx.message, '✅') # white check mark
 
+    @commands.command(no_pm=True, aliases=['cs'])
+    @isOwner()
+    async def clearStream(self, ctx):
+        """Clear the gw match tracker (Owner only)"""
+        self.bot.matchtracker = None
+        self.bot.savePending = True
+        await self.bot.react(ctx.message, '✅') # white check mark
+
     @commands.command(no_pm=True)
     @isOwner()
     async def setSchedule(self, ctx, *, txt : str):
