@@ -2358,7 +2358,7 @@ class GBF_Access(commands.Cog):
         for sid in [you_id, self.bot.matchtracker['id']]:
             c.execute("SELECT * FROM crews WHERE id = {}".format(sid)) # get the score
             data = c.fetchall()
-            if data is None or if len(data) == 0: raise Exception("Failed to retrieve data")
+            if data is None or len(data) == 0: raise Exception("Failed to retrieve data")
             infos.append([data[0][2], data[0][d[day-2]]-data[0][d[day-2]-1]]) # name and score of the day
         conn.close()
 
