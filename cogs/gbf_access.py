@@ -73,9 +73,6 @@ class GBF_Access(commands.Cog):
         crewsB = [2000, 5500, 9000, 14000, 18000, 30000]
         players = [2000, 70000, 120000, 160000, 250000, 350000]
 
-        days = ["End", "Day 5", "Day 4", "Day 3", "Day 2", "Day 1", "Interlude", "Preliminaries"]
-        minute_update = [3, 23, 43]
-
         while True:
             cog.getGWState()
             try:
@@ -83,7 +80,7 @@ class GBF_Access(commands.Cog):
                     if 'ranking' not in self.bot.gw or self.bot.gw['ranking'] is not None:
                         self.bot.gw['ranking'] = None
                         self.bot.savePending = True
-                    await asyncio.sleep(3600)
+                    return
                 elif self.bot.getJST() < self.bot.gw['dates']["Preliminaries"]:
                     if 'ranking' not in self.bot.gw or self.bot.gw['ranking'] is not None:
                         self.bot.gw['ranking'] = None
@@ -98,7 +95,7 @@ class GBF_Access(commands.Cog):
                         m = current_time.minute
                         h = current_time.hour
                         skip = False
-                        for d in days:
+                        for d in ["End", "Day 5", "Day 4", "Day 3", "Day 2", "Day 1", "Interlude", "Preliminaries"]:
                             if current_time < self.bot.gw['dates'][d]:
                                 continue
                             if d == "Preliminaries":
@@ -110,7 +107,7 @@ class GBF_Access(commands.Cog):
                             break
                         if skip:
                             await asyncio.sleep(600)
-                        elif m in minute_update:
+                        elif m in [3, 4, 23, 24, 43, 44]: # minute to update
                             if d.startswith("Day "):
                                 crews = crewsB
                                 mode = 0
@@ -119,7 +116,8 @@ class GBF_Access(commands.Cog):
                                 mode = 1
                             # update $ranking and $estimation
                             try:
-                                data = [{}, {}, {}, {}, current_time - timedelta(seconds=60 * (current_time.minute % 20))]
+                                update_time = current_time - timedelta(seconds=60 * (current_time.minute % 20))
+                                data = [{}, {}, {}, {}, update_time]
                                 if self.bot.gw['ranking'] is not None:
                                     diff = data[4] - self.bot.gw['ranking'][4]
                                     diff = round(diff.total_seconds() / 60.0)
@@ -149,7 +147,7 @@ class GBF_Access(commands.Cog):
 
                             # update DB
                             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as async_executor:
-                                if await self.bot.loop.run_in_executor(async_executor, self.gwscrap):
+                                if await self.bot.loop.run_in_executor(async_executor, self.gwscrap, update_time):
                                     data = await self.GWDBver()
                                     if data is not None and data[1] is not None:
                                         if self.bot.gw['id'] != data[1]['gw']: # different gw, we move
@@ -160,15 +158,8 @@ class GBF_Access(commands.Cog):
                                         await self.bot.sendError('gwscrap', 'Upload failed')
                                     self.bot.delFile('temp.sql')
                                     await self.loadGWDB() # reload db
-                                    
-                                    # update match tracker for our crew
-                                    try:
-                                        await self.updateYouTracker(current_time - timedelta(seconds=60 * (current_time.minute % 20)))
-                                    except Exception as ue:
-                                        await self.bot.sendError('updateyoutracker', str(ue))
                                 else:
                                     await self.bot.sendError('gwscrap', 'Scraping failed')
-
                             await asyncio.sleep(300)
                         else:
                             await asyncio.sleep(30)
@@ -2347,13 +2338,13 @@ class GBF_Access(commands.Cog):
 
     async def updateYouTracker(self, t):
         day = self.getCurrentGWDayID()
-        if day is None or day <= 1 or day >= 10:
+        if day is None or day <= 1 or day >= 10: # check if match day
             return
-        you_id = self.bot.granblue['gbfgcrew'].get('you', None)
+        you_id = self.bot.granblue['gbfgcrew'].get('you', None) # our id
         
         if you_id is None: return
-        if self.bot.matchtracker is None: return
-        if self.bot.matchtracker['day'] != day:
+        if self.bot.matchtracker is None: return # not initialized
+        if self.bot.matchtracker['day'] != day: # new day, reset
             self.bot.matchtracker = {
                 'day':day,
                 'init':False,
@@ -2362,22 +2353,14 @@ class GBF_Access(commands.Cog):
             }
             
         infos = []
-
+        conn = sqlite3.connect('temp.sql') # open temp.sql
+        c = conn.cursor()
         for sid in [you_id, self.bot.matchtracker['id']]:
-            data = await self.searchGWDBCrew(None, sid, 2)
-            if data is None: return
-            else:
-                if data[1] is None or data[1].get('gw', '') != self.bot.gw['id']: return
-                result = data[1].get('result', [])
-                ver = data[1].get('ver', 0)
-                gwnum = data[1].get('gw', '')
-                if len(result) == 0: return
-                elif ver == 2:
-                    d = [4, 5, 6, 7]
-                    infos.append([result[0][2], result[0][d[day-2]]-result[0][d[day-2]-1]])
-                else:
-                    d = [4, 6, 8, 10]
-                    infos.append([result[0][2], result[0][d[day-2]]])
+            c.execute("SELECT * FROM crews WHERE id = {}".format(sid)) # get the score
+            data = c.fetchall()
+            if data is None or if len(data) == 0: raise Exception("Failed to retrieve data")
+            infos.append([data[0][2], data[0][d[day-2]]-data[0][d[day-2]-1]]) # name and score of the day
+        conn.close()
 
         if self.bot.matchtracker['init']:
             d = t - self.bot.matchtracker['last']
@@ -2392,21 +2375,22 @@ class GBF_Access(commands.Cog):
         self.bot.matchtracker['names'] = [infos[0][0], infos[1][0]]
         self.bot.matchtracker['scores'] = [infos[0][1], infos[1][1]]
         self.bot.matchtracker['last'] = t
-        self.bot.matchtracker['gwid'] = gwnum
+        self.bot.matchtracker['gwid'] = self.bot.gw['id']
         self.bot.savePending = True
         if self.bot.matchtracker['speed'] is not None: # save chart data
             self.bot.matchtracker['plot'].append({'x': t, 'q': { 'y': [self.bot.matchtracker['speed'][0] / 1000000, self.bot.matchtracker['speed'][1] / 1000000] }})
             self.bot.savePending = True # just in case
-        if len(self.bot.matchtracker['plot']) > 0: # generate chart
+        if len(self.bot.matchtracker['plot']) > 1: # generate chart
             chart = leather.Chart('Speed Chart')
-            chart.add_line(self.bot.matchtracker['plot'], x=self.x, y=self.yA, name=infos[0][0])
-            chart.add_line(self.bot.matchtracker['plot'], x=self.x, y=self.yB, name=infos[1][0])
+            chart.add_line(self.bot.matchtracker['plot'], x=self.x, y=self.yA, name="(You)")
+            chart.add_line(self.bot.matchtracker['plot'], x=self.x, y=self.yB, name="Opponent")
             chart.to_svg('chart.svg')
             cairosvg.svg2png(url="chart.svg", write_to="chart.png")
             with open("chart.png", "rb") as f:
                 message = await self.bot.send('image', file=discord.File(f))
                 self.bot.matchtracker['chart'] = message.attachments[0].url
                 self.bot.savePending = True
+        print("ok") # for debug, remove later
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isYou()
@@ -2466,7 +2450,8 @@ class GBF_Access(commands.Cog):
                 if lead >= 0:
                     msg += "**Difference** ▫️ {:,}\n".format(lead)
 
-                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.getEmote('gw'), self.bot.matchtracker['gwid'], self.bot.matchtracker['day']-1), description=msg, timestamp=datetime.utcnow(), image=self.bot.matchtracker.get('chart', None), color=self.color))
+                final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.getEmote('gw'), self.bot.matchtracker['gwid'], self.bot.matchtracker['day']-1), description=msg, timestamp=datetime.utcnow(), thumbnail=self.bot.matchtracker.get('chart', None), color=self.color))
+                await self.bot.cleanMessage(ctx, final_msg, 90)
 
     def scrapProcess(self, mode, qi, qo): # thread for ranking
         while not qi.empty(): # until the input queue is empty
@@ -2479,7 +2464,7 @@ class GBF_Access(commands.Cog):
             for item in data['list']: # put the entries in the list
                 qo.put(item)
 
-    def gwdbbuilder(self, mode, qo, count, res):
+    def gwdbbuilder(self, mode, qo, count, res, update_time):
         try:
             day = self.getCurrentGWDayID() # calculate which day it is (0 being prelim, 1 being interlude/day 1, etc...)
             if day is None or day >= 10:
@@ -2527,13 +2512,20 @@ class GBF_Access(commands.Cog):
                 if i == count: # if we reached the end, commit
                     conn.commit()
                     conn.close()
+            
+            if mode: # update tracker before updating the players (for speed reason)
+                try:
+                    self.bot.loop.call_soon_threadsafe(self.updateYouTracker, update_time)
+                except Exception as ue:
+                    print('updateyoutracker() exception:', ue)
+            
             res.put(True)
         except Exception as err:
             print('gwdbbuilder', err)
             self.stoprankupdate = True # send the stop signal if a critical error happened
             res.put(False)
 
-    def gwscrap(self):
+    def gwscrap(self, update_time):
         self.bot.drive.delFiles(["temp.sql"], self.bot.tokens['files']) # delete previous temp file (if any)
         self.bot.delFile('temp.sql') # locally too
         if self.bot.drive.cpyFile("GW.sql", self.bot.tokens['files'], "temp.sql"): # copy existing gw.sql to temp.sql
@@ -2585,7 +2577,7 @@ class GBF_Access(commands.Cog):
                 threadpool[-1].start()
 
             r = Queue() # return value for self.gwdbbuilder
-            threadpool.append(Thread(target=self.gwdbbuilder, args=(n == 0, qo, count, r))) # sql builder thread (just need one, not more)
+            threadpool.append(Thread(target=self.gwdbbuilder, args=(n == 0, qo, count, r, update_time))) # sql builder thread (just need one, not more)
             threadpool[-1].setDaemon(True)
             threadpool[-1].start()
 
