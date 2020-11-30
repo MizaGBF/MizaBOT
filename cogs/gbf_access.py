@@ -41,7 +41,6 @@ class GBF_Access(commands.Cog):
         self.possiblesum = {'10':'fire', '20':'water', '30':'earth', '40':'wind', '50':'light', '60':'dark', '00':'misc', '01':'misc'}
         self.subsum = {'chev':'luminiera omega', 'chevalier':'luminiera omega', 'lumi':'luminiera omega', 'luminiera':'luminiera omega', 'colossus':'colossus omega', 'colo':'colossus omega', 'leviathan':'leviathan omega', 'levi':'leviathan omega', 'yggdrasil':'yggdrasil omega', 'yugu':'yggdrasil omega', 'tiamat':'tiamat omega', 'tia':'tiamat omega', 'celeste':'celeste omega', 'boat':'celeste omega', 'alex':'godsworn alexiel', 'alexiel':'godsworn alexiel', 'zeph':'zephyrus', 'longdong':'huanglong', 'dong':'huanglong', 'long':'huanglong', 'bunny':'white rabbit', 'kirin':'qilin', 'sylph gacha':'sylph, flutterspirit of purity', 'poseidon gacha':'poseidon, the tide father', 'anat gacha':'anat, for love and war', 'cerberus gacha':'cerberus, hellhound trifecta', 'marduck gacha':'marduk, battlefield reaper'}
         self.sql = {
-            'summon' : [None, None, False], # conn, cursor, status
             'old_gw' : [None, None, None], # conn, cursor, status
             'gw' : [None, None, None] # conn, cursor, status
         }
@@ -49,15 +48,20 @@ class GBF_Access(commands.Cog):
         self.loadinggacha = False
         self.blacklist = ["677159", "147448"]
         self.stoprankupdate = False
+        self.dad_running = False
 
     def startTasks(self):
         self.bot.runTask('gbfwatch', self.gbfwatch)
-        self.bot.runTask('summon', self.summontask)
         self.bot.runTask('check_ranking', self.checkGWRanking)
 
     def isOwner(): # for decorators
         async def predicate(ctx):
             return ctx.bot.isOwner(ctx)
+        return commands.check(predicate)
+
+    def isOwnerOrDebug(): # for decorators
+        async def predicate(ctx):
+            return (ctx.bot.isOwner(ctx) or ctx.bot.isChannel(ctx, 'debug_bot'))
         return commands.check(predicate)
 
     def isYou(): # for decorators
@@ -278,7 +282,7 @@ class GBF_Access(commands.Cog):
                 v = await self.bot.getGameversion()
                 s = self.bot.updateGameversion(v)
                 if s == 3:
-                    react = await self.bot.sendMulti(['debug', 'private_update'], embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version updated to `{}` (`{}`)".format(v, self.bot.versionToDateStr(v)), color=self.color))
+                    react = await self.bot.sendMulti(['debug_update', 'private_update'], embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version updated to `{}` (`{}`)".format(v, self.bot.versionToDateStr(v)), color=self.color))
                     try:
                         for r in react: await self.bot.react(r, 'time')
                     except:
@@ -294,7 +298,8 @@ class GBF_Access(commands.Cog):
                         thumb = tickets[0]
                         self.bot.gbfdata['new_ticket'] = tickets
                         self.bot.savePending = True
-                    news = await self.cc()
+                    ch = self.bot.get_channel(self.ids['debug_bot'])
+                    news = await self.cc(ch)
                     try:
                         for r in react: await self.bot.unreact(r, 'time')
                     except:
@@ -304,10 +309,10 @@ class GBF_Access(commands.Cog):
                         for k in news:
                             msg += "{} {}\n".format(news[k], k)
                     if msg != "":
-                        await self.bot.sendMulti(['debug', 'private_update'], embed=self.bot.buildEmbed(title="Latest Update", description=msg, thumbnail=thumb, color=self.color))
-                        await self.bot.send('debug', embed=self.bot.buildEmbed(title="Reminder", description="Keep it private", color=self.color))
+                        await self.bot.sendMulti(['debug_update', 'private_update'], embed=self.bot.buildEmbed(title="Latest Update", description=msg, thumbnail=thumb, color=self.color))
+                        await self.bot.send('debug_update', embed=self.bot.buildEmbed(title="Reminder", description="Keep it private", color=self.color))
                 elif s == 2:
-                    await self.bot.send('debug', embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version set to `{}` (`{}`)".format(v, self.bot.versionToDateStr(v)) , color=self.color))
+                    await self.bot.send('debug_update', embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version set to `{}` (`{}`)".format(v, self.bot.versionToDateStr(v)) , color=self.color))
                 await asyncio.sleep(60)
             except asyncio.CancelledError:
                 await self.bot.sendError('gbfwatch', 'cancelled')
@@ -438,15 +443,15 @@ class GBF_Access(commands.Cog):
             if isinstance(c, list):
                 res += self.pa(c, indent+1)
             else:
-                res += s+c+'\n'
-        if indent == 0: res += '\n'
+                res += s+c+'\r\n'
+        if indent == 0: res += '\r\n'
         return res
 
     async def dad(self, id, silent, mode = 0): # black magic
         if id[0] == '3': type = 0
         elif id[0] == '2': type = 1
         elif id[0] == '1': type = 2
-        else: return ["", {}]
+        else: return ["", {}, {}, {}]
         try:
             files = self.bot.gbfwatch["files"]
             flags = {}
@@ -455,10 +460,16 @@ class GBF_Access(commands.Cog):
                 for k in self.bot.gbfwatch["flags"][t]:
                     flags[t][k] = False
             it = self.bot.gbfwatch["it"]
+            thbd = self.bot.gbfwatch["thbd"]
         except:
-            return ["", {}]
+            return ["", {}, {}, {}]
+
+        if self.dad_running:
+            return ["please wait your turn", {}, {}, thbd[type].format(id)]
+        self.dad_running = True
 
         paste = ""
+        iul = {}
         counter = 0
         font = ImageFont.truetype("assets/font.ttf", 16)
         for f in files[type]:
@@ -471,7 +482,7 @@ class GBF_Access(commands.Cog):
                 if data is None: raise Exception("404")
                 data = str(data)
 
-                paste += '# {} ############################################\n'.format(ff)
+                paste += '# {} ############################################\r\n'.format(ff)
 
                 root = []
                 ref = root
@@ -585,21 +596,53 @@ class GBF_Access(commands.Cog):
                 txcs.clear()
                 i.save("{}.png".format(ff), "PNG")
                 with open("{}.png".format(ff), 'rb') as infile:
-                    await self.bot.send('debug', "{}.png".format(ff), file=discord.File(infile))
+                    message = await self.bot.send('image', file=discord.File(infile))
+                    iul["{}.png".format(ff)] = message.attachments[0].url
                 self.bot.delFile("{}.png".format(ff))
             except:
-                if counter >= 3 and len(paste) == 0: return ["", {}]
+                if counter >= 3 and len(paste) == 0:
+                    self.dad_running = False
+                    return ["", {}, {}, thbd[type].format(id)]
             counter+=1
 
         if len(paste) > 0:
             if silent:
-                return ["Not posted to pastebin", flags]
+                self.dad_running = False
+                return ["Not uploaded", flags, iul, thbd[type].format(id)]
             else:
-                return [str(self.postPastebin(id, paste)), flags]
+                title = "{}_dump_{}.txt".format(id, datetime.utcnow().timestamp())
+                with open(title, "wb") as f:
+                    f.write(paste.encode('utf-8'))
+                self.dad_running = False
+                return [title, flags, iul, thbd[type].format(id)]
         else:
-            return ["", {}]
+            self.dad_running = False
+            return ["", {}, {}, thbd[type].format(id)]
 
-    async def cc(self): # black magic
+    async def dadp(self, c, data, tt): # black magic
+        fields = []
+
+        tmp = ""
+        for k in data[2]:
+            tmp += "[{}]({})\n".format(k, data[2][k])
+        if len(tmp) > 0:
+            fields.append({'name':'Sprites', 'value':tmp})
+
+        for k in data[1]:
+            tmp = ""
+            for t in data[1][k]:
+                if data[1][k][t]:
+                    tmp += t + ', '
+            if len(tmp) > 0:
+                fields.append({'name':k, 'value':tmp[:-2]})
+
+        try:
+            with open(data[0], "rb") as f:
+                await c.send(embed=self.bot.buildEmbed(title=tt, fields=fields, color=self.color, thumbnail=data[3]), file=discord.File(f))
+        except:
+            await c.send(embed=self.bot.buildEmbed(title=tt, description=data[0], fields=fields, color=self.color, thumbnail=data[3]))
+
+    async def cc(self, channel): # black magic
         found = {}
         silent = False
 
@@ -647,20 +690,8 @@ class GBF_Access(commands.Cog):
                     errc = 0
 
                     if not silent:
-                        title = "{} : {}".format(crt[i][0], cid + id * 1000)
-
-                        # processing
-                        fields = []
-
-                        for k in data[1]:
-                            tmp = ""
-                            for t in data[1][k]:
-                                if data[1][k][t]:
-                                    tmp += t + ', '
-                            if len(tmp) > 0:
-                                fields.append({'name':k, 'value':tmp[:-2]})
-
-                        await self.bot.send('debug', embed=self.bot.buildEmbed(title=crt[i][0], description=data[0], fields=fields, color=self.color))
+                        await self.dadp(channel, data, "{} : {}".format(crt[i][0], cid + id * 1000))
+                        
                 id += 1
 
         if nc is not None:
@@ -711,7 +742,7 @@ class GBF_Access(commands.Cog):
                         found[tt] += 1
 
                     if not silent:
-                        await self.bot.send('debug', embed=self.bot.buildEmbed(title=ws[x], description='{} ▫️ {}'.format(tt, id), thumbnail=wl[0].format(id), color=self.color))
+                        await channel.send(embed=self.bot.buildEmbed(title=ws[x], description='{} ▫️ {}'.format(tt, id), thumbnail=wl[0].format(id), color=self.color))
 
                     stid += 1
 
@@ -720,50 +751,6 @@ class GBF_Access(commands.Cog):
                 self.bot.savePending = True
 
         return found
-
-    async def summontask(self): # discord summon update task
-        while True:
-            try:
-                uptime = self.bot.uptime(False)
-                if self.bot.summonlast is None: delta = None
-                else: delta = self.bot.getJST() - self.bot.summonlast
-                if uptime.seconds > 3600 and uptime.seconds < 30000 and (delta is None or delta.days >= 5):
-                    await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="summontask()", description="auto update started", timestamp=datetime.utcnow()))
-                    await self.updateSummon()
-                    await self.bot.send('debug', embed=self.bot.buildEmbed(color=self.color, title="summontask()", description="auto update ended", timestamp=datetime.utcnow()))
-                    await asyncio.sleep(80000)
-                    return
-                else:
-                    await asyncio.sleep(3600)
-            except asyncio.CancelledError:
-                await self.bot.sendError('summontask', 'cancelled')
-                return
-            except Exception as e:
-                await self.bot.sendError('summontask', str(e))
-                if str(e) == "Maintenance": await asyncio.sleep(80000)
-
-    async def loadSumDB(self): # load the summon db file
-        try:
-            if self.sql['summon'][2]:
-                self.sql['summon'][0] = None
-            elif self.bot.drive.dlFile("summon.sql", self.bot.tokens['files']):
-                self.sql['summon'][0] = sqlite3.connect("summon.sql")
-                self.sql['summon'][1] = self.sql['summon'][0].cursor()
-            else:
-                self.sql['summon'][0] = None
-        except Exception as e:
-            self.sql['summon'][0] = None
-            await self.bot.sendError('loadSumDB', str(e))
-        return (self.sql['summon'][0] is not None)
-
-    async def checkSumDB(self, ctx): # check if the summon db is loaded and try to if not
-        if self.sql['summon'][0]:
-            return True
-        else:
-            await self.bot.react(ctx.message, 'time')
-            r = await self.loadSumDB()
-            await self.bot.unreact(ctx.message, 'time')
-            return r
 
     async def getCrewSummary(self, id):
         res = await self.bot.sendRequest("http://game.granbluefantasy.jp/guild_main/content/detail/{}?_=TS1&t=TS2&uid=ID".format(id), account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
@@ -963,47 +950,6 @@ class GBF_Access(commands.Cog):
 
         except Exception as e:
             await self.bot.sendError("postCrewData", str(e))
-
-    async def updateSummon(self): # update summon.sql
-        self.bot.drive.delFiles(["summon.sql"], self.bot.tokens['files'])
-        self.sql['summon'] = [None, None, True]
-        self.bot.delFile('summon.sql')
-        conn = sqlite3.connect('summon.sql')
-        c = conn.cursor()
-        c.execute('CREATE TABLE players (id int, name text)')
-        summonnames = []
-        for sid in list(self.bot.gbfids.keys()):
-            id = self.bot.gbfids[sid]
-            data = await self.getProfileData(id)
-            if data == "Maintenance":
-                raise Exception("Maintenance")
-            if data is None:
-                continue
-            soup = BeautifulSoup(data, 'html.parser')
-            try: name = soup.find_all("span", class_="txt-other-name")[0].string
-            except: name = None
-            if name is not None: # private
-                try:
-                    c.execute("INSERT INTO players VALUES ({},'{}')".format(id, name.replace("'", "''").replace("%", "\%")))
-                    summons_res = self.sumre.findall(data)
-                    for s in summons_res:
-                        sp = s[1].lower().split() # Lvl 000 Name1 Name2 ... NameN
-                        sn = " ".join(sp[2:])
-                        if sn not in summonnames:
-                            summonnames.append(sn)
-                            c.execute('CREATE TABLE `{}` (id int, level int)'.format(sn))
-                        c.execute("INSERT INTO `{}` VALUES ({},{})".format(sn, id, sp[1]))
-                except:
-                    pass
-            await asyncio.sleep(0.1)
-        conn.commit()
-        conn.close()
-        self.sql['summon'][2] = False
-        if self.bot.drive.saveDiskFile("summon.sql", "application/sql", "summon.sql", self.bot.tokens['files']):
-            self.bot.summonlast = self.bot.getJST()
-            self.bot.savePending = True
-        self.sql['summon'][0] = sqlite3.connect("summon.sql")
-        self.sql['summon'][1] = self.sql['summon'][0].cursor()
 
     def honorFormat(self, h): # convert honor number to a shorter string version
         if h is None: return "n/a"
@@ -1312,9 +1258,10 @@ class GBF_Access(commands.Cog):
         await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isOwner()
+    @isOwnerOrDebug()
+    @commands.cooldown(1, 10, commands.BucketType.default)
     async def item(self, ctx, id : int):
-        """Retrieve an item description"""
+        """Retrieve an item description (Owner or Bot only)"""
         try:
             data = await self.bot.sendRequest('http://game.granbluefantasy.jp/rest/quest/droplist/drop_item_detail?_=TS1&t=TS2&uid=ID', account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True, payload={"special_token":None,"item_id":id,"item_kind":10})
             await ctx.send(embed=self.bot.buildEmbed(title=data['name'], description=data['comment'].replace('<br>', ' '), thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/item/article/s/{}.jpg".format(id), footer=data['id'], color=self.color))
@@ -1322,9 +1269,10 @@ class GBF_Access(commands.Cog):
             await self.bot.react(ctx.message, '❎') # white negative mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isOwner()
+    @isOwnerOrDebug()
+    @commands.cooldown(1, 10, commands.BucketType.default)
     async def loot(self, ctx, id : str):
-        """Retrieve a weapon or summon description"""
+        """Retrieve a weapon or summon description (Owner or Bot only)"""
         try:
             type = int(id[0])
             id = int(id)
@@ -1416,25 +1364,6 @@ class GBF_Access(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Clear Profile Error", description="ID not found", color=self.color))
             return
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isOwner()
-    async def forceSummonUpdate(self, ctx):
-        """Force update the summon list (Owner only)"""
-        await self.bot.react(ctx.message, 'time')
-        await self.updateSummon()
-        await self.bot.unreact(ctx.message, 'time')
-        await self.bot.react(ctx.message, '✅') # white check mark
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isOwner()
-    async def profileStat(self, ctx):
-        """Linked GBF id statistics (Owner only)"""
-        if self.sql['summon'][0] is not None: msg = "Database loaded"
-        else:
-            if self.sql['summon'][2]: msg = "Database is locked"
-            else: msg = "Database isn't loaded"
-        await ctx.send(embed=self.bot.buildEmbed(title="{} Summon statistics".format(self.bot.getEmote('summon')), description="**{}** Registered Users\n{}".format(len(self.bot.gbfids), msg), color=self.color))
-
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['unsetid'])
     @commands.cooldown(1, 60, commands.BucketType.user)
     async def unsetProfile(self, ctx):
@@ -1471,62 +1400,6 @@ class GBF_Access(commands.Cog):
             await self.bot.react(ctx.message, '✅') # white check mark
         except Exception as e:
             await self.bot.sendError("setprofile", str(e))
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['friend'])
-    @commands.cooldown(1, 7, commands.BucketType.user)
-    async def summon(self, ctx, *search : str):
-        """Search a summon
-        <summon name> or <level min> <summon name>
-         or <summon name> <level min>"""
-        await self.bot.send('debug', '$summon called')
-        if not await self.checkSumDB(ctx):
-            await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="Currently unavailable".format(name), color=self.color))
-            return
-        try:
-            level = int(search[0])
-            name = " ".join(search[1:])
-        except:
-            try:
-                level = int(search[-1])
-                name = " ".join(search[:-1])
-            except:
-                level = 0
-                name = " ".join(search)
-        name = self.subsum.get(name.lower(), name.lower())
-        try:
-            self.sql['summon'][1].execute("SELECT * FROM `{}` WHERE level >= {}".format(name.lower(), level))
-            data = self.sql['summon'][1].fetchall()
-        except:
-            await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="`{}` ▫️ No one has this summon".format(name), footer="Be sure to type the full name", color=self.color))
-            return
-        random.shuffle(data)
-        msg = ""
-        count = 0
-        fields = []
-
-        history = []
-        for u in data:
-            if u[0] not in history:
-                history.append(u[0])
-                self.sql['summon'][1].execute("SELECT * FROM players WHERE id == {}".format(u[0]))
-                pname = self.sql['summon'][1].fetchall()
-                if len(pname) == 0: continue
-                if count < 3:
-                    fields.append({'name':'Page {} '.format(self.bot.getEmote(str(len(fields)+1))), 'value':'', 'inline':True})
-                fields[count%3]['value'] += "**{}**▫️[{}](http://game.granbluefantasy.jp/#profile/{})\n".format(u[1], self.escape(pname[0][1]), u[0])
-                count += 1
-                if count >= 30:
-                    if level > 0: msg = "*Only {} random results shown*.".format(count)
-                    else: msg = "*Only {} random results shown, specify a minimum level to affine the result*.".format(count)
-                    break
-
-        if count == 0:
-            await ctx.send(embed=self.bot.buildEmbed(title="Summon Error", description="`{}` ▫️ No one has this summon above level {}".format(name, level), footer="Be sure to type the full name", color=self.color))
-        else:
-            if level > 0:
-                await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} ▫️ Lvl {} and more".format(name.capitalize(), level)}, description=msg, fields=fields, footer="Auto updated once per week", color=self.color))
-            else:
-                await ctx.send(embed=self.bot.buildEmbed(author={'name':"{}".format(name.capitalize())}, description=msg, fields=fields, footer="Auto updated once per week", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['badboi', 'branded', 'restricted'])
     @commands.cooldown(5, 30, commands.BucketType.guild)
@@ -1937,28 +1810,18 @@ class GBF_Access(commands.Cog):
             await self.bot.react(ctx.message, '❎') # white negative mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isOwner()
+    @isOwnerOrDebug()
+    @commands.cooldown(1, 2, commands.BucketType.default)
     async def dd(self, ctx, id : str, mode : int = 0):
-        """Black magic (Owner only)"""
+        """Black magic (Owner or Bot only)"""
         if not await self.bot.isGameAvailable():
             await ctx.send(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))
             return
         await self.bot.react(ctx.message, 'time')
         data = await self.dad(id, False, mode)
-        await self.bot.unreact(ctx.message, 'time')
         if data[0] != "":
-            # processing
-            fields = []
-
-            for k in data[1]:
-                tmp = ""
-                for t in data[1][k]:
-                    if data[1][k][t]:
-                        tmp += t + ', '
-                if len(tmp) > 0:
-                    fields.append({'name':k, 'value':tmp[:-2]})
-
-            await self.bot.send('debug', embed=self.bot.buildEmbed(title=id, description=data[0], fields=fields, color=self.color))
+            await self.dadp(ctx.channel, data, id)
+        await self.bot.unreact(ctx.message, 'time')
         await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -1969,7 +1832,7 @@ class GBF_Access(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))
             return
         await self.bot.react(ctx.message, 'time')
-        news = await self.cc()
+        news = await self.cc(ctx.channel)
         await self.bot.unreact(ctx.message, 'time')
         msg = ""
         if len(news) > 0:

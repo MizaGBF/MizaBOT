@@ -331,9 +331,9 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "7.3" # version number
+        self.botversion = "7.4" # version number
         self.saveversion = 0 # save version
-        self.botchangelog = ["Added `$recruit` to check recruiting /gbfg/ crews", "Updated `$crew` with more infos", "`$memeroll` added", "`$mizatube` is now available", "Pinboard now enabled on /gbfg/", "`$valiant` renamed to `$barrage` (alternative names are available)"] # bot changelog
+        self.botchangelog = ["Removed `$summon`", "Added `$blackjack`", "Added `$recruit` to check recruiting /gbfg/ crews"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted before
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
@@ -712,6 +712,11 @@ class Mizabot(commands.Bot):
 
     def isServer(self, ctx, id_string : str): # check if the context is in the targeted guild (must be in config.json)
         if ctx.message.author.guild.id == self.ids.get(id_string, -1):
+            return True
+        return False
+
+    def isChannel(self, ctx, id_string : str): # check if the context is in the targeted channel (must be in config.json)
+        if ctx.channel.id == self.ids.get(id_string, -1):
             return True
         return False
 
@@ -1150,7 +1155,7 @@ async def on_ready(): # when the bot starts or reconnects
     await bot.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=random.choice(bot.games)))
     if not bot.boot_flag:
         # send a pretty message
-        bot.setChannels([['debug', 'debug_channel'], ['image', 'image_upload'], ['you_pinned', 'you_pinned'], ['gbfg_pinned', 'gbfg_pinned'], ['gbfglog', 'gbfg_log'], ['youlog', 'you_log']]) # register to-be-used channels for the send function
+        bot.setChannels([['debug', 'debug_channel'], ['image', 'image_upload'], ['deebug_update', 'debug_update'], ['you_pinned', 'you_pinned'], ['gbfg_pinned', 'gbfg_pinned'], ['gbfglog', 'gbfg_log'], ['youlog', 'you_log']]) # register to-be-used channels for the send function
         await bot.send('debug', embed=bot.buildEmbed(title="{} is Ready".format(bot.user.display_name), description="**Version** {}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}\n**Twitter**▫️{}".format(bot.botversion, bot.process.cpu_percent(), bot.process.memory_full_info().uss >> 20, len(asyncio.all_tasks()), len(bot.guilds), len(bot.guilddata['pending']), len(bot.cogs), bot.cogn, (bot.twitter_api is not None)), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
         await bot.startTasks() # start the tasks
         bot.boot_flag = True

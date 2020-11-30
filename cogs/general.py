@@ -188,6 +188,7 @@ class General(commands.Cog):
         self.bot = bot
         self.color = 0x8fe3e8
         self.pokergames = {}
+        self.blackjackgames = {}
 
     def startTasks(self):
         self.bot.runTask('reminder', self.remindertask)
@@ -672,4 +673,88 @@ class General(commands.Cog):
                 else: await final_msg.edit(embed=self.bot.buildEmbed(title="♠️ Multiplayer Poker ♥️", description=msg, color=self.color))
                 await asyncio.sleep(2)
             self.pokergames.pop(id)
+            await self.bot.cleanMessage(ctx, final_msg, 45)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(10, 30, commands.BucketType.guild)
+    async def blackjack(self, ctx):
+        """Play a blackjack mini-game with other people"""
+        # search game
+        id = ctx.channel.id
+        if id in self.blackjackgames:
+            if self.blackjackgames[id]['state'] == 'waiting':
+                if len(self.blackjackgames[id]['players']) >= 6:
+                    await self.bot.cleanMessage(ctx, (await ctx.send(embed=self.bot.buildEmbed(title="Error", description="This game is full", color=self.color))), 6)
+                elif ctx.author.id not in self.blackjackgames[id]['players']:
+                    self.blackjackgames[id]['players'].append(ctx.author.id)
+                    await self.bot.react(ctx.message, '✅') # white check mark
+                else:
+                    await self.bot.cleanMessage(ctx, (await ctx.send(embed=self.bot.buildEmbed(title="Error", description="You are already in the next game", color=self.color))), 10)
+            else:
+                await self.bot.cleanMessage(ctx, (await ctx.send(embed=self.bot.buildEmbed(title="Error", description="This game started", color=self.color))), 10)
+        else:
+            self.blackjackgames[id] = {'state':'waiting', 'players':[ctx.author.id]}
+            msg = await ctx.send(embed=self.bot.buildEmbed(title="♠️ Multiplayer Blackjack ♥️", description="Starting in 30s\n1/6 players", footer="Use the blackjack command to join", color=self.color))
+            cd = 29
+            while cd >= 0:
+                await asyncio.sleep(1)
+                await msg.edit(embed=self.bot.buildEmbed(title="♠️ Multiplayer Blackjack ♥️", description="Starting in {}s\n{}/6 players".format(cd, len(self.blackjackgames[id]['players'])), footer="Use the blackjack command to join", color=self.color))
+                cd -= 1
+                if len(self.blackjackgames[id]['players']) >= 6:
+                    break
+            self.blackjackgames[id]['state'] = "playing"
+            if len(self.blackjackgames[id]['players']) > 6: self.blackjackgames[id]['players'] = self.blackjackgames[id]['players'][:6]
+            await self.bot.cleanMessage(ctx, msg, 0, True)
+            # game start
+            status = []
+            for p in self.blackjackgames[id]['players']:
+                status.append({'name':ctx.guild.get_member(p).display_name, 'score':0, 'cards':[], 'state':0})
+            status.append({'name':'Dealer', 'score':0, 'cards':[], 'state':0}) # 0 = playing card down, 1 = playing card up, 2 = lost, 3 = won, 4 = blackjack
+            final_msg = None
+            deck = []
+            kind = ["D", "S", "H", "C"]
+            for i in range(51):
+                deck.append('{}{}'.format((i % 13) + 1, kind[i // 13]))
+            
+            done = 0
+            while done < len(status):
+                msg = ""
+                for p in range(len(status)):
+                    if status[p]['state'] == 1:
+                        c = deck[0]
+                        deck = deck[1:]
+                        value = int(c[:-1])
+                        if value >= 10: value = 10
+                        elif value == 1 and status[p]['score'] <= 10: value = 11
+                        if status[p]['score'] + value > 21:
+                            status[p]['state'] = 2
+                            done += 1
+                        elif status[p]['score'] + value == 21:
+                            if len(status[p]['cards']) == 1: status[p]['state'] = 4
+                            else: status[p]['state'] = 3
+                            status[p]['score'] += value
+                            done += 1
+                        else:
+                            status[p]['score'] += value
+                        status[p]['cards'].append(c)
+                    if p == len(status) - 1: msg += "\n:spy: "
+                    else: msg += "{} ".format(self.bot.getEmote(str(p+1)))
+                    msg += self.pokerNameStrip(status[p]['name'])
+                    msg += " \▫️ "
+                    for i in range(len(status[p]['cards'])):
+                        msg += "{}".format(status[p]['cards'][i].replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("10", "tmp").replace("1", "A").replace("tmp", "10"))
+                        if i == len(status[p]['cards']) - 1 and status[p]['state'] == 0: msg += ", 🎴"
+                        elif i < len(status[p]['cards']) - 1: msg += ", "
+                    if len(status[p]['cards']) == 0: msg += "🎴"
+                    if status[p]['state'] == 0: status[p]['state'] = 1
+                    elif status[p]['state'] == 1: status[p]['state'] = 0
+                    msg += " \▫️ "
+                    if status[p]['state'] == 4: msg += "**Blackjack**\n"
+                    elif status[p]['state'] == 3: msg += "**21**\n"
+                    elif status[p]['state'] == 2: msg += "Best {}\n".format(status[p]['score'])
+                    else: msg += "{}\n".format(status[p]['score'])
+                if final_msg is None: final_msg = await ctx.send(embed=self.bot.buildEmbed(title="♠️ Multiplayer Blackjack ♥️", description=msg, color=self.color))
+                else: await final_msg.edit(embed=self.bot.buildEmbed(title="♠️ Multiplayer Blackjack ♥️", description=msg, color=self.color))
+                await asyncio.sleep(2)
+            self.blackjackgames.pop(id)
             await self.bot.cleanMessage(ctx, final_msg, 45)
