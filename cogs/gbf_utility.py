@@ -583,6 +583,13 @@ class GBF_Utility(commands.Cog):
         """Post the (You) python raidfinder"""
         await ctx.send(embed=self.bot.buildEmbed(title="(You) Python Raidfinder", description=self.bot.strings["pyfinder()"], color=self.color))
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 20, commands.BucketType.guild)
+    async def mizatube(self, ctx):
+        """Post the owner youtube channel"""
+        if 'mizatube()' in self.bot.strings:
+            await ctx.send(embed=self.bot.buildEmbed(title="Mizatube:tm:", description="[Link]({})".format(self.bot.strings['mizatube()']), footer="Subscribe ;)", color=self.color))
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['ubhl', 'ubahahl'])
     @commands.cooldown(1, 15, commands.BucketType.guild)
     async def ubaha(self, ctx):
