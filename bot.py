@@ -673,9 +673,11 @@ class Mizabot(commands.Bot):
                 if tw is not None:
                     for t in tw:
                         txt = t.full_text
-                        if txt.find(" = ") != -1 and txt.find("chedule") != -1:
+                        if txt.find(" = ") != -1 and txt.find("chedule\n") != -1:
                             s = txt.find("https://t.co/")
                             if s != -1: txt = txt[:s]
+                            txt = txt.replace('\n\n', '\n')
+                            txt = txt[txt.find("chedule\n")+len("chedule\n"):]
                             try: new_schedule = txt.replace('\n', ' = ').split(' = ')[1:]
                             except: pass
             else: # else, just clean up old entries
