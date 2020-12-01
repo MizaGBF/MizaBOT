@@ -834,7 +834,8 @@ class GBF_Utility(commands.Cog):
         c = self.bot.getJST()
         if c.day == 1:
             if c.hour >= 12:
-                target = datetime(year=c.year, month=c.month+1, day=1, hour=12, minute=0, second=0, microsecond=0)
+                if c.month == 12: target = datetime(year=c.year+1, month=1, day=1, hour=12, minute=0, second=0, microsecond=0)
+                else: target = datetime(year=c.year, month=c.month+1, day=1, hour=12, minute=0, second=0, microsecond=0)
             else:
                 target = datetime(year=c.year, month=c.month, day=1, hour=12, minute=0, second=0, microsecond=0)
         else:

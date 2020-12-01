@@ -38,7 +38,7 @@ class GBF_Access(commands.Cog):
         self.badprofilecache = []
         self.badcrewcache = []
         self.crewcache = {}
-        self.possiblesum = {'10':'fire', '20':'water', '30':'earth', '40':'wind', '50':'light', '60':'dark', '00':'misc', '01':'misc'}
+        self.possiblesum = {'10':'fire', '11':'fire', '20':'water', '21':'water', '30':'earth', '31':'earth', '40':'wind', '41':'wind', '50':'light', '51':'light', '60':'dark', '61':'dark', '00':'misc', '01':'misc'}
         self.subsum = {'chev':'luminiera omega', 'chevalier':'luminiera omega', 'lumi':'luminiera omega', 'luminiera':'luminiera omega', 'colossus':'colossus omega', 'colo':'colossus omega', 'leviathan':'leviathan omega', 'levi':'leviathan omega', 'yggdrasil':'yggdrasil omega', 'yugu':'yggdrasil omega', 'tiamat':'tiamat omega', 'tia':'tiamat omega', 'celeste':'celeste omega', 'boat':'celeste omega', 'alex':'godsworn alexiel', 'alexiel':'godsworn alexiel', 'zeph':'zephyrus', 'longdong':'huanglong', 'dong':'huanglong', 'long':'huanglong', 'bunny':'white rabbit', 'kirin':'qilin', 'sylph gacha':'sylph, flutterspirit of purity', 'poseidon gacha':'poseidon, the tide father', 'anat gacha':'anat, for love and war', 'cerberus gacha':'cerberus, hellhound trifecta', 'marduck gacha':'marduk, battlefield reaper'}
         self.sql = {
             'old_gw' : [None, None, None], # conn, cursor, status
@@ -298,7 +298,7 @@ class GBF_Access(commands.Cog):
                         thumb = tickets[0]
                         self.bot.gbfdata['new_ticket'] = tickets
                         self.bot.savePending = True
-                    ch = self.bot.get_channel(self.ids['debug_bot'])
+                    ch = self.bot.get_channel(self.bot.ids['debug_update'])
                     news = await self.cc(ch)
                     try:
                         for r in react: await self.bot.unreact(r, 'time')
@@ -310,7 +310,8 @@ class GBF_Access(commands.Cog):
                             msg += "{} {}\n".format(news[k], k)
                     if msg != "":
                         await self.bot.sendMulti(['debug_update', 'private_update'], embed=self.bot.buildEmbed(title="Latest Update", description=msg, thumbnail=thumb, color=self.color))
-                        await self.bot.send('debug_update', embed=self.bot.buildEmbed(title="Reminder", description="Keep it private", color=self.color))
+                        if len(tickets) > 0 and len(news) > 0:
+                            await self.bot.send('debug_update', embed=self.bot.buildEmbed(title="Reminder", description="Keep it private", color=self.color))
                 elif s == 2:
                     await self.bot.send('debug_update', embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version set to `{}` (`{}`)".format(v, self.bot.versionToDateStr(v)) , color=self.color))
                 await asyncio.sleep(60)
@@ -1539,19 +1540,12 @@ class GBF_Access(commands.Cog):
                     summons = {}
                     for s in summons_res:
                         summons[s[0]] = s[1]
-                    count = 0
-                    half = len(summons) // 2
-                    if half < 4: half = 4
-                    msg = ""
-                    for s in self.possiblesum:
-                        if s in summons:
-                            msg += "{} {}\n".format(self.bot.getEmote(self.possiblesum[s]), summons[s])
-                            count += 1
-                            if count == half and msg != "":
-                                fields.append({'name':'{} Summons'.format(self.bot.getEmote('summon')), 'value':msg, 'inline':True})
-                                msg = ""
-                    if msg != "":
-                        fields.append({'name':'{} Summons'.format(self.bot.getEmote('summon')), 'value':msg, 'inline':True})
+                    
+                    keys = list(self.possiblesum.keys())
+                    for i in range(len(keys)):
+                        if i < 2: fields.append({'name':'{} Summons'.format(self.bot.getEmote('summon')), 'value':"", 'inline':True})
+                        if keys[i] in summons:
+                            fields[i % 2]['value'] += "{} {}\n".format(self.bot.getEmote(self.possiblesum[keys[i]]), summons[keys[i]])
                 except:
                     pass
 
