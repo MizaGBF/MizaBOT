@@ -1543,9 +1543,11 @@ class GBF_Access(commands.Cog):
                     
                     keys = list(self.possiblesum.keys())
                     for i in range(len(keys)):
-                        if i < 2: fields.append({'name':'{} Summons'.format(self.bot.getEmote('summon')), 'value':"", 'inline':True})
+                        if i < 2: fields.append({'name':'{} Summon {}'.format(self.bot.getEmote('summon'), self.bot.getEmote(str(i+1))), 'value':"", 'inline':True})
                         if keys[i] in summons:
                             fields[i % 2]['value'] += "{} {}\n".format(self.bot.getEmote(self.possiblesum[keys[i]]), summons[keys[i]])
+                        else:
+                            fields[i % 2]['value'] += "{} Not set\n".format(self.bot.getEmote(self.possiblesum[keys[i]]))
                 except:
                     pass
 

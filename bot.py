@@ -376,7 +376,7 @@ class Mizabot(commands.Bot):
         self.strings = {} # bot strings
         self.emotes = {} # bot custom emote ids
         self.emote_cache = {} # store used emotes
-        self.pinned_cache = {} # store pinned messages
+        self.pinned_cache = [] # store pinned messages
         self.matchtracker = None # to store gw data for match against our crew
         self.granblue = {} # store player/crew ids
         self.assignablerole = {} # self assignable role
@@ -1267,7 +1267,6 @@ async def on_raw_reaction_add(payload):
             bot.pinned_cache.append(message.id)
             if len(bot.pinned_cache) > 20: bot.pinned_cache = bot.pinned_cache[-20:] # limited to 20 entries
             await message.add_reaction(servers[idx]['emoji'])
-            if message.id in bot.pinned_cache: return # anti dupe safety
 
             try:
                 dict = {}
