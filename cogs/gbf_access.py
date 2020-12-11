@@ -1558,7 +1558,7 @@ class GBF_Access(commands.Cog):
                         summons += "\n{} {}".format(self.bot.getEmote(k), sortsum[k])
                     if summons != "": summons = "\n{} **Summons**{}".format(self.bot.getEmote('summon'), summons)
                 except:
-                    pass
+                    summons = ""
 
                 try:
                     beg = data.find('<div class="prt-inner-title">Star Character</div>')
@@ -1578,7 +1578,7 @@ class GBF_Access(commands.Cog):
                     if starcom is not None and starcom[0] != "(Blank)": msg += "\n\u202d💬 ``{}``".format(su.unescape(starcom[0]))
                     star = "\n\n{} **Star Character**\n{}".format(self.bot.getEmote('skill2'), msg)
                 except:
-                    pass
+                    star = ""
 
                 try:
                     img = Image.new('RGB', (410, 354), "black")
