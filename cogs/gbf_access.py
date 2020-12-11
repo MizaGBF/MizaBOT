@@ -22,6 +22,7 @@ import concurrent.futures
 from threading import Thread
 import leather
 import cairosvg
+from io import BytesIO
 
 class GBF_Access(commands.Cog):
     """GBF advanced commands."""
@@ -1433,6 +1434,14 @@ class GBF_Access(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Unavailable", color=self.color))
             await self.bot.sendError("brand", str(e))
 
+    def dlAndPasteImage(self, img, url, offset, resize):
+        req = request.Request(url)
+        url_handle = request.urlopen(req)
+        file_jpgdata = BytesIO(url_handle.read())
+        dt = Image.open(file_jpgdata)
+        if resize is not None: dt = dt.resize(resize)
+        img.paste(dt, offset, dt.convert('RGBA'))
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['id'])
     @commands.cooldown(5, 30, commands.BucketType.guild)
     async def profile(self, ctx, *target : str):
@@ -1533,21 +1542,21 @@ class GBF_Access(commands.Cog):
                             except:
                                 pass
 
-                fields = []
-
                 try:
                     summons_res = self.sumre.findall(data)
-                    summons = {}
+                    sortsum = {}
                     for s in summons_res:
-                        summons[s[0]] = s[1]
-                    
-                    keys = list(self.possiblesum.keys())
-                    for i in range(len(keys)):
-                        if i < 2: fields.append({'name':'{} Summon {}'.format(self.bot.getEmote('summon'), self.bot.getEmote(str(i+1))), 'value':"", 'inline':True})
-                        if keys[i] in summons:
-                            fields[i % 2]['value'] += "{} {}\n".format(self.bot.getEmote(self.possiblesum[keys[i]]), summons[keys[i]])
-                        else:
-                            fields[i % 2]['value'] += "{} Not set\n".format(self.bot.getEmote(self.possiblesum[keys[i]]))
+                        if self.possiblesum[s[0]] not in sortsum: sortsum[self.possiblesum[s[0]]] = s[1]
+                        else: sortsum[self.possiblesum[s[0]]] += ' ▫️ ' + s[1]
+                    try:
+                        misc = sortsum.pop('misc')
+                        sortsum['misc'] = misc
+                    except:
+                        pass
+                    summons = ""
+                    for k in sortsum:
+                        summons += "\n{} {}".format(self.bot.getEmote(k), sortsum[k])
+                    if summons != "": summons = "\n{} **Summons**{}".format(self.bot.getEmote('summon'), summons)
                 except:
                     pass
 
@@ -1567,13 +1576,38 @@ class GBF_Access(commands.Cog):
                     except: pass
                     starcom = self.starcomre.findall(star_section)
                     if starcom is not None and starcom[0] != "(Blank)": msg += "\n\u202d💬 ``{}``".format(su.unescape(starcom[0]))
-                    fields.append({'name':'{} Star Character'.format(self.bot.getEmote('skill2')), 'value':msg})
+                    star = "\n\n{} **Star Character**\n{}".format(self.bot.getEmote('skill2'), msg)
                 except:
                     pass
+
+                try:
+                    img = Image.new('RGB', (410, 354), "black")
+                    d = ImageDraw.Draw(img, 'RGBA')
+                    self.dlAndPasteImage(img, mc_url.replace("/talk/", "/po/"), (-40, -80), None)
+                    self.dlAndPasteImage(img, soup.find_all('img', class_='img-weapon')[0].attrs['src'].replace('img_low', 'img'), (244, 20), (78, 164))
+                    self.dlAndPasteImage(img, soup.find_all('img', class_='img-summon')[0].attrs['src'].replace('img_low', 'img'), (322, 20), (78, 164))
+                    party = soup.find_all("div", class_="prt-npc-box")
+                    count = 0
+                    testimg = ""
+                    for npc in party:
+                        imtag = npc.findChildren("img", class_="img-npc", recursive=True)[0]
+                        ring = npc.findChildren("div", class_="ico-augment2-m", recursive=True)
+                        self.dlAndPasteImage(img, imtag['src'].replace('img_low', 'img'), (10+78*count, 202), (78, 142))
+                        if len(ring) > 0:
+                            self.dlAndPasteImage(img, "http://game-a.granbluefantasy.jp/assets_en/img/sp/ui/icon/augment2/icon_augment2_l.png", (10+78*count, 202), (30, 30))
+                        count += 1
+                    ifn = "{}_{}.png".format(id, datetime.utcnow().timestamp())
+                    img.save(ifn, "PNG")
+                    with open(ifn, 'rb') as infile:
+                        message = await self.bot.send('image', file=discord.File(infile))
+                        thumbnail = message.attachments[0].url
+                        self.bot.delFile(ifn)
+                except:
+                    thumbnail = None
+
                 if trophy == "No Trophy Displayed": title = "\u202d{} **{}**".format(self.bot.getEmote(rarity), name)
                 else: title = "\u202d{} **{}**▫️{}".format(self.bot.getEmote(rarity), name, trophy)
-
-                final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}{}\n{} Crew ▫️ {}\n{}".format(rank, comment, self.bot.getEmote('gw'), crew, scores), fields=fields, thumbnail=mc_url, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}{}\n{} Crew ▫️ {}\n{}{}{}".format(rank, comment, self.bot.getEmote('gw'), crew, scores, summons, star), thumbnail=thumbnail, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             else:
                 final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile is private", url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             await self.bot.cleanMessage(ctx, final_msg, 45)
