@@ -883,7 +883,7 @@ class GBF_Access(commands.Cog):
             if 'count' in crew: title += "▫️{}/30".format(crew['count'])
             if 'average' in crew: title += "▫️Rank {}".format(crew['average'])
             if 'online' in crew: title += "▫️{} online".format(crew['online'])
-            description = "💬 ``{}``".format(self.escape(crew['message'], True))
+            description = "💬 `{}`".format(self.escape(crew['message'], True))
             footer = ""
             fields = []
 
@@ -964,7 +964,7 @@ class GBF_Access(commands.Cog):
     def escape(self, s, lite=False): # escape markdown string
         # add the RLO character before
         if lite: return '\u202d' + s.replace('\\', '\\\\').replace('`', '\\`')
-        else: return '\u202d' + s.replace('\\', '\\\\').replace('`', '\\`').replace('*', '\\*').replace('_', '\\_').replace('{', '\\{').replace('}', '\\}').replace('[', '').replace(']', '').replace('(', '\\(').replace(')', '\\)').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('.', '\\.').replace('!', '\\!').replace('|', '\\|')
+        else: return '\u202d' + s.replace('\\', '\\\\').replace('`', '\'').replace('*', '\\*').replace('_', '\\_').replace('{', '\\{').replace('}', '\\}').replace('[', '').replace(']', '').replace('(', '\\(').replace(')', '\\)').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('.', '\\.').replace('!', '\\!').replace('|', '\\|')
 
     async def requestCrew(self, id : int, page : int): # get crew data
         if page == 0: return await self.bot.sendRequest("http://game.granbluefantasy.jp/guild_other/guild_info/{}?_=TS1&t=TS2&uid=ID".format(id), account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
@@ -1510,8 +1510,8 @@ class GBF_Access(commands.Cog):
                 trophy = soup.find_all("div", class_="prt-title-name")[0].string
                 comment = su.unescape(soup.find_all("div", class_="prt-other-comment")[0].string).replace('\t', '').replace('\n', '')
                 if comment == "": pass
-                elif rank == "": comment = "💬 ``{}``".format(comment)
-                else: comment = " ▫️ 💬 ``{}``".format(comment)
+                elif rank == "": comment = "💬 `{}`".format(comment.replace('`', '\''))
+                else: comment = " ▫️ 💬 `{}`".format(comment.replace('`', '\''))
                 mc_url = soup.find_all("img", class_="img-pc")[0]['src'].replace("/po/", "/talk/").replace("/img_low/", "/img/")
                 stats = soup.find_all("div", class_="num")
                 hp = int(stats[0].string)
@@ -1575,7 +1575,7 @@ class GBF_Access(commands.Cog):
                     try: msg += " ▫️ **{}** EMP".format(self.empre.findall(star_section)[0]) # emp
                     except: pass
                     starcom = self.starcomre.findall(star_section)
-                    if starcom is not None and starcom[0] != "(Blank)": msg += "\n\u202d💬 ``{}``".format(su.unescape(starcom[0]))
+                    if starcom is not None and starcom[0] != "(Blank)": msg += "\n\u202d💬 `{}`".format(su.unescape(starcom[0].replace('`', '\'')))
                     star = "\n\n{} **Star Character**\n{}".format(self.bot.getEmote('skill2'), msg)
                 except:
                     star = ""
