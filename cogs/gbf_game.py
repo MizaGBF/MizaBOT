@@ -619,12 +619,14 @@ class GBF_Game(commands.Cog):
                     result = self.tenDrawsExtended(3*l, roll//10)
                     count = sum(result[:3])
                     rate = (100*result[2]/count)
-                    msg += "{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
-                    for i in result[3]:
-                        msg += i
-                        if result[3][i] > 1: msg += " x{}".format(result[3][i])
-                        if i is list(result[3])[-1]: msg += "\n**{:.2f}%** SSR rate\n\n".format(rate)
-                        else: msg += ", "
+                    msg += "{} {} ▫️ {} {} ▫️ {} {}\n".format(result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'))
+                    if result[2] > 0:
+                        msg += "{} ".format(self.bot.getEmote('SSR'))
+                        for i in result[3]:
+                            msg += i
+                            if result[3][i] > 1: msg += " x{}".format(result[3][i])
+                            if i is list(result[3])[-1]: msg += "\n**{:.2f}%** SSR rate\n\n".format(rate)
+                            else: msg += ", "
                 except: # legacy mode
                     count = sum(result)
                     result = self.tenDraws(300*l, roll//10)
