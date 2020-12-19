@@ -145,7 +145,7 @@ class GBF_Game(commands.Cog):
                 r = self.getRollExtended(3*l)
                 result[r[0]] += 1
                 msg = "{} {} ▫️ {} {} ▫️ {} {}\n" + "{} {}".format(self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
-                while rateup and l == 1 and (r[0] != 2 or not r[1].startswith('**')) and sum(result) % 5 != 0: # roll twice for slower modes if no rate up ssr
+                while rateup and (r[0] != 2 or not r[1].startswith('**')) and sum(result) % 5 != 0: # roll twice for slower modes if no rate up ssr
                     r = self.getRollExtended(3*l)
                     result[r[0]] += 1
                     msg += "\n{} {}".format(self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
@@ -246,6 +246,13 @@ class GBF_Game(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} sparked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         await self.bot.cleanMessage(ctx, final_msg, 30)
 
+    async def genGachapin(self, mode):
+        try:
+            await self.checkGacha()
+            return 0, self.tenDrawsExtended(3*mode, 0, 1)
+        except: #legacy mode
+            return 1, self.tenDraws(300*mode, 0, 1)
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['frenzy'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def gachapin(self, ctx, double : str = ""):
@@ -255,9 +262,8 @@ class GBF_Game(commands.Cog):
         l = self.isLegfest(double)
         if l == 2: footer = "6% SSR rate"
         else: footer = "3% SSR rate"
-        try:
-            await self.checkGacha()
-            result = self.tenDrawsExtended(3*l, 0, 1)
+        gtype, result = await self.genGachapin(l)
+        if gtype == 0:
             count = sum(result[:3])
             msg = "Gachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
             for i in result[3]:
@@ -266,13 +272,19 @@ class GBF_Game(commands.Cog):
                 msg += ", "
             if len(result[3]) > 0: msg = msg[:-2]
             msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/count)
-        except: #legacy mode
-            result = self.tenDraws(300*l, 0, 1)
+        elif gtype == 1: #legacy mode
             count = sum(result)
             msg = "Gachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
 
         final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} rolled the Gachapin".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         await self.bot.cleanMessage(ctx, final_msg, 25)
+
+    async def genMukku(self, rate, mode):
+        try:
+            await self.checkGacha()
+            return 0, self.tenDrawsExtended(rate//100, 0, mode)
+        except: #legacy mode
+            return 1, self.tenDraws(rate, 0, mode)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['mook'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
@@ -287,8 +299,8 @@ class GBF_Game(commands.Cog):
             footer = "9% SSR rate"
             rate = 900
             mode = 1
-        try:
-            await self.checkGacha()
+        gtype, result = await self.genMukku(rate, mode)
+        if gtype == 0:
             result = self.tenDrawsExtended(rate//100, 0, mode)
             count = sum(result[:3])
             msg = "Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
@@ -298,8 +310,7 @@ class GBF_Game(commands.Cog):
                 msg += ", "
             if len(result[3]) > 0: msg = msg[:-2]
             msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/count)
-        except: #legacy mode
-            result = self.tenDraws(rate, 0, mode)
+        elif gtype == 1: #legacy mode
             count = sum(result)
             msg = "Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
 
@@ -540,81 +551,138 @@ class GBF_Game(commands.Cog):
         l = self.isLegfest(double)
         if l == 2: footer = "6% SSR rate"
         else: footer = "3% SSR rate"
-        mode = 0
         roll = 0
         rps = ['rock', 'paper', 'scissor']
-        d = random.randint(1, 36000)
         ct = self.bot.getJST()
         # customization settings
-        fix200S = ct.replace(year=2020, month=3, day=29, hour=18, minute=0, second=0, microsecond=0)
-        fix200E = fix200S.replace(day=31, hour=5)
-        forced3pc = False
-        forcedRollCount = 100
-        enable200 = False
-        enableJanken = False
-        if ct >= fix200S and ct < fix200E:
-            msg = "{} {} :confetti_ball: :tada: Guaranteed **{} 0 0** R O L L S :tada: :confetti_ball: {} {}".format(self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), forcedRollCount//100, self.bot.getEmote('crystal'), self.bot.getEmote('crystal'))
-            roll = forcedRollCount // 10
-            d = 0
+        fixedS = ct.replace(year=2021, month=1, day=4, hour=18, minute=0, second=0, microsecond=0) # beginning of fixed rolls
+        fixedE = fixedS.replace(day=6, hour=5) # end of fixed rolls
+        forced3pc = False # force 3%
+        forcedRollCount = 200 # number of rolls during fixed rolls
+        enable200 = False # add 200 on wheel
+        enableJanken = True
+        # settings end
+        state = 0
+        superFlag = False
+        if ct >= fixedS and ct < fixedE:
+            msg = "{} {} :confetti_ball: :tada: Guaranteed **{} 0 0** R O L L S :tada: :confetti_ball: {} {}\n".format(self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), forcedRollCount//100, self.bot.getEmote('crystal'), self.bot.getEmote('crystal'))
+            roll = forcedRollCount
+            superFlag = True
             if l == 2 and forced3pc:
                 footer = "3% SSR rate ▪️ You won't get legfest rates, you fool"
                 l = 1
-            mode = 3
-        elif enable200 and d < 300:
-            msg = "{} {} :confetti_ball: :tada: **2 0 0 R O L L S** :tada: :confetti_ball: {} {}".format(self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'))
-            roll = 20
-        elif d < 1500:
-            msg = "**Gachapin Frenzy** :four_leaf_clover:"
-            mode = 1
-        elif d < 2000:
-            msg = ":confetti_ball: :tada: **100** rolls!! :tada: :confetti_ball:"
-            roll = 10
-        elif d < 6200:
-            msg = "**30** rolls! :clap:"
-            roll = 3
-        elif d < 18000:
-            msg = "**20** rolls :open_mouth:"
-            roll = 2
+            d = 0
+            state = 1
         else:
-            msg = "**10** rolls :pensive:"
-            roll = 1
-        # janken
-        if enableJanken and d >= 2000 and random.randint(0, 2) > 0:
-            a = 0
-            b = 0
-            while a == b:
-                a = random.randint(0, 2)
-                b = random.randint(0, 2)
-            msg += "\nYou got **{}**, Gachapin got **{}**".format(rps[a], rps[b])
-            if (a == 1 and b == 0) or (a == 2 and b == 1) or (a == 0 and b == 2):
-                msg += " :thumbsup:\nYou **won** rock paper scissor, your rolls are **doubled** :confetti_ball:"
-                roll = roll * 2
+            d = random.randint(1, 36000)
+            if enable200 and d < 300:
+                msg = "{} {} :confetti_ball: :tada: **2 0 0 R O L L S** :tada: :confetti_ball: {} {}\n".format(self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'))
+                roll = 200
+            elif d < 1500:
+                msg = "**Gachapin Frenzy** :four_leaf_clover:\n"
+                roll = -1
+                state = 2
+            elif d < 2000:
+                msg = ":confetti_ball: :tada: **100** rolls!! :tada: :confetti_ball:\n"
+                roll = 100
+            elif d < 6200:
+                msg = "**30** rolls! :clap:\n"
+                roll = 30
+            elif d < 18000:
+                msg = "**20** rolls :open_mouth:\n"
+                roll = 20
             else:
-                msg += " :pensive:"
-        # rolls
-        if mode == 0 or mode == 3:
-            result = self.tenDraws(300*l, roll)
-            msg += "\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/(roll*10))
-        elif mode == 1:
-            result = self.tenDraws(300*l, 0, 1)
-            count = result[0]+result[1]+result[2]
-            msg += "\nGachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
-            if count == 10 and random.randint(1, 100) < 99: mode = 2
-            elif count == 20 and random.randint(1, 100) < 60: mode = 2
-            elif count == 30 and random.randint(1, 100) < 30: mode = 2
+                msg = "**10** rolls :pensive:\n"
+                roll = 10
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} is spinning the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        if not enableJanken: state = 1
+        running = True
+        while running:
+            await asyncio.sleep(2)
+            if state == 0: # RPS
+                if enableJanken and d >= 2000 and random.randint(0, 2) > 0:
+                    a = 0
+                    b = 0
+                    while a == b:
+                        a = random.randint(0, 2)
+                        b = random.randint(0, 2)
+                    msg += "You got **{}**, Gachapin got **{}**".format(rps[a], rps[b])
+                    if (a == 1 and b == 0) or (a == 2 and b == 1) or (a == 0 and b == 2):
+                        msg += " :thumbsup:\nYou **won** rock paper scissor, your rolls are **doubled** :confetti_ball:\n"
+                        roll = roll * 2
+                    else:
+                        msg += " :pensive:\n"
+                state = 1
+            elif state == 1: # normal rolls
+                try:
+                    await self.checkGacha()
+                    result = self.tenDrawsExtended(3*l, roll//10)
+                    count = sum(result[:3])
+                    rate = (100*result[2]/count)
+                    msg += "{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
+                    for i in result[3]:
+                        msg += i
+                        if result[3][i] > 1: msg += " x{}".format(result[3][i])
+                        if i is list(result[3])[-1]: msg += "\n**{:.2f}%** SSR rate\n\n".format(rate)
+                        else: msg += ", "
+                except: # legacy mode
+                    count = sum(result)
+                    result = self.tenDraws(300*l, roll//10)
+                    msg += "{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n\n".format(result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
+                if superFlag: state = 4
+                else: running = False
+            elif state == 2: # gachapin
+                gtype, result = await self.genGachapin(l)
+                if gtype == 0:
+                    count = sum(result[:3])
+                    msg += "Gachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
+                    for i in result[3]:
+                        msg += i
+                        if result[3][i] > 1: msg += " x{}".format(result[3][i])
+                        msg += ", "
+                    if len(result[3]) > 0: msg = msg[:-2]
+                    msg += "\n**{:.2f}%** SSR rate\n\n".format(100*result[2]/count)
+                elif gtype == 1: #legacy mode
+                    count = sum(result)
+                    msg += "Gachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
+                if count == 10 and random.randint(1, 100) < 99: state = 3
+                elif count == 20 and random.randint(1, 100) < 60: state = 3
+                elif count == 30 and random.randint(1, 100) < 30: state = 3
+                else: running = False
+            elif state == 3:
+                gtype, result = await self.genMukku(900, 1)
+                if gtype == 0:
+                    count = sum(result[:3])
+                    msg += ":confetti_ball: Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
+                    for i in result[3]:
+                        msg += i
+                        if result[3][i] > 1: msg += " x{}".format(result[3][i])
+                        msg += ", "
+                    if len(result[3]) > 0: msg = msg[:-2]
+                    msg += "\n**{:.2f}%** SSR rate\n\n".format(100*result[2]/count)
+                elif gtype == 1: #legacy mode
+                    count = sum(result)
+                    msg += "\n:confetti_ball: Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
+                running = False
+            elif state == 4:
+                gtype, result = await self.genMukku(1500, 2)
+                if gtype == 0:
+                    count = sum(result[:3])
+                    msg += ":confetti_ball: **Super Mukku** stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
+                    for i in result[3]:
+                        msg += i
+                        if result[3][i] > 1: msg += " x{}".format(result[3][i])
+                        msg += ", "
+                    if len(result[3]) > 0: msg = msg[:-2]
+                    msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/count)
+                elif gtype == 1: #legacy mode
+                    count = sum(result)
+                    msg += ":confetti_ball: **Super Mukku** stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
+                running = False
 
-        if mode == 2:
-            result = self.tenDraws(900, 0, 1)
-            count = result[0]+result[1]+result[2]
-            msg += "\n:confetti_ball: Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
+            await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
 
-        if mode == 3:
-            result = self.tenDraws(1500, 0, 2)
-            count = result[0]+result[1]+result[2]
-            msg += "\n:confetti_ball: :confetti_ball: **Super Mukku** stopped after **{}** rolls :confetti_ball: :confetti_ball:\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
-
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        await self.bot.cleanMessage(ctx, final_msg, 30)
+        await self.bot.cleanMessage(ctx, final_msg, 45)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 600, commands.BucketType.user)
