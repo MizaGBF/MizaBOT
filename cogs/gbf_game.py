@@ -559,8 +559,9 @@ class GBF_Game(commands.Cog):
         fixedE = fixedS.replace(day=6, hour=5) # end of fixed rolls
         forced3pc = False # force 3%
         forcedRollCount = 200 # number of rolls during fixed rolls
-        enable200 = False # add 200 on wheel
+        enable200 = True # add 200 on wheel
         enableJanken = True
+        maxJanken = 2 # number of RPS
         # settings end
         state = 0
         superFlag = False
@@ -610,9 +611,15 @@ class GBF_Game(commands.Cog):
                     if (a == 1 and b == 0) or (a == 2 and b == 1) or (a == 0 and b == 2):
                         msg += " :thumbsup:\nYou **won** rock paper scissor, your rolls are **doubled** :confetti_ball:\n"
                         roll = roll * 2
+                        if roll > (200 if enable200 else 100): roll = (200 if enable200 else 100)
+                        maxJanken -= 1
+                        if maxJanken == 0:
+                            state = 1
                     else:
                         msg += " :pensive:\n"
-                state = 1
+                        state = 1
+                else:
+                    state = 1
             elif state == 1: # normal rolls
                 try:
                     await self.checkGacha()

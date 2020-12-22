@@ -1580,22 +1580,40 @@ class GBF_Access(commands.Cog):
                 except:
                     star = ""
 
-                try:
-                    img = Image.new('RGB', (410, 354), "black")
+                try: # image processing
+                    img = Image.new('RGB', (410, 370), "black")
                     d = ImageDraw.Draw(img, 'RGBA')
+                    font = ImageFont.truetype("assets/font.ttf", 16)
                     self.dlAndPasteImage(img, mc_url.replace("/talk/", "/po/"), (-40, -80), None)
                     self.dlAndPasteImage(img, soup.find_all('img', class_='img-weapon')[0].attrs['src'].replace('img_low', 'img'), (244, 20), (78, 164))
                     self.dlAndPasteImage(img, soup.find_all('img', class_='img-summon')[0].attrs['src'].replace('img_low', 'img'), (322, 20), (78, 164))
-                    party = soup.find_all("div", class_="prt-npc-box")
+                    
+                    # party members
+                    party_section = soup.find_all("div", class_="prt-party-npc")[0]
+                    party = party_section.findChildren("div", class_="prt-npc-box", recursive=True)
                     count = 0
-                    testimg = ""
                     for npc in party:
                         imtag = npc.findChildren("img", class_="img-npc", recursive=True)[0]
                         ring = npc.findChildren("div", class_="ico-augment2-m", recursive=True)
                         self.dlAndPasteImage(img, imtag['src'].replace('img_low', 'img'), (10+78*count, 202), (78, 142))
                         if len(ring) > 0:
                             self.dlAndPasteImage(img, "http://game-a.granbluefantasy.jp/assets_en/img/sp/ui/icon/augment2/icon_augment2_l.png", (10+78*count, 202), (30, 30))
+                        
+                        plus = npc.findChildren("div", class_="prt-quality", recursive=True)
+                        if len(plus) > 0:
+                            d.text((40+78*count, 314), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
                         count += 1
+
+                    # levels
+                    party = party_section.findChildren("div", class_="prt-npc-level", recursive=True)
+                    count = 0
+                    for lvl in party:
+                        d.rectangle([(10+78*count, 344), (10+78*(count+1), 364)], fill=(0, 0, 0, 150), outline=(255, 255, 255), width=1)
+                        d.text((16+78*count, 341), lvl.text.strip(), fill=(255, 255, 255), font=font)
+                        count += 1
+
+                    # id
+                    d.text((0, 0), "{}".format(id), fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
                     ifn = "{}_{}.png".format(id, datetime.utcnow().timestamp())
                     img.save(ifn, "PNG")
                     with open(ifn, 'rb') as infile:

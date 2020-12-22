@@ -547,6 +547,12 @@ class GBF_Utility(commands.Cog):
         """Post a link to my autistic Arcanum Sheet"""
         await ctx.send(embed=self.bot.buildEmbed(title="Arcanum Tracking Sheet", description=self.bot.strings["arcanum()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/item/article/s/250{:02d}.jpg".format(random.randint(1, 46)), color=self.color))
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['eternals', 'transcendence', 'transc'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def eternal(self, ctx):
+        """Post a link to my autistic Eternal Sheet"""
+        await ctx.send(embed=self.bot.buildEmbed(title="Eternal Transcendance Tracking Sheet", description=self.bot.strings["eternal()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/npc/s/30400{}.jpg".format(random.choice(['30000_04', '31000_04', '32000_03', '33000_03', '34000_03', '35000_03', '36000_03', '37000_03', '38000_03', '39000_03'])), color=self.color))
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['sparktracker'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def rollTracker(self, ctx):
