@@ -1585,8 +1585,23 @@ class GBF_Access(commands.Cog):
                     d = ImageDraw.Draw(img, 'RGBA')
                     font = ImageFont.truetype("assets/font.ttf", 16)
                     self.dlAndPasteImage(img, mc_url.replace("/talk/", "/po/"), (-40, -80), None)
-                    self.dlAndPasteImage(img, soup.find_all('img', class_='img-weapon')[0].attrs['src'].replace('img_low', 'img'), (244, 20), (78, 164))
-                    self.dlAndPasteImage(img, soup.find_all('img', class_='img-summon')[0].attrs['src'].replace('img_low', 'img'), (322, 20), (78, 164))
+
+                    equip = soup.find_all('div', class_='prt-equip-image')
+                    for eq in equip:
+                        mh = eq.findChildren('img', class_='img-weapon', recursive=True)
+                        if len(mh) > 0: # mainhand
+                            self.dlAndPasteImage(img, mh[0].attrs['src'].replace('img_low', 'img'), (244, 20), (78, 164))
+                            plus = eq.findChildren("div", class_="prt-weapon-quality", recursive=True)
+                            if len(plus) > 0:
+                                d.text((274, 154), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
+                            continue
+                        ms = eq.findChildren('img', class_='img-summon', recursive=True)
+                        if len(ms) > 0: # main summon
+                            self.dlAndPasteImage(img, ms[0].attrs['src'].replace('img_low', 'img'), (322, 20), (78, 164))
+                            plus = eq.findChildren("div", class_="prt-summon-quality", recursive=True)
+                            if len(plus) > 0:
+                                d.text((352, 154), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
+                            continue
                     
                     # party members
                     party_section = soup.find_all("div", class_="prt-party-npc")[0]
@@ -2187,6 +2202,34 @@ class GBF_Access(commands.Cog):
             else: return self.bot.sendRequestNoAsync("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?_=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page), account=self.bot.gbfcurrent, decompress=True, load_json=True)
         except:
             return None
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['lightchads', 'lightards', 'lightard'])
+    @isOwner()
+    async def lightchad(self, ctx):
+        """WIP"""
+        ids = [20570061, 1539029, 14506879, 21950001]
+        gwnum = None # use?
+        array = []
+        for id in ids:
+            data = await self.searchGWDBPlayer(ctx, id, 2)
+            if data is not None and data[1] is not None:
+                if gwnum is None: gwnum = data[1].get('gw', None)
+                if len(array) == 0: array.append(data[1]['result'][0])
+                else:
+                    for i in range(0, len(array)):
+                        if array[i][3] < data[1]['result'][0][3]:
+                            array.insert(i, data[1]['result'][0])
+                            break
+                        if i == len(array) - 1:
+                            array.append(data[1]['result'][0])
+        
+        msg = ""
+        for p in array:
+            msg += "[{}](http://game.granbluefantasy.jp/#profile/{}) :white_small_square: {}\n".format(p[2], p[1], self.honorFormat(p[3]))
+        if msg == "":
+            msg = "No lightCHADs found in the ranking"
+        
+        await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ LightCHADs", description=msg, thumbnail="https://media.discordapp.net/attachments/614716155646705676/791301455239708714/447748562571362304.png", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwlead', 'gwcompare', 'gwcmp'])
     @commands.cooldown(2, 15, commands.BucketType.user)

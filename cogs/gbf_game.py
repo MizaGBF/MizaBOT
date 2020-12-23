@@ -557,7 +557,7 @@ class GBF_Game(commands.Cog):
         # customization settings
         fixedS = ct.replace(year=2021, month=1, day=4, hour=18, minute=0, second=0, microsecond=0) # beginning of fixed rolls
         fixedE = fixedS.replace(day=6, hour=5) # end of fixed rolls
-        forced3pc = False # force 3%
+        forced3pc = True # force 3%
         forcedRollCount = 200 # number of rolls during fixed rolls
         enable200 = True # add 200 on wheel
         enableJanken = True
