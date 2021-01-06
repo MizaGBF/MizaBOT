@@ -2216,16 +2216,14 @@ class GBF_Access(commands.Cog):
             return None
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['lightchads', 'lightards', 'lightard'])
-    @isOwner()
+    @commands.cooldown(1, 40, commands.BucketType.guild)
     async def lightchad(self, ctx):
-        """WIP"""
+        """No comment on this thing"""
         ids = [20570061, 1539029, 14506879, 21950001, 7636084]
-        gwnum = None # use?
         array = []
         for id in ids:
             data = await self.searchGWDBPlayer(ctx, id, 2)
             if data is not None and data[1] is not None:
-                if gwnum is None: gwnum = data[1].get('gw', None)
                 if len(array) == 0: array.append(data[1]['result'][0])
                 else:
                     for i in range(0, len(array)):
@@ -2241,7 +2239,8 @@ class GBF_Access(commands.Cog):
         if msg == "":
             msg = "No lightCHADs found in the ranking"
         
-        await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ LightCHADs", description=msg, thumbnail="https://media.discordapp.net/attachments/614716155646705676/791301455239708714/447748562571362304.png", color=self.color))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ LightCHADs", description=msg, thumbnail="https://media.discordapp.net/attachments/614716155646705676/791301455239708714/447748562571362304.png", color=self.color))
+        await self.bot.cleanMessage(ctx, final_msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwlead', 'gwcompare', 'gwcmp'])
     @commands.cooldown(2, 15, commands.BucketType.user)
