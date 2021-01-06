@@ -331,7 +331,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "7.8" # version number
+        self.botversion = "7.9" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Added `$eternals`", "Generate a picture when `$profile` is used", "Added back `$mizatube` (no fancy search function)", "Removed `$summon`", "Added `$blackjack`", "Added `$recruit` to check recruiting /gbfg/ crews"] # bot changelog
         self.running = True # if True, the bot is running
@@ -751,7 +751,8 @@ class Mizabot(commands.Bot):
             await msg.add_reaction(self.getEmote(key))
             return True
         except Exception as e:
-            await self.sendError('react', str(e))
+            if str(e) != "404 Not Found (error code: 10008): Unknown Message":
+                await self.sendError('react', str(e))
             return False
 
     async def unreact(self, msg, key): # remove a reaction using a custom emote defined in config.json
@@ -759,7 +760,8 @@ class Mizabot(commands.Bot):
             await msg.remove_reaction(self.getEmote(key), msg.guild.me)
             return True
         except Exception as e:
-            await self.sendError('unreact', str(e))
+            if str(e) != "404 Not Found (error code: 10008): Unknown Message":
+                await self.sendError('unreact', str(e))
             return False
 
     async def cleanMessage(self, ctx, msg, timeout, all=False): # delete a message after X amount of time if posted in an unauthorized channel (all = False) or everywhere (all = True)
@@ -815,7 +817,9 @@ class Mizabot(commands.Bot):
             if "headers" in options:
                 headers = {**headers, **options["headers"]}
             id = options.get('account', None)
-            if id is not None: acc = self.getGBFAccount(id)
+            if id is not None:
+                acc = self.getGBFAccount(id)
+                if not options.get('force_down', False) and acc[3] == 2: return "Down"
             if options.get('check', False):
                 ver = await self.getGameversion()
             else:
@@ -850,10 +854,6 @@ class Mizabot(commands.Bot):
         except Exception as e:
             if options.get('error', False):
                 await self.sendError('sendRequest', 'Request failed for url `{}`\nCause \▫️ {}'.format(url, e))
-            try:
-                self.gbfaccounts[id][3] = 0
-                self.savePending = True
-            except: pass
             return None
 
     def sendRequestNoAsync(self, url, **options): # no asyncio version, for threaded functions
@@ -902,10 +902,6 @@ class Mizabot(commands.Bot):
         except Exception as e:
             if options.get('error', False):
                 print('Exception in sendRequestNoAsync()\n', 'Request failed for url `{}`\nCause \▫️ {}'.format(url, e))
-            try:
-                self.gbfaccounts[id][3] = 0
-                self.savePending = True
-            except: pass
             return None
 
     def getGBFAccount(self, id : int = 0): # retrive one of our gbf account

@@ -210,6 +210,10 @@ class GBF_Access(commands.Cog):
                     self.bot.maintenance = {"state" : False, "time" : None, "duration" : 0}
                     self.bot.savePending = True
 
+            if self.bot.gbfaccounts[self.bot.gbfcurrent][3] == 2:
+                await asyncio.sleep(60)
+                continue
+
             try: # account refresh
                 await asyncio.sleep(0.001)
                 if 'test' in self.bot.gbfdata:
@@ -217,7 +221,7 @@ class GBF_Access(commands.Cog):
                     for i in range(0, len(self.bot.gbfaccounts)):
                         acc = self.bot.gbfaccounts[i]
                         if acc[3] == 0 or (acc[3] == 1 and (acc[5] is None or current_time - acc[5] >= timedelta(seconds=7200))):
-                            r = await self.bot.sendRequest(self.bot.gbfwatch['test'], account=i, decompress=True, load_json=True, check=True)
+                            r = await self.bot.sendRequest(self.bot.gbfwatch['test'], account=i, decompress=True, load_json=True, check=True, force_down=True)
                             if r is None or str(r.get('user_id', None)) != str(acc[0]):
                                 await self.bot.send('debug', embed=self.bot.buildEmbed(title="Account refresh", description="Account #{} is down".format(i) , color=self.color))
                                 self.bot.gbfaccounts[i][3] = 2
@@ -804,6 +808,8 @@ class GBF_Access(commands.Cog):
                 get = await self.requestCrew(id, i)
                 if get == "Maintenance":
                     return {'error':'Maintenance'}
+                elif get == "Down":
+                    return {'error':'Unavailable'}
                 if get is None:
                     if i == 0: # if error on page 0, the crew doesn't exist
                         self.badcrewcache.append(id)
@@ -1031,7 +1037,7 @@ class GBF_Access(commands.Cog):
             if not data['ratio'][0]['ratio'].startswith('3'):
                 banner_msg += " ▫️ **Premium Gala**"
             banner_msg += "\n"
-            possible_zodiac_wpn = ['Ramulus', 'Dormius', 'Gallinarius', 'Canisius', 'Porculius', 'Rodentius']
+            possible_zodiac_wpn = ['Ramulus', 'Dormius', 'Gallinarius', 'Canisius', 'Porculius', 'Rodentius', 'Bovinius']
             rateuplist = {'zodiac':[]} # SSR list
             rateup = [{'rate':0, 'list':{}}, {'rate':0, 'list':{}}, {'rate':0, 'list':{}}] # to store the gacha (for GBF_Game cog)
             for appear in data['appear']:
@@ -1167,7 +1173,7 @@ class GBF_Access(commands.Cog):
         if acc is None:
             await ctx.send(embed=self.bot.buildEmbed(title="GBF Account status", description="No accounts set in slot {}".format(id), color=self.color))
             return
-        r = await self.bot.sendRequest(self.bot.gbfwatch['test'], account=id, decompress=True, load_json=True, check=True)
+        r = await self.bot.sendRequest(self.bot.gbfwatch['test'], account=id, decompress=True, load_json=True, check=True, force_down=True)
         if r is None or r.get('user_id', None) != acc[0]:
             await self.bot.send('debug', embed=self.bot.buildEmbed(title="GBF Account status", description="Account #{} is down\nck: `{}`\nuid: `{}`\nua: `{}`\n".format(id, acc[0], acc[1], acc[2]) , color=self.color))
             self.bot.gbfaccounts[id][3] = 2
@@ -1389,7 +1395,9 @@ class GBF_Access(commands.Cog):
             if data == "Maintenance":
                 await ctx.send(embed=self.bot.buildEmbed(title="Set Profile Error", description="Game is in maintenance, try again later.", color=self.color))
                 return
-            if data is None:
+            elif data == "Down":
+                return
+            elif data is None:
                 await ctx.send(embed=self.bot.buildEmbed(title="Set Profile Error", description="Profile not found", color=self.color))
                 return
             for u in self.bot.gbfids:
@@ -1417,6 +1425,8 @@ class GBF_Access(commands.Cog):
             data = await self.getScoutData(id)
             if data == "Maintenance":
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Game is in maintenance", color=self.color))
+                return
+            elif data == "Down":
                 return
             elif len(data['user']) == 0:
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="In game message:\n`{}`".format(data['no_member_msg'].replace("<br>", " ")), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
@@ -1485,6 +1495,8 @@ class GBF_Access(commands.Cog):
             data = await self.getProfileData(id)
             if data == "Maintenance":
                 await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Game is in maintenance", color=self.color))
+                return
+            elif data == "Down":
                 return
             elif data is None:
                 self.badprofilecache.append(id)
@@ -2207,7 +2219,7 @@ class GBF_Access(commands.Cog):
     @isOwner()
     async def lightchad(self, ctx):
         """WIP"""
-        ids = [20570061, 1539029, 14506879, 21950001]
+        ids = [20570061, 1539029, 14506879, 21950001, 7636084]
         gwnum = None # use?
         array = []
         for id in ids:

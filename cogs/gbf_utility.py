@@ -541,11 +541,11 @@ class GBF_Utility(commands.Cog):
             image = ""
         await ctx.send(embed=self.bot.buildEmbed(title="(You) Public Google Drive", description=self.bot.strings["gdrive()"], thumbnail=image, color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['arcarum', 'arca', 'oracle', 'evoker', 'astra'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['arcarum', 'arca', 'oracle', 'evoker', 'astra', 'sandbox', 'veritas', 'newworld', 'luster'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def arcanum(self, ctx):
         """Post a link to my autistic Arcanum Sheet"""
-        await ctx.send(embed=self.bot.buildEmbed(title="Arcanum Tracking Sheet", description=self.bot.strings["arcanum()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/item/article/s/250{:02d}.jpg".format(random.randint(1, 46)), color=self.color))
+        await ctx.send(embed=self.bot.buildEmbed(title="Arcanum Tracking Sheet", description=self.bot.strings["arcanum()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/item/article/s/250{:02d}.jpg".format(random.randint(1, 74)), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['eternals', 'transcendence', 'transc'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
@@ -806,6 +806,9 @@ class GBF_Utility(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def premium(self, ctx):
         """Post the time to the next Premium Friday"""
+        await ctx.send(embed=self.bot.buildEmbed(title="{} Premium Friday".format(self.bot.getEmote('clock')), description="Friday went on an adventure...", url="http://game.granbluefantasy.jp", thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/584025273079562240/unknown.png", color=self.color))
+        return
+        ### disabled for now
         c = self.bot.getJST()
         d = c
         last = None
