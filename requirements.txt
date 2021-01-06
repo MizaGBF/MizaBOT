@@ -5,4 +5,4 @@ beautifulsoup4==4.8.1
 tweepy==3.8.0
 pillow==7.2.0
 leather==0.3.3
-cairosvg==2.5.0
+cairosvg==2.5.1
