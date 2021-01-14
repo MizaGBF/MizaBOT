@@ -262,9 +262,9 @@ class General(commands.Cog):
         try:
             possible = choices.split(";")
             if len(possible) < 2: raise Exception()
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{}'s choice".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=random.choice(possible), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(author={'name':"{}'s choice".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=random.choice(possible), color=self.color))
         except:
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Give me a list of something to choose from, separated by `;`", color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Give me a list of something to choose from, separated by `;`", color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 30)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['math'])
@@ -286,9 +286,9 @@ class General(commands.Cog):
                 msg += "\nwith:\n"
                 for k in d:
                     msg += "{} = {}\n".format(k, d[k])
-            await ctx.send(embed=self.bot.buildEmbed(title="Calculator", description=msg, color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Calculator", description=msg, color=self.color))
         except Exception as e:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description=str(e), color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Error", description=str(e), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 5, commands.BucketType.guild)
@@ -315,9 +315,9 @@ class General(commands.Cog):
                 if r.name == name or (exact == False and r.name.lower().find(name.lower()) != -1):
                     i += 1
         if exact != "exact":
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Roles containing: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon_url, footer="on server {}".format(g.name), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Roles containing: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon_url, footer="on server {}".format(g.name), color=self.color))
         else:
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Roles matching: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon_url, footer="on server {}".format(g.name), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Roles matching: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon_url, footer="on server {}".format(g.name), color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 20)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['hgg2d'])
@@ -325,7 +325,7 @@ class General(commands.Cog):
     async def hgg(self, ctx):
         """Post the latest /hgg2d/ threads"""
         if not ctx.channel.is_nsfw():
-            await ctx.send(embed=self.bot.buildEmbed(title=':underage: NSFW channels only'))
+            await ctx.reply(embed=self.bot.buildEmbed(title=':underage: NSFW channels only'))
             return
         threads = await self.get4chan('vg', '/hgg2d/')
         if len(threads) > 0:
@@ -338,9 +338,9 @@ class General(commands.Cog):
                 if len(msg) > 1800:
                     msg += 'and more...'
                     break
-            await ctx.send(embed=self.bot.buildEmbed(title="/hgg2d/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="/hgg2d/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
-            await ctx.send(embed=self.bot.buildEmbed(title="/hgg2d/ Error", description="I couldn't find a single /hgg2d/ thread 😔", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="/hgg2d/ Error", description="I couldn't find a single /hgg2d/ thread 😔", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['thread'])
     @commands.cooldown(1, 3, commands.BucketType.default)
@@ -357,9 +357,9 @@ class General(commands.Cog):
                 if len(msg) > 1800:
                     msg += 'and more...'
                     break
-            await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="/gbfg/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
-            await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ Error", description="I couldn't find a single /gbfg/ thread 😔", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="/gbfg/ Error", description="I couldn't find a single /gbfg/ thread 😔", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, name='4chan')
     @commands.cooldown(1, 3, commands.BucketType.default)
@@ -368,7 +368,7 @@ class General(commands.Cog):
         nsfw = ['b', 'r9k', 'pol', 'bant', 'soc', 's4s', 's', 'hc', 'hm', 'h', 'e', 'u', 'd', 'y', 't', 'hr', 'gif', 'aco', 'r']
         board = board.lower()
         if board in nsfw and not ctx.channel.is_nsfw():
-            await ctx.send(embed=self.bot.buildEmbed(title=":underage: The board `{}` is restricted to NSFW channels".format(board)))
+            await ctx.reply(embed=self.bot.buildEmbed(title=":underage: The board `{}` is restricted to NSFW channels".format(board)))
             return
         threads = await self.get4chan(board, term)
         if len(threads) > 0:
@@ -381,9 +381,9 @@ class General(commands.Cog):
                 if len(msg) > 1800:
                     msg += 'and more...'
                     break
-            await ctx.send(embed=self.bot.buildEmbed(title="4chan Search result", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="4chan Search result", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
-            await ctx.send(embed=self.bot.buildEmbed(title="4chan Search result", description="No matching threads found", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="4chan Search result", description="No matching threads found", color=self.color))
 
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['reminder'])
@@ -395,26 +395,26 @@ class General(commands.Cog):
         if id not in self.bot.reminders:
             self.bot.reminders[id] = []
         if len(self.bot.reminders[id]) >= 5 and ctx.author.id != self.bot.ids.get('owner', -1):
-            await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="Sorry, I'm limited to 5 reminders per user 🙇", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Reminder Error", description="Sorry, I'm limited to 5 reminders per user 🙇", color=self.color))
             return
         try:
             d = self.bot.makeTimedelta(duration)
             if d is None: raise Exception()
         except:
-            await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="Invalid duration string `{}`, format is `NdNhNm`".format(duration), color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Reminder Error", description="Invalid duration string `{}`, format is `NdNhNm`".format(duration), color=self.color))
             return
         if msg == "":
-            await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="Tell me what I'm supposed to remind you 🤔", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Reminder Error", description="Tell me what I'm supposed to remind you 🤔", color=self.color))
             return
         if len(msg) > 200:
-            await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="Reminders are limited to 200 characters", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Reminder Error", description="Reminders are limited to 200 characters", color=self.color))
             return
         try:
             self.bot.reminders[id].append([datetime.utcnow().replace(microsecond=0) + timedelta(seconds=32400) + d, msg]) # keep JST
             self.bot.savePending = True
             await self.bot.react(ctx.message, '✅') # white check mark
         except:
-            await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", footer="I have no clues about what went wrong", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Reminder Error", footer="I have no clues about what went wrong", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rl', 'reminderlist'])
     @commands.cooldown(1, 6, commands.BucketType.user)
@@ -422,13 +422,13 @@ class General(commands.Cog):
         """Post your current list of reminders"""
         id = str(ctx.author.id)
         if id not in self.bot.reminders or len(self.bot.reminders[id]) == 0:
-            await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="You don't have any reminders", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Reminder Error", description="You don't have any reminders", color=self.color))
         else:
             embed = discord.Embed(title="{}'s Reminder List".format(ctx.author.display_name), color=random.randint(0, 16777216)) # random color
             embed.set_thumbnail(url=ctx.author.avatar_url)
             for i in range(0, len(self.bot.reminders[id])):
                 embed.add_field(name="#{} ▫️ {:%Y/%m/%d %H:%M} JST".format(i, self.bot.reminders[id][i][0]), value=self.bot.reminders[id][i][1], inline=False)
-            await ctx.send(embed=embed)
+            await ctx.reply(embed=embed)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rd', 'reminderdel'])
     @commands.cooldown(2, 3, commands.BucketType.user)
@@ -436,10 +436,10 @@ class General(commands.Cog):
         """Delete one of your reminders"""
         id = str(ctx.author.id)
         if id not in self.bot.reminders or len(self.bot.reminders[id]) == 0:
-            await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="You don't have any reminders", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Reminder Error", description="You don't have any reminders", color=self.color))
         else:
             if rid < 0 or rid >= len(self.bot.reminders[id]):
-                await ctx.send(embed=self.bot.buildEmbed(title="Reminder Error", description="Invalid id `{}`".format(rid), color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="Reminder Error", description="Invalid id `{}`".format(rid), color=self.color))
             else:
                 self.bot.reminders[id].pop(rid)
                 if len(self.bot.reminders[id]) == 0:
@@ -503,7 +503,7 @@ class General(commands.Cog):
         if page < 1: page = 1
         roles = self.bot.assignablerole.get(str(ctx.guild.id), {})
         if len(roles) == 0:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="No self assignable roles available on this server", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Error", description="No self assignable roles available on this server", color=self.color))
             return
         if (page -1) >= len(roles) // 20:
             page = ((len(roles) - 1) // 20) + 1
@@ -525,7 +525,7 @@ class General(commands.Cog):
                 self.bot.savePending = True
             count += 1
 
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Self Assignable Roles", fields=fields, footer="Page {}/{}".format(page, 1+len(roles)//20), color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Self Assignable Roles", fields=fields, footer="Page {}/{}".format(page, 1+len(roles)//20), color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 30)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['nitro', 'here'])
@@ -581,7 +581,7 @@ class General(commands.Cog):
             card = str(random.randint(2, 14)) + random.choice(["D", "S", "H", "C"])
             if card not in hand:
                 hand.append(card)
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"{}'s hand".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="🎴, 🎴, 🎴, 🎴, 🎴", color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.buildEmbed(author={'name':"{}'s hand".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="🎴, 🎴, 🎴, 🎴, 🎴", color=self.color))
         for x in range(0, 5):
             await asyncio.sleep(1)
             # check result
@@ -612,17 +612,17 @@ class General(commands.Cog):
         if id in self.pokergames:
             if self.pokergames[id]['state'] == 'waiting':
                 if len(self.pokergames[id]['players']) >= 6:
-                    await self.bot.cleanMessage(ctx, (await ctx.send(embed=self.bot.buildEmbed(title="Error", description="This game is full", color=self.color))), 6)
+                    await self.bot.cleanMessage(ctx, (await ctx.reply(embed=self.bot.buildEmbed(title="Error", description="This game is full", color=self.color))), 6)
                 elif ctx.author.id not in self.pokergames[id]['players']:
                     self.pokergames[id]['players'].append(ctx.author.id)
                     await self.bot.react(ctx.message, '✅') # white check mark
                 else:
-                    await self.bot.cleanMessage(ctx, (await ctx.send(embed=self.bot.buildEmbed(title="Error", description="You are already in the next game", color=self.color))), 10)
+                    await self.bot.cleanMessage(ctx, (await ctx.reply(embed=self.bot.buildEmbed(title="Error", description="You are already in the next game", color=self.color))), 10)
             else:
-                await self.bot.cleanMessage(ctx, (await ctx.send(embed=self.bot.buildEmbed(title="Error", description="This game started", color=self.color))), 10)
+                await self.bot.cleanMessage(ctx, (await ctx.reply(embed=self.bot.buildEmbed(title="Error", description="This game started", color=self.color))), 10)
         else:
             self.pokergames[id] = {'state':'waiting', 'players':[ctx.author.id]}
-            msg = await ctx.send(embed=self.bot.buildEmbed(title="♠️ Multiplayer Poker ♥️", description="Starting in 30s\n1/6 players", footer="Use the poker command to join", color=self.color))
+            msg = await ctx.reply(embed=self.bot.buildEmbed(title="♠️ Multiplayer Poker ♥️", description="Starting in 30s\n1/6 players", footer="Use the poker command to join", color=self.color))
             cd = 29
             while cd >= 0:
                 await asyncio.sleep(1)
@@ -669,7 +669,7 @@ class General(commands.Cog):
                                 else:
                                     msg += hstr
                             msg += "\n"
-                if final_msg is None: final_msg = await ctx.send(embed=self.bot.buildEmbed(title="♠️ Multiplayer Poker ♥️", description=msg, color=self.color))
+                if final_msg is None: final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="♠️ Multiplayer Poker ♥️", description=msg, color=self.color))
                 else: await final_msg.edit(embed=self.bot.buildEmbed(title="♠️ Multiplayer Poker ♥️", description=msg, color=self.color))
                 await asyncio.sleep(2)
             self.pokergames.pop(id)
@@ -684,17 +684,17 @@ class General(commands.Cog):
         if id in self.blackjackgames:
             if self.blackjackgames[id]['state'] == 'waiting':
                 if len(self.blackjackgames[id]['players']) >= 6:
-                    await self.bot.cleanMessage(ctx, (await ctx.send(embed=self.bot.buildEmbed(title="Error", description="This game is full", color=self.color))), 6)
+                    await self.bot.cleanMessage(ctx, (await ctx.reply(embed=self.bot.buildEmbed(title="Error", description="This game is full", color=self.color))), 6)
                 elif ctx.author.id not in self.blackjackgames[id]['players']:
                     self.blackjackgames[id]['players'].append(ctx.author.id)
                     await self.bot.react(ctx.message, '✅') # white check mark
                 else:
-                    await self.bot.cleanMessage(ctx, (await ctx.send(embed=self.bot.buildEmbed(title="Error", description="You are already in the next game", color=self.color))), 10)
+                    await self.bot.cleanMessage(ctx, (await ctx.reply(embed=self.bot.buildEmbed(title="Error", description="You are already in the next game", color=self.color))), 10)
             else:
-                await self.bot.cleanMessage(ctx, (await ctx.send(embed=self.bot.buildEmbed(title="Error", description="This game started", color=self.color))), 10)
+                await self.bot.cleanMessage(ctx, (await ctx.reply(embed=self.bot.buildEmbed(title="Error", description="This game started", color=self.color))), 10)
         else:
             self.blackjackgames[id] = {'state':'waiting', 'players':[ctx.author.id]}
-            msg = await ctx.send(embed=self.bot.buildEmbed(title="♠️ Multiplayer Blackjack ♥️", description="Starting in 30s\n1/6 players", footer="Use the blackjack command to join", color=self.color))
+            msg = await ctx.reply(embed=self.bot.buildEmbed(title="♠️ Multiplayer Blackjack ♥️", description="Starting in 30s\n1/6 players", footer="Use the blackjack command to join", color=self.color))
             cd = 29
             while cd >= 0:
                 await asyncio.sleep(1)
@@ -753,7 +753,7 @@ class General(commands.Cog):
                     elif status[p]['state'] == 3: msg += "**21**\n"
                     elif status[p]['state'] == 2: msg += "Best {}\n".format(status[p]['score'])
                     else: msg += "{}\n".format(status[p]['score'])
-                if final_msg is None: final_msg = await ctx.send(embed=self.bot.buildEmbed(title="♠️ Multiplayer Blackjack ♥️", description=msg, color=self.color))
+                if final_msg is None: final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="♠️ Multiplayer Blackjack ♥️", description=msg, color=self.color))
                 else: await final_msg.edit(embed=self.bot.buildEmbed(title="♠️ Multiplayer Blackjack ♥️", description=msg, color=self.color))
                 await asyncio.sleep(2)
             self.blackjackgames.pop(id)

@@ -139,7 +139,7 @@ class GBF_Utility(commands.Cog):
                         for m in matches: # build the message with the results
                             desc += "[{}](https://gbf.wiki/{})\n".format(m, m.replace(" ", "_"))
                         desc = "First five results\n{}".format(desc)
-                        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Not Found, click here to refine", description=desc, url=url, color=self.color))
+                        final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Not Found, click here to refine", description=desc, url=url, color=self.color))
                     else: # direct access to the page (assume a match)
                         data = {}
                         # what we are interested in
@@ -208,7 +208,7 @@ class GBF_Utility(commands.Cog):
 
                         x = data.get('object', None)
                         if x is None: # if no match
-                            final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=data.get('description', None), image=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
+                            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title=title, description=data.get('description', None), image=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
                         elif x == 0: # charater
                             if 'title' in data: title = title + ", " + data['title']
                             if 'rarity' in data: title = "{} {}".format(self.bot.getEmote(data['rarity']), title)
@@ -223,9 +223,9 @@ class GBF_Utility(commands.Cog):
                                 desc = "This character has other versions\n"
                                 for e in elems:
                                     desc += "[{}](https://gbf.wiki/{})\n".format(e, e.replace(" ", "_"))
-                                final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=desc, image=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
+                                final_msg = await ctx.reply(embed=self.bot.buildEmbed(title=title, description=desc, image=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
                             except: # if none, just send the link
-                                final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=data.get('description', None), image=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
+                                final_msg = await ctx.reply(embed=self.bot.buildEmbed(title=title, description=data.get('description', None), image=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
                         else: # summon and weapon
                             # iterate all wikitable again
                             for t in tables:
@@ -342,7 +342,7 @@ class GBF_Utility(commands.Cog):
 
                             footer = data.get('id', None)
 
-                            final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=desc, thumbnail=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
+                            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title=title, description=desc, thumbnail=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 80)
 
 
@@ -352,7 +352,7 @@ class GBF_Utility(commands.Cog):
         """Search the GBF wiki"""
         final_msg = None
         if terms == "":
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Tell me what to search on the wiki", footer="wiki [search terms]", color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Tell me what to search on the wiki", footer="wiki [search terms]", color=self.color))
         else:
             # build the url (the wiki is case sensitive)
             arr = []
@@ -366,15 +366,15 @@ class GBF_Utility(commands.Cog):
                 url = "https://gbf.wiki/index.php?title=Special:Search&search={}".format(parse.quote_plus(terms))
                 if str(e) != "HTTP Error 404: Not Found": # unknown error, we stop here
                     await self.bot.sendError("wiki", str(e))
-                    final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Unexpected error, click here to search", url=url, footer=str(e), color=self.color))
+                    final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Unexpected error, click here to search", url=url, footer=str(e), color=self.color))
                 else: # failed, we try the search function
                     try:
                         await self.requestWiki(ctx, url, True) # try
                     except Exception as f:
                         if str(f) == "No results":
-                            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="No matches found", color=self.color)) # no results
+                            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="No matches found", color=self.color)) # no results
                         else:
-                            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Not Found, click here to refine", url=url, color=self.color)) # no results
+                            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Not Found, click here to refine", url=url, color=self.color)) # no results
         await self.bot.cleanMessage(ctx, final_msg, 45)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tweet'])
@@ -425,26 +425,26 @@ class GBF_Utility(commands.Cog):
 
         if accepted:
             if user is None:
-                await ctx.send(embed=self.bot.buildEmbed(title=target[0], url="https://twitter.com/{}".format(target[0]), description=target[1], thumbnail=pic, color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title=target[0], url="https://twitter.com/{}".format(target[0]), description=target[1], thumbnail=pic, color=self.color))
             else:
-                await ctx.send(embed=self.bot.buildEmbed(title=user.name, url="https://twitter.com/{}".format(target[0]), description=target[1], thumbnail=pic, color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title=user.name, url="https://twitter.com/{}".format(target[0]), description=target[1], thumbnail=pic, color=self.color))
         elif user is None:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="`{}` not found".format(term), color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Error", description="`{}` not found".format(term), color=self.color))
         elif ctx.channel.is_nsfw():
-            await ctx.send(embed=self.bot.buildEmbed(title=user.name, url="https://twitter.com/{}".format(user.screen_name), thumbnail=pic, color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title=user.name, url="https://twitter.com/{}".format(user.screen_name), thumbnail=pic, color=self.color))
         else:
-            await ctx.send(embed=self.bot.buildEmbed(title="NSFW protection", description="Check at your own risk\n[{}](https://twitter.com/{})".format(user.name, user.screen_name), color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="NSFW protection", description="Check at your own risk\n[{}](https://twitter.com/{})".format(user.name, user.screen_name), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     async def reddit(self, ctx):
         """Post a link to /r/Granblue_en
         You wouldn't dare, do you?"""
-        await ctx.send(embed=self.bot.buildEmbed(title="/r/Granblue_en/", url="https://www.reddit.com/r/Granblue_en/", thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/581522602325966864/lTgz7Yx_6n8VZemjf54viYVZgFhW2GlB6dlpj1ZwKbo.png", description="Disgusting :nauseated_face:", color=self.color))
+        await ctx.reply(embed=self.bot.buildEmbed(title="/r/Granblue_en/", url="https://www.reddit.com/r/Granblue_en/", thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/581522602325966864/lTgz7Yx_6n8VZemjf54viYVZgFhW2GlB6dlpj1ZwKbo.png", description="Disgusting :nauseated_face:", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['leech'])
     async def leechlist(self, ctx):
         """Post a link to /gbfg/ leechlist collection"""
-        await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ Leechlist", description=self.bot.strings["leechlist()"], thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/582191446182985734/unknown.png", color=self.color))
+        await ctx.reply(embed=self.bot.buildEmbed(title="/gbfg/ Leechlist", description=self.bot.strings["leechlist()"], thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/582191446182985734/unknown.png", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['time', 'st', 'reset', 'gbf'])
     @commands.cooldown(2, 2, commands.BucketType.guild)
@@ -539,80 +539,80 @@ class GBF_Utility(commands.Cog):
             image = self.bot.get_guild(self.bot.ids['you_server']).icon_url
         except:
             image = ""
-        await ctx.send(embed=self.bot.buildEmbed(title="(You) Public Google Drive", description=self.bot.strings["gdrive()"], thumbnail=image, color=self.color))
+        await ctx.reply(embed=self.bot.buildEmbed(title="(You) Public Google Drive", description=self.bot.strings["gdrive()"], thumbnail=image, color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['arcarum', 'arca', 'oracle', 'evoker', 'astra', 'sandbox', 'veritas', 'newworld', 'luster'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def arcanum(self, ctx):
         """Post a link to my autistic Arcanum Sheet"""
-        await ctx.send(embed=self.bot.buildEmbed(title="Arcanum Tracking Sheet", description=self.bot.strings["arcanum()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/item/article/s/250{:02d}.jpg".format(random.randint(1, 74)), color=self.color))
+        await ctx.reply(embed=self.bot.buildEmbed(title="Arcanum Tracking Sheet", description=self.bot.strings["arcanum()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/item/article/s/250{:02d}.jpg".format(random.randint(1, 74)), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['eternals', 'transcendence', 'transc'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def eternal(self, ctx):
         """Post a link to my autistic Eternal Sheet"""
-        await ctx.send(embed=self.bot.buildEmbed(title="Eternal Transcendance Tracking Sheet", description=self.bot.strings["eternal()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/npc/s/30400{}.jpg".format(random.choice(['30000_04', '31000_04', '32000_03', '33000_03', '34000_03', '35000_03', '36000_03', '37000_03', '38000_03', '39000_03'])), color=self.color))
+        await ctx.reply(embed=self.bot.buildEmbed(title="Eternal Transcendance Tracking Sheet", description=self.bot.strings["eternal()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/npc/s/30400{}.jpg".format(random.choice(['30000_04', '31000_04', '32000_03', '33000_03', '34000_03', '35000_03', '36000_03', '37000_03', '38000_03', '39000_03'])), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['sparktracker'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def rollTracker(self, ctx):
         """Post a link to my autistic roll tracking Sheet"""
-        await ctx.send(embed=self.bot.buildEmbed(title="{} GBF Roll Tracker".format(self.bot.getEmote('crystal')), description=self.bot.strings["rolltracker()"], color=self.color))
+        await ctx.reply(embed=self.bot.buildEmbed(title="{} GBF Roll Tracker".format(self.bot.getEmote('crystal')), description=self.bot.strings["rolltracker()"], color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwskin', 'blueskin'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def stayBlue(self, ctx):
         """Post a link to my autistic blue eternal outfit grinding Sheet"""
-        await ctx.send(embed=self.bot.buildEmbed(title="5* Eternal Skin Farming Sheet", description=self.bot.strings["stayblue()"], color=self.color))
+        await ctx.reply(embed=self.bot.buildEmbed(title="5* Eternal Skin Farming Sheet", description=self.bot.strings["stayblue()"], color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['soldier'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def bullet(self, ctx):
         """Post a link to my bullet grind Sheet"""
-        await ctx.send(embed=self.bot.buildEmbed(title="Bullet Grind Sheet", description=self.bot.strings["bullet()"], color=self.color))
+        await ctx.reply(embed=self.bot.buildEmbed(title="Bullet Grind Sheet", description=self.bot.strings["bullet()"], color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gbfgcrew', 'gbfgpastebin'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def pastebin(self, ctx):
         """Post a link to the /gbfg/ crew pastebin"""
-        await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ Guild Pastebin", description=self.bot.strings["pastebin()"], thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/582191446182985734/unknown.png", color=self.color))
+        await ctx.reply(embed=self.bot.buildEmbed(title="/gbfg/ Guild Pastebin", description=self.bot.strings["pastebin()"], thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/582191446182985734/unknown.png", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tracker'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def dps(self, ctx):
         """Post the custom Combat tracker"""
-        await ctx.send(embed=self.bot.buildEmbed(title="GBF Combat Tracker", description=self.bot.strings["dps()"], color=self.color))
+        await ctx.reply(embed=self.bot.buildEmbed(title="GBF Combat Tracker", description=self.bot.strings["dps()"], color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['raidfinder', 'python_raidfinder'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def pyfinder(self, ctx):
         """Post the (You) python raidfinder"""
-        await ctx.send(embed=self.bot.buildEmbed(title="(You) Python Raidfinder", description=self.bot.strings["pyfinder()"], color=self.color))
+        await ctx.reply(embed=self.bot.buildEmbed(title="(You) Python Raidfinder", description=self.bot.strings["pyfinder()"], color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 20, commands.BucketType.guild)
     async def mizatube(self, ctx):
         """Post the owner youtube channel"""
         if 'mizatube()' in self.bot.strings:
-            await ctx.send(embed=self.bot.buildEmbed(title="Mizatube:tm:", description="[Link]({})".format(self.bot.strings['mizatube()']), footer="Subscribe ;)", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Mizatube:tm:", description="[Link]({})".format(self.bot.strings['mizatube()']), footer="Subscribe ;)", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['ubhl', 'ubahahl'])
     @commands.cooldown(1, 15, commands.BucketType.guild)
     async def ubaha(self, ctx):
         """Post the Ultimate Bahamut HL Triggers"""
-        await ctx.send(embed=self.bot.buildEmbed(title="Empyreal Ascension (Impossible)", url="https://gbf.wiki/Ultimate_Bahamut_(Raid)#impossible", description="**95%**{} Daedalus Wing (uplift)\n**85%**{} Deadly Flare (dispel)\n**80%**♦️ charge diamonds\n**75%**{} Virtuous Verse (swap)\n**70%**{} The Rage (local debuffs)\n**70-50%**♦️ charge diamonds in OD\n**55%**{} Deadly Flare (stone)\n**50 & 40**%{} Sirius (4x30% plain)\n**45 & 35**%▫️ Sirius\n**28%**♦️ charge diamonds\n**22%**{} Ultima Blast (dispel)\n**15%**{} Skyfall Ultimus\n**10% & 1%**▫️ Cosmic Collision\n**5%**{} Deadly Flare".format(self.bot.getEmote('wind'), self.bot.getEmote('fire'), self.bot.getEmote('earth'), self.bot.getEmote('light'), self.bot.getEmote('fire'), self.bot.getEmote('misc'), self.bot.getEmote('water'), self.bot.getEmote('dark'), self.bot.getEmote('dark')), footer="Stay blue", color=self.color))
+        await ctx.reply(embed=self.bot.buildEmbed(title="Empyreal Ascension (Impossible)", url="https://gbf.wiki/Ultimate_Bahamut_(Raid)#impossible", description="**95%**{} Daedalus Wing (uplift)\n**85%**{} Deadly Flare (dispel)\n**80%**♦️ charge diamonds\n**75%**{} Virtuous Verse (swap)\n**70%**{} The Rage (local debuffs)\n**70-50%**♦️ charge diamonds in OD\n**55%**{} Deadly Flare (stone)\n**50 & 40**%{} Sirius (4x30% plain)\n**45 & 35**%▫️ Sirius\n**28%**♦️ charge diamonds\n**22%**{} Ultima Blast (dispel)\n**15%**{} Skyfall Ultimus\n**10% & 1%**▫️ Cosmic Collision\n**5%**{} Deadly Flare".format(self.bot.getEmote('wind'), self.bot.getEmote('fire'), self.bot.getEmote('earth'), self.bot.getEmote('light'), self.bot.getEmote('fire'), self.bot.getEmote('misc'), self.bot.getEmote('water'), self.bot.getEmote('dark'), self.bot.getEmote('dark')), footer="Stay blue", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['darkrapture', 'rapture', 'faa', 'luci', 'lucihl', 'luciliushl'])
     @commands.cooldown(1, 30, commands.BucketType.guild)
     async def lucilius(self, ctx):
         """Post the Lucilius HL Triggers"""
-        await ctx.send(embed=self.bot.buildEmbed(title="Dark Rapture (Hard)", url="https://gbf.wiki/Lucilius_(Raid)#Impossible_.28Hard.29", fields = [{'name': "{} Black Wings".format(self.bot.getEmote('1')), 'value':'**N **{} Phosphosrus (single)\n**OD**{} Iblis (multi, debuffs)\n**OD, both**▫️ Paradise Lost (party)\n**Join**{} Paradise Lost (30K)\n**70%**▫️ Sephiroth (debuff wipe)\n**50%**{} Seven Trumpets (**12 Labors**)\n**1-6**{} increase damage [10M]\n**7**{} use superior element [2M plain]\n**8**{} nullify phalanx [OverChain]\n**9**{} heal [30 hits]\n**10**{} random debuff [10 debuffs]\n**11**{} dispel 2 buffs [trigger PL]\n**12**{} deal plain damage [all labors]'.format(self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'), self.bot.getEmote('misc'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'))}, {'name': "{} Lucilius".format(self.bot.getEmote('2')), 'value':'**95%**{} Phosphosrus (single)\n**85%**{} Axion (multi)\n**70%**♦️ charge diamonds\n**60%**{} Axion (**party**)\n**55%**♦️ charge diamonds\n**25%**{} Gopherwood Ark (racial check)\n**20 & 15%**{} Axion Apocalypse (multi)\n**10 & 3%**{} Paradise Lost (999k)\n\n*Click the title for more details*'.format(self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'))}], inline=True, footer="Your fate is over", color=self.color))
+        await ctx.reply(embed=self.bot.buildEmbed(title="Dark Rapture (Hard)", url="https://gbf.wiki/Lucilius_(Raid)#Impossible_.28Hard.29", fields = [{'name': "{} Black Wings".format(self.bot.getEmote('1')), 'value':'**N **{} Phosphosrus (single)\n**OD**{} Iblis (multi, debuffs)\n**OD, both**▫️ Paradise Lost (party)\n**Join**{} Paradise Lost (30K)\n**70%**▫️ Sephiroth (debuff wipe)\n**50%**{} Seven Trumpets (**12 Labors**)\n**1-6**{} increase damage [10M]\n**7**{} use superior element [2M plain]\n**8**{} nullify phalanx [OverChain]\n**9**{} heal [30 hits]\n**10**{} random debuff [10 debuffs]\n**11**{} dispel 2 buffs [trigger PL]\n**12**{} deal plain damage [all labors]'.format(self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'), self.bot.getEmote('misc'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'), self.bot.getEmote('labor'))}, {'name': "{} Lucilius".format(self.bot.getEmote('2')), 'value':'**95%**{} Phosphosrus (single)\n**85%**{} Axion (multi)\n**70%**♦️ charge diamonds\n**60%**{} Axion (**party**)\n**55%**♦️ charge diamonds\n**25%**{} Gopherwood Ark (racial check)\n**20 & 15%**{} Axion Apocalypse (multi)\n**10 & 3%**{} Paradise Lost (999k)\n\n*Click the title for more details*'.format(self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'), self.bot.getEmote('lucilius'))}], inline=True, footer="Your fate is over", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['beelzebub', 'bubz'])
     @commands.cooldown(1, 15, commands.BucketType.guild)
     async def bubs(self, ctx):
         """Post the Beelzebub HL Triggers"""
-        await ctx.send(embed=self.bot.buildEmbed(title="Long Live the King", url="https://gbf.wiki/Beelzebub_(Raid)", description="**100% & OD**▫️ Chaoscaliber (party, stun) [30 hits]\n**N **▫️ Unisonic (multi, counter) [10M]\n**75, 60% & OD**▫️ Karma (summonless) [FC]\n**N **▫️ Black Flies (multi, slashed) [10M]\n**50%**{} Langelaan Field (4T, reflect 2K, doesn't attack) [5M+20M/death]\n**OD**▫️ Chaoscaliber (party x2, stun) [FC]\n**N **▫️ Just Execution (24 hits, -1T to buff/hit) [FC]\n**30 & 15%**▫️ Black Spear (party, defenless) [FC]\n**25 & 10%**▫️ Chaos Legion (party, 10k guarded) [FC]\n**King's Religion**{} Total turns reached 30xPlayer Count".format(self.bot.getEmote('misc'), self.bot.getEmote('misc')), footer="Qilin Fantasy", color=self.color))
+        await ctx.reply(embed=self.bot.buildEmbed(title="Long Live the King", url="https://gbf.wiki/Beelzebub_(Raid)", description="**100% & OD**▫️ Chaoscaliber (party, stun) [30 hits]\n**N **▫️ Unisonic (multi, counter) [10M]\n**75, 60% & OD**▫️ Karma (summonless) [FC]\n**N **▫️ Black Flies (multi, slashed) [10M]\n**50%**{} Langelaan Field (4T, reflect 2K, doesn't attack) [5M+20M/death]\n**OD**▫️ Chaoscaliber (party x2, stun) [FC]\n**N **▫️ Just Execution (24 hits, -1T to buff/hit) [FC]\n**30 & 15%**▫️ Black Spear (party, defenless) [FC]\n**25 & 10%**▫️ Chaos Legion (party, 10k guarded) [FC]\n**King's Religion**{} Total turns reached 30xPlayer Count".format(self.bot.getEmote('misc'), self.bot.getEmote('misc')), footer="Qilin Fantasy", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["christmas", "anniversary", "anniv", "summer"])
     @commands.cooldown(3, 30, commands.BucketType.guild)
@@ -712,9 +712,9 @@ class GBF_Utility(commands.Cog):
             n100 = math.ceil(t / 168.0)
             n150 = math.ceil(t / 257.0)
             wanpan = math.ceil(t / 48.0)
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator ▫️ {}".format(self.bot.getEmote('gw'), t), description="**{:,}** box(s) and **{:,}** leftover tokens\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(b, tok, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} Token Calculator ▫️ {}".format(self.bot.getEmote('gw'), t), description="**{:,}** box(s) and **{:,}** leftover tokens\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(b, tok, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
         except:
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid token number", color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Error", description="Invalid token number", color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -744,9 +744,9 @@ class GBF_Utility(commands.Cog):
             n100 = math.ceil(t / 168.0)
             n150 = math.ceil(t / 257.0)
             wanpan = math.ceil(t / 48.0)
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} Token Calculator ▫️ {}".format(self.bot.getEmote('gw'), b), description="**{:,}** tokens needed\n\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(t, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} Token Calculator ▫️ {}".format(self.bot.getEmote('gw'), b), description="**{:,}** tokens needed\n\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(t, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
         except:
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid box number", color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Error", description="Invalid box number", color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -760,9 +760,9 @@ class GBF_Utility(commands.Cog):
             nm95 = meat // 10
             nm100 = meat // 20
             nm150 = meat // 20
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} Meat Calculator ▫️ {}".format(self.bot.getEmote('gw'), meat), description="**{:,}** NM90 or **{:}** honors\n**{:,}** NM95 or **{:}** honors\n**{:}** NM100 or **{:}** honors\n**{:,}** NM150 or **{:}** honors\n".format(nm90, self.honorFormat(nm90*260000), nm95, self.honorFormat(nm95*910000), nm100, self.honorFormat(nm100*2650000), nm150, self.honorFormat(nm150*4100000)), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} Meat Calculator ▫️ {}".format(self.bot.getEmote('gw'), meat), description="**{:,}** NM90 or **{:}** honors\n**{:,}** NM95 or **{:}** honors\n**{:}** NM100 or **{:}** honors\n**{:,}** NM150 or **{:}** honors\n".format(nm90, self.honorFormat(nm90*260000), nm95, self.honorFormat(nm95*910000), nm100, self.honorFormat(nm100*2650000), nm150, self.honorFormat(nm150*4100000)), color=self.color))
         except:
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid meat number", color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Error", description="Invalid meat number", color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['honors'])
@@ -797,9 +797,9 @@ class GBF_Utility(commands.Cog):
                         daily += honor_per_nm[i]
                         honor[i+1] += honor_per_nm[i]
 
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} Honor Planning ▫️ {} honors".format(self.bot.getEmote('gw'), self.honorFormat(target)), description="Preliminaries & Interlude ▫️ **{:,}** meats (around **{:,}** EX+ and **{:}** honors)\nDay 1 and 2 total ▫️ **{:,}** NM95 (**{:}** honors)\nDay 3 and 4 total ▫️ **{:,}** NM150 (**{:}** honors)".format(math.ceil(total_meat*2), ex*2, self.honorFormat(honor[0]*2), nm[0]*2, self.honorFormat(honor[1]*2), nm[1]*2, self.honorFormat(honor[2]*2)), footer="Assuming {} meats / EX+ on average".format(meat_per_ex_average), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} Honor Planning ▫️ {} honors".format(self.bot.getEmote('gw'), self.honorFormat(target)), description="Preliminaries & Interlude ▫️ **{:,}** meats (around **{:,}** EX+ and **{:}** honors)\nDay 1 and 2 total ▫️ **{:,}** NM95 (**{:}** honors)\nDay 3 and 4 total ▫️ **{:,}** NM150 (**{:}** honors)".format(math.ceil(total_meat*2), ex*2, self.honorFormat(honor[0]*2), nm[0]*2, self.honorFormat(honor[1]*2), nm[1]*2, self.honorFormat(honor[2]*2)), footer="Assuming {} meats / EX+ on average".format(meat_per_ex_average), color=self.color))
         except:
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Invalid honor number", color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Error", description="Invalid honor number", color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['friday'])
@@ -946,10 +946,10 @@ class GBF_Utility(commands.Cog):
             type = 'ssr ({} was invalid)'.format(type)
         if next < current: next = current + 1
         if current < 1:
-            await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description="Current level can't be lesser than 1", url="https://gbf.wiki/Raising_Weapon_Skills", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Skill Level Calculator", description="Current level can't be lesser than 1", url="https://gbf.wiki/Raising_Weapon_Skills", color=self.color))
             return
         if current >= 20 or (current >= 15 and value == 0):
-            await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description="Current level is too high", url="https://gbf.wiki/Raising_Weapon_Skills", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Skill Level Calculator", description="Current level is too high", url="https://gbf.wiki/Raising_Weapon_Skills", color=self.color))
             return
         while next > 20 or (next > 15 and value == 0):
             next -= 1
@@ -980,15 +980,8 @@ class GBF_Utility(commands.Cog):
             if first: first = False
             else: msg += ", "
             msg += "{} {}".format(total[k], k)
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg, url="https://gbf.wiki/Raising_Weapon_Skills", fields=fields, inline=True, footer="type: {}".format(type), color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Skill Level Calculator", description=msg, url="https://gbf.wiki/Raising_Weapon_Skills", fields=fields, inline=True, footer="type: {}".format(type), color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 60)
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['fc'])
-    @commands.cooldown(1, 15, commands.BucketType.guild)
-    async def fatedchain(self, ctx):
-        """Give the Battle 2.0 Fated Chain gain"""
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Fated Chain gain", description="1 ▫️ **10%**\n2 ▫️ **23%**\n3 ▫️ **36%**\n4 ▫️ **50%**\n5 ▫️ **60%**", url="https://gbf.wiki/Battle_System_2.0#Fated_Chains", footer="chain size x 10 + chain size bonus", color=self.color))
-        await self.bot.cleanMessage(ctx, final_msg, 30)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["doom", "doompost", "magnafest", "magnafes", "campaign", "brick", "bar", "sunlight", "stone", "suptix", "surprise", "evolite", "fugdidmagnafeststart", "alivegame", "alive"])
     @commands.cooldown(1, 60, commands.BucketType.guild)
@@ -996,7 +989,7 @@ class GBF_Utility(commands.Cog):
         """Give the time elapsed of various GBF related releases"""
         msg = ""
         wiki_checks = ["Category:Campaign", "Surprise_Special_Draw_Set", "Damascus_Ingot", "Gold_Brick", "Sunlight_Stone", "Sephira_Evolite"]
-        regexs = ["<td>(\d+ days)<\/td>\s*<td>Time since last", "<td>(-\d+ days)<\/td>\s*<td>Time since last", "<td>(\d+ days)<\/td>\s*<td>Time since last", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last", "<td>(\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last ", "<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td>(\d+ days)<\/td>\s*"]
+        regexs = ["<td>(\\d+ days)<\/td>\s*<td>Time since last", "<td>(-\\d+ days)<\/td>\s*<td>Time since last", "<td>(\\d+ days)<\/td>\s*<td>Time since last", "<td>(\\d+ days)<\/td>\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\/td>\s*<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td style=\"text-align: left;\">Time since last ", "<td style=\"text-align: center;\">\?\?\?<\/td>\s*<td>(\\d+ days)<\/td>\s*"]
         for w in wiki_checks:
             async with aiohttp.ClientSession() as session:
                 async with session.get("https://gbf.wiki/{}".format(w)) as r:
@@ -1033,10 +1026,10 @@ class GBF_Utility(commands.Cog):
             try:
                 await self.bot.callCommand(ctx, 'seeRoll')
             except Exception as e:
-                final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':title, 'icon_url':member.avatar_url}, description="**{} {} {} {} {} {}**".format(self.bot.getEmote("crystal"), crystal, self.bot.getEmote("singledraw"), single, self.bot.getEmote("tendraw"), ten), color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.buildEmbed(author={'name':title, 'icon_url':member.avatar_url}, description="**{} {} {} {} {} {}**".format(self.bot.getEmote("crystal"), crystal, self.bot.getEmote("singledraw"), single, self.bot.getEmote("tendraw"), ten), color=self.color))
                 await self.bot.sendError('setRoll', str(e), 'B')
         except Exception as e:
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color, footer="setRoll <crystal> [single] [ten]"))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color, footer="setRoll <crystal> [single] [ten]"))
         try:
             await self.bot.cleanMessage(ctx, final_msg, 30)
         except:
@@ -1066,8 +1059,8 @@ class GBF_Utility(commands.Cog):
 
             # calculate estimation
             # note: those numbers are from my own experimentation
-            month_min = [80, 80, 140, 95, 80, 75, 75, 250, 70, 80, 80, 150]
-            month_max = [60, 50, 100, 70, 55, 50, 50, 200, 50, 60, 60, 110]
+            month_min = [80, 80, 200, 80, 80, 80, 80, 250, 90, 80, 80, 160]
+            month_max = [60, 60, 120, 60, 60, 60, 60, 140, 60, 60, 60, 110]
             month_day = [31.0, 28.25, 31.0, 30.0, 31.0, 30.0, 31.0, 31.0, 30.0, 31.0, 30.0, 31.0]
 
             # get current day
@@ -1093,13 +1086,13 @@ class GBF_Utility(commands.Cog):
             if fr != 1: title += "s"
             # sending
             if s is None:
-                final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':title, 'icon_url':member.avatar_url}, description="Update your rolls with the `setRoll` command", footer="Next spark between {} and {} from 0 rolls".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.buildEmbed(author={'name':title, 'icon_url':member.avatar_url}, description="Update your rolls with the `setRoll` command", footer="Next spark between {} and {} from 0 rolls".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), color=self.color))
             else:
                 title += " / {} skin roll".format(s[0] // 200)
                 if  s[0] >= 200: title += "s"
-                final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':title, 'icon_url':member.avatar_url}, description="**{} {} {} {} {} {}**\n*Expecting {} to {} rolls in {}*".format(self.bot.getEmote("crystal"), s[0], self.bot.getEmote("singledraw"), s[1], self.bot.getEmote("tendraw"), s[2], expected[0], expected[1], now.strftime("%B")), footer="Next spark between {} and {}".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), timestamp=timestamp, color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.buildEmbed(author={'name':title, 'icon_url':member.avatar_url}, description="**{} {} {} {} {} {}**\n*Expecting {} to {} rolls in {}*".format(self.bot.getEmote("crystal"), s[0], self.bot.getEmote("singledraw"), s[1], self.bot.getEmote("tendraw"), s[2], expected[0], expected[1], now.strftime("%B")), footer="Next spark between {} and {}".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), timestamp=timestamp, color=self.color))
         except Exception as e:
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I warned my owner", color=self.color, footer=str(e)))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Error", description="I warned my owner", color=self.color, footer=str(e)))
             await self.bot.sendError('seeRoll', str(e))
         await self.bot.cleanMessage(ctx, final_msg, 30)
 

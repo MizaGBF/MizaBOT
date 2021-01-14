@@ -35,7 +35,7 @@ class Management(commands.Cog):
         else:
             self.bot.prefixes[id] = prefix_string
             self.bot.savePending = True
-        await ctx.send(embed=self.bot.buildEmbed(title=ctx.guild.name, description="Server Prefix changed to `{}`".format(prefix_string), color=self.color))
+        await ctx.reply(embed=self.bot.buildEmbed(title=ctx.guild.name, description="Server Prefix changed to `{}`".format(prefix_string), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['bug', 'report', 'bug_report'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -49,14 +49,14 @@ class Management(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     async def joined(self, ctx, member : discord.Member):
         """Says when a member joined."""
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(title=ctx.guild.name, description="Joined at {0.joined_at}".format(member), thumbnail=member.avatar_url, color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.buildEmbed(title=ctx.guild.name, description="Joined at {0.joined_at}".format(member), thumbnail=member.avatar_url, color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['source'])
     @commands.cooldown(1, 20, commands.BucketType.guild)
     async def github(self, ctx):
         """Post the bot.py file running right now"""
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(title=self.bot.description.splitlines()[0], description="Code source at https://github.com/MizaGBF/MizaBOT", thumbnail=ctx.guild.me.avatar_url, color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.buildEmbed(title=self.bot.description.splitlines()[0], description="Code source at https://github.com/MizaGBF/MizaBOT", thumbnail=ctx.guild.me.avatar_url, color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -340,7 +340,7 @@ class Management(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def status(self, ctx):
         """Post the bot status"""
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} ▫️ v{}".format(ctx.guild.me.display_name, self.bot.botversion), description="**Uptime**▫️{}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Save Pending**▫️{}\n**Errors since boot**▫️{}\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}\n**Twitter**▫️{}".format(self.bot.uptime(), self.bot.process.cpu_percent(), self.bot.process.memory_full_info().uss >> 20, self.bot.savePending, self.bot.errn, len(asyncio.all_tasks()), len(self.bot.guilds), len(self.bot.guilddata['pending']), len(self.bot.cogs), self.bot.cogn, (self.bot.twitter_api is not None)), thumbnail=ctx.guild.me.avatar_url, color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} ▫️ v{}".format(ctx.guild.me.display_name, self.bot.botversion), description="**Uptime**▫️{}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Save Pending**▫️{}\n**Errors since boot**▫️{}\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}\n**Twitter**▫️{}".format(self.bot.uptime(), self.bot.process.cpu_percent(), self.bot.process.memory_full_info().uss >> 20, self.bot.savePending, self.bot.errn, len(asyncio.all_tasks()), len(self.bot.guilds), len(self.bot.guilddata['pending']), len(self.bot.cogs), self.bot.cogn, (self.bot.twitter_api is not None)), thumbnail=ctx.guild.me.avatar_url, color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 40)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)

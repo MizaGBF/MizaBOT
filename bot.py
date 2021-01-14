@@ -331,9 +331,9 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "7.9" # version number
+        self.botversion = "7.10" # version number
         self.saveversion = 0 # save version
-        self.botchangelog = ["Added `$eternals`", "Generate a picture when `$profile` is used", "Added back `$mizatube` (no fancy search function)", "Removed `$summon`", "Added `$blackjack`", "Added `$recruit` to check recruiting /gbfg/ crews"] # bot changelog
+        self.botchangelog = ["Cleaned up the bot and put the new reply system in use", "Added `$lightchads` for the upcoming GW", "Added `$eternals`", "Generate a picture when `$profile` is used", "Added back `$mizatube` (no fancy search function)", "Removed `$summon`", "Added `$blackjack`", "Added `$recruit` to check recruiting /gbfg/ crews"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted before
         self.boot_msg = "" # msg to be displayed on the debug channel after boot

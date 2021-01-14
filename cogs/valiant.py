@@ -111,7 +111,7 @@ class DreadBarrage(commands.Cog):
             if d != "":
                 em = self.bot.getEmote(self.bot.valiant.get('element', ''))
                 if em == "": em = ":white_small_square:"
-                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {} status".format(self.bot.getEmote('crew'), self.bot.valiant['id'], em), description=d, color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War {}** {} status".format(self.bot.getEmote('crew'), self.bot.valiant['id'], em), description=d, color=self.color))
         except Exception as e:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
             await self.bot.sendError("fugdidbarragestart", str(e))

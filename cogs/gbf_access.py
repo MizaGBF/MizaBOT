@@ -881,7 +881,7 @@ class GBF_Access(commands.Cog):
 
             if 'error' in crew: # print the error if any
                 if len(crew['error']) > 0:
-                    await ctx.send(embed=self.bot.buildEmbed(title="Crew Error", description=crew['error'], color=self.color))
+                    await ctx.reply(embed=self.bot.buildEmbed(title="Crew Error", description=crew['error'], color=self.color))
                 return
 
             # embed initialization
@@ -953,7 +953,7 @@ class GBF_Access(commands.Cog):
                     entry += "\n"
                     fields[-1]['value'] += entry
 
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description=description, fields=fields, inline=True, url="http://game.granbluefantasy.jp/#guild/detail/{}".format(crew['id']), footer=footer, timestamp=crew['timestamp'], color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title=title, description=description, fields=fields, inline=True, url="http://game.granbluefantasy.jp/#guild/detail/{}".format(crew['id']), footer=footer, timestamp=crew['timestamp'], color=self.color))
             await self.bot.cleanMessage(ctx, final_msg, 60)
 
         except Exception as e:
@@ -1272,7 +1272,7 @@ class GBF_Access(commands.Cog):
         """Retrieve an item description (Owner or Bot only)"""
         try:
             data = await self.bot.sendRequest('http://game.granbluefantasy.jp/rest/quest/droplist/drop_item_detail?_=TS1&t=TS2&uid=ID', account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True, payload={"special_token":None,"item_id":id,"item_kind":10})
-            await ctx.send(embed=self.bot.buildEmbed(title=data['name'], description=data['comment'].replace('<br>', ' '), thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/item/article/s/{}.jpg".format(id), footer=data['id'], color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title=data['name'], description=data['comment'].replace('<br>', ' '), thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/item/article/s/{}.jpg".format(id), footer=data['id'], color=self.color))
         except:
             await self.bot.react(ctx.message, '❎') # white negative mark
 
@@ -1316,7 +1316,7 @@ class GBF_Access(commands.Cog):
                     msg += "{}\n".format(data['sub_skill']['comment'])
                 url = 'http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/summon/m/{}.jpg'.format(data['id'])
 
-            await ctx.send(embed=self.bot.buildEmbed(title="{}{}{}".format(rarity, kind, data['name']), description=msg, thumbnail=url, footer=data['id'], color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="{}{}{}".format(rarity, kind, data['name']), description=msg, thumbnail=url, footer=data['id'], color=self.color))
         except:
             await self.bot.react(ctx.message, '❎') # white negative mark
             
@@ -1377,7 +1377,7 @@ class GBF_Access(commands.Cog):
     async def unsetProfile(self, ctx):
         """Unlink your GBF id"""
         if str(ctx.author.id) not in self.bot.gbfids:
-            await ctx.send(embed=self.bot.buildEmbed(title="Unset Profile Error", description="You didn't set your GBF profile ID", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Unset Profile Error", description="You didn't set your GBF profile ID", color=self.color))
             return
         del self.bot.gbfids[str(ctx.author.id)]
         self.bot.savePending = True
@@ -1389,20 +1389,20 @@ class GBF_Access(commands.Cog):
         """Link your GBF id to your Discord ID"""
         try:
             if id < 0 or id >= 100000000:
-                await ctx.send(embed=self.bot.buildEmbed(title="Set Profile Error", description="Invalid ID", color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="Set Profile Error", description="Invalid ID", color=self.color))
                 return
             data = await self.getProfileData(id)
             if data == "Maintenance":
-                await ctx.send(embed=self.bot.buildEmbed(title="Set Profile Error", description="Game is in maintenance, try again later.", color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="Set Profile Error", description="Game is in maintenance, try again later.", color=self.color))
                 return
             elif data == "Down":
                 return
             elif data is None:
-                await ctx.send(embed=self.bot.buildEmbed(title="Set Profile Error", description="Profile not found", color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="Set Profile Error", description="Profile not found", color=self.color))
                 return
             for u in self.bot.gbfids:
                 if self.bot.gbfids[u] == id:
-                    await ctx.send(embed=self.bot.buildEmbed(title="Set Profile Error", description="This id is already in use", footer="use the bug_report command if it's a case of griefing", color=self.color))
+                    await ctx.reply(embed=self.bot.buildEmbed(title="Set Profile Error", description="This id is already in use", footer="use the bug_report command if it's a case of griefing", color=self.color))
                     return
             # register
             self.bot.gbfids[str(ctx.author.id)] = id
@@ -1417,19 +1417,19 @@ class GBF_Access(commands.Cog):
         """Check if a GBF profile is restricted"""
         try:
             if id < 0 or id >= 100000000:
-                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
                 return
             if id in self.badprofilecache:
-                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
                 return
             data = await self.getScoutData(id)
             if data == "Maintenance":
-                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Game is in maintenance", color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="Profile Error", description="Game is in maintenance", color=self.color))
                 return
             elif data == "Down":
                 return
             elif len(data['user']) == 0:
-                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="In game message:\n`{}`".format(data['no_member_msg'].replace("<br>", " ")), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="Profile Error", description="In game message:\n`{}`".format(data['no_member_msg'].replace("<br>", " ")), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
                 return
             try:
                 if data['user']["restriction_flag_list"]["event_point_deny_flag"]:
@@ -1438,10 +1438,10 @@ class GBF_Access(commands.Cog):
                     status = "Account isn't restricted"
             except:
                 status = "Account isn't restricted"
-            await ctx.send(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('gw'), data['user']['nickname']), description=status, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/leader/talk/{}.png".format(data['user']['image']), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="{} {}".format(self.bot.getEmote('gw'), data['user']['nickname']), description=status, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/leader/talk/{}.png".format(data['user']['image']), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
 
         except Exception as e:
-            await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Unavailable", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Profile Error", description="Unavailable", color=self.color))
             await self.bot.sendError("brand", str(e))
 
     def dlAndPasteImage(self, img, url, offset, resize):
@@ -1460,7 +1460,7 @@ class GBF_Access(commands.Cog):
         try:
             if target == "":
                 if str(ctx.author.id) not in self.bot.gbfids:
-                    await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(ctx.author.display_name), footer="setProfile <id>", color=self.color))
+                    await ctx.reply(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(ctx.author.display_name), footer="setProfile <id>", color=self.color))
                     return
                 id = self.bot.gbfids[str(ctx.author.id)]
             elif target.startswith('<@') and target.endswith('>'):
@@ -1469,38 +1469,38 @@ class GBF_Access(commands.Cog):
                     else: target = int(target[2:-1])
                     member = ctx.guild.get_member(target)
                     if str(member.id) not in self.bot.gbfids:
-                        await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), footer="setProfile <id>", color=self.color))
+                        await ctx.reply(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), footer="setProfile <id>", color=self.color))
                         return
                     id = self.bot.gbfids[str(member.id)]
                 except:
-                    await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid parameter {} -> {}".format(target, type(target)), color=self.color))
+                    await ctx.reply(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid parameter {} -> {}".format(target, type(target)), color=self.color))
                     return
             else:
                 try: id = int(target)
                 except:
                     member = ctx.guild.get_member_named(target)
                     if member is None:
-                        await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Member not found", color=self.color))
+                        await ctx.reply(embed=self.bot.buildEmbed(title="Profile Error", description="Member not found", color=self.color))
                         return
                     elif str(member.id) not in self.bot.gbfids:
-                        await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), footer="setProfile <id>", color=self.color))
+                        await ctx.reply(embed=self.bot.buildEmbed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), footer="setProfile <id>", color=self.color))
                         return
                     id = self.bot.gbfids[str(member.id)]
             if id < 0 or id >= 100000000:
-                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="Profile Error", description="Invalid ID", color=self.color))
                 return
             if id in self.badprofilecache:
-                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
                 return
             data = await self.getProfileData(id)
             if data == "Maintenance":
-                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Game is in maintenance", color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="Profile Error", description="Game is in maintenance", color=self.color))
                 return
             elif data == "Down":
                 return
             elif data is None:
                 self.badprofilecache.append(id)
-                await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="Profile Error", description="Profile not found", color=self.color))
                 return
             soup = BeautifulSoup(data, 'html.parser')
             try: name = soup.find_all("span", class_="txt-other-name")[0].string
@@ -1652,9 +1652,9 @@ class GBF_Access(commands.Cog):
 
                 if trophy == "No Trophy Displayed": title = "\u202d{} **{}**".format(self.bot.getEmote(rarity), name)
                 else: title = "\u202d{} **{}**▫️{}".format(self.bot.getEmote(rarity), name, trophy)
-                final_msg = await ctx.send(embed=self.bot.buildEmbed(title=title, description="{}{}\n{} Crew ▫️ {}\n{}{}{}".format(rank, comment, self.bot.getEmote('gw'), crew, scores, summons, star), thumbnail=thumbnail, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.buildEmbed(title=title, description="{}{}\n{} Crew ▫️ {}\n{}{}{}".format(rank, comment, self.bot.getEmote('gw'), crew, scores, summons, star), thumbnail=thumbnail, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             else:
-                final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Profile Error", description="Profile is private", url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Profile Error", description="Profile is private", url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             await self.bot.cleanMessage(ctx, final_msg, 45)
         except Exception as e:
             await self.bot.sendError("profile", str(e))
@@ -1674,7 +1674,7 @@ class GBF_Access(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['supercrew', 'poaching'])
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def gwranking(self, ctx):
-        """Sort and post the top 30 server membes per contribution"""
+        """Sort and post the top 30 server members per contribution"""
         members = []
         gwid = None
         for sid in self.bot.gbfids:
@@ -1723,6 +1723,7 @@ class GBF_Access(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["danchouranking", "danchous", "danchos", "captains", "captainranking", "capranking"])
     @commands.cooldown(1, 100, commands.BucketType.guild)
     async def danchoranking(self, ctx):
+        """Sort and post all /gbfg/ captains per contribution"""
         crews = []
         for e in self.bot.granblue['gbfgcrew']:
             if self.bot.granblue['gbfgcrew'][e] in crews or self.bot.granblue['gbfgcrew'][e] in self.blacklist: continue
@@ -1817,7 +1818,7 @@ class GBF_Access(commands.Cog):
     async def recruit(self, ctx):
         """Post all recruiting /gbfg/ crew"""
         if not await self.bot.isGameAvailable():
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ recruiting crews".format(self.bot.getEmote('crew')), description="Unavailable", color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} /gbfg/ recruiting crews".format(self.bot.getEmote('crew')), description="Unavailable", color=self.color))
         else:
             await self.bot.react(ctx.message, 'time')
             crews = []
@@ -1847,7 +1848,7 @@ class GBF_Access(commands.Cog):
             for i in range(0, len(sortedcrew)):
                 if i % size == 0: fields.append({'name':'{}'.format(self.bot.getEmote(str(len(fields)+1))), 'value':''})
                 fields[-1]['value'] += "Rank **{}** \▫️  **{}** \▫️ **{}** slot\n".format(sortedcrew[i]['average'], sortedcrew[i]['name'], 30-sortedcrew[i]['count'])
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} /gbfg/ recruiting crews".format(self.bot.getEmote('crew')), fields=fields, inline=True, color=self.color, timestamp=datetime.utcnow()))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} /gbfg/ recruiting crews".format(self.bot.getEmote('crew')), fields=fields, inline=True, color=self.color, timestamp=datetime.utcnow()))
         await self.bot.cleanMessage(ctx, final_msg, 90)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -1879,7 +1880,7 @@ class GBF_Access(commands.Cog):
         try:
             if id == -123456789: id = int(self.bot.gbfdata['4koma'])
             if id < 0 or id > int(self.bot.gbfdata['4koma']): raise Exception()
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="Granblue Episode {}".format(id), url="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/comic/episode/episode_{}.jpg".format(id), image="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/comic/thumbnail/thum_{}.png".format(str(id).zfill(5)), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Granblue Episode {}".format(id), url="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/comic/episode/episode_{}.jpg".format(id), image="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/comic/thumbnail/thum_{}.png".format(str(id).zfill(5)), color=self.color))
             await self.bot.cleanMessage(ctx, final_msg, 45)
         except:
             await self.bot.react(ctx.message, '❎') # white negative mark
@@ -1890,7 +1891,7 @@ class GBF_Access(commands.Cog):
     async def dd(self, ctx, id : str, mode : int = 0):
         """Black magic (Owner or Bot only)"""
         if not await self.bot.isGameAvailable():
-            await ctx.send(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))
             return
         await self.bot.react(ctx.message, 'time')
         data = await self.dad(id, False, mode)
@@ -1904,7 +1905,7 @@ class GBF_Access(commands.Cog):
     async def cn(self, ctx):
         """Black magic (Owner only)"""
         if not await self.bot.isGameAvailable():
-            await ctx.send(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))
             return
         await self.bot.react(ctx.message, 'time')
         news = await self.cc(ctx.channel)
@@ -2068,7 +2069,7 @@ class GBF_Access(commands.Cog):
         if type: txt = "crew"
         else: txt = "player"
         if terms == "":
-            final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="**Usage**\n`find{} [crewname]` to search a {} by name\n`find{} %eq [{}name]` or `find{} %== [{}name]` for an exact match\n`find{} %id [{}id]` for an id search\n`find{} %rank [ranking]` for a ranking search\n`find{} %all ...` to receive all the results by direct message".format(txt, txt, txt, txt, txt, txt, txt, txt, txt, txt), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="**Usage**\n`find{} [crewname]` to search a {} by name\n`find{} %eq [{}name]` or `find{} %== [{}name]` for an exact match\n`find{} %id [{}id]` for an id search\n`find{} %rank [ranking]` for a ranking search\n`find{} %all ...` to receive all the results by direct message".format(txt, txt, txt, txt, txt, txt, txt, txt, txt, txt), color=self.color))
         else:
             try:
                 index = terms.find("%all ")
@@ -2093,21 +2094,21 @@ class GBF_Access(commands.Cog):
                         terms = int(terms[4:])
                         mode = 2
                     except:
-                        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="`{}` isn't a valid syntax".format(terms), color=self.color))
+                        final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="`{}` isn't a valid syntax".format(terms), color=self.color))
                         raise Exception("Returning")
                 elif terms.startswith("%rank "):
                     try:
                         terms = int(terms[6:])
                         mode = 3
                     except:
-                        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="`{}` isn't a valid syntax".format(terms), color=self.color))
+                        final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="`{}` isn't a valid syntax".format(terms), color=self.color))
                         raise Exception("Returning")
                 else:
                     mode = 0
                 if type: data = await self.searchGWDBCrew(ctx, terms, mode)
                 else: data = await self.searchGWDBPlayer(ctx, terms, mode)
                 if data is None:
-                    final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Database unavailable", color=self.color))
+                    final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Database unavailable", color=self.color))
                     raise Exception("Returning")
 
                 try:
@@ -2120,18 +2121,18 @@ class GBF_Access(commands.Cog):
                         ver = data[1].get('ver', '')
                         result = data[1].get('result', [])
                 except:
-                    final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Database unavailable", color=self.color))
+                    final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Database unavailable", color=self.color))
                     raise Exception("Returning")
 
                 if len(result) == 0:
-                    final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="`{}` not found".format(terms), footer="help find{} for details".format(txt), color=self.color))
+                    final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="`{}` not found".format(terms), footer="help find{} for details".format(txt), color=self.color))
                     raise Exception("Returning")
                 elif all:
                     if type: xl = 36
                     else: xl = 80
                     x = len(result)
                     if x > xl: x = xl
-                    final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Sending your {}/{} result(s)".format(x, len(result)), footer="help find{} for details".format(txt), color=self.color))
+                    final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Sending your {}/{} result(s)".format(x, len(result)), footer="help find{} for details".format(txt), color=self.color))
                 elif type and len(result) > 6: x = 6 # crew
                 elif not type and len(result) > 15: x = 15 # player
                 elif len(result) > 1: x = len(result)
@@ -2159,7 +2160,7 @@ class GBF_Access(commands.Cog):
                             try:
                                 await ctx.author.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), fields=fields, inline=True, footer="help findcrew for details", color=self.color))
                             except:
-                                final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="I can't send you the full list by private messages", color=self.color))
+                                final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="I can't send you the full list by private messages", color=self.color))
                                 raise Exception("Returning")
                             fields = []
                     else: # player -----------------------------------------------------------------
@@ -2175,7 +2176,7 @@ class GBF_Access(commands.Cog):
                             try:
                                 await ctx.author.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), fields=fields, inline=True, footer="help findplayer for details", color=self.color))
                             except:
-                                final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="I can't send you the full list by private messages", color=self.color))
+                                final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="I can't send you the full list by private messages", color=self.color))
                                 raise Exception("Returning")
                             fields = []
 
@@ -2185,7 +2186,7 @@ class GBF_Access(commands.Cog):
                 elif type and len(result) > 6: desc = "6/{} random result(s) shown".format(len(result)) # crew
                 elif not type and len(result) > 30: desc = "30/{} random result(s) shown".format(len(result)) # player
                 else: desc = ""
-                final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), description=desc, fields=fields, inline=True, footer="help find{} for details".format(txt), color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War {}**".format(self.bot.getEmote('gw'), gwnum), description=desc, fields=fields, inline=True, footer="help find{} for details".format(txt), color=self.color))
             except:
                 pass
         await self.bot.cleanMessage(ctx, final_msg, 45)
@@ -2248,7 +2249,7 @@ class GBF_Access(commands.Cog):
         """Search two crews current score and compare them"""
         day = self.getCurrentGWDayID()
         if day is None or (day % 10) <= 1:
-            await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Unavailable", color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Unavailable", color=self.color))
             return
         if day >= 10: day = day % 10
         ver = None
@@ -2261,16 +2262,16 @@ class GBF_Access(commands.Cog):
             else:
                 try: id = int(sid)
                 except:
-                    await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Invalid name `{}`".format(sid), color=self.color))
+                    await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Invalid name `{}`".format(sid), color=self.color))
                     return
 
             data = await self.searchGWDBCrew(ctx, str(id), 2)
             if data is None:
-                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Unavailable", color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Unavailable", color=self.color))
                 return
             else:
                 if data[1] is None or data[1].get('gw', '') != self.bot.gw['id']:
-                    await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="No data available for the current GW", color=self.color))
+                    await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="No data available for the current GW", color=self.color))
                     return
                 result = data[1].get('result', [])
                 ver = data[1].get('ver', 0)
@@ -2290,7 +2291,7 @@ class GBF_Access(commands.Cog):
                     elif lead >= 0: lead = abs(lead - result[0][d[day-2]])
         if lead is not None and lead >= 0:
             msg += "**Difference** ▫️ {:,}\n".format(lead)
-        await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.getEmote('gw'), gwnum, day - 1), description=msg, timestamp=datetime.utcnow(), color=self.color))
+        await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.getEmote('gw'), gwnum, day - 1), description=msg, timestamp=datetime.utcnow(), color=self.color))
 
     def x(self, row, index):
         return row['x']
@@ -2364,7 +2365,7 @@ class GBF_Access(commands.Cog):
         """Show the current match of (You)"""
         if opponent != "":
             if not self.bot.isMod(ctx):
-                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Only moderators can set the opponent", color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Only moderators can set the opponent", color=self.color))
                 return
             crew_id_list = {**(self.bot.granblue['gbfgcrew']), **(self.bot.granblue.get('othercrew', {}))}
             if opponent.lower() in crew_id_list:
@@ -2372,7 +2373,7 @@ class GBF_Access(commands.Cog):
             else:
                 try: id = int(opponent)
                 except:
-                    await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Invalid name `{}`".format(opponent), color=self.color))
+                    await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Invalid name `{}`".format(opponent), color=self.color))
                     return
             if self.bot.matchtracker is None or self.bot.matchtracker['id'] != id:
                 self.bot.matchtracker = {
@@ -2381,10 +2382,10 @@ class GBF_Access(commands.Cog):
                     'id':id,
                     'plot':[]
                 }
-            await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Opponent set to id `{}`, please wait the next ranking update".format(id), color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Opponent set to id `{}`, please wait the next ranking update".format(id), color=self.color))
         else:
             if self.bot.matchtracker is None or not self.bot.matchtracker['init']:
-                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Unavailable, either wait the next ranking update or add the opponent id after the command to initialize it", color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War**".format(self.bot.getEmote('gw')), description="Unavailable, either wait the next ranking update or add the opponent id after the command to initialize it", color=self.color))
             else:
                 you_id = self.bot.granblue['gbfgcrew'].get('you', None)
                 d = self.bot.getJST() - self.bot.matchtracker['last']
@@ -2415,7 +2416,7 @@ class GBF_Access(commands.Cog):
                 if lead >= 0:
                     msg += "**Difference** ▫️ {:,}\n".format(lead)
 
-                final_msg = await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.getEmote('gw'), self.bot.matchtracker['gwid'], self.bot.matchtracker['day']-1), description=msg, timestamp=datetime.utcnow(), thumbnail=self.bot.matchtracker.get('chart', None), color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.getEmote('gw'), self.bot.matchtracker['gwid'], self.bot.matchtracker['day']-1), description=msg, timestamp=datetime.utcnow(), thumbnail=self.bot.matchtracker.get('chart', None), color=self.color))
                 await self.bot.cleanMessage(ctx, final_msg, 90)
 
     def scrapProcess(self, mode, qi, qo): # thread for ranking

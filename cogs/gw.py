@@ -256,9 +256,9 @@ class GuildWar(commands.Cog):
             if d != "":
                 em = self.bot.getEmote(self.bot.gw.get('element', ''))
                 if em == "": em = ":white_small_square:"
-                await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {} status".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description=d, color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="{} **Guild War {}** {} status".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description=d, color=self.color))
         except Exception as e:
-            await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
+            await ctx.reply(embed=self.bot.buildEmbed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
             await self.bot.sendError("fugdidgwstart", str(e))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['buff'])
@@ -269,9 +269,9 @@ class GuildWar(commands.Cog):
         try:
             d = self.getNextBuff(ctx)
             if d != "":
-                await ctx.send(embed=self.bot.buildEmbed(title="{} Guild War (You) Buff status".format(self.bot.getEmote('gw')), description=d, color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="{} Guild War (You) Buff status".format(self.bot.getEmote('gw')), description=d, color=self.color))
             else:
-                await ctx.send(embed=self.bot.buildEmbed(title="{} Guild War (You) Buff status".format(self.bot.getEmote('gw')), description="Only available when Guild War is on going", color=self.color))
+                await ctx.reply(embed=self.bot.buildEmbed(title="{} Guild War (You) Buff status".format(self.bot.getEmote('gw')), description="Only available when Guild War is on going", color=self.color))
         except Exception as e:
             await ctx.send(embed=self.bot.buildEmbed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
             await self.bot.sendError("gwbuff", str(e))
