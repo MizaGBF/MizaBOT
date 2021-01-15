@@ -42,9 +42,9 @@ class GuildWar(commands.Cog):
                             msg += "{} {}\n".format(self.bot.getEmote('foace'), fo_role.mention)
                         if self.bot.gw['buffs'][0][4]:
                             if self.bot.gw['buffs'][0][3]:
-                                msg += '*Buffs in 5 minutes* **(Double use this time only !)**'
+                                msg += '*Buffs in 5 minutes* **(Use twice this time! They are reset later.)**'
                             else:
-                                msg += 'Buffs now! **(Double use this time only !)**'
+                                msg += 'Buffs now! **(Use twice this time! They are reset later.)**'
                         else:
                             if self.bot.gw['buffs'][0][3]:
                                 msg += '*Buffs in 5 minutes*'

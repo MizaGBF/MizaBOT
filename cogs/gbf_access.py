@@ -50,6 +50,7 @@ class GBF_Access(commands.Cog):
         self.blacklist = ["677159", "147448"]
         self.stoprankupdate = False
         self.dad_running = False
+        self.ddcmp_state = 0
 
     def startTasks(self):
         self.bot.runTask('gbfwatch', self.gbfwatch)
@@ -468,10 +469,10 @@ class GBF_Access(commands.Cog):
             it = self.bot.gbfwatch["it"]
             thbd = self.bot.gbfwatch["thbd"]
         except:
-            return ["", {}, {}, {}]
+            return ["", {}, {}, {}, ""]
 
         if self.dad_running:
-            return ["please wait your turn", {}, {}, thbd[type].format(id)]
+            return ["please wait your turn", {}, {}, thbd[type].format(id), ""]
         self.dad_running = True
 
         paste = ""
@@ -608,19 +609,19 @@ class GBF_Access(commands.Cog):
             except:
                 if counter >= 3 and len(paste) == 0:
                     self.dad_running = False
-                    return ["", {}, {}, thbd[type].format(id)]
+                    return ["", {}, {}, thbd[type].format(id), ""]
             counter+=1
 
         if len(paste) > 0:
             if silent:
                 self.dad_running = False
-                return ["Not uploaded", flags, iul, thbd[type].format(id)]
+                return ["Not uploaded", flags, iul, thbd[type].format(id), paste]
             else:
                 title = "{}_dump_{}.txt".format(id, datetime.utcnow().timestamp())
                 with open(title, "wb") as f:
                     f.write(paste.encode('utf-8'))
                 self.dad_running = False
-                return [title, flags, iul, thbd[type].format(id)]
+                return [title, flags, iul, thbd[type].format(id), paste]
         else:
             self.dad_running = False
             return ["", {}, {}, thbd[type].format(id)]
@@ -630,7 +631,7 @@ class GBF_Access(commands.Cog):
 
         tmp = ""
         for k in data[2]:
-            tmp += "[{}]({})\n".format(k, data[2][k])
+            tmp += "[{}]({})\n".format(k.replace(tt, ''), data[2][k])
         if len(tmp) > 0:
             fields.append({'name':'Sprites', 'value':tmp})
 
@@ -641,10 +642,14 @@ class GBF_Access(commands.Cog):
                     tmp += t + ', '
             if len(tmp) > 0:
                 fields.append({'name':k, 'value':tmp[:-2]})
-
+        
+        for f in fields:
+            if len(f['value']) >= 1024:
+                f['value'] = f['value'][:1019] + '...'
         try:
             with open(data[0], "rb") as f:
                 await c.send(embed=self.bot.buildEmbed(title=tt, fields=fields, color=self.color, thumbnail=data[3]), file=discord.File(f))
+            self.bot.delFile(data[0])
         except:
             await c.send(embed=self.bot.buildEmbed(title=tt, description=data[0], fields=fields, color=self.color, thumbnail=data[3]))
 
@@ -1448,6 +1453,7 @@ class GBF_Access(commands.Cog):
         req = request.Request(url)
         url_handle = request.urlopen(req)
         file_jpgdata = BytesIO(url_handle.read())
+        url_handle.close()
         dt = Image.open(file_jpgdata)
         if resize is not None: dt = dt.resize(resize)
         img.paste(dt, offset, dt.convert('RGBA'))
@@ -1901,6 +1907,49 @@ class GBF_Access(commands.Cog):
         await self.bot.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isOwnerOrDebug()
+    @commands.cooldown(1, 2, commands.BucketType.default)
+    async def ddcmp(self, ctx, cmp: str):
+        """Black magic (Owner or Bot only)"""
+        if not await self.bot.isGameAvailable():
+            await ctx.reply(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))
+            return
+        try:
+            c = self.bot.gbfdata['c']
+            crt = self.bot.gbfwatch['crt']
+        except: return
+        if self.ddcmp_state != 0:
+            return
+        self.ddcmp_state = 1
+        await self.bot.react(ctx.message, 'time')
+        await ctx.reply(embed=self.bot.buildEmbed(title="Starting for `{}`".format(cmp), color=self.color))
+        cid = crt[0][1]
+        for i in range(0, c[0]):
+            id = str(cid + i * 1000)
+            data = await self.dad(id, False, 0)
+            if data[4].lower().find(cmp.lower()) != -1:
+                await self.dadp(ctx.channel, data, id)
+            else:
+                self.bot.delFile(data[0])
+            await asyncio.sleep(0.001)
+            if self.ddcmp_state == 2:
+                break
+        await self.bot.unreact(ctx.message, 'time')
+        await ctx.reply(embed=self.bot.buildEmbed(title="`{}`: Finished".format(cmp), color=self.color))
+        self.ddcmp_state = 0
+        await self.bot.react(ctx.message, '✅') # white check mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isOwnerOrDebug()
+    async def ddcmpstop(self, ctx):
+        """Stop ddcmp (Owner or Bot only)"""
+        if self.ddcmp_state == 1:
+            self.ddcmp_state = 2
+            await self.bot.react(ctx.message, '✅') # white check mark
+        else:
+            self.ddcmp_state = 0
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
     async def cn(self, ctx):
         """Black magic (Owner only)"""
@@ -2220,19 +2269,22 @@ class GBF_Access(commands.Cog):
     @commands.cooldown(1, 40, commands.BucketType.guild)
     async def lightchad(self, ctx):
         """No comment on this thing"""
-        ids = [20570061, 1539029, 14506879, 21950001, 7636084]
+        ids = [20570061, 1539029, 14506879, 21950001, 7636084, 8817744, 6272981, 6747425]
         array = []
         for id in ids:
             data = await self.searchGWDBPlayer(ctx, id, 2)
-            if data is not None and data[1] is not None:
-                if len(array) == 0: array.append(data[1]['result'][0])
-                else:
-                    for i in range(0, len(array)):
-                        if array[i][3] < data[1]['result'][0][3]:
-                            array.insert(i, data[1]['result'][0])
-                            break
-                        if i == len(array) - 1:
-                            array.append(data[1]['result'][0])
+            try:
+                if data is not None and data[1] is not None:
+                    if len(array) == 0: array.append(data[1]['result'][0])
+                    else:
+                        for i in range(0, len(array)):
+                            if array[i][3] < data[1]['result'][0][3]:
+                                array.insert(i, data[1]['result'][0])
+                                break
+                            if i == len(array) - 1:
+                                array.append(data[1]['result'][0])
+            except:
+                pass
         
         msg = ""
         for p in array:
@@ -2481,7 +2533,7 @@ class GBF_Access(commands.Cog):
             
             if mode: # update tracker before updating the players (for speed reason)
                 try:
-                    self.bot.loop.call_soon_threadsafe(self.updateYouTracker, update_time)
+                    asyncio.run_coroutine_threadsafe(self.updateYouTracker(update_time), self.bot.loop)
                 except Exception as ue:
                     print('updateyoutracker() exception:', ue)
             

@@ -331,7 +331,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "7.10" # version number
+        self.botversion = "7.11" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Cleaned up the bot and put the new reply system in use", "Added `$lightchads` for the upcoming GW", "Added `$eternals`", "Generate a picture when `$profile` is used", "Added back `$mizatube` (no fancy search function)", "Removed `$summon`", "Added `$blackjack`", "Added `$recruit` to check recruiting /gbfg/ crews"] # bot changelog
         self.running = True # if True, the bot is running
@@ -849,6 +849,7 @@ class Mizabot(commands.Bot):
                 self.refreshGBFAccount(id, url_handle.info()['Set-Cookie'])
             if options.get('decompress', False): data = zlib.decompress(url_handle.read(), 16+zlib.MAX_WBITS)
             else: data = url_handle.read()
+            url_handle.close()
             if options.get('load_json', False): data = json.loads(data)
             return data
         except Exception as e:
@@ -897,6 +898,7 @@ class Mizabot(commands.Bot):
                 self.refreshGBFAccount(id, url_handle.info()['Set-Cookie'])
             if options.get('decompress', False): data = zlib.decompress(url_handle.read(), 16+zlib.MAX_WBITS)
             else: data = url_handle.read()
+            url_handle.close()
             if options.get('load_json', False): data = json.loads(data)
             return data
         except Exception as e:
@@ -1186,17 +1188,24 @@ async def on_message(message): # to do something with a message
 
 @bot.check # authorize or not a command on a global scale
 async def global_check(ctx):
-    id = str(ctx.guild.id)
-    if id in bot.guilddata['banned'] or str(ctx.guild.owner.id) in bot.guilddata['owners']: # ban check
-        await ctx.guild.leave() # leave the server if banned
+    if ctx.guild is None:
+        await bot.send('debug', 'debug global check\n' + str(ctx.author) + '\n' + str(ctx.message))
         return False
-    elif id in bot.guilddata['pending']: # pending check
-        await bot.react(ctx.message, 'cooldown')
+    try:
+        id = str(ctx.guild.id)
+        if id in bot.guilddata['banned'] or str(ctx.guild.owner.id) in bot.guilddata['owners']: # ban check
+            await ctx.guild.leave() # leave the server if banned
+            return False
+        elif id in bot.guilddata['pending']: # pending check
+            await bot.react(ctx.message, 'cooldown')
+            return False
+        elif ctx.guild.owner.id in bot.bannedusers:
+            await bot.send('debug', embed=bot.buildEmbed(title="[TEST] Banned message by {}".format(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=datetime.utcnow()))
+            return False
+        return True
+    except Exception as e:
+        await bot.sendError('global_check', 'Context: ' + str(ctx) + '\n' + str(e))
         return False
-    elif ctx.guild.owner.id in bot.bannedusers:
-        await bot.send('debug', embed=bot.buildEmbed(title="[TEST] Banned message by {}".format(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=datetime.utcnow()))
-        return False
-    return True
 
 @bot.event # if an error happens
 async def on_command_error(ctx, error):
