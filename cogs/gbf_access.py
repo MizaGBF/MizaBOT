@@ -2566,9 +2566,9 @@ class GBF_Access(commands.Cog):
                 self.bot.delFile('temp.sql')
             conn.close()
 
-        self.stoprankupdate = False # if true, this flag will stop the threads
         res = False # return value
         for n in [0, 1]: # n == 0 (crews) or 1 (players)
+            self.stoprankupdate = False # if true, this flag will stop the threads
             current_time = self.bot.getJST()
             if n == 0 and current_time >= self.bot.gw['dates']["Interlude"] and current_time < self.bot.gw['dates']["Day 1"]:
                 continue # disabled during interlude for crews
@@ -2601,6 +2601,7 @@ class GBF_Access(commands.Cog):
 
             for t in threadpool:
                 t.join() # wait for ALL 100+1 threads to finish (or the garbage collector will mess up)
+            self.stoprankupdate = True # to be safe
 
             threadpool.clear() # delete our finished threads
             qi.queue.clear() # clear the queues
