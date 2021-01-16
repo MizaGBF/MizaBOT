@@ -19,7 +19,6 @@ from xml.sax import saxutils as su
 from PIL import Image, ImageFont, ImageDraw
 from queue import Queue
 import concurrent.futures
-from threading import Thread
 import leather
 import cairosvg
 from io import BytesIO
@@ -2408,7 +2407,6 @@ class GBF_Access(commands.Cog):
                 message = await self.bot.send('image', file=discord.File(f))
                 self.bot.matchtracker['chart'] = message.attachments[0].url
                 self.bot.savePending = True
-        print("ok") # for debug, remove later
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isYou()
@@ -2568,7 +2566,6 @@ class GBF_Access(commands.Cog):
 
         res = False # return value
         for n in [0, 1]: # n == 0 (crews) or 1 (players)
-            self.stoprankupdate = False # if true, this flag will stop the threads
             current_time = self.bot.getJST()
             if n == 0 and current_time >= self.bot.gw['dates']["Interlude"] and current_time < self.bot.gw['dates']["Day 1"]:
                 continue # disabled during interlude for crews
@@ -2588,22 +2585,15 @@ class GBF_Access(commands.Cog):
             for item in data['list']: # queue what we already retrieved on the first page
                 qo.put(item)
 
-            threadpool = []
-            for i in range(100): # make lot of threads
-                threadpool.append(Thread(target=self.scrapProcess, args=(n == 0, qi, qo))) # will request the ranking
-                threadpool[-1].setDaemon(True)
-                threadpool[-1].start()
-
+            self.stoprankupdate = False # if true, this flag will stop the threads
             r = Queue() # return value for self.gwdbbuilder
-            threadpool.append(Thread(target=self.gwdbbuilder, args=(n == 0, qo, count, r, update_time))) # sql builder thread (just need one, not more)
-            threadpool[-1].setDaemon(True)
-            threadpool[-1].start()
-
-            for t in threadpool:
-                t.join() # wait for ALL 100+1 threads to finish (or the garbage collector will mess up)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=101) as executor:
+                futures = [executor.submit(self.scrapProcess, (n == 0), qi, qo) for i in range(100)]
+                futures.append(executor.submit(self.gwdbbuilder, (n == 0), qo, count, r, update_time))
+                for future in concurrent.futures.as_completed(futures):
+                    pass
             self.stoprankupdate = True # to be safe
 
-            threadpool.clear() # delete our finished threads
             qi.queue.clear() # clear the queues
             qo.queue.clear()
             if r.get(): # check if self.gwdbbuilder put True in the queue
