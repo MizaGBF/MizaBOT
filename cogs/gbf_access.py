@@ -19,6 +19,7 @@ from xml.sax import saxutils as su
 from PIL import Image, ImageFont, ImageDraw
 from queue import Queue
 import concurrent.futures
+import time
 import leather
 import cairosvg
 from io import BytesIO
@@ -48,6 +49,7 @@ class GBF_Access(commands.Cog):
         self.loadinggacha = False
         self.blacklist = ["677159", "147448"]
         self.stoprankupdate = False
+        self.isgettingranking = False
         self.dad_running = False
         self.ddcmp_state = 0
 
@@ -152,7 +154,8 @@ class GBF_Access(commands.Cog):
 
                             # update DB
                             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as async_executor:
-                                if await self.bot.loop.run_in_executor(async_executor, self.gwscrap, update_time):
+                                scrapout = await self.bot.loop.run_in_executor(async_executor, self.gwscrap, update_time)
+                                if scrapout == "":
                                     data = await self.GWDBver()
                                     if data is not None and data[1] is not None:
                                         if self.bot.gw['id'] != data[1]['gw']: # different gw, we move
@@ -163,8 +166,8 @@ class GBF_Access(commands.Cog):
                                         await self.bot.sendError('gwscrap', 'Upload failed')
                                     self.bot.delFile('temp.sql')
                                     await self.loadGWDB() # reload db
-                                else:
-                                    await self.bot.sendError('gwscrap', 'Scraping failed')
+                                elif scrapout != "Invalid day":
+                                    await self.bot.sendError('gwscrap', 'Scraping failed\n' + scrapout)
                             await asyncio.sleep(300)
                         else:
                             await asyncio.sleep(30)
@@ -2268,7 +2271,7 @@ class GBF_Access(commands.Cog):
     @commands.cooldown(1, 40, commands.BucketType.guild)
     async def lightchad(self, ctx):
         """No comment on this thing"""
-        ids = [20570061, 1539029, 14506879, 21950001, 7636084, 8817744, 6272981, 6747425]
+        ids = [20570061, 1539029, 14506879, 21950001, 7636084, 8817744, 6272981, 6747425, 15627188]
         array = []
         for id in ids:
             data = await self.searchGWDBPlayer(ctx, id, 2)
@@ -2480,13 +2483,12 @@ class GBF_Access(commands.Cog):
             for item in data['list']: # put the entries in the list
                 qo.put(item)
 
-    def gwdbbuilder(self, mode, qo, count, res, update_time):
+    def gwdbbuilder(self, mode, qo, count, update_time):
         try:
             day = self.getCurrentGWDayID() # calculate which day it is (0 being prelim, 1 being interlude/day 1, etc...)
             if day is None or day >= 10:
-                res.put(False)
                 self.stoprankupdate = True # send the stop signal
-                return
+                return "Invalid day"
             if day > 0: day -= 1 # interlude is put into prelims
 
             conn = sqlite3.connect('temp.sql') # open temp.sql
@@ -2508,10 +2510,9 @@ class GBF_Access(commands.Cog):
                 c.execute('CREATE TABLE players (ranking int, id int, name text, current_total int)')
             i = 0
             while i < count: # count is the number of entries to process
-                if self.bot.exit_flag or (self.bot.maintenance['state'] and self.bot.maintenance["duration"] == 0): # stop if the bot is stopping
-                    res.put(False)
+                if self.bot.exit_flag or (self.bot.maintenance['state'] and self.bot.maintenance["duration"] == 0) or self.stoprankupdate: # stop if the bot is stopping
                     self.stoprankupdate = True # send the stop signal
-                    return
+                    return "Forced stop"
                 try: item = qo.get() # retrieve an item
                 except: continue # skip if error or no item in the queue
 
@@ -2535,18 +2536,28 @@ class GBF_Access(commands.Cog):
                 except Exception as ue:
                     print('updateyoutracker() exception:', ue)
             
-            res.put(True)
+            return ""
         except Exception as err:
-            print('gwdbbuilder', err)
             self.stoprankupdate = True # send the stop signal if a critical error happened
-            res.put(False)
+            return 'gwdbbuilder() exception:\n' + str(err)
 
     def gwscrap(self, update_time):
+        if self.isgettingranking:
+            self.stoprankupdate = True
+            count = 0
+            while self.isgettingranking:
+                time.sleep(1)
+                count += 1
+                if count >= 30:
+                    return "Previous gwscrap() isn't stopped"
+    
+        self.isgettingranking = True
         self.bot.drive.delFiles(["temp.sql"], self.bot.tokens['files']) # delete previous temp file (if any)
         self.bot.delFile('temp.sql') # locally too
         if self.bot.drive.cpyFile("GW.sql", self.bot.tokens['files'], "temp.sql"): # copy existing gw.sql to temp.sql
             if not self.bot.drive.dlFile("temp.sql", self.bot.tokens['files']): # retrieve it
-                return False
+                self.isgettingranking = False
+                return "Failed to retrieve copied GW.sql"
             conn = sqlite3.connect('temp.sql') # open
             c = conn.cursor()
             try:
@@ -2564,7 +2575,8 @@ class GBF_Access(commands.Cog):
                 self.bot.delFile('temp.sql')
             conn.close()
 
-        res = False # return value
+        state = "" # return value
+        max_thread = 100
         for n in [0, 1]: # n == 0 (crews) or 1 (players)
             current_time = self.bot.getJST()
             if n == 0 and current_time >= self.bot.gw['dates']["Interlude"] and current_time < self.bot.gw['dates']["Day 1"]:
@@ -2572,9 +2584,7 @@ class GBF_Access(commands.Cog):
 
             data = self.getRanking(1, n == 0) # get the first page
             if data is None or data['count'] == False:
-                print("Can't access the ranking")
-                res = False
-                break
+                return "gwscrap() can't access the ranking"
             count = int(data['count']) # number of crews/players
             last = data['last'] # number of pages
 
@@ -2584,20 +2594,20 @@ class GBF_Access(commands.Cog):
             qo = Queue() # output queue (contains json-data for each crew/player not processed yet)
             for item in data['list']: # queue what we already retrieved on the first page
                 qo.put(item)
-
             self.stoprankupdate = False # if true, this flag will stop the threads
-            r = Queue() # return value for self.gwdbbuilder
-            with concurrent.futures.ThreadPoolExecutor(max_workers=101) as executor:
-                futures = [executor.submit(self.scrapProcess, (n == 0), qi, qo) for i in range(100)]
-                futures.append(executor.submit(self.gwdbbuilder, (n == 0), qo, count, r, update_time))
+            with concurrent.futures.ThreadPoolExecutor(max_workers=max_thread+1) as executor:
+                futures = [executor.submit(self.scrapProcess, (n == 0), qi, qo) for i in range(max_thread)]
+                futures.append(executor.submit(self.gwdbbuilder, (n == 0), qo, count, update_time))
                 for future in concurrent.futures.as_completed(futures):
-                    pass
+                    r = future.result()
+                    if r is None: continue
+                    else: state = r
             self.stoprankupdate = True # to be safe
 
             qi.queue.clear() # clear the queues
             qo.queue.clear()
-            if r.get(): # check if self.gwdbbuilder put True in the queue
-                res = True
-            else:
-                return False
-        return res
+            if state != "":
+                self.isgettingranking = False
+                return state
+        self.isgettingranking = False
+        return ""

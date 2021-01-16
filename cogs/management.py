@@ -340,7 +340,7 @@ class Management(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def status(self, ctx):
         """Post the bot status"""
-        final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} ▫️ v{}".format(ctx.guild.me.display_name, self.bot.botversion), description="**Uptime**▫️{}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Save Pending**▫️{}\n**Errors since boot**▫️{}\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}\n**Twitter**▫️{}".format(self.bot.uptime(), self.bot.process.cpu_percent(), self.bot.process.memory_full_info().uss >> 20, self.bot.savePending, self.bot.errn, len(asyncio.all_tasks()), len(self.bot.guilds), len(self.bot.guilddata['pending']), len(self.bot.cogs), self.bot.cogn, (self.bot.twitter_api is not None)), thumbnail=ctx.guild.me.avatar_url, color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} ▫️ v{}".format(ctx.guild.me.display_name, self.bot.botversion), description="**Uptime**▫️{}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Save Pending**▫️{}\n**Errors since boot**▫️{}\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}\n**Twitter**▫️{}".format(self.bot.uptime(), self.bot.process.cpu_percent(), self.bot.process.memory_info()[0] >> 20, self.bot.savePending, self.bot.errn, len(asyncio.all_tasks()), len(self.bot.guilds), len(self.bot.guilddata['pending']), len(self.bot.cogs), self.bot.cogn, (self.bot.twitter_api is not None)), thumbnail=ctx.guild.me.avatar_url, color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 40)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)

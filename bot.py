@@ -338,7 +338,7 @@ class Mizabot(commands.Bot):
         self.boot_flag = False # if True, the bot has booted before
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
         self.starttime = datetime.utcnow() # used to check the uptime
-        self.process = psutil.Process() # script process
+        self.process = psutil.Process(os.getpid()) # script process
         self.process.cpu_percent() # called once to initialize
         self.errn = 0 # count the number of errors
         self.cogn = 0 # will store how many cogs are expected to be in memory
@@ -1156,7 +1156,7 @@ async def on_ready(): # when the bot starts or reconnects
     if not bot.boot_flag:
         # send a pretty message
         bot.setChannels([['debug', 'debug_channel'], ['image', 'image_upload'], ['debug_update', 'debug_update'], ['you_pinned', 'you_pinned'], ['gbfg_pinned', 'gbfg_pinned'], ['gbfglog', 'gbfg_log'], ['youlog', 'you_log']]) # register to-be-used channels for the send function
-        await bot.send('debug', embed=bot.buildEmbed(title="{} is Ready".format(bot.user.display_name), description="**Version** {}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}\n**Twitter**▫️{}".format(bot.botversion, bot.process.cpu_percent(), bot.process.memory_full_info().uss >> 20, len(asyncio.all_tasks()), len(bot.guilds), len(bot.guilddata['pending']), len(bot.cogs), bot.cogn, (bot.twitter_api is not None)), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
+        await bot.send('debug', embed=bot.buildEmbed(title="{} is Ready".format(bot.user.display_name), description="**Version** {}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}\n**Twitter**▫️{}".format(bot.botversion, bot.process.cpu_percent(), bot.process.memory_info()[0] >> 20, len(asyncio.all_tasks()), len(bot.guilds), len(bot.guilddata['pending']), len(bot.cogs), bot.cogn, (bot.twitter_api is not None)), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
         await bot.startTasks() # start the tasks
         bot.boot_flag = True
     if bot.boot_msg != "":
