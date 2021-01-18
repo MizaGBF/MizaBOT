@@ -2271,7 +2271,7 @@ class GBF_Access(commands.Cog):
     @commands.cooldown(1, 40, commands.BucketType.guild)
     async def lightchad(self, ctx):
         """No comment on this thing"""
-        ids = [20570061, 1539029, 14506879, 21950001, 7636084, 8817744, 6272981, 6747425, 15627188]
+        ids = [20570061, 1539029, 14506879, 21950001, 7636084, 8817744, 6272981, 6747425, 15627188, 18549435]
         array = []
         for id in ids:
             data = await self.searchGWDBPlayer(ctx, id, 2)
@@ -2294,7 +2294,7 @@ class GBF_Access(commands.Cog):
         if msg == "":
             msg = "No lightCHADs found in the ranking"
         
-        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ LightCHADs", description=msg, thumbnail="https://media.discordapp.net/attachments/614716155646705676/791301455239708714/447748562571362304.png", color=self.color))
+        final_msg = await ctx.send(embed=self.bot.buildEmbed(title="/gbfg/ LightCHADs", description=msg, thumbnail="https://media.discordapp.net/attachments/614716155646705676/800315410289262602/light.png", color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwlead', 'gwcompare', 'gwcmp'])
@@ -2379,6 +2379,7 @@ class GBF_Access(commands.Cog):
             c.execute("SELECT * FROM crews WHERE id = {}".format(sid)) # get the score
             data = c.fetchall()
             if data is None or len(data) == 0: raise Exception("Failed to retrieve data")
+            d = [4, 5, 6, 7]
             infos.append([data[0][2], data[0][d[day-2]]-data[0][d[day-2]-1]]) # name and score of the day
         conn.close()
 
@@ -2532,9 +2533,11 @@ class GBF_Access(commands.Cog):
             
             if mode: # update tracker before updating the players (for speed reason)
                 try:
-                    asyncio.run_coroutine_threadsafe(self.updateYouTracker(update_time), self.bot.loop)
+                    future = asyncio.run_coroutine_threadsafe(self.updateYouTracker(update_time), self.bot.loop)
+                    future.result()
                 except Exception as ue:
-                    print('updateyoutracker() exception:', ue)
+                    future = asyncio.run_coroutine_threadsafe(self.bot.sendError('updateyoutracker', str(ue)), self.bot.loop)
+                    future.result()
             
             return ""
         except Exception as err:

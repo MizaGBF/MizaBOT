@@ -30,7 +30,7 @@ class GBF_Game(commands.Cog):
                 rateups.append(rate)
             l = len(rateups)
             if l <= 1: rateups = sorted(rateups, key=float)
-            if l == 2: rateups = sorted(rateups, key=float)[1:]
+            elif l <= 3: rateups = sorted(rateups, key=float)[1:]
             else: rateups = sorted(rateups, key=float)[2:]
         except:
             rateups = []
