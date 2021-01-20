@@ -857,55 +857,6 @@ class Mizabot(commands.Bot):
                 await self.sendError('sendRequest', 'Request failed for url `{}`\nCause \▫️ {}'.format(url, e))
             return None
 
-    def sendRequestNoAsync(self, url, **options): # no asyncio version, for threaded functions
-        try:
-            data = None
-            headers = {}
-            if not options.get('no_base_headers', False):
-                headers['Accept'] = 'application/json, text/javascript, */*; q=0.01'
-                headers['Accept-Encoding'] = 'gzip, deflate'
-                headers['Accept-Language'] = 'en'
-                headers['Connection'] = 'keep-alive'
-                headers['Host'] = 'game.granbluefantasy.jp'
-                headers['Origin'] = 'http://game.granbluefantasy.jp'
-                headers['Referer'] = 'http://game.granbluefantasy.jp/'
-            if "headers" in options:
-                headers = {**headers, **options["headers"]}
-            id = options.get('account', None)
-            if id is not None: acc = self.getGBFAccount(id)
-            ver = self.gbfversion
-            if ver is None: return None
-            url = url.replace("VER", "{}".format(ver))
-            ts = int(datetime.utcnow().timestamp() * 1000)
-            url = url.replace("TS1", "{}".format(ts))
-            url = url.replace("TS2", "{}".format(ts+300))
-            if id is not None:
-                if ver is None or acc is None:
-                    return None
-                url = url.replace("ID", "{}".format(acc[0]))
-                if 'Cookie' not in headers: headers['Cookie'] = acc[1]
-                if 'User-Agent' not in headers: headers['User-Agent'] = acc[2]
-                if 'X-Requested-With' not in headers: headers['X-Requested-With'] = 'XMLHttpRequest'
-                if 'X-VERSION' not in headers: headers['X-VERSION'] = ver
-            payload = options.get('payload', None)
-            if payload is None: req = request.Request(url, headers=headers)
-            else:
-                if not options.get('no_base_headers', False) and 'Content-Type' not in headers: headers['Content-Type'] = 'application/json'
-                if 'user_id' in payload and payload['user_id'] == "ID": payload['user_id'] = acc[0]
-                req = request.Request(url, headers=headers, data=json.dumps(payload).encode('utf-8'))
-            url_handle = request.urlopen(req)
-            if id is not None:
-                self.refreshGBFAccount(id, url_handle.info()['Set-Cookie'])
-            if options.get('decompress', False): data = zlib.decompress(url_handle.read(), 16+zlib.MAX_WBITS)
-            else: data = url_handle.read()
-            url_handle.close()
-            if options.get('load_json', False): data = json.loads(data)
-            return data
-        except Exception as e:
-            if options.get('error', False):
-                print('Exception in sendRequestNoAsync()\n', 'Request failed for url `{}`\nCause \▫️ {}'.format(url, e))
-            return None
-
     def getGBFAccount(self, id : int = 0): # retrive one of our gbf account
         if id < 0 or id >= len(self.gbfaccounts):
             return None

@@ -1728,6 +1728,14 @@ class GBF_Access(commands.Cog):
             await self.bot.unreact(ctx.message, 'time')
         return self.bot.gbfdata['leader']
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["resetdancho"])
+    @isOwner()
+    async def resetleader(self, ctx):
+        """Reset the saved captain list"""
+        self.bot.gbfdata.pop('leader')
+        self.bot.savePending = True
+        await self.bot.react(ctx.message, '✅') # white check mark
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["danchouranking", "danchous", "danchos", "captains", "captainranking", "capranking"])
     @commands.cooldown(1, 100, commands.BucketType.guild)
     async def danchoranking(self, ctx):
@@ -2260,10 +2268,45 @@ class GBF_Access(commands.Cog):
         add %past to get past GW results"""
         await self.findranking(ctx, False, terms)
 
+    def specialRequest(self, url):
+        try:
+            data = None
+            headers = {
+                'Accept': 'application/json, text/javascript, */*; q=0.01',
+                'Accept-Encoding': 'gzip, deflate',
+                'Accept-Language': 'en',
+                'Connection': 'keep-alive',
+                'Host': 'game.granbluefantasy.jp',
+                'Origin': 'http://game.granbluefantasy.jp',
+                'Referer': 'http://game.granbluefantasy.jp/',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+            id = self.bot.gbfcurrent
+            acc = self.bot.getGBFAccount(id)
+            ver = self.bot.gbfversion
+            if ver is None or acc is None:
+                return None
+            ts = int(datetime.utcnow().timestamp() * 1000)
+            url = url.replace("TS1", "{}".format(ts))
+            url = url.replace("TS2", "{}".format(ts+300))
+            url = url.replace("ID", "{}".format(acc[0]))
+            headers['Cookie'] = acc[1]
+            headers['User-Agent'] = acc[2]
+            headers['X-VERSION'] = ver
+            req = request.Request(url, headers=headers)
+            url_handle = request.urlopen(req)
+            self.bot.refreshGBFAccount(id, url_handle.info()['Set-Cookie'])
+            data = zlib.decompress(url_handle.read(), 16+zlib.MAX_WBITS)
+            url_handle.close()
+            data = json.loads(data)
+            return data
+        except Exception as e:
+            return None
+
     def getRanking(self, page, mode):
         try:
-            if mode: return self.bot.sendRequestNoAsync("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/totalguild/detail/{}/0?_=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page), account=self.bot.gbfcurrent, decompress=True, load_json=True)
-            else: return self.bot.sendRequestNoAsync("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?_=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page), account=self.bot.gbfcurrent, decompress=True, load_json=True)
+            if mode: return self.specialRequest("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/totalguild/detail/{}/0?_=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page))
+            else: return self.specialRequest("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?_=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page))
         except:
             return None
 
@@ -2511,7 +2554,7 @@ class GBF_Access(commands.Cog):
                 c.execute('CREATE TABLE players (ranking int, id int, name text, current_total int)')
             i = 0
             while i < count: # count is the number of entries to process
-                if self.bot.exit_flag or (self.bot.maintenance['state'] and self.bot.maintenance["duration"] == 0) or self.stoprankupdate: # stop if the bot is stopping
+                if self.bot.exit_flag or self.bot.maintenance['state'] or self.stoprankupdate: # stop if the bot is stopping
                     self.stoprankupdate = True # send the stop signal
                     return "Forced stop"
                 try: item = qo.get() # retrieve an item
@@ -2530,8 +2573,8 @@ class GBF_Access(commands.Cog):
                 if i == count: # if we reached the end, commit
                     conn.commit()
                     conn.close()
-            
-            if mode: # update tracker before updating the players (for speed reason)
+
+            if mode: # update tracker
                 try:
                     future = asyncio.run_coroutine_threadsafe(self.updateYouTracker(update_time), self.bot.loop)
                     future.result()
@@ -2579,7 +2622,7 @@ class GBF_Access(commands.Cog):
             conn.close()
 
         state = "" # return value
-        max_thread = 100
+        max_thread = 75
         for n in [0, 1]: # n == 0 (crews) or 1 (players)
             current_time = self.bot.getJST()
             if n == 0 and current_time >= self.bot.gw['dates']["Interlude"] and current_time < self.bot.gw['dates']["Day 1"]:
