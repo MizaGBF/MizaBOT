@@ -19,6 +19,7 @@ from xml.sax import saxutils as su
 from PIL import Image, ImageFont, ImageDraw
 from queue import Queue
 import concurrent.futures
+import threading
 import time
 import leather
 import cairosvg
@@ -48,8 +49,8 @@ class GBF_Access(commands.Cog):
         self.loadinggw = False
         self.loadinggacha = False
         self.blacklist = ["677159", "147448"]
+        self.rankinglock = threading.Lock()
         self.stoprankupdate = False
-        self.isgettingranking = False
         self.dad_running = False
         self.ddcmp_state = 0
 
@@ -72,6 +73,22 @@ class GBF_Access(commands.Cog):
             return ctx.bot.isServer(ctx, 'you_server')
         return commands.check(predicate)
 
+    def updateRankingThread(self, data, diff, iscrew, mode, rank):
+        if iscrew:
+            r = self.requestRanking(rank // 10, mode)
+            if r is not None and 'list' in r and len(r['list']) > 0:
+                with self.rankinglock:
+                    data[0][str(rank)] = int(r['list'][-1]['point'])
+                    if diff > 0 and self.bot.gw['ranking'] is not None and str(rank) in self.bot.gw['ranking'][0]:
+                        data[2][str(rank)] = (data[0][str(rank)] - self.bot.gw['ranking'][0][str(rank)]) / diff
+        else:
+            r = self.requestRanking(rank // 10, 2)
+            if r is not None and 'list' in r and len(r['list']) > 0:
+                with self.rankinglock:
+                    data[1][str(rank)] = int(r['list'][-1]['point'])
+                    if diff > 0 and self.bot.gw['ranking'] is not None and str(rank) in self.bot.gw['ranking'][1]:
+                        data[3][str(rank)] = (data[1][str(rank)] - self.bot.gw['ranking'][1][str(rank)]) / diff
+
     async def checkGWRanking(self):
         cog = self.bot.get_cog('GuildWar')
         if cog is None:
@@ -93,6 +110,7 @@ class GBF_Access(commands.Cog):
                         self.bot.gw['ranking'] = None
                         self.bot.savePending = True
                     d = self.bot.gw['dates']["Preliminaries"] - self.bot.getJST()
+                    if d >= timedelta(days=1): return
                     await asyncio.sleep(d.seconds + 1)
                 elif self.bot.getJST() > self.bot.gw['dates']["Day 5"] - timedelta(seconds=21600):
                     await asyncio.sleep(3600)
@@ -114,7 +132,7 @@ class GBF_Access(commands.Cog):
                             break
                         if skip:
                             await asyncio.sleep(600)
-                        elif m in [3, 4, 23, 24, 43, 44]: # minute to update
+                        elif m in [3, 23, 43]: # minute to update
                             if d.startswith("Day "):
                                 crews = crewsB
                                 mode = 0
@@ -129,21 +147,18 @@ class GBF_Access(commands.Cog):
                                     diff = data[4] - self.bot.gw['ranking'][4]
                                     diff = round(diff.total_seconds() / 60.0)
                                 else: diff = 0
-                                for c in crews:
-                                    r = await self.requestRanking(c // 10, mode)
-                                    if r is not None and 'list' in r and len(r['list']) > 0:
-                                        data[0][str(c)] = int(r['list'][-1]['point'])
-                                        if diff > 0 and self.bot.gw['ranking'] is not None and str(c) in self.bot.gw['ranking'][0]:
-                                            data[2][str(c)] = (data[0][str(c)] - self.bot.gw['ranking'][0][str(c)]) / diff
-                                    await asyncio.sleep(0.001)
+                                with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+                                    futures = []
+                                    for c in crews:
+                                        futures.append(executor.submit(self.updateRankingThread, data, diff, True, mode, c))
+                                    for p in players:
+                                        futures.append(executor.submit(self.updateRankingThread, data, diff, False, 2, p))
+                                    await asyncio.sleep(1)
+                                    for future in concurrent.futures.as_completed(futures):
+                                        future.result()
 
-                                for p in players:
-                                    r = await self.requestRanking(p // 10, 2)
-                                    if r is not None and 'list' in r and len(r['list']) > 0:
-                                        data[1][str(p)] = int(r['list'][-1]['point'])
-                                        if diff > 0 and self.bot.gw['ranking'] is not None and str(p) in self.bot.gw['ranking'][1]:
-                                            data[3][str(p)] = (data[1][str(p)] - self.bot.gw['ranking'][1][str(p)]) / diff
-                                    await asyncio.sleep(0.001)
+                                for i in range(0, 4):
+                                    data[i] = dict(sorted(data[i].items(), reverse=True, key=lambda item: int(item[1])))
 
                                 self.bot.gw['ranking'] = data
                                 self.bot.savePending = True
@@ -170,7 +185,7 @@ class GBF_Access(commands.Cog):
                                     await self.bot.sendError('gwscrap', 'Scraping failed\n' + scrapout)
                             await asyncio.sleep(300)
                         else:
-                            await asyncio.sleep(30)
+                            await asyncio.sleep(25)
                     else:
                         await asyncio.sleep(60)
             except asyncio.CancelledError:
@@ -993,18 +1008,16 @@ class GBF_Access(commands.Cog):
     async def getScoutData(self, id : int): # get player scout data
         return await self.bot.sendRequest("http://game.granbluefantasy.jp/forum/search_users_id?_=TS1&t=TS2&uid=ID", account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True, payload={"special_token":None,"user_id":id})
 
-    async def requestRanking(self, page, mode = 0): # get gw ranking data
-        if not await self.bot.isGameAvailable():
-            return None
+    def requestRanking(self, page, mode = 0): # get gw ranking data
         if self.bot.gw['state'] == False or self.bot.getJST() <= self.bot.gw['dates']["Preliminaries"]:
             return None
 
         if mode == 0: # crew
-            res = await self.bot.sendRequest("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/totalguild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page), account=self.bot.gbfcurrent, decompress=True, load_json=True)
+            res = self.specialRequest("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/totalguild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page))
         elif mode == 1: # prelim crew
-            res = await self.bot.sendRequest("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/guild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page), account=self.bot.gbfcurrent, decompress=True, load_json=True)
+            res = self.specialRequest("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/guild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page))
         elif mode == 2: # player
-            res = await self.bot.sendRequest("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page), account=self.bot.gbfcurrent, decompress=True, load_json=True)
+            res = self.specialRequest("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page))
         return res
 
     async def getGacha(self): # get current gacha
@@ -2399,7 +2412,7 @@ class GBF_Access(commands.Cog):
     def yB(self, row, index):
         return row['q']['y'][1]
 
-    async def updateYouTracker(self, t):
+    def updateYouTracker(self, t):
         day = self.getCurrentGWDayID()
         if day is None or day <= 1 or day >= 10: # check if match day
             return
@@ -2451,9 +2464,14 @@ class GBF_Access(commands.Cog):
             chart.to_svg('chart.svg')
             cairosvg.svg2png(url="chart.svg", write_to="chart.png")
             with open("chart.png", "rb") as f:
-                message = await self.bot.send('image', file=discord.File(f))
-                self.bot.matchtracker['chart'] = message.attachments[0].url
-                self.bot.savePending = True
+                try:
+                    future = asyncio.run_coroutine_threadsafe(self.bot.send('image', file=discord.File(f)), self.bot.loop)
+                    future.result()
+                    message = future.result()
+                    self.bot.matchtracker['chart'] = message.attachments[0].url
+                except:
+                    pass
+            self.bot.savePending = True
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isYou()
@@ -2554,7 +2572,7 @@ class GBF_Access(commands.Cog):
                 c.execute('CREATE TABLE players (ranking int, id int, name text, current_total int)')
             i = 0
             while i < count: # count is the number of entries to process
-                if self.bot.exit_flag or self.bot.maintenance['state'] or self.stoprankupdate: # stop if the bot is stopping
+                if self.bot.exit_flag or self.bot.maintenance['state'] or self.stoprankupdate or (self.bot.getJST() - update_time > timedelta(seconds=1150)): # stop if the bot is stopping
                     self.stoprankupdate = True # send the stop signal
                     return "Forced stop"
                 try: item = qo.get() # retrieve an item
@@ -2576,8 +2594,7 @@ class GBF_Access(commands.Cog):
 
             if mode: # update tracker
                 try:
-                    future = asyncio.run_coroutine_threadsafe(self.updateYouTracker(update_time), self.bot.loop)
-                    future.result()
+                    self.updateYouTracker(update_time)
                 except Exception as ue:
                     future = asyncio.run_coroutine_threadsafe(self.bot.sendError('updateyoutracker', str(ue)), self.bot.loop)
                     future.result()
@@ -2587,22 +2604,11 @@ class GBF_Access(commands.Cog):
             self.stoprankupdate = True # send the stop signal if a critical error happened
             return 'gwdbbuilder() exception:\n' + str(err)
 
-    def gwscrap(self, update_time):
-        if self.isgettingranking:
-            self.stoprankupdate = True
-            count = 0
-            while self.isgettingranking:
-                time.sleep(1)
-                count += 1
-                if count >= 30:
-                    return "Previous gwscrap() isn't stopped"
-    
-        self.isgettingranking = True
+    def gwscrap(self, update_time):   
         self.bot.drive.delFiles(["temp.sql"], self.bot.tokens['files']) # delete previous temp file (if any)
         self.bot.delFile('temp.sql') # locally too
         if self.bot.drive.cpyFile("GW.sql", self.bot.tokens['files'], "temp.sql"): # copy existing gw.sql to temp.sql
             if not self.bot.drive.dlFile("temp.sql", self.bot.tokens['files']): # retrieve it
-                self.isgettingranking = False
                 return "Failed to retrieve copied GW.sql"
             conn = sqlite3.connect('temp.sql') # open
             c = conn.cursor()
@@ -2622,7 +2628,7 @@ class GBF_Access(commands.Cog):
             conn.close()
 
         state = "" # return value
-        max_thread = 75
+        max_thread = 100
         for n in [0, 1]: # n == 0 (crews) or 1 (players)
             current_time = self.bot.getJST()
             if n == 0 and current_time >= self.bot.gw['dates']["Interlude"] and current_time < self.bot.gw['dates']["Day 1"]:
@@ -2641,19 +2647,15 @@ class GBF_Access(commands.Cog):
             for item in data['list']: # queue what we already retrieved on the first page
                 qo.put(item)
             self.stoprankupdate = False # if true, this flag will stop the threads
-            with concurrent.futures.ThreadPoolExecutor(max_workers=max_thread+1) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=max_thread) as executor:
                 futures = [executor.submit(self.scrapProcess, (n == 0), qi, qo) for i in range(max_thread)]
-                futures.append(executor.submit(self.gwdbbuilder, (n == 0), qo, count, update_time))
+                state = self.gwdbbuilder((n == 0), qo, count, update_time)
                 for future in concurrent.futures.as_completed(futures):
-                    r = future.result()
-                    if r is None: continue
-                    else: state = r
+                    future.result()
             self.stoprankupdate = True # to be safe
 
             qi.queue.clear() # clear the queues
             qo.queue.clear()
             if state != "":
-                self.isgettingranking = False
                 return state
-        self.isgettingranking = False
         return ""
