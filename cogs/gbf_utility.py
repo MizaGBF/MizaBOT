@@ -497,6 +497,13 @@ class GBF_Utility(commands.Cog):
             await self.bot.sendError("getgachatime", str(e))
 
         try:
+            if current_time < self.bot.stream['time']:
+                d = self.bot.stream['time'] - current_time
+                description += "\n{} Stream starts in **{}**".format(self.bot.getEmote('crystal'), self.bot.getTimedeltaStr(d, 2))
+        except:
+            pass
+
+        try:
             buf = self.bot.get_cog('GuildWar').getGWState()
             if len(buf) > 0: description += "\n" + buf
         except Exception as e:
