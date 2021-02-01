@@ -658,7 +658,6 @@ class Mizabot(commands.Bot):
             if count > 0:
                 self.savePending = True
                 await self.send('debug', embed=self.buildEmbed(title="cleansave()", description="Cleaned {} unused profiles".format(count), timestamp=datetime.utcnow()))
-
             # clean up schedule
             c = self.getJST()
             fd = c.replace(day=1, hour=12, minute=15, second=0, microsecond=0) # day of the next schedule drop, 15min after
@@ -674,16 +673,17 @@ class Mizabot(commands.Bot):
                     for t in tw:
                         txt = t.full_text
                         if txt.find(" = ") != -1 and txt.find("chedule\n") != -1:
-                            s = txt.find("https://t.co/")
-                            if s != -1: txt = txt[:s]
-                            txt = txt.replace('\n\n', '\n')
-                            txt = txt[txt.find("chedule\n")+len("chedule\n"):]
-                            try: new_schedule = txt.replace('\n', ' = ').split(' = ')[0:]
+                            try:
+                                s = txt.find("https://t.co/")
+                                if s != -1: txt = txt[:s]
+                                txt = txt.replace('\n\n', '\n')
+                                txt = txt[txt.find("chedule\n")+len("chedule\n"):]
+                                new_schedule = txt.replace('\n', ' = ').split(' = ')
+                                while len(new_schedule) > 0 and new_schedule[0] == '': new_schedule.pop(0)
                             except: pass
-                            while len(new_schedule) > 0 and new_schedule[0] == '': new_schedule.pop(0)
                             break
             else: # else, just clean up old entries
-                for i in range(0, len(self.schedule), 2):
+                for i in range(0, ((len(self.schedule)//2)*2), 2):
                     try:
                         date = self.schedule[i].replace(" ", "").split("-")[-1].split("/")
                         x = c.replace(month=int(date[0]), day=int(date[1])+1, microsecond=0)
@@ -695,8 +695,7 @@ class Mizabot(commands.Bot):
                         pass
                     new_schedule.append(self.schedule[i])
                     new_schedule.append(self.schedule[i+1])
-
-            if len(new_schedule) != len(self.schedule):
+            if len(new_schedule) != 0 and len(new_schedule) != len(self.schedule):
                 self.schedule = new_schedule
                 self.savePending = True
                 await self.send('debug', embed=self.buildEmbed(title="cleansave()", description="The schedule has been cleaned up", timestamp=datetime.utcnow()))

@@ -656,19 +656,21 @@ class GBF_Utility(commands.Cog):
             await ctx.send(embed=self.bot.buildEmbed(title="No schedule available", color=self.color))
         else:
             l = len(self.bot.schedule)
-            l = l - (l%2) # need an even amount, skipping the last one if odd
+            if raw != 'raw': l = l - (l%2) # need an even amount, skipping the last one if odd
             i = 0
             msg = ""
             while i < l:
                 if raw == 'raw':
                     if i != 0: msg += ";"
                     else: msg += "`"
-                    msg += "{};{}".format(self.bot.schedule[i], self.bot.schedule[i+1])
+                    msg += self.bot.schedule[i]
+                    i += 1
                 elif l > 12: # enable or not emotes (I have 6 numbered emotes, so 6 field max aka 12 elements in my array)
                     msg += "{} ▫️ {}\n".format(self.bot.schedule[i], self.bot.schedule[i+1])
+                    i += 2
                 else:
                     msg += "{} {} ▫️ {}\n".format(self.bot.getEmote(str((i//2)+1)), self.bot.schedule[i], self.bot.schedule[i+1])
-                i += 2
+                    i += 2
             if raw == 'raw': msg += "`"
             await ctx.send(embed=self.bot.buildEmbed(title="🗓 Event Schedule {} {:%Y/%m/%d %H:%M} JST".format(self.bot.getEmote('clock'), self.bot.getJST()), url="https://twitter.com/granblue_en", color=self.color, description=msg))
 
