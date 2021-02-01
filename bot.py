@@ -331,7 +331,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "7.11" # version number
+        self.botversion = "7.12" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Cleaned up the bot and put the new reply system in use", "Added `$lightchads` for the upcoming GW", "Added `$eternals`", "Generate a picture when `$profile` is used", "Added back `$mizatube` (no fancy search function)", "Removed `$summon`", "Added `$blackjack`", "Added `$recruit` to check recruiting /gbfg/ crews"] # bot changelog
         self.running = True # if True, the bot is running
@@ -678,8 +678,10 @@ class Mizabot(commands.Bot):
                             if s != -1: txt = txt[:s]
                             txt = txt.replace('\n\n', '\n')
                             txt = txt[txt.find("chedule\n")+len("chedule\n"):]
-                            try: new_schedule = txt.replace('\n', ' = ').split(' = ')[1:]
+                            try: new_schedule = txt.replace('\n', ' = ').split(' = ')[0:]
                             except: pass
+                            while len(new_schedule) > 0 and new_schedule[0] == '': new_schedule.pop(0)
+                            break
             else: # else, just clean up old entries
                 for i in range(0, len(self.schedule), 2):
                     try:
