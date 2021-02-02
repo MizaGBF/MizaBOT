@@ -666,18 +666,33 @@ class GBF_Utility(commands.Cog):
             if raw != 'raw': l = l - (l%2) # need an even amount, skipping the last one if odd
             i = 0
             msg = ""
+            c = self.bot.getJST()
+            md = c.month * 100 + c.day
             while i < l:
                 if raw == 'raw':
                     if i != 0: msg += ";"
                     else: msg += "`"
                     msg += self.bot.schedule[i]
                     i += 1
-                elif l > 12: # enable or not emotes (I have 6 numbered emotes, so 6 field max aka 12 elements in my array)
-                    msg += "{} ▫️ {}\n".format(self.bot.schedule[i], self.bot.schedule[i+1])
-                    i += 2
                 else:
-                    msg += "{} {} ▫️ {}\n".format(self.bot.getEmote(str((i//2)+1)), self.bot.schedule[i], self.bot.schedule[i+1])
-                    i += 2
+                    try: # checking if the event is on going (to bold it)
+                        dates = self.bot.schedule[i].replace(' ', '').split('-')
+                        ev_md = []
+                        for di in range(0, 2):
+                            ev_md.append(int(dates[di].split('/')[0]) * 100 + int(dates[di].split('/')[1]))
+                        if ev_md[0] >= 1200 and ev_md[1] <= 100: ev_md[0] -= 1200
+                        on_going = (md >= ev_md[0] and md <= ev_md[1])
+                    except:
+                        on_going = False
+                    if on_going: msg += "**"
+                    if l > 12: # enable or not emotes (I have 6 numbered emotes, so 6 field max aka 12 elements in my array)
+                        msg += "{} ▫️ {}".format(self.bot.schedule[i], self.bot.schedule[i+1])
+                        i += 2
+                    else:
+                        msg += "{} {} ▫️ {}".format(self.bot.getEmote(str((i//2)+1)), self.bot.schedule[i], self.bot.schedule[i+1])
+                        i += 2
+                    if on_going: msg += "**"
+                    msg += "\n"
             if raw == 'raw': msg += "`"
             await ctx.send(embed=self.bot.buildEmbed(title="🗓 Event Schedule {} {:%Y/%m/%d %H:%M} JST".format(self.bot.getEmote('clock'), self.bot.getJST()), url="https://twitter.com/granblue_en", color=self.color, description=msg))
 

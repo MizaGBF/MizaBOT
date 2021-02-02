@@ -244,8 +244,7 @@ class Management(commands.Cog):
             self.bot.valiant['dates']["Day 6"] = self.bot.valiant['dates']["Day 5"] + timedelta(days=1)
             self.bot.valiant['dates']["Day 7"] = self.bot.valiant['dates']["Day 6"] + timedelta(days=1)
             self.bot.valiant['dates']["Day 8"] = self.bot.valiant['dates']["Day 7"] + timedelta(days=1)
-            self.bot.valiant['dates']["Day 9"] = self.bot.valiant['dates']["Day 8"] + timedelta(days=1)
-            self.bot.valiant['dates']["End"] = self.bot.valiant['dates']["Day 9"] + timedelta(seconds=50400)
+            self.bot.valiant['dates']["End"] = self.bot.valiant['dates']["Day 8"] + timedelta(seconds=50400)
             # set the valiant state to true
             self.bot.valiant['state'] = True
             self.bot.savePending = True

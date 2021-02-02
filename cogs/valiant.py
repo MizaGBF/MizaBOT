@@ -50,7 +50,7 @@ class DreadBarrage(commands.Cog):
                 self.bot.savePending = True
                 return ""
             elif current_time > self.bot.valiant['dates']["Day 1"]:
-                it = ['End', 'Day 9', 'Day 8', 'Day 7', 'Day 6', 'Day 5', 'Day 4', 'Day 3', 'Day 2', 'Day 1']
+                it = ['End', 'Day 8', 'Day 7', 'Day 6', 'Day 5', 'Day 4', 'Day 3', 'Day 2', 'Day 1']
                 for i in range(1, len(it)):
                     if current_time > self.bot.valiant['dates'][it[i]]:
                         msg = "{} Barrage {} is on going (Time left: **{}**)".format(self.bot.getEmote('mark_a'), it[i], self.bot.getTimedeltaStr(self.bot.valiant['dates'][it[i-1]] - current_time))
@@ -84,7 +84,7 @@ class DreadBarrage(commands.Cog):
                         description += "▫️ Start: **{:%a. %m/%d %H:%M}**\n".format(self.bot.valiant['dates']['Day 1'] + timedelta(seconds=3600*(gmt-9)))
                     if current_time < self.bot.valiant['dates']["Day 4"]:
                         description += "▫️ New Foes: **{:%a. %m/%d %H:%M}**\n".format(self.bot.valiant['dates']['New Foes'] + timedelta(seconds=3600*(gmt-9)))
-                    description += "▫️ Last day: **{:%a. %m/%d %H:%M}**\n".format(self.bot.valiant['dates']['Day 9'] + timedelta(seconds=3600*(gmt-9)))
+                    description += "▫️ Last day: **{:%a. %m/%d %H:%M}**\n".format(self.bot.valiant['dates']['Day 8'] + timedelta(seconds=3600*(gmt-9)))
                 else:
                     await ctx.send(embed=self.bot.buildEmbed(title="{} **Dread Barrage**".format(self.bot.getEmote('crew')), description="Not available", color=self.color))
                     self.bot.valiant['state'] = False
