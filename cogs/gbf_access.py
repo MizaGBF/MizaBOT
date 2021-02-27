@@ -378,7 +378,8 @@ class GBF_Access(commands.Cog):
         return res
 
     async def check4koma(self):
-        data = await self.bot.sendRequest('http://game.granbluefantasy.jp/comic/list/1?_=TS1&t=TS2&uid=ID', account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
+        data = await self.bot.sendRequest('http://game.granbluefantasy.jp/comic/list/1?PARAMS', account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
+        if data is None: return None
         return data['list'][0]
 
     def getCurrentGWDayID(self):
@@ -484,6 +485,7 @@ class GBF_Access(commands.Cog):
                 for k in self.bot.gbfwatch["flags"][t]:
                     flags[t][k] = False
             it = self.bot.gbfwatch["it"]
+            thct = self.bot.gbfwatch["thct"]
             thbd = self.bot.gbfwatch["thbd"]
         except:
             return ["", {}, {}, {}, ""]
@@ -491,6 +493,16 @@ class GBF_Access(commands.Cog):
         if self.dad_running:
             return ["please wait your turn", {}, {}, thbd[type].format(id), ""]
         self.dad_running = True
+
+        thf = thbd[type].format(id)
+        try:
+            data = await self.bot.sendRequest(thbd[type].format(id), no_base_headers=True)
+            if data is None and type == 0:
+                data = await self.bot.sendRequest(thct.format(id).replace("/30", "/38"), no_base_headers=True)
+                if data is not None:
+                    thf = thct.format(id).replace("/30", "/38")
+        except:
+            pass
 
         paste = ""
         iul = {}
@@ -626,22 +638,22 @@ class GBF_Access(commands.Cog):
             except:
                 if counter >= 3 and len(paste) == 0:
                     self.dad_running = False
-                    return ["", {}, {}, thbd[type].format(id), ""]
+                    return ["", {}, {}, thf, ""]
             counter+=1
 
         if len(paste) > 0:
             if silent:
                 self.dad_running = False
-                return ["Not uploaded", flags, iul, thbd[type].format(id), paste]
+                return ["Not uploaded", flags, iul, thf, paste]
             else:
                 title = "{}_dump_{}.txt".format(id, datetime.utcnow().timestamp())
                 with open(title, "wb") as f:
                     f.write(paste.encode('utf-8'))
                 self.dad_running = False
-                return [title, flags, iul, thbd[type].format(id), paste]
+                return [title, flags, iul, thf, paste]
         else:
             self.dad_running = False
-            return ["", {}, {}, thbd[type].format(id)]
+            return ["", {}, {}, thf]
 
     async def dadp(self, c, data, tt): # black magic
         fields = []
@@ -781,7 +793,7 @@ class GBF_Access(commands.Cog):
         return found
 
     async def getCrewSummary(self, id):
-        res = await self.bot.sendRequest("http://game.granbluefantasy.jp/guild_main/content/detail/{}?_=TS1&t=TS2&uid=ID".format(id), account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
+        res = await self.bot.sendRequest("http://game.granbluefantasy.jp/guild_main/content/detail/{}?PARAMS".format(id), account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
         if res is None: return None
         else:
             soup = BeautifulSoup(unquote(res['data']), 'html.parser')
@@ -995,18 +1007,18 @@ class GBF_Access(commands.Cog):
         else: return '\u202d' + s.replace('\\', '\\\\').replace('`', '\'').replace('*', '\\*').replace('_', '\\_').replace('{', '\\{').replace('}', '\\}').replace('[', '').replace(']', '').replace('(', '\\(').replace(')', '\\)').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('.', '\\.').replace('!', '\\!').replace('|', '\\|')
 
     async def requestCrew(self, id : int, page : int): # get crew data
-        if page == 0: return await self.bot.sendRequest("http://game.granbluefantasy.jp/guild_other/guild_info/{}?_=TS1&t=TS2&uid=ID".format(id), account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
-        else: return await self.bot.sendRequest("http://game.granbluefantasy.jp/guild_other/member_list/{}/{}?_=TS1&t=TS2&uid=ID".format(page, id), account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
+        if page == 0: return await self.bot.sendRequest("http://game.granbluefantasy.jp/guild_other/guild_info/{}?PARAMS".format(id), account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
+        else: return await self.bot.sendRequest("http://game.granbluefantasy.jp/guild_other/member_list/{}/{}?PARAMS".format(page, id), account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
 
     async def getProfileData(self, id : int): # get player data
         if not await self.bot.isGameAvailable():
             return "Maintenance"
-        res = await self.bot.sendRequest("http://game.granbluefantasy.jp/profile/content/index/{}?_=TS1&t=TS2&uid=ID".format(id), account=self.bot.gbfcurrent, decompress=True, load_json=True)
+        res = await self.bot.sendRequest("http://game.granbluefantasy.jp/profile/content/index/{}?PARAMS".format(id), account=self.bot.gbfcurrent, decompress=True, load_json=True)
         if res is not None: return unquote(res['data'])
         else: return res
 
     async def getScoutData(self, id : int): # get player scout data
-        return await self.bot.sendRequest("http://game.granbluefantasy.jp/forum/search_users_id?_=TS1&t=TS2&uid=ID", account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True, payload={"special_token":None,"user_id":id})
+        return await self.bot.sendRequest("http://game.granbluefantasy.jp/forum/search_users_id?PARAMS", account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True, payload={"special_token":None,"user_id":id})
 
     def requestRanking(self, page, mode = 0): # get gw ranking data
         if self.bot.gw['state'] == False or self.bot.getJST() <= self.bot.gw['dates']["Preliminaries"]:
@@ -1034,7 +1046,7 @@ class GBF_Access(commands.Cog):
         c = self.bot.getJST()
         try:
             #gacha page
-            data = await self.bot.sendRequest("http://game.granbluefantasy.jp/gacha/list?_=TS1&t=TS2&uid=ID", account=self.bot.gbfcurrent, decompress=True, load_json=True, check_update=True)
+            data = await self.bot.sendRequest("http://game.granbluefantasy.jp/gacha/list?PARAMS", account=self.bot.gbfcurrent, decompress=True, load_json=True, check_update=True)
             self.bot.gbfdata['gachatime'] = datetime.strptime(data['legend']['lineup'][-1]['end'], '%m/%d %H:%M').replace(year=c.year, microsecond=0)
             NY = False
             if c > self.bot.gbfdata['gachatime']:
@@ -1051,7 +1063,7 @@ class GBF_Access(commands.Cog):
             await asyncio.sleep(0.001) # sleep to take a break
 
             # draw rate
-            data = await self.bot.sendRequest("http://game.granbluefantasy.jp/gacha/provision_ratio/{}/1?_=TS1&t=TS2&uid=ID".format(gachaid), account=self.bot.gbfcurrent, decompress=True, load_json=True, check_update=True)
+            data = await self.bot.sendRequest("http://game.granbluefantasy.jp/gacha/provision_ratio/{}/1?PARAMS".format(gachaid), account=self.bot.gbfcurrent, decompress=True, load_json=True, check_update=True)
             # build list
             banner_msg = "{} **{}** Rate".format(self.bot.getEmote('SSR'), data['ratio'][0]['ratio'])
             if not data['ratio'][0]['ratio'].startswith('3'):
@@ -1291,7 +1303,7 @@ class GBF_Access(commands.Cog):
     async def item(self, ctx, id : int):
         """Retrieve an item description (Owner or Bot only)"""
         try:
-            data = await self.bot.sendRequest('http://game.granbluefantasy.jp/rest/quest/droplist/drop_item_detail?_=TS1&t=TS2&uid=ID', account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True, payload={"special_token":None,"item_id":id,"item_kind":10})
+            data = await self.bot.sendRequest('http://game.granbluefantasy.jp/rest/quest/droplist/drop_item_detail?PARAMS', account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True, payload={"special_token":None,"item_id":id,"item_kind":10})
             await ctx.reply(embed=self.bot.buildEmbed(title=data['name'], description=data['comment'].replace('<br>', ' '), thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/item/article/s/{}.jpg".format(id), footer=data['id'], color=self.color))
         except:
             await self.bot.react(ctx.message, '❎') # white negative mark
@@ -1305,7 +1317,7 @@ class GBF_Access(commands.Cog):
             type = int(id[0])
             id = int(id)
             if type not in [1, 2]: raise Exception()
-            data = await self.bot.sendRequest('http://game.granbluefantasy.jp/result/detail?_=TS1&t=TS2&uid=ID', account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True, payload={"special_token":None,"item_id":id,"item_kind":type})
+            data = await self.bot.sendRequest('http://game.granbluefantasy.jp/result/detail?PARAMS', account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True, payload={"special_token":None,"item_id":id,"item_kind":type})
             data = data['data']
 
             rarity = "{}".format(self.bot.getEmote({"2":"R", "3":"SR", "4":"SSR"}.get(data['rarity'], '')))
@@ -1345,7 +1357,7 @@ class GBF_Access(commands.Cog):
     async def coop(self, ctx):
         """Retrieve the current coop daily missions"""
         try:
-            data = (await self.bot.sendRequest('http://game.granbluefantasy.jp/coopraid/daily_mission?_=TS1&t=TS2&uid=ID', account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True))['daily_mission']
+            data = (await self.bot.sendRequest('http://game.granbluefantasy.jp/coopraid/daily_mission?PARAMS', account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True))['daily_mission']
             msg = ""
             for i in range(len(data)):
                 if data[i]['category'] == '2':
@@ -2318,8 +2330,8 @@ class GBF_Access(commands.Cog):
 
     def getRanking(self, page, mode):
         try:
-            if mode: return self.specialRequest("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/totalguild/detail/{}/0?_=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page))
-            else: return self.specialRequest("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?_=TS1&t=TS2&uid=ID".format(str(self.bot.gw['id']).zfill(3), page))
+            if mode: return self.specialRequest("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/totalguild/detail/{}/0?PARAMS".format(str(self.bot.gw['id']).zfill(3), page))
+            else: return self.specialRequest("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?PARAMS".format(str(self.bot.gw['id']).zfill(3), page))
         except:
             return None
 

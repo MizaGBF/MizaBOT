@@ -331,7 +331,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "7.12" # version number
+        self.botversion = "7.13" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Cleaned up the bot and put the new reply system in use", "Added `$lightchads` for the upcoming GW", "Added `$eternals`", "Generate a picture when `$profile` is used", "Added back `$mizatube` (no fancy search function)", "Removed `$summon`", "Added `$blackjack`", "Added `$recruit` to check recruiting /gbfg/ crews"] # bot changelog
         self.running = True # if True, the bot is running
@@ -825,6 +825,7 @@ class Mizabot(commands.Bot):
                 ver = await self.getGameversion()
             else:
                 ver = self.gbfversion
+            url = url.replace("PARAMS", "_=TS1&t=TS2&uid=ID")
             if ver == "Maintenance": return "Maintenance"
             elif ver is not None:
                 url = url.replace("VER", "{}".format(ver))

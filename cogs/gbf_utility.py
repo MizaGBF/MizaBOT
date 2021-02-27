@@ -483,7 +483,7 @@ class GBF_Utility(commands.Cog):
             buf = self.getMaintenanceStatus()
             if len(buf) > 0: description += "\n" + buf
         except Exception as e:
-            await self.bot.sendError("maintenanceUpdate", str(e))
+            await self.bot.sendError("getMaintenanceStatus", str(e))
 
         try:
             cog = self.bot.get_cog('GBF_Access')
@@ -498,8 +498,7 @@ class GBF_Utility(commands.Cog):
 
         try:
             if current_time < self.bot.stream['time']:
-                d = self.bot.stream['time'] - current_time
-                description += "\n{} Stream starts in **{}**".format(self.bot.getEmote('crystal'), self.bot.getTimedeltaStr(d, 2))
+                description += "\n{} Stream starts in **{}**".format(self.bot.getEmote('crystal'), self.bot.getTimedeltaStr(self.bot.stream['time'] - current_time, 2))
         except:
             pass
 
@@ -667,6 +666,7 @@ class GBF_Utility(commands.Cog):
             i = 0
             msg = ""
             c = self.bot.getJST()
+            nx = None
             md = c.month * 100 + c.day
             while i < l:
                 if raw == 'raw':
@@ -684,6 +684,16 @@ class GBF_Utility(commands.Cog):
                         on_going = (md >= ev_md[0] and md <= ev_md[1])
                     except:
                         on_going = False
+                    # check if it's the next event in line
+                    if not on_going:
+                        try:
+                            dates = self.bot.schedule[i].replace(' ', '').split('-')
+                            evd = dates[0].split('/')
+                            evt = c.replace(month=int(evd[0]), day=int(evd[1]), hour=18, minute=0, second=0, microsecond=0)
+                            if evt > c and (nx is None or evt < nx):
+                                nx = evt
+                        except:
+                            pass
                     if on_going: msg += "**"
                     if l > 12: # enable or not emotes (I have 6 numbered emotes, so 6 field max aka 12 elements in my array)
                         msg += "{} ▫️ {}".format(self.bot.schedule[i], self.bot.schedule[i+1])
@@ -694,6 +704,20 @@ class GBF_Utility(commands.Cog):
                     if on_going: msg += "**"
                     msg += "\n"
             if raw == 'raw': msg += "`"
+            else:
+                if nx is not None and c < nx:
+                    msg += "{} Next event approximately in **{}**\n".format(self.bot.getEmote('mark'), self.bot.getTimedeltaStr(nx - c, 2))
+                try:
+                    buf = self.getMaintenanceStatus()
+                    if len(buf) > 0: msg += buf + '\n'
+                except Exception as e:
+                    await self.bot.sendError("getMaintenanceStatus", str(e))
+                try:
+                    current_time = self.bot.getJST()
+                    if current_time < self.bot.stream['time']:
+                        msg += "{} Stream starts in **{}**".format(self.bot.getEmote('crystal'), self.bot.getTimedeltaStr(self.bot.stream['time'] - current_time, 2))
+                except:
+                    pass
             await ctx.send(embed=self.bot.buildEmbed(title="🗓 Event Schedule {} {:%Y/%m/%d %H:%M} JST".format(self.bot.getEmote('clock'), self.bot.getJST()), url="https://twitter.com/granblue_en", color=self.color, description=msg))
 
     def strToInt(self, s): # convert string such as 1.2B to 1200000000
@@ -865,15 +889,21 @@ class GBF_Utility(commands.Cog):
     async def korekara(self, ctx):
         """Post the time to the next monthly dev post"""
         c = self.bot.getJST()
-        if c.day == 1:
-            if c.hour >= 12:
+        try:
+            if c < self.bot.stream['time']:
+                target = self.bot.stream['time']
+            else:
+                raise Exception()
+        except:
+            if c.day == 1:
+                if c.hour >= 12:
+                    if c.month == 12: target = datetime(year=c.year+1, month=1, day=1, hour=12, minute=0, second=0, microsecond=0)
+                    else: target = datetime(year=c.year, month=c.month+1, day=1, hour=12, minute=0, second=0, microsecond=0)
+                else:
+                    target = datetime(year=c.year, month=c.month, day=1, hour=12, minute=0, second=0, microsecond=0)
+            else:
                 if c.month == 12: target = datetime(year=c.year+1, month=1, day=1, hour=12, minute=0, second=0, microsecond=0)
                 else: target = datetime(year=c.year, month=c.month+1, day=1, hour=12, minute=0, second=0, microsecond=0)
-            else:
-                target = datetime(year=c.year, month=c.month, day=1, hour=12, minute=0, second=0, microsecond=0)
-        else:
-            if c.month == 12: target = datetime(year=c.year+1, month=1, day=1, hour=12, minute=0, second=0, microsecond=0)
-            else: target = datetime(year=c.year, month=c.month+1, day=1, hour=12, minute=0, second=0, microsecond=0)
         delta = target - c
         await ctx.send(embed=self.bot.buildEmbed(title="{} Kore Kara".format(self.bot.getEmote('clock')), description="Release approximately in **{}**".format(self.bot.getTimedeltaStr(delta, 2)),  url="https://granbluefantasy.jp/news/index.php", thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
 
