@@ -715,7 +715,8 @@ class GBF_Access(commands.Cog):
             cid = crt[i][1]
             id = self.bot.gbfdata['c'][i] + 1
             errc = 0
-            while errc < 4:
+            errm = 4 if (i < len(self.bot.gbfdata['c']) - 1) else 8
+            while errc < errm:
                 data = await self.dad(str(cid + id * 1000), silent)
 
                 if data[0] == "":
@@ -754,7 +755,7 @@ class GBF_Access(commands.Cog):
                     stid = self.bot.gbfdata['w'][k][i][-1] - 10
                     max = self.bot.gbfdata['w'][k][i][-1]
                 id = (103 + x) * 10000000 + i * 100000 + stid * 100
-                while errc < 4 or stid <= max:
+                while errc < 7 or stid <= max:
                     if stid in self.bot.gbfdata['w'][k][i]:
                         stid += 1
                         continue
