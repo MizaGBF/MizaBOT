@@ -41,14 +41,12 @@ class GBF_Access(commands.Cog):
         self.badcrewcache = []
         self.crewcache = {}
         self.possiblesum = {'10':'fire', '11':'fire', '20':'water', '21':'water', '30':'earth', '31':'earth', '40':'wind', '41':'wind', '50':'light', '51':'light', '60':'dark', '61':'dark', '00':'misc', '01':'misc'}
-        self.subsum = {'chev':'luminiera omega', 'chevalier':'luminiera omega', 'lumi':'luminiera omega', 'luminiera':'luminiera omega', 'colossus':'colossus omega', 'colo':'colossus omega', 'leviathan':'leviathan omega', 'levi':'leviathan omega', 'yggdrasil':'yggdrasil omega', 'yugu':'yggdrasil omega', 'tiamat':'tiamat omega', 'tia':'tiamat omega', 'celeste':'celeste omega', 'boat':'celeste omega', 'alex':'godsworn alexiel', 'alexiel':'godsworn alexiel', 'zeph':'zephyrus', 'longdong':'huanglong', 'dong':'huanglong', 'long':'huanglong', 'bunny':'white rabbit', 'kirin':'qilin', 'sylph gacha':'sylph, flutterspirit of purity', 'poseidon gacha':'poseidon, the tide father', 'anat gacha':'anat, for love and war', 'cerberus gacha':'cerberus, hellhound trifecta', 'marduck gacha':'marduk, battlefield reaper'}
         self.sql = {
             'old_gw' : [None, None, None], # conn, cursor, status
             'gw' : [None, None, None] # conn, cursor, status
         }
         self.loadinggw = False
         self.loadinggacha = False
-        self.blacklist = ["677159", "147448"]
         self.rankinglock = threading.Lock()
         self.stoprankupdate = False
         self.dad_running = False
@@ -406,56 +404,6 @@ class GBF_Access(commands.Cog):
             else: return 0
         else:
             return None
-
-    def postPastebin(self, title, paste, duration = '1D'): # to send informations on a pastebin, requires dev and user keys
-        try:
-            url = "https://pastebin.com/api/api_post.php"
-            values = {'api_option' : 'paste',
-                      'api_dev_key' : self.bot.pastebin['dev_key'],
-                      'api_user_key' : self.bot.pastebin['user_key'],
-                      'api_paste_code' : paste,
-                      'api_paste_private' : '1',
-                      'api_paste_name' : title,
-                      'api_paste_expire_date' : duration}
-            req = request.Request(url, parse.urlencode(values).encode('utf-8'))
-            with request.urlopen(req) as response:
-               result = response.read()
-            return result.decode('ascii')
-        except Exception as e:
-            return "Error: " + str(e)
-
-    def delPastebin(self, link): # delete a pastebin
-        try:
-            link = link.replace('https://pastebin.com/', '')
-            url = "https://pastebin.com/api/api_post.php"
-            values = {'api_option' : 'delete',
-                      'api_dev_key' : self.bot.pastebin['dev_key'],
-                      'api_user_key' : self.bot.pastebin['user_key'],
-                      'api_paste_key' : link}
-            req = request.Request(url, parse.urlencode(values).encode('utf-8'))
-            with request.urlopen(req) as response:
-               result = response.read()
-            return result.decode('ascii')
-        except Exception as e:
-            return "Error: " + str(e)
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True)
-    @isOwner()
-    async def getPastebinUserKey(self, ctx):
-        """No description"""
-        url = "https://pastebin.com/api/api_login.php"
-        values = {'api_dev_key' : self.bot.pastebin['dev_key'],
-                  'api_user_name' : self.bot.pastebin['user'],
-                  'api_user_password' : self.bot.pastebin['pass']}
-
-        try:
-            await self.bot.react(ctx.message, '✅') # white check mark
-            req = request.Request(url, parse.urlencode(values).encode('utf-8'))
-            with request.urlopen(req) as response:
-               the_page = response.read()
-            await self.bot.send('debug', embed=self.bot.buildEmbed(title=the_page.decode('ascii'), color=self.color))
-        except Exception as e:
-            await self.bot.sendError('getpastebinuserkey', str(e))
 
     def pa(self, a, indent): # black magic
         s = ""
@@ -1768,7 +1716,7 @@ class GBF_Access(commands.Cog):
         """Sort and post all /gbfg/ captains per contribution"""
         crews = []
         for e in self.bot.granblue['gbfgcrew']:
-            if self.bot.granblue['gbfgcrew'][e] in crews or self.bot.granblue['gbfgcrew'][e] in self.blacklist: continue
+            if self.bot.granblue['gbfgcrew'][e] in crews: continue
             crews.append(self.bot.granblue['gbfgcrew'][e])
         ranking = []
         leaders = await self.getCrewLeaders(ctx, crews)
@@ -1807,7 +1755,7 @@ class GBF_Access(commands.Cog):
         """Sort and post all /gbfg/ crew per contribution"""
         crews = []
         for e in self.bot.granblue['gbfgcrew']:
-            if self.bot.granblue['gbfgcrew'][e] in crews or self.bot.granblue['gbfgcrew'][e] in self.blacklist: continue
+            if self.bot.granblue['gbfgcrew'][e] in crews: continue
             crews.append(self.bot.granblue['gbfgcrew'][e])
         tosort = {}
         data = await self.GWDBver(ctx)
@@ -1865,7 +1813,7 @@ class GBF_Access(commands.Cog):
             await self.bot.react(ctx.message, 'time')
             crews = []
             for e in self.bot.granblue['gbfgcrew']:
-                if self.bot.granblue['gbfgcrew'][e] in crews or self.bot.granblue['gbfgcrew'][e] in self.blacklist: continue
+                if self.bot.granblue['gbfgcrew'][e] in crews: continue
                 crews.append(self.bot.granblue['gbfgcrew'][e])
 
             sortedcrew = []

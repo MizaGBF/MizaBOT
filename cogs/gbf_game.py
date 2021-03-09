@@ -11,6 +11,9 @@ class GBF_Game(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.color = 0xfce746
+        self.scratcher_thumb = {
+            'Siero Ticket':'item/article/s/30041.jpg', 'Sunlight Stone':'item/evolution/s/20014.jpg', 'Gold Brick':'item/evolution/s/20004.jpg', 'Damascus Ingot':'item/evolution/s/20005.jpg','Agni':'summon/s/2040094000.jpg', 'Varuna':'summon/s/2040100000.jpg', 'Titan':'summon/s/2040084000.jpg', 'Zephyrus':'summon/s/2040098000.jpg', 'Zeus':'summon/s/2040080000.jpg', 'Hades':'summon/s/2040090000.jpg', 'Shiva':'summon/s/2040185000.jpg', 'Europa':'summon/s/2040225000.jpg', 'Godsworn Alexiel':'summon/s/2040205000.jpg', 'Grimnir':'summon/s/2040261000.jpg', 'Lucifer':'summon/s/2040056000.jpg', 'Bahamut':'summon/s/2040030000.jpg', 'Michael':'summon/s/2040306000.jpg', 'Gabriel':'summon/s/2040311000.jpg', 'Uriel':'summon/s/2040203000.jpg', 'Raphael':'summon/s/2040202000.jpg', 'Metatron':'summon/s/2040330000.jpg', 'Sariel':'summon/s/2040327000.jpg', 'Belial':'summon/s/2040347000.jpg', 'Murgleis':'weapon/s/1040004600.jpg', 'Benedia':'weapon/s/1040502500.jpg',  'Gambanteinn':'weapon/s/1040404300.jpg',  'Love Eternal':'weapon/s/1040105400.jpg',  'AK-4A':'weapon/s/1040004600.jpg',  'Reunion':'weapon/s/1040108200.jpg',  'Ichigo-Hitofuri':'weapon/s/1040910000.jpg',  'Taisai Spirit Bow':'weapon/s/1040708700.jpg',  'Unheil':'weapon/s/1040809100.jpg',  'Sky Ace':'weapon/s/1040911500.jpg',  'Ivory Ark':'weapon/s/1040112500.jpg',  'Blutgang':'weapon/s/1040008700.jpg',  'Eden':'weapon/s/1040207000.jpg',  'Parazonium':'weapon/s/1040108700.jpg',  'Ixaba':'weapon/s/1040906400.jpg',  'Blue Sphere':'weapon/s/1040410000.jpg',  'Certificus':'weapon/s/1040309000.jpg',  'Fallen Sword':'weapon/s/1040014300.jpg',  'Mirror-Blade Shard':'weapon/s/1040110600.jpg',  'Galilei\'s Insight':'weapon/s/1040211600.jpg',  'Purifying Thunderbolt':'weapon/s/1040709000.jpg',  'Vortex of the Void':'weapon/s/1040212700.jpg',  'Sacred Standard':'weapon/s/1040213400.jpg',  'Bab-el-Mandeb':'weapon/s/1040004600.jpg',  'Cute Ribbon':'weapon/s/1040605900.jpg',  'Kerak':'weapon/s/1040812000.jpg',  'Sunya':'weapon/s/1040811800.jpg',  'Fist of Destruction':'weapon/s/1040004600.jpg',  'Yahata\'s Naginata':'weapon/s/1040312900.jpg',  'Cerastes':'weapon/s/1040004600.jpg',  'World Ender':'weapon/s/1040004600.jpg',  'Ouroboros Prime':'weapon/s/1040004600.jpg', 'Crystals x3000':'item/normal/s/gem.jpg', 'Intricacy Ring':'item/npcaugment/s/3.jpg', 'Gold Spellbook':'item/evolution/s/20403.jpg', 'Moonlight Stone':'item/evolution/s/20013.jpg', 'Gold Moon x2':'item/article/s/30033.jpg', 'Ultima Unit x3':'item/article/s/138.jpg', 'Silver Centrum x5':'item/article/s/107.jpg', 'Primeval Horn x3':'item/article/s/79.jpg', 'Horn of Bahamut x4':'item/article/s/59.jpg', 'Legendary Merit x5':'item/article/s/2003.jpg', 'Steel Brick':'item/evolution/s/20003.jpg', 'Lineage Ring x2':'item/npcaugment/s/2.jpg', 'Coronation Ring x3':'item/npcaugment/s/1.jpg', 'Silver Moon x5':'item/article/s/30032.jpg', 'Bronze Moon x10':'item/article/s/30031.jpg', 'Elixir x100':'item/normal/s/2.jpg', 'Soul Berry x300':'item/normal/s/5.jpg'
+        }
 
     # used by the gacha games
     def getRoll(self, ssr, sr_mode = False): # return 0 for ssr, 1 for sr, 2 for r
@@ -319,46 +322,79 @@ class GBF_Game(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['scratcher'])
     @commands.cooldown(1, 300, commands.BucketType.user)
-    async def scratch(self, ctx):
+    async def scratch(self, ctx, mode : str = ""):
         """Imitate the GBF scratch game from Anniversary 2020"""
-        # loot table (based on real one)
         loot = {
-            'Siero Ticket':10,
-            'Sunlight Stone':300,
-            'Gold Brick':200,
-            'Damascus Ingot':450,
-            'Agni':1302, 'Varuna':1302, 'Titan':1302, 'Zephyrus':1302, 'Zeus':1302, 'Hades':1302, 'Shiva':1302, 'Europa':1302, 'Godsworn Alexiel':1302, 'Grimnir':1302, 'Lucifer':1302, 'Bahamut':1302, 'Michael':1302, 'Gabriel':1302, 'Uriel':1302, 'Raphael':1302, 'Metatron':1302, 'Sariel':1302, 'Belial':1302, # (18*1375)->24750 / 19
-            'Murgleis':862, 'Benedia':862, 'Gambanteinn':862, 'Love Eternal':862, 'AK-4A':862, 'Reunion':862, 'Ichigo-Hitofuri':862, 'Taisai Spirit Bow':862, 'Unheil':862, 'Sky Ace':862, 'Ivory Ark':862, 'Blutgang':862, 'Eden':862, 'Parazonium':862, 'Ixaba':862, 'Blue Sphere':862, 'Certificus':862, 'Fallen Sword':862, 'Mirror-Blade Shard':862, 'Galilei\'s Insight':862, 'Purifying Thunderbolt':862, 'Vortex of the Void':862, 'Sacred Standard':862, 'Bab-el-Mandeb':862, 'Cute Ribbon':862, 'Kerak': 862, 'Sunya':862, 'Fist of Destruction': 862, 'Yahata\'s Naginata': 862, # (25x1000)->25000 / 29
-            'Crystals x3000':8000,
-            'Intricacy Ring':3000, 'Gold Spellbook':3000, 'Moonlight Stone':3000, 'Gold Moon x2':3000, 'Ultima Unit x3':3000, 'Silver Centrum x5':3000, 'Primeval Horn x3':3000, 'Horn of Bahamut x4':3000, 'Legendary Merit x5':3000, 'Steel Brick':3000,
-            'Lineage Ring x2':4000, 'Coronation Ring x3':4000, 'Silver Moon x5':4000, 'Bronze Moon x10':5000, 'Half Elixir x100':6000, 'Soul Berry x300':6000
+            100 : ['Siero Ticket'],
+            300 : ['Sunlight Stone', 'Gold Brick'],
+            450 : ['Damascus Ingot'],
+            600 : ['Agni', 'Varuna', 'Titan', 'Zephyrus', 'Zeus', 'Hades', 'Shiva', 'Europa', 'Godsworn Alexiel', 'Grimnir', 'Lucifer', 'Bahamut', 'Michael', 'Gabriel', 'Uriel', 'Raphael', 'Metatron', 'Sariel', 'Belial'],
+            400 : ['Murgleis', 'Benedia', 'Gambanteinn', 'Love Eternal', 'AK-4A', 'Reunion', 'Ichigo-Hitofuri', 'Taisai Spirit Bow', 'Unheil', 'Sky Ace', 'Ivory Ark', 'Blutgang', 'Eden', 'Parazonium', 'Ixaba', 'Blue Sphere', 'Certificus', 'Fallen Sword', 'Mirror-Blade Shard', 'Galilei\'s Insight', 'Purifying Thunderbolt', 'Vortex of the Void', 'Sacred Standard', 'Bab-el-Mandeb', 'Cute Ribbon', 'Kerak', 'Sunya', 'Fist of Destruction', 'Yahata\'s Naginata', 'Cerastes', 'World Ender', 'Ouroboros Prime'],
+            15000 : ['Crystals x3000', 'Intricacy Ring', 'Gold Spellbook', 'Moonlight Stone', 'Gold Moon x2', 'Ultima Unit x3', 'Silver Centrum x5', 'Primeval Horn x3', 'Horn of Bahamut x4', 'Legendary Merit x5', 'Steel Brick'],
+            22000: ['Lineage Ring x2', 'Coronation Ring x3', 'Silver Moon x5', 'Bronze Moon x10'],
+            33000: ['Elixir x100', 'Soul Berry x300']
         }
-        message = None # store the message to edit
-        mm = 0 # maximum random loot value
-        for x in loot:
-            mm += loot[x] # calculated here
+        message = None
+        ct = self.bot.getJST()
+        # settings
+        fixedS = ct.replace(year=2021, month=3, day=19, hour=19, minute=0, second=0, microsecond=0) # beginning of good scratcher
+        fixedE = fixedS.replace(day=20, hour=19) # end of good scratcher
+        betterScratcher = False # if true, only good results possible
+        # settings end
+        if ct >= fixedS and ct < fixedE:
+            betterScratcher = True
+        
+        # rate calcul
+        total = 0
+        total_rare = 0
+        rare_divider = 'Murgleis'
+        for r in loot:
+            total += r * len(loot[r])
+            if loot[r][0] == rare_divider: total_rare = total
 
-        # select the loot
+        # user options
+        if mode == "debug" and ctx.author.id == self.bot.ids['owner']:
+            msg = "`$scratch` Debug Values\nTotal: {} (100%)\n".format(total)
+            for r in loot:
+                msg += "{} Tier: {} ({}%)\n".format(loot[r][0], r * len(loot[r]), ((10000 * r * len(loot[r])) // total) / 100)
+            debug_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Scratcher Debug", description=msg, color=self.color))
+            await self.bot.cleanMessage(ctx, debug_msg, 30)
+        elif mode == "rigged" and ctx.author.id == self.bot.ids['owner']:
+            betterScratcher = True
+        
+        footer = "" if not betterScratcher else "Good item guaranteed"        
         selected = {}
-        sm = random.randint(4, 6) # number of loots, 4 to 6 max
-        i = 0
-        while i < sm:
-            if len(selected) == 1 and n > 20000: n = random.randint(0, mm//10) # add one rarer loot
-            else: n = random.randint(0, mm-1) # roll a dice
+        nloot = random.randint(4, 5)
+        last = 'Soul Berry x300'
+        is_rare = False
+        while len(selected) < nloot:
+            n = total
+            if betterScratcher:
+                while n > total_rare: # force a rare, according to settings
+                    n = random.randint(1, total)
+            elif len(selected) == 1:
+                while n > total_rare: # force a rare, for the salt
+                    n = random.randint(1, total)
+            else:
+                n = random.randint(1, total)
             c = 0
-            check = "" # check which loot match in this loop
-            for x in loot:
-                if n < c + loot[x]:
-                    check = x
-                    break
-                else:
-                    c += loot[x]
-            if check != "" and check not in selected: # add to the list if correct
-                selected[check] = 0
-                i += 1
-
+            found = False
+            for r in loot:
+                for item in loot[r]:
+                    if n <= c:
+                        if item in selected:
+                            n += r
+                        else:
+                            selected[item] = 0
+                            if c < total_rare: is_rare = True
+                            found = True
+                        break
+                    else:
+                        c += r
+                if found: break
+        
         # build the scratch grid
-        hidden = "[???????????????]"
+        hidden = "▄▄▄▄▄▄▄▄▄▄▄"
         grid = []
         win = ""
         keys = list(selected.keys())
@@ -382,7 +418,8 @@ class GBF_Game(commands.Cog):
                 break
         while True: # shuffle the grid until we get a valid one
             random.shuffle(grid)
-            if nofinal and grid[-1][0] == "": break
+            if nofinal and grid[-1][0] == "":
+                break
             elif not nofinal and grid[-1][0] == keys[0]:
                 win = ""
                 break
@@ -406,16 +443,16 @@ class GBF_Game(commands.Cog):
                     else: fields[i%3]['value'] += "{}\n".format(grid[i][0])
             # send the message
             if message is None:
-                message = await ctx.reply(embed=self.bot.buildEmbed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, inline=True, fields=fields, color=self.color))
+                message = await ctx.reply(embed=self.bot.buildEmbed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, inline=True, footer=footer, fields=fields, color=self.color))
             else:
-                await message.edit(embed=self.bot.buildEmbed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, inline=True, fields=fields, color=self.color))
+                await message.edit(embed=self.bot.buildEmbed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, inline=True, footer=footer, fields=fields, color=self.color))
             await asyncio.sleep(1)
             # win sequence
             if win_flag:
                 if win == "": # final scratch must happens
                     win = grid[-1][0]
                     msg += "*The Final scratch...*\n"
-                    await message.edit(embed=self.bot.buildEmbed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
+                    await message.edit(embed=self.bot.buildEmbed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, footer=footer, fields=fields, color=self.color))
                     await asyncio.sleep(2)
                 msg += ":confetti_ball: :tada: **{}** :tada: :confetti_ball:".format(win)
                 for i in range(0, 9): # update the grid
@@ -425,11 +462,8 @@ class GBF_Game(commands.Cog):
                     elif c == 3: fields[i%3]['value'] += "**{}**\n".format(grid[i][0])
                     elif c == 2: fields[i%3]['value'] += "__{}__\n".format(grid[i][0])
                     else: fields[i%3]['value'] += "{}\n".format(grid[i][0])
-                await message.edit(embed=self.bot.buildEmbed(author={'name':"{} scratched".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, fields=fields, color=self.color))
-                if not self.bot.isAuthorized(ctx):
-                    await asyncio.sleep(30)
-                    await message.delete()
-                    await self.bot.react(ctx.message, '✅') # white check mark
+                await message.edit(embed=self.bot.buildEmbed(author={'name':"{} scratched".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, footer=footer, fields=fields, thumbnail='http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/' + self.scratcher_thumb.get(win, ''), color=self.color))
+                await self.bot.cleanMessage(ctx, message, 45)
                 return
             # next pull
             i = random.randint(0, 8)
@@ -508,10 +542,7 @@ class GBF_Game(commands.Cog):
             else:
                 await message.edit(embed=self.bot.buildEmbed(author={'name':title, 'icon_url':ctx.author.avatar_url}, inline=True, fields=fields, color=self.color))
             if game_over:
-                if not self.bot.isAuthorized(ctx):
-                    await asyncio.sleep(45)
-                    await message.delete()
-                    await self.bot.react(ctx.message, '✅') # white check mark
+                await self.bot.cleanMessage(ctx, message, 45)
                 return
             await asyncio.sleep(1)
 
@@ -555,13 +586,14 @@ class GBF_Game(commands.Cog):
         rps = ['rock', 'paper', 'scissor']
         ct = self.bot.getJST()
         # customization settings
-        fixedS = ct.replace(year=2021, month=1, day=3, hour=19, minute=0, second=0, microsecond=0) # beginning of fixed rolls
-        fixedE = fixedS.replace(day=5, hour=19) # end of fixed rolls
+        fixedS = ct.replace(year=2021, month=3, day=19, hour=19, minute=0, second=0, microsecond=0) # beginning of fixed rolls
+        fixedE = fixedS.replace(day=20, hour=19) # end of fixed rolls
         forced3pc = True # force 3%
-        forcedRollCount = 200 # number of rolls during fixed rolls
-        enable200 = True # add 200 on wheel
-        enableJanken = True
+        forcedRollCount = 100 # number of rolls during fixed rolls
+        enable200 = False # add 200 on wheel
+        enableJanken = False
         maxJanken = 2 # number of RPS
+        doubleMukku = True
         # settings end
         state = 0
         superFlag = False
@@ -596,7 +628,7 @@ class GBF_Game(commands.Cog):
                 msg = "**10** rolls :pensive:\n"
                 roll = 10
         final_msg = await ctx.reply(embed=self.bot.buildEmbed(author={'name':"{} is spinning the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        if not enableJanken: state = 1
+        if not enableJanken and state < 2: state = 1
         running = True
         while running:
             await asyncio.sleep(2)
@@ -644,7 +676,7 @@ class GBF_Game(commands.Cog):
                 gtype, result = await self.genGachapin(l)
                 if gtype == 0:
                     count = sum(result[:3])
-                    msg += "Gachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
+                    msg += "Gachapin ▫️ **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
                     for i in result[3]:
                         msg += i
                         if result[3][i] > 1: msg += " x{}".format(result[3][i])
@@ -653,7 +685,7 @@ class GBF_Game(commands.Cog):
                     msg += "\n**{:.2f}%** SSR rate\n\n".format(100*result[2]/count)
                 elif gtype == 1: #legacy mode
                     count = sum(result)
-                    msg += "Gachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
+                    msg += "Gachapin ▫️ **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
                 if count == 10 and random.randint(1, 100) < 99: state = 3
                 elif count == 20 and random.randint(1, 100) < 60: state = 3
                 elif count == 30 and random.randint(1, 100) < 30: state = 3
@@ -662,7 +694,7 @@ class GBF_Game(commands.Cog):
                 gtype, result = await self.genMukku(900, 1)
                 if gtype == 0:
                     count = sum(result[:3])
-                    msg += ":confetti_ball: Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
+                    msg += ":confetti_ball: Mukku ▫️ **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
                     for i in result[3]:
                         msg += i
                         if result[3][i] > 1: msg += " x{}".format(result[3][i])
@@ -671,13 +703,18 @@ class GBF_Game(commands.Cog):
                     msg += "\n**{:.2f}%** SSR rate\n\n".format(100*result[2]/count)
                 elif gtype == 1: #legacy mode
                     count = sum(result)
-                    msg += "\n:confetti_ball: Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
-                running = False
+                    msg += "\n:confetti_ball: Mukku ▫️ **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n\n".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
+                if doubleMukku:
+                    if random.randint(1, 100) < 25: pass
+                    else: running = False
+                    doubleMukku = False
+                else:
+                    running = False
             elif state == 4:
                 gtype, result = await self.genMukku(1500, 2)
                 if gtype == 0:
                     count = sum(result[:3])
-                    msg += ":confetti_ball: **Super Mukku** stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
+                    msg += ":confetti_ball: **Super Mukku** ▫️ **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
                     for i in result[3]:
                         msg += i
                         if result[3][i] > 1: msg += " x{}".format(result[3][i])
@@ -686,7 +723,7 @@ class GBF_Game(commands.Cog):
                     msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/count)
                 elif gtype == 1: #legacy mode
                     count = sum(result)
-                    msg += ":confetti_ball: **Super Mukku** stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
+                    msg += ":confetti_ball: **Super Mukku** ▫️ **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate".format(count, result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
                 running = False
 
             await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
@@ -790,19 +827,3 @@ class GBF_Game(commands.Cog):
     async def leak(self, ctx):
         """Do nothing"""
         await self.bot.react(ctx.message, '✅') # white check mark
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(2, 30, commands.BucketType.guild)
-    async def dragon(self, ctx):
-        """Generate two random dragon for today reset in GBF"""
-        possible = [
-            "{} Wilnas".format(self.bot.getEmote('fire')),
-            "{} Wamdus".format(self.bot.getEmote('water')),
-            "{} Galleon".format(self.bot.getEmote('earth')),
-            "{} Ewiyar".format(self.bot.getEmote('wind')),
-            "{} Lu Woh".format(self.bot.getEmote('light')),
-            "{} Fediel".format(self.bot.getEmote('dark'))
-        ]
-
-        final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{}'s daily dragons are".format(ctx.author.display_name), description="{} {}\n{} {}".format(self.bot.getEmote('1'), random.choice(possible), self.bot.getEmote('2'), random.choice(possible)), thumbnail=ctx.author.avatar_url, color=self.color))
-        await self.bot.cleanMessage(ctx, final_msg, 30)

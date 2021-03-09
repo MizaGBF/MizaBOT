@@ -331,9 +331,9 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "7.13" # version number
+        self.botversion = "7.14" # version number
         self.saveversion = 0 # save version
-        self.botchangelog = ["Cleaned up the bot and put the new reply system in use", "Added `$lightchads` for the upcoming GW", "Added `$eternals`", "Generate a picture when `$profile` is used", "Added back `$mizatube` (no fancy search function)", "Removed `$summon`", "Added `$blackjack`", "Added `$recruit` to check recruiting /gbfg/ crews"] # bot changelog
+        self.botchangelog = ["Rewrote `$scratcher`", "Added the chance of double Mukku to `$roulette`", "Removed `$dragon`"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted before
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
@@ -364,7 +364,6 @@ class Mizabot(commands.Bot):
         self.gbfcurrent = 0  # gbf current bot account
         self.gbfversion = None  # gbf version
         self.gbfwatch = {}  # gbf special data
-        self.pastebin = {}  # pastebin credentials
         self.twitter = {} # twitter credentials
         self.twitter_api = None # twitter api object
         self.ids = {} # discord ids used by the bot
@@ -496,7 +495,6 @@ class Mizabot(commands.Bot):
                 self.emotes = data.get('emotes', {})
                 self.granblue = data.get('granblue', {"gbfgcrew":{}})
                 self.gbfwatch = data.get('gbfwatch', {})
-                self.pastebin = data.get('pastebin', {"dev_key" : "", "user_key" : "", "user" : "", "pass" : ""})
                 self.twitter = data.get('twitter', {"key" : "", "secret" : "", "access" : "", "access_secret" : ""})
         except Exception as e:
             print('loadConfig(): {}\nCheck your \'config.json\' for the above error.'.format(e))
