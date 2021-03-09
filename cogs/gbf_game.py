@@ -11,9 +11,26 @@ class GBF_Game(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.color = 0xfce746
+        self.scratcher_loot = {
+            100 : ['Siero Ticket'],
+            300 : ['Sunlight Stone', 'Gold Brick'],
+            450 : ['Damascus Ingot'],
+            600 : ['Agni', 'Varuna', 'Titan', 'Zephyrus', 'Zeus', 'Hades', 'Shiva', 'Europa', 'Godsworn Alexiel', 'Grimnir', 'Lucifer', 'Bahamut', 'Michael', 'Gabriel', 'Uriel', 'Raphael', 'Metatron', 'Sariel', 'Belial'],
+            400 : ['Murgleis', 'Benedia', 'Gambanteinn', 'Love Eternal', 'AK-4A', 'Reunion', 'Ichigo-Hitofuri', 'Taisai Spirit Bow', 'Unheil', 'Sky Ace', 'Ivory Ark', 'Blutgang', 'Eden', 'Parazonium', 'Ixaba', 'Blue Sphere', 'Certificus', 'Fallen Sword', 'Mirror-Blade Shard', 'Galilei\'s Insight', 'Purifying Thunderbolt', 'Vortex of the Void', 'Sacred Standard', 'Bab-el-Mandeb', 'Cute Ribbon', 'Kerak', 'Sunya', 'Fist of Destruction', 'Yahata\'s Naginata', 'Cerastes', 'World Ender', 'Ouroboros Prime'],
+            15000 : ['Crystals x3000', 'Intricacy Ring', 'Gold Spellbook', 'Moonlight Stone', 'Gold Moon x2', 'Ultima Unit x3', 'Silver Centrum x5', 'Primeval Horn x3', 'Horn of Bahamut x4', 'Legendary Merit x5', 'Steel Brick'],
+            22000: ['Lineage Ring x2', 'Coronation Ring x3', 'Silver Moon x5', 'Bronze Moon x10'],
+            33000: ['Elixir x100', 'Soul Berry x300']
+        }
         self.scratcher_thumb = {
             'Siero Ticket':'item/article/s/30041.jpg', 'Sunlight Stone':'item/evolution/s/20014.jpg', 'Gold Brick':'item/evolution/s/20004.jpg', 'Damascus Ingot':'item/evolution/s/20005.jpg','Agni':'summon/s/2040094000.jpg', 'Varuna':'summon/s/2040100000.jpg', 'Titan':'summon/s/2040084000.jpg', 'Zephyrus':'summon/s/2040098000.jpg', 'Zeus':'summon/s/2040080000.jpg', 'Hades':'summon/s/2040090000.jpg', 'Shiva':'summon/s/2040185000.jpg', 'Europa':'summon/s/2040225000.jpg', 'Godsworn Alexiel':'summon/s/2040205000.jpg', 'Grimnir':'summon/s/2040261000.jpg', 'Lucifer':'summon/s/2040056000.jpg', 'Bahamut':'summon/s/2040030000.jpg', 'Michael':'summon/s/2040306000.jpg', 'Gabriel':'summon/s/2040311000.jpg', 'Uriel':'summon/s/2040203000.jpg', 'Raphael':'summon/s/2040202000.jpg', 'Metatron':'summon/s/2040330000.jpg', 'Sariel':'summon/s/2040327000.jpg', 'Belial':'summon/s/2040347000.jpg', 'Murgleis':'weapon/s/1040004600.jpg', 'Benedia':'weapon/s/1040502500.jpg',  'Gambanteinn':'weapon/s/1040404300.jpg',  'Love Eternal':'weapon/s/1040105400.jpg',  'AK-4A':'weapon/s/1040004600.jpg',  'Reunion':'weapon/s/1040108200.jpg',  'Ichigo-Hitofuri':'weapon/s/1040910000.jpg',  'Taisai Spirit Bow':'weapon/s/1040708700.jpg',  'Unheil':'weapon/s/1040809100.jpg',  'Sky Ace':'weapon/s/1040911500.jpg',  'Ivory Ark':'weapon/s/1040112500.jpg',  'Blutgang':'weapon/s/1040008700.jpg',  'Eden':'weapon/s/1040207000.jpg',  'Parazonium':'weapon/s/1040108700.jpg',  'Ixaba':'weapon/s/1040906400.jpg',  'Blue Sphere':'weapon/s/1040410000.jpg',  'Certificus':'weapon/s/1040309000.jpg',  'Fallen Sword':'weapon/s/1040014300.jpg',  'Mirror-Blade Shard':'weapon/s/1040110600.jpg',  'Galilei\'s Insight':'weapon/s/1040211600.jpg',  'Purifying Thunderbolt':'weapon/s/1040709000.jpg',  'Vortex of the Void':'weapon/s/1040212700.jpg',  'Sacred Standard':'weapon/s/1040213400.jpg',  'Bab-el-Mandeb':'weapon/s/1040004600.jpg',  'Cute Ribbon':'weapon/s/1040605900.jpg',  'Kerak':'weapon/s/1040812000.jpg',  'Sunya':'weapon/s/1040811800.jpg',  'Fist of Destruction':'weapon/s/1040004600.jpg',  'Yahata\'s Naginata':'weapon/s/1040312900.jpg',  'Cerastes':'weapon/s/1040004600.jpg',  'World Ender':'weapon/s/1040004600.jpg',  'Ouroboros Prime':'weapon/s/1040004600.jpg', 'Crystals x3000':'item/normal/s/gem.jpg', 'Intricacy Ring':'item/npcaugment/s/3.jpg', 'Gold Spellbook':'item/evolution/s/20403.jpg', 'Moonlight Stone':'item/evolution/s/20013.jpg', 'Gold Moon x2':'item/article/s/30033.jpg', 'Ultima Unit x3':'item/article/s/138.jpg', 'Silver Centrum x5':'item/article/s/107.jpg', 'Primeval Horn x3':'item/article/s/79.jpg', 'Horn of Bahamut x4':'item/article/s/59.jpg', 'Legendary Merit x5':'item/article/s/2003.jpg', 'Steel Brick':'item/evolution/s/20003.jpg', 'Lineage Ring x2':'item/npcaugment/s/2.jpg', 'Coronation Ring x3':'item/npcaugment/s/1.jpg', 'Silver Moon x5':'item/article/s/30032.jpg', 'Bronze Moon x10':'item/article/s/30031.jpg', 'Elixir x100':'item/normal/s/2.jpg', 'Soul Berry x300':'item/normal/s/5.jpg'
         }
+        # scratcher rate calcul
+        self.scratcher_total = 0
+        self.scratcher_total_rare = 0
+        rare_divider = 'Murgleis'
+        for r in self.scratcher_loot:
+            self.scratcher_total += r * len(self.scratcher_loot[r])
+            if self.scratcher_loot[r][0] == rare_divider: self.scratcher_total_rare = self.scratcher_total
 
     # used by the gacha games
     def getRoll(self, ssr, sr_mode = False): # return 0 for ssr, 1 for sr, 2 for r
@@ -324,16 +341,6 @@ class GBF_Game(commands.Cog):
     @commands.cooldown(1, 300, commands.BucketType.user)
     async def scratch(self, ctx, mode : str = ""):
         """Imitate the GBF scratch game from Anniversary 2020"""
-        loot = {
-            100 : ['Siero Ticket'],
-            300 : ['Sunlight Stone', 'Gold Brick'],
-            450 : ['Damascus Ingot'],
-            600 : ['Agni', 'Varuna', 'Titan', 'Zephyrus', 'Zeus', 'Hades', 'Shiva', 'Europa', 'Godsworn Alexiel', 'Grimnir', 'Lucifer', 'Bahamut', 'Michael', 'Gabriel', 'Uriel', 'Raphael', 'Metatron', 'Sariel', 'Belial'],
-            400 : ['Murgleis', 'Benedia', 'Gambanteinn', 'Love Eternal', 'AK-4A', 'Reunion', 'Ichigo-Hitofuri', 'Taisai Spirit Bow', 'Unheil', 'Sky Ace', 'Ivory Ark', 'Blutgang', 'Eden', 'Parazonium', 'Ixaba', 'Blue Sphere', 'Certificus', 'Fallen Sword', 'Mirror-Blade Shard', 'Galilei\'s Insight', 'Purifying Thunderbolt', 'Vortex of the Void', 'Sacred Standard', 'Bab-el-Mandeb', 'Cute Ribbon', 'Kerak', 'Sunya', 'Fist of Destruction', 'Yahata\'s Naginata', 'Cerastes', 'World Ender', 'Ouroboros Prime'],
-            15000 : ['Crystals x3000', 'Intricacy Ring', 'Gold Spellbook', 'Moonlight Stone', 'Gold Moon x2', 'Ultima Unit x3', 'Silver Centrum x5', 'Primeval Horn x3', 'Horn of Bahamut x4', 'Legendary Merit x5', 'Steel Brick'],
-            22000: ['Lineage Ring x2', 'Coronation Ring x3', 'Silver Moon x5', 'Bronze Moon x10'],
-            33000: ['Elixir x100', 'Soul Berry x300']
-        }
         message = None
         ct = self.bot.getJST()
         # settings
@@ -343,20 +350,12 @@ class GBF_Game(commands.Cog):
         # settings end
         if ct >= fixedS and ct < fixedE:
             betterScratcher = True
-        
-        # rate calcul
-        total = 0
-        total_rare = 0
-        rare_divider = 'Murgleis'
-        for r in loot:
-            total += r * len(loot[r])
-            if loot[r][0] == rare_divider: total_rare = total
 
         # user options
         if mode == "debug" and ctx.author.id == self.bot.ids['owner']:
-            msg = "`$scratch` Debug Values\nTotal: {} (100%)\n".format(total)
-            for r in loot:
-                msg += "{} Tier: {} ({}%)\n".format(loot[r][0], r * len(loot[r]), ((10000 * r * len(loot[r])) // total) / 100)
+            msg = "`$scratch` Debug Values\nTotal: {} (100%)\n".format(self.scratcher_total)
+            for r in self.scratcher_loot:
+                msg += "{} Tier: {} ({}%)\n".format(self.scratcher_loot[r][0], r * len(self.scratcher_loot[r]), ((10000 * r * len(self.scratcher_loot[r])) // self.scratcher_total) / 100)
             debug_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Scratcher Debug", description=msg, color=self.color))
             await self.bot.cleanMessage(ctx, debug_msg, 30)
         elif mode == "rigged" and ctx.author.id == self.bot.ids['owner']:
@@ -368,25 +367,25 @@ class GBF_Game(commands.Cog):
         last = 'Soul Berry x300'
         is_rare = False
         while len(selected) < nloot:
-            n = total
+            n = self.scratcher_total
             if betterScratcher:
-                while n > total_rare: # force a rare, according to settings
-                    n = random.randint(1, total)
+                while n > self.scratcher_total_rare: # force a rare, according to settings
+                    n = random.randint(1, self.scratcher_total)
             elif len(selected) == 1:
-                while n > total_rare: # force a rare, for the salt
-                    n = random.randint(1, total)
+                while n > self.scratcher_total_rare: # force a rare, for the salt
+                    n = random.randint(1, self.scratcher_total)
             else:
-                n = random.randint(1, total)
+                n = random.randint(1, self.scratcher_total)
             c = 0
             found = False
-            for r in loot:
-                for item in loot[r]:
+            for r in self.scratcher_loot:
+                for item in self.scratcher_loot[r]:
                     if n <= c:
                         if item in selected:
                             n += r
                         else:
                             selected[item] = 0
-                            if c < total_rare: is_rare = True
+                            if c < self.scratcher_total_rare: is_rare = True
                             found = True
                         break
                     else:
