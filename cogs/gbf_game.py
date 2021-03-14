@@ -350,12 +350,12 @@ class GBF_Game(commands.Cog):
         # settings
         fixedS = ct.replace(year=2021, month=3, day=19, hour=19, minute=0, second=0, microsecond=0) # beginning of good scratcher
         fixedE = fixedS.replace(day=20, hour=19) # end of good scratcher
+        enableBetterDuringPeriod = False
         betterScratcher = False # if true, only good results possible
         # settings end
         footer = ""
-        if ct >= fixedS and ct < fixedE:
+        if enableBetterDuringPeriod and ct >= fixedS and ct < fixedE:
             betterScratcher = True
-        
 
         # user options
         if mode == "debug" and ctx.author.id == self.bot.ids['owner']:
@@ -368,7 +368,7 @@ class GBF_Game(commands.Cog):
             betterScratcher = True
             footer = "Debug mode"
 
-        if random.randint(1, 10000) <= 1000:
+        if random.randint(1, 100) <= 10:
             betterScratcher = True # to simulate the rare scratcher card thing, currently 10%
         if footer == "" and betterScratcher: footer = "Rare card"
         selected = {}
