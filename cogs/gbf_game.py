@@ -349,8 +349,10 @@ class GBF_Game(commands.Cog):
         fixedE = fixedS.replace(day=20, hour=19) # end of good scratcher
         betterScratcher = False # if true, only good results possible
         # settings end
+        footer = ""
         if ct >= fixedS and ct < fixedE:
             betterScratcher = True
+        
 
         # user options
         if mode == "debug" and ctx.author.id == self.bot.ids['owner']:
@@ -361,9 +363,11 @@ class GBF_Game(commands.Cog):
             await self.bot.cleanMessage(ctx, debug_msg, 30)
         elif mode == "rigged" and ctx.author.id == self.bot.ids['owner']:
             betterScratcher = True
-        
-        footer = "" if not betterScratcher else "Good item guaranteed"
-        if random.randint(1, 10000) <= 100: betterScratcher = True # to simulate the rare scratcher card thing, currently 1%
+            footer = "Debug mode"
+
+        if random.randint(1, 10000) <= 1000:
+            betterScratcher = True # to simulate the rare scratcher card thing, currently 10%
+        if footer == "" and betterSratcher: footer = "Rare card"
         selected = {}
         nloot = random.randint(4, 5)
         last = 'Soul Berry x300'
