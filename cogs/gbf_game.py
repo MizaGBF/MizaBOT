@@ -367,7 +367,7 @@ class GBF_Game(commands.Cog):
 
         if random.randint(1, 10000) <= 1000:
             betterScratcher = True # to simulate the rare scratcher card thing, currently 10%
-        if footer == "" and betterSratcher: footer = "Rare card"
+        if footer == "" and betterScratcher: footer = "Rare card"
         selected = {}
         nloot = random.randint(4, 5)
         last = 'Soul Berry x300'
