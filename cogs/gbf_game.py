@@ -27,10 +27,13 @@ class GBF_Game(commands.Cog):
         }
         # scratcher rate calcul
         self.scratcher_total = 0
-        self.scratcher_total_rare = 0
-        rare_divider = 'Crystals x3000'
+        self.scratcher_total_rare1 = 0
+        self.scratcher_total_rare2 = 0
+        rare_divider1 = 'Damascus Crystal'
+        rare_divider2 = 'Crystals x3000'
         for r in self.scratcher_loot:
-            if self.scratcher_loot[r][0] == rare_divider: self.scratcher_total_rare = self.scratcher_total
+            if self.scratcher_loot[r][0] == rare_divider1: self.scratcher_total_rare1 = self.scratcher_total
+            if self.scratcher_loot[r][0] == rare_divider2: self.scratcher_total_rare2 = self.scratcher_total
             self.scratcher_total += r * len(self.scratcher_loot[r])
 
     # used by the gacha games
@@ -375,10 +378,10 @@ class GBF_Game(commands.Cog):
         while len(selected) < nloot:
             n = self.scratcher_total
             if betterScratcher:
-                while n > self.scratcher_total_rare: # force a rare, according to settings
+                while n > self.scratcher_total_rare2: # force a rare, according to settings
                     n = random.randint(1, self.scratcher_total)
             elif len(selected) == 1:
-                while n > self.scratcher_total_rare: # force a rare, for the salt
+                while n > self.scratcher_total_rare1: # force a rare, for the salt
                     n = random.randint(1, self.scratcher_total)
             else:
                 n = random.randint(1, self.scratcher_total)
@@ -391,7 +394,7 @@ class GBF_Game(commands.Cog):
                             n += r
                         else:
                             selected[item] = 0
-                            if c < self.scratcher_total_rare: is_rare = True
+                            if c < self.scratcher_total_rare1: is_rare = True
                             found = True
                         break
                     else:
