@@ -17,8 +17,8 @@ class GBF_Game(commands.Cog):
             450 : ['Damascus Ingot'],
             600 : ['Agni', 'Varuna', 'Titan', 'Zephyrus', 'Zeus', 'Hades', 'Shiva', 'Europa', 'Godsworn Alexiel', 'Grimnir', 'Lucifer', 'Bahamut', 'Michael', 'Gabriel', 'Uriel', 'Raphael', 'Metatron', 'Sariel', 'Belial'],
             400 : ['Murgleis', 'Benedia', 'Gambanteinn', 'Love Eternal', 'AK-4A', 'Reunion', 'Ichigo-Hitofuri', 'Taisai Spirit Bow', 'Unheil', 'Sky Ace', 'Ivory Ark', 'Blutgang', 'Eden', 'Parazonium', 'Ixaba', 'Blue Sphere', 'Certificus', 'Fallen Sword', 'Mirror-Blade Shard', 'Galilei\'s Insight', 'Purifying Thunderbolt', 'Vortex of the Void', 'Sacred Standard', 'Bab-el-Mandeb', 'Cute Ribbon', 'Kerak', 'Sunya', 'Fist of Destruction', 'Yahata\'s Naginata', 'Cerastes', 'World Ender', 'Ouroboros Prime'],
-            8000 : ['Damascus Crystal', 'Intricacy Ring', 'Brimston Earrings', 'Permafrost Earrings', 'Brickearth Earrings', 'Jetstream Earrings', 'Sunbeam Earrings', 'Nightshade Earrings'],
-            10600 : ['Crystals x3000', 'Gold Spellbook', 'Moonlight Stone', 'Gold Moon x2', 'Ultima Unit x3', 'Silver Centrum x5', 'Primeval Horn x3', 'Horn of Bahamut x4', 'Legendary Merit x5', 'Steel Brick'],
+            8000 : ['Damascus Crystal', 'Intricacy Ring', 'Gold Moon x2', 'Brimston Earrings', 'Permafrost Earrings', 'Brickearth Earrings', 'Jetstream Earrings', 'Sunbeam Earrings', 'Nightshade Earrings'],
+            12250 : ['Crystals x3000', 'Gold Spellbook', 'Moonlight Stone', 'Ultima Unit x3', 'Silver Centrum x5', 'Primeval Horn x3', 'Horn of Bahamut x4', 'Legendary Merit x5', 'Steel Brick'],
             22000: ['Lineage Ring x2', 'Coronation Ring x3', 'Silver Moon x5', 'Bronze Moon x10'],
             33000: ['Elixir x100', 'Soul Berry x300']
         }
@@ -29,12 +29,12 @@ class GBF_Game(commands.Cog):
         self.scratcher_total = 0
         self.scratcher_total_rare1 = 0
         self.scratcher_total_rare2 = 0
-        rare_divider1 = 'Damascus Crystal'
-        rare_divider2 = 'Crystals x3000'
+        rare_divider1 = 'Murgleis'
+        rare_divider2 = 'Damascus Crystal'
         for r in self.scratcher_loot:
+            self.scratcher_total += r * len(self.scratcher_loot[r])
             if self.scratcher_loot[r][0] == rare_divider1: self.scratcher_total_rare1 = self.scratcher_total
             if self.scratcher_loot[r][0] == rare_divider2: self.scratcher_total_rare2 = self.scratcher_total
-            self.scratcher_total += r * len(self.scratcher_loot[r])
 
     # used by the gacha games
     def getRoll(self, ssr, sr_mode = False): # return 0 for ssr, 1 for sr, 2 for r
