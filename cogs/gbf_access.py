@@ -50,7 +50,6 @@ class GBF_Access(commands.Cog):
         self.rankinglock = threading.Lock()
         self.stoprankupdate = False
         self.dad_running = False
-        self.ddcmp_state = 0
 
     def startTasks(self):
         self.bot.runTask('gbfwatch', self.gbfwatch)
@@ -1889,49 +1888,6 @@ class GBF_Access(commands.Cog):
             await self.dadp(ctx.channel, data, id)
         await self.bot.unreact(ctx.message, 'time')
         await self.bot.react(ctx.message, '✅') # white check mark
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isOwnerOrDebug()
-    @commands.cooldown(1, 2, commands.BucketType.default)
-    async def ddcmp(self, ctx, cmp: str):
-        """Black magic (Owner or Bot only)"""
-        if not await self.bot.isGameAvailable():
-            await ctx.reply(embed=self.bot.buildEmbed(title="Unavailable", color=self.color))
-            return
-        try:
-            c = self.bot.gbfdata['c']
-            crt = self.bot.gbfwatch['crt']
-        except: return
-        if self.ddcmp_state != 0:
-            return
-        self.ddcmp_state = 1
-        await self.bot.react(ctx.message, 'time')
-        await ctx.reply(embed=self.bot.buildEmbed(title="Starting for `{}`".format(cmp), color=self.color))
-        cid = crt[0][1]
-        for i in range(0, c[0]):
-            id = str(cid + i * 1000)
-            data = await self.dad(id, False, 0)
-            if data[4].lower().find(cmp.lower()) != -1:
-                await self.dadp(ctx.channel, data, id)
-            else:
-                self.bot.delFile(data[0])
-            await asyncio.sleep(0.001)
-            if self.ddcmp_state == 2:
-                break
-        await self.bot.unreact(ctx.message, 'time')
-        await ctx.reply(embed=self.bot.buildEmbed(title="`{}`: Finished".format(cmp), color=self.color))
-        self.ddcmp_state = 0
-        await self.bot.react(ctx.message, '✅') # white check mark
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isOwnerOrDebug()
-    async def ddcmpstop(self, ctx):
-        """Stop ddcmp (Owner or Bot only)"""
-        if self.ddcmp_state == 1:
-            self.ddcmp_state = 2
-            await self.bot.react(ctx.message, '✅') # white check mark
-        else:
-            self.ddcmp_state = 0
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()

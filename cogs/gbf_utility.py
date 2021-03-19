@@ -678,10 +678,13 @@ class GBF_Utility(commands.Cog):
                     try: # checking if the event is on going (to bold it)
                         dates = self.bot.schedule[i].replace(' ', '').split('-')
                         ev_md = []
-                        for di in range(0, 2):
+                        for di in range(0, len(dates)):
                             ev_md.append(int(dates[di].split('/')[0]) * 100 + int(dates[di].split('/')[1]))
-                        if ev_md[0] >= 1200 and ev_md[1] <= 100: ev_md[0] -= 1200
-                        on_going = (md >= ev_md[0] and md <= ev_md[1])
+                        if len(dates) == 2:
+                            if ev_md[0] >= 1200 and ev_md[1] <= 100: ev_md[0] -= 1200
+                            on_going = (md >= ev_md[0] and md <= ev_md[1])
+                        else:
+                            on_going = (md >= ev_md[0])
                     except:
                         on_going = False
                     # check if it's the next event in line

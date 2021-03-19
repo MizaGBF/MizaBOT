@@ -17,8 +17,8 @@ class GBF_Game(commands.Cog):
             450 : ['Damascus Ingot'],
             600 : ['Agni', 'Varuna', 'Titan', 'Zephyrus', 'Zeus', 'Hades', 'Shiva', 'Europa', 'Godsworn Alexiel', 'Grimnir', 'Lucifer', 'Bahamut', 'Michael', 'Gabriel', 'Uriel', 'Raphael', 'Metatron', 'Sariel', 'Belial'],
             400 : ['Murgleis', 'Benedia', 'Gambanteinn', 'Love Eternal', 'AK-4A', 'Reunion', 'Ichigo-Hitofuri', 'Taisai Spirit Bow', 'Unheil', 'Sky Ace', 'Ivory Ark', 'Blutgang', 'Eden', 'Parazonium', 'Ixaba', 'Blue Sphere', 'Certificus', 'Fallen Sword', 'Mirror-Blade Shard', 'Galilei\'s Insight', 'Purifying Thunderbolt', 'Vortex of the Void', 'Sacred Standard', 'Bab-el-Mandeb', 'Cute Ribbon', 'Kerak', 'Sunya', 'Fist of Destruction', 'Yahata\'s Naginata', 'Cerastes', 'World Ender', 'Ouroboros Prime'],
-            8000 : ['Damascus Crystal', 'Intricacy Ring', 'Gold Moon x2', 'Brimston Earrings', 'Permafrost Earrings', 'Brickearth Earrings', 'Jetstream Earrings', 'Sunbeam Earrings', 'Nightshade Earrings'],
-            12250 : ['Crystals x3000', 'Gold Spellbook', 'Moonlight Stone', 'Ultima Unit x3', 'Silver Centrum x5', 'Primeval Horn x3', 'Horn of Bahamut x4', 'Legendary Merit x5', 'Steel Brick'],
+            8000 : ['Crystals x3000', 'Damascus Crystal', 'Intricacy Ring', 'Gold Moon x2', 'Brimston Earrings', 'Permafrost Earrings', 'Brickearth Earrings', 'Jetstream Earrings', 'Sunbeam Earrings', 'Nightshade Earrings'],
+            11250 : ['Gold Spellbook', 'Moonlight Stone', 'Ultima Unit x3', 'Silver Centrum x5', 'Primeval Horn x3', 'Horn of Bahamut x4', 'Legendary Merit x5', 'Steel Brick'],
             22000: ['Lineage Ring x2', 'Coronation Ring x3', 'Silver Moon x5', 'Bronze Moon x10'],
             33000: ['Elixir x100', 'Soul Berry x300']
         }
@@ -30,7 +30,7 @@ class GBF_Game(commands.Cog):
         self.scratcher_total_rare1 = 0
         self.scratcher_total_rare2 = 0
         rare_divider1 = 'Murgleis'
-        rare_divider2 = 'Damascus Crystal'
+        rare_divider2 = 'Crystals x3000'
         for r in self.scratcher_loot:
             self.scratcher_total += r * len(self.scratcher_loot[r])
             if self.scratcher_loot[r][0] == rare_divider1: self.scratcher_total_rare1 = self.scratcher_total
@@ -237,7 +237,7 @@ class GBF_Game(commands.Cog):
         await self.bot.cleanMessage(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(30, 30, commands.BucketType.guild)
+    @commands.cooldown(15, 30, commands.BucketType.guild)
     async def spark(self, ctx, double : str = ""):
         """Do thirty times ten gacha rolls
         6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
@@ -278,7 +278,7 @@ class GBF_Game(commands.Cog):
             return 1, self.tenDraws(300*mode, 0, 1)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['frenzy'])
-    @commands.cooldown(30, 30, commands.BucketType.guild)
+    @commands.cooldown(15, 30, commands.BucketType.guild)
     async def gachapin(self, ctx, double : str = ""):
         """Do ten rolls until you get a ssr
         6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
@@ -311,7 +311,7 @@ class GBF_Game(commands.Cog):
             return 1, self.tenDraws(rate, 0, mode)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['mook'])
-    @commands.cooldown(30, 30, commands.BucketType.guild)
+    @commands.cooldown(15, 30, commands.BucketType.guild)
     async def mukku(self, ctx, super : str = ""):
         """Do ten rolls until you get a ssr, 9% ssr rate
         You can add "super" for a 9% rate and 5 ssr mukku"""
@@ -587,7 +587,10 @@ class GBF_Game(commands.Cog):
         """Imitate the GBF roulette
         6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
         3% keywords: "normal", "x1", "3%", "gacha", "1"."""
-        l = self.isLegfest(double)
+        try:
+            l = self.isLegfest(double)
+        except: # nothing if can't use extended mode
+            return
         if l == 2: footer = "6% SSR rate"
         else: footer = "3% SSR rate"
         roll = 0
@@ -610,8 +613,9 @@ class GBF_Game(commands.Cog):
             roll = forcedRollCount
             superFlag = True
             if l == 2 and forced3pc:
-                footer = "3% SSR rate ▪️ You won't get legfest rates, you fool"
-                l = 1
+                l = self.isLegfest("")
+                if l == 2: footer = "6% SSR rate ▪️ Fixed rate"
+                else: footer = "3% SSR rate ▪️ Fixed rate"
             d = 0
             state = 1
         else:
