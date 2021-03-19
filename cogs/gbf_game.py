@@ -601,6 +601,7 @@ class GBF_Game(commands.Cog):
         fixedE = fixedS.replace(day=20, hour=19) # end of fixed rolls
         forced3pc = True # force 3%
         forcedRollCount = 100 # number of rolls during fixed rolls
+        forcedSuperMukku = False
         enable200 = False # add 200 on wheel
         enableJanken = False
         maxJanken = 2 # number of RPS
@@ -611,7 +612,7 @@ class GBF_Game(commands.Cog):
         if ct >= fixedS and ct < fixedE:
             msg = "{} {} :confetti_ball: :tada: Guaranteed **{} 0 0** R O L L S :tada: :confetti_ball: {} {}\n".format(self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), forcedRollCount//100, self.bot.getEmote('crystal'), self.bot.getEmote('crystal'))
             roll = forcedRollCount
-            superFlag = True
+            if forcedSuperMukku: superFlag = True
             if l == 2 and forced3pc:
                 l = self.isLegfest("")
                 if l == 2: footer = "6% SSR rate ▪️ Fixed rate"
