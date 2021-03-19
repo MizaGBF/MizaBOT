@@ -50,12 +50,19 @@ class GBF_Game(commands.Cog):
     def getRollExtended(self, ssr, sr_mode = False): # use the real gacha, return 2 for ssr, 1 for sr, 0 for r
         try:
             rateups = []
+            highest = -1
+            highest_str = ""
+            count = 0
             for rate in self.bot.gbfdata['rateup'][2]['list']:
-                rateups.append(rate)
-            l = len(rateups)
-            if l <= 1: rateups = sorted(rateups, key=float)
-            elif l <= 3: rateups = sorted(rateups, key=float)[1:]
-            else: rateups = sorted(rateups, key=float)[2:]
+                if float(rate) > highest:
+                    highest = float(rate)
+                    highest_str = rate
+                    count += 1
+                elif float(rate) < highest:
+                    rateups.append(highest_str)
+                    count = 1
+                elif rate is self.bot.gbfdata['rateup'][2]['list'][list(self.bot.gbfdata['rateup'][2]['list'].keys())[-1]] and count != 0:
+                    rateups.append(rate)
         except:
             rateups = []
         d = random.randint(1, 100000) / 1000
