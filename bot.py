@@ -333,7 +333,7 @@ class Mizabot(commands.Bot):
     def __init__(self):
         self.botversion = "7.14" # version number
         self.saveversion = 0 # save version
-        self.botchangelog = ["Rewrote `$scratcher`", "Added the chance of double Mukku to `$roulette`", "Removed `$dragon`"] # bot changelog
+        self.botchangelog = ["Added `$srssr`", "Rewrote `$scratcher`", "Added the chance of double Mukku to `$roulette`", "Removed `$dragon`"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted before
         self.boot_msg = "" # msg to be displayed on the debug channel after boot

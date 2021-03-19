@@ -152,6 +152,34 @@ class GBF_Game(commands.Cog):
             final_msg = await ctx.reply(embed=self.bot.buildEmbed(author={'name':"{} did a single roll".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         await self.bot.cleanMessage(ctx, final_msg, 25)
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    async def srssr(self, ctx, double : str = ""):
+        """Do a single SR/SSR ticket roll
+        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
+        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
+        l = self.isLegfest(double)
+        if l == 2: footer = "6% SSR rate"
+        else: footer = "3% SSR rate"
+        try:
+            await self.checkGacha()
+            r = self.getRollExtended(3*l, True)
+            msg = "{} {}".format(self.bot.getEmote({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
+            if r[0] == 2: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
+            elif r[0] == 1: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
+            else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969231323070494/0_s.png'
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(author={'name':"{} used a SR/SSR ticket...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
+            await asyncio.sleep(5)
+            await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} used a SR/SSR ticket".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        except: # legacy mode
+            r = 2
+            r = self.getRoll(300*l, True)
+            if r == 0: msg = "Luckshitter! It's a {}".format(self.bot.getEmote('SSR'))
+            elif r == 1: msg = "It's a {}".format(self.bot.getEmote('SR'))
+            else: msg = "It's a {}, too bad!".format(self.bot.getEmote('R'))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(author={'name':"{}  used a SR/SSR ticket".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        await self.bot.cleanMessage(ctx, final_msg, 25)
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['memerolls'])
     @commands.cooldown(1, 30, commands.BucketType.user)
     async def memeroll(self, ctx, double : str = ""):
