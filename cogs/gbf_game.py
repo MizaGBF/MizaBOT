@@ -53,16 +53,18 @@ class GBF_Game(commands.Cog):
             highest = -1
             highest_str = ""
             count = 0
-            for rate in self.bot.gbfdata['rateup'][2]['list']:
+            keys = list(self.bot.gbfdata['rateup'][2]['list'].keys())
+            for i in range(0, len(keys)):
+                rate = keys[i]
                 if float(rate) > highest:
                     highest = float(rate)
                     highest_str = rate
                     count += 1
+                elif i == len(keys)-1:
+                    rateups.append(rate)
                 elif float(rate) < highest:
                     rateups.append(highest_str)
                     count = 1
-                elif rate is self.bot.gbfdata['rateup'][2]['list'][list(self.bot.gbfdata['rateup'][2]['list'].keys())[-1]] and count != 0:
-                    rateups.append(rate)
         except:
             rateups = []
         d = random.randint(1, 100000) / 1000
@@ -632,11 +634,11 @@ class GBF_Game(commands.Cog):
         rps = ['rock', 'paper', 'scissor']
         ct = self.bot.getJST()
         # customization settings
-        fixedS = ct.replace(year=2021, month=3, day=19, hour=19, minute=0, second=0, microsecond=0) # beginning of fixed rolls
-        fixedE = fixedS.replace(day=20, hour=19) # end of fixed rolls
+        fixedS = ct.replace(year=2021, month=3, day=29, hour=19, minute=0, second=0, microsecond=0) # beginning of fixed rolls
+        fixedE = fixedS.replace(day=31, hour=19) # end of fixed rolls
         forced3pc = True # force 3%
         forcedRollCount = 100 # number of rolls during fixed rolls
-        forcedSuperMukku = False
+        forcedSuperMukku = True
         enable200 = False # add 200 on wheel
         enableJanken = False
         maxJanken = 2 # number of RPS
