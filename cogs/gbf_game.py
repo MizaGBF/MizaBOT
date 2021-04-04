@@ -48,25 +48,7 @@ class GBF_Game(commands.Cog):
         if self.bot.gbfdata.get('rateup', None) is None: raise Exception()
 
     def getRollExtended(self, ssr, sr_mode = False): # use the real gacha, return 2 for ssr, 1 for sr, 0 for r
-        try:
-            rateups = []
-            highest = -1
-            highest_str = ""
-            count = 0
-            keys = list(self.bot.gbfdata['rateup'][2]['list'].keys())
-            for i in range(0, len(keys)):
-                rate = keys[i]
-                if float(rate) > highest:
-                    highest = float(rate)
-                    highest_str = rate
-                    count += 1
-                elif i == len(keys)-1:
-                    rateups.append(rate)
-                elif float(rate) < highest:
-                    rateups.append(highest_str)
-                    count = 1
-        except:
-            rateups = []
+        rateups = self.bot.gbfdata.get('gacharateups', [])
         d = random.randint(1, 100000) / 1000
         if d < ssr:
             r = 2
@@ -229,7 +211,7 @@ class GBF_Game(commands.Cog):
         await self.bot.cleanMessage(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(1, 10, commands.BucketType.user)
+    @commands.cooldown(1, 15, commands.BucketType.user)
     async def ten(self, ctx, double : str = ""):
         """Do ten gacha rolls
         6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
@@ -274,6 +256,55 @@ class GBF_Game(commands.Cog):
         await self.bot.cleanMessage(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 15, commands.BucketType.user)
+    async def roll(self, ctx, count : int = 0, double : str = ""):
+        """Do an user-specified number gacha rolls
+        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
+        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
+        if count <= 0 or count > 600:
+            msg = await ctx.reply(embed=self.bot.buildEmbed(title="Roll Error", description="Please specify a valid number of rolls (between **1** and **600** included)", color=self.color))
+            await self.bot.cleanMessage(ctx, msg, 20)
+            return
+        l = self.isLegfest(double)
+        if l == 2: base_rate = 6
+        else: base_rate = 3
+        footer = "{}% SSR rate".format(base_rate)
+        try:
+            await self.checkGacha()
+            result = self.tenDrawsExtended(3*l, count // 10)
+            for i in range(0, count % 10):
+                r = self.getRollExtended(3*l)
+                result[r[0]] += 1
+                if r[0] == 2: result[3][r[1]] = result[3].get(r[1], 0) + 1
+            rate = (100*result[2]/count)
+            if rate == 0: crystal = 'https://cdn.discordapp.com/attachments/614716155646705676/761969231323070494/0_s.png'
+            elif rate >= base_rate * 1.2: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'
+            elif rate >= base_rate: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
+            elif rate >= base_rate * 0.9: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
+            else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761976275706445844/1_s.png'
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(author={'name':"{} is rolling {} times...".format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
+            await asyncio.sleep(5)
+            msg = "{} {} ▫️ {} {} ▫️ {} {}\n".format(result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'))
+            if result[2] > 0: msg += '{} '.format(self.bot.getEmote('SSR'))
+            for i in result[3]:
+                msg += i
+                if result[3][i] > 1: msg += " x{}".format(result[3][i])
+                msg += ", "
+                if i is list(result[3])[-1]: msg = msg[:-2] + "\n**{:.2f}%** SSR rate".format(rate)
+                await asyncio.sleep(0.75)
+                await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} rolled {} times".format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+            await asyncio.sleep(0.75)
+            await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} rolled {} times".format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        except: #legacy mode
+            result = self.tenDraws(300*l, count // 10)
+            for i in range(0, count % 10):
+                r = self.getRoll(300*l)
+                result[r] += 1
+            msg = "{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate".format(result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/count)
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(author={'name':"{} rolled {} times".format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        await self.bot.cleanMessage(ctx, final_msg, 30)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(15, 30, commands.BucketType.guild)
     async def spark(self, ctx, double : str = ""):
         """Do thirty times ten gacha rolls
@@ -293,7 +324,8 @@ class GBF_Game(commands.Cog):
             else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761976275706445844/1_s.png'
             final_msg = await ctx.reply(embed=self.bot.buildEmbed(author={'name':"{} is sparking...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
             await asyncio.sleep(5)
-            msg = "{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'), self.bot.getEmote('SSR'))
+            msg = "{} {} ▫️ {} {} ▫️ {} {}\n".format(result[2], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[0], self.bot.getEmote('R'))
+            if result[2] > 0: msg += '{} '.format(self.bot.getEmote('SSR'))
             for i in result[3]:
                 msg += i
                 if result[3][i] > 1: msg += " x{}".format(result[3][i])
@@ -301,6 +333,8 @@ class GBF_Game(commands.Cog):
                 if i is list(result[3])[-1]: msg = msg[:-2] + "\n**{:.2f}%** SSR rate".format(rate)
                 await asyncio.sleep(0.75)
                 await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} sparked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+            await asyncio.sleep(0.75)
+            await final_msg.edit(embed=self.bot.buildEmbed(author={'name':"{} sparked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         except: #legacy mode
             result = self.tenDraws(300*l, 30)
             msg = "{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate".format(result[0], self.bot.getEmote('SSR'), result[1], self.bot.getEmote('SR'), result[2], self.bot.getEmote('R'), 100*result[0]/300)
@@ -385,9 +419,9 @@ class GBF_Game(commands.Cog):
         message = None
         ct = self.bot.getJST()
         # settings
-        fixedS = ct.replace(year=2021, month=3, day=19, hour=19, minute=0, second=0, microsecond=0) # beginning of good scratcher
-        fixedE = fixedS.replace(day=20, hour=19) # end of good scratcher
-        enableBetterDuringPeriod = False
+        fixedS = ct.replace(year=2021, month=3, day=29, hour=19, minute=0, second=0, microsecond=0) # beginning of good scratcher
+        fixedE = fixedS.replace(day=31, hour=19) # end of good scratcher
+        enableBetterDuringPeriod = True
         betterScratcher = False # if true, only good results possible
         # settings end
         footer = ""
@@ -661,17 +695,17 @@ class GBF_Game(commands.Cog):
             if enable200 and d < 300:
                 msg = "{} {} :confetti_ball: :tada: **2 0 0 R O L L S** :tada: :confetti_ball: {} {}\n".format(self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'), self.bot.getEmote('crystal'))
                 roll = 200
-            elif d < 1500:
+            elif d < 3000:
                 msg = "**Gachapin Frenzy** :four_leaf_clover:\n"
                 roll = -1
                 state = 2
-            elif d < 2000:
+            elif d < 4500:
                 msg = ":confetti_ball: :tada: **100** rolls!! :tada: :confetti_ball:\n"
                 roll = 100
-            elif d < 6200:
+            elif d < 7700:
                 msg = "**30** rolls! :clap:\n"
                 roll = 30
-            elif d < 18000:
+            elif d < 19500:
                 msg = "**20** rolls :open_mouth:\n"
                 roll = 20
             else:

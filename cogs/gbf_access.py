@@ -678,7 +678,7 @@ class GBF_Access(commands.Cog):
                     errc = 0
 
                     if not silent:
-                        await self.dadp(channel, data, "{} : {}".format(crt[i][0], cid + id * 1000))
+                        await self.dadp(channel, data, "{} : {}".format(crt[i][0], str(cid + id * 1000)))
                         
                 id += 1
 
@@ -991,6 +991,7 @@ class GBF_Access(commands.Cog):
         self.bot.gbfdata['gachatimesub'] = None
         self.bot.gbfdata['gachabanner'] = None
         self.bot.gbfdata['gachacontent'] = None
+        self.bot.gbfdata['gacharateups'] = None
         c = self.bot.getJST()
         try:
             #gacha page
@@ -1038,7 +1039,8 @@ class GBF_Access(commands.Cog):
                             else: rateuplist[appear['category_name']][item['drop_rate']].append(item['name'])
             self.bot.gbfdata['rateup'] = rateup
 
-            # build message
+            # build rate up
+            self.bot.gbfdata['gacharateups'] = []
             for k in rateuplist:
                 if k == 'zodiac':
                     if len(rateuplist['zodiac']) > 0:
@@ -1052,6 +1054,7 @@ class GBF_Access(commands.Cog):
                 else:
                     if len(rateuplist[k]) > 0:
                         for r in rateuplist[k]:
+                            if r not in self.bot.gbfdata['gacharateups']: self.bot.gbfdata['gacharateups'].append(r)
                             if k.lower().find("weapon") != -1: banner_msg += "{}**{}%** ▫️ ".format(self.bot.getEmote('sword'), r)
                             elif k.lower().find("summon") != -1: banner_msg += "{}**{}%** ▫️ ".format(self.bot.getEmote('summon'), r)
                             count = 0
@@ -1082,6 +1085,7 @@ class GBF_Access(commands.Cog):
             self.bot.gbfdata['gachatimesub'] = None
             self.bot.gbfdata['gachabanner'] = None
             self.bot.gbfdata['gachacontent'] = None
+            self.bot.gbfdata['gacharateups'] = None
             self.bot.savePending = True # save anyway
             self.loadinggacha = False
             return False

@@ -1046,7 +1046,7 @@ class GBF_Utility(commands.Cog):
         """Give the time elapsed of various GBF related releases"""
         msg = ""
         wiki_checks = ["Category:Campaign", "Surprise_Special_Draw_Set", "Damascus_Ingot", "Gold_Brick", "Sunlight_Stone", "Sephira_Evolite"]
-        regexs = ["<td>(\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(-\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td style=\"text-align: left;\">Time since last ", "<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td>(\\d+ days)<\\/td>\\s*"]
+        regexs = ["<td>(\\d+ days)<\\/td>\\s*<td><span class=\"image_link\"><a href=\"/Four_Symbols_Stone\"", "<td>(\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(-\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td style=\"text-align: left;\">Time since last ", "<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td>(\\d+ days)<\\/td>\\s*"]
         for w in wiki_checks:
             async with aiohttp.ClientSession() as session:
                 async with session.get("https://gbf.wiki/{}".format(w)) as r:
@@ -1057,6 +1057,15 @@ class GBF_Utility(commands.Cog):
                             if m:
                                 msg += "**{}** since the last {}\n".format(m.group(1), w.replace("_", " ").replace("Category:", ""))
                                 break
+
+        # grand (for memes, might remove later)
+        c = self.bot.getJST()
+        grands = {
+            "Water": c.replace(year=2018, month=10, day=17, hour=19, minute=0, second=0, microsecond=0),
+            "Wind": c.replace(year=2019, month=9, day=30, hour=19, minute=0, second=0, microsecond=0)
+        }
+        for e in grands:
+            msg += "**{} days** since the last {} Grand\n".format(self.bot.getTimedeltaStr(c - grands[e], 3).split('d')[0], e)
 
         if msg != "":
             final_msg = await ctx.send(embed=self.bot.buildEmbed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))
