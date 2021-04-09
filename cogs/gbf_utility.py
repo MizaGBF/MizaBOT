@@ -825,7 +825,7 @@ class GBF_Utility(commands.Cog):
             if target < 10000: raise Exception()
             honor = [0, 0, 0]
             ex = 0
-            meat_per_ex_average = 3.8
+            meat_per_ex_average = 4
             meat = 0
             total_meat = 0
             nm = [0, 0]
@@ -840,8 +840,8 @@ class GBF_Utility(commands.Cog):
                         meat += meat_per_ex_average
                         total_meat += meat_per_ex_average
                         ex += 1
-                        daily += 75000
-                        honor[0] += 75000
+                        daily += 80800
+                        honor[0] += 80800
                     else:
                         meat -= meat_use[i]
                         nm[i] += 1
@@ -857,9 +857,6 @@ class GBF_Utility(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def premium(self, ctx):
         """Post the time to the next Premium Friday"""
-        await ctx.send(embed=self.bot.buildEmbed(title="{} Premium Friday".format(self.bot.getEmote('clock')), description="Friday went on an adventure...", url="http://game.granbluefantasy.jp", thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/584025273079562240/unknown.png", color=self.color))
-        return
-        ### disabled for now
         c = self.bot.getJST()
         d = c
         last = None

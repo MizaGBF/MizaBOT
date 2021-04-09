@@ -314,7 +314,7 @@ class GuildWar(commands.Cog):
         except Exception as e:
             await self.bot.sendError("ranking", str(e))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['estimate', 'estim', 'predict', 'prediction'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['estimate', 'estimates', 'estim', 'predict', 'prediction', 'predictions'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def estimation(self, ctx):
         """Estimate the GW ranking at the end of current day"""

@@ -331,12 +331,13 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "7.15" # version number
+        self.botversion = "7.16" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Added `$roll`", "Added `$srssr`", "Rewrote `$scratcher`", "Added the chance of double Mukku to `$roulette`", "Removed `$dragon`"] # bot changelog
         self.running = True # if True, the bot is running
         self.boot_flag = False # if True, the bot has booted before
         self.boot_msg = "" # msg to be displayed on the debug channel after boot
+        self.retcode = 0 # return code when the bot exit
         self.starttime = datetime.utcnow() # used to check the uptime
         self.process = psutil.Process(os.getpid()) # script process
         self.process.cpu_percent() # called once to initialize
@@ -439,6 +440,7 @@ class Mizabot(commands.Bot):
             print('Autosave Success')
         else:
             print('Autosave Failed')
+        return self.retcode
 
     def prefix(self, client, message): # command prefix check
         try:
@@ -809,7 +811,7 @@ class Mizabot(commands.Bot):
                 headers['Accept'] = 'application/json, text/javascript, */*; q=0.01'
                 headers['Accept-Encoding'] = 'gzip, deflate'
                 headers['Accept-Language'] = 'en'
-                headers['Connection'] = 'keep-alive'
+                headers['Connection'] = 'close'
                 headers['Host'] = 'game.granbluefantasy.jp'
                 headers['Origin'] = 'http://game.granbluefantasy.jp'
                 headers['Referer'] = 'http://game.granbluefantasy.jp/'
@@ -1385,4 +1387,4 @@ async def on_guild_channel_delete(channel):
 
 # #####################################################################################
 # Start the bot
-bot.mainLoop()
+exit(bot.mainLoop())

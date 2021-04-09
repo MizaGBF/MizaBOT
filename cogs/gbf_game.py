@@ -880,7 +880,9 @@ class GBF_Game(commands.Cog):
             elif c == 3: m = 666
             elif c == 4: m = 6666
 
-        final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} {}'s daily quota".format(self.bot.getEmote('gw'), ctx.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.avatar_url ,color=self.color))
+        if random.randint(1, 100) < 31: dogimg = "https://cdn.discordapp.com/attachments/261864133161385984/829057364124368896/dog_controls_your_destiny.png"
+        else: dogimg = ""
+        final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} {}'s daily quota".format(self.bot.getEmote('gw'), ctx.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.avatar_url, image=dogimg,color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 40)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -891,8 +893,14 @@ class GBF_Game(commands.Cog):
         rarity = ['SSR', 'SR', 'R']
         race = ['Human', 'Erun', 'Draph', 'Harvin', 'Primal', 'Other']
         element = ['fire', 'water', 'earth', 'wind', 'light', 'dark']
+        limited_seed = seed % 300
+        if limited_seed < 60:
+            limited = ['Summer', 'Yukata', 'Grand', 'Holiday', 'Halloween', 'Valentine']
+            limited_txt = "\n**Series** ▫️ " + limited[limited_seed // 10]
+        else:
+            limited_txt = ""
 
-        final_msg = await ctx.reply(embed=self.bot.buildEmbed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="**Rarity** ▫️ {}\n**Race** ▫️ {}\n**Element** ▫️ {}\n**Rating** ▫️ {:.1f}".format(self.bot.getEmote(rarity[seed % 3]), race[(seed - 1) % 6], self.bot.getEmote(element[(seed - 3) % 6]), ((seed % 41) * 0.1) + 6.0 - (seed % 3) * 1.5), inline=True, color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.buildEmbed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="**Rarity** ▫️ {}\n**Race** ▫️ {}\n**Element** ▫️ {}\n**Rating** ▫️ {:.1f}{}".format(self.bot.getEmote(rarity[seed % 3]), race[(seed - 1) % 6], self.bot.getEmote(element[(seed - 3) % 6]), ((seed % 41) * 0.1) + 6.0 - (seed % 3) * 1.5, limited_txt), inline=True, color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 30)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)

@@ -386,6 +386,15 @@ class Owner(commands.Cog):
 
     @commands.command(no_pm=True)
     @isOwner()
+    async def reboot(self, ctx):
+        """Make the bot reboot (Owner only)"""
+        await self.bot.autosave()
+        self.bot.retcode = 1 # heroku restart if the error code isn't 0
+        self.bot.running = False
+        await self.bot.logout()
+
+    @commands.command(no_pm=True)
+    @isOwner()
     async def config(self, ctx):
         """Post the current config file in the debug channel (Owner only)"""
         try:
