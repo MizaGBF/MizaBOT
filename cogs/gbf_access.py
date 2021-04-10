@@ -47,8 +47,8 @@ class GBF_Access(commands.Cog):
         self.scraplockIn = threading.Lock()
         self.scraplockOut = threading.Lock()
         self.scrap_mode = False
-        self.scrap_qi = []
-        self.scrap_qo = []
+        self.scrap_qi = None
+        self.scrap_qo = None
         self.loadinggw = False
         self.loadinggacha = False
         self.rankinglock = threading.Lock()
@@ -1439,7 +1439,7 @@ class GBF_Access(commands.Cog):
 
     def dlAndPasteImage(self, img, url, offset, resize):
         req = request.Request(url)
-        url_handle = request.urlopen(req)
+        url_handle = request.urlopen(req, context=self.bot.ssl)
         file_jpgdata = BytesIO(url_handle.read())
         url_handle.close()
         dt = Image.open(file_jpgdata)
@@ -2239,7 +2239,7 @@ class GBF_Access(commands.Cog):
             headers['User-Agent'] = acc[2]
             headers['X-VERSION'] = ver
             req = request.Request(url, headers=headers)
-            url_handle = request.urlopen(req)
+            url_handle = request.urlopen(req, context=self.bot.ssl)
             self.bot.refreshGBFAccount(id, url_handle.info()['Set-Cookie'])
             data = zlib.decompress(url_handle.read(), 16+zlib.MAX_WBITS)
             url_handle.close()
@@ -2535,6 +2535,9 @@ class GBF_Access(commands.Cog):
                 elif i % 1000 == 0:
                     c.execute("COMMIT")
                     c.execute("BEGIN") # start next one
+            
+            self.scrap_qi = None
+            self.scrap_qo = None
             
             return ""
         except Exception as err:

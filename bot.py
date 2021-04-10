@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from urllib.request import urlopen
 from urllib import request, parse
 from urllib.parse import unquote
+import ssl
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 import itertools
@@ -386,6 +387,7 @@ class Mizabot(commands.Bot):
         self.on_message_low = {} # on message callback
         self.memmonitor = {0, None} # for monitoring the memory
         self.vregex = re.compile("Game\.version = \"(\d+)\";") # for the gbf version check
+        self.ssl = ssl.create_default_context() # default context for urllib
 
         # graceful exit
         signal.signal(signal.SIGTERM, self.exit_gracefully)
@@ -775,7 +777,7 @@ class Mizabot(commands.Bot):
             pass
 
     def buildEmbed(self, **options): # make a full embed
-        embed = discord.Embed(title=options.get('title'), description=options.pop('description', ""), url=options.pop('url', ""), color=options.pop('color', random.randint(0, 16777216)))
+        embed = discord.Embed(title=options.get('title', ""), description=options.pop('description', ""), url=options.pop('url', ""), color=options.pop('color', random.randint(0, 16777216)))
         fields = options.pop('fields', [])
         inline = options.pop('inline', False)
         for f in fields:
@@ -846,7 +848,7 @@ class Mizabot(commands.Bot):
                 if not options.get('no_base_headers', False) and 'Content-Type' not in headers: headers['Content-Type'] = 'application/json'
                 if 'user_id' in payload and payload['user_id'] == "ID": payload['user_id'] = acc[0]
                 req = request.Request(url, headers=headers, data=json.dumps(payload).encode('utf-8'))
-            url_handle = request.urlopen(req)
+            url_handle = request.urlopen(req, context=self.ssl)
             if id is not None:
                 self.refreshGBFAccount(id, url_handle.info()['Set-Cookie'])
             if options.get('decompress', False): data = zlib.decompress(url_handle.read(), 16+zlib.MAX_WBITS)
