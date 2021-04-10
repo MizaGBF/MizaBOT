@@ -2342,7 +2342,7 @@ class GBF_Access(commands.Cog):
     def yB(self, row, index):
         return row['q']['y'][1]
 
-    def updateYouTracker(self, t):
+    async def updateYouTracker(self, t):
         day = self.getCurrentGWDayID()
         if day is None or day <= 1 or day >= 10: # check if match day
             return
@@ -2367,8 +2367,8 @@ class GBF_Access(commands.Cog):
             if data is None or len(data) == 0: raise Exception("Failed to retrieve data")
             d = [4, 5, 6, 7]
             infos.append([data[0][2], data[0][d[day-2]]-data[0][d[day-2]-1]]) # name and score of the day
+            await asyncio.sleep(0.01)
         conn.close()
-
         if self.bot.matchtracker['init']:
             d = t - self.bot.matchtracker['last']
             speed = [(infos[0][1] - self.bot.matchtracker['scores'][0]) / (d.seconds//60), (infos[1][1] - self.bot.matchtracker['scores'][1]) / (d.seconds//60)]
@@ -2388,20 +2388,21 @@ class GBF_Access(commands.Cog):
             self.bot.matchtracker['plot'].append({'x': t, 'q': { 'y': [self.bot.matchtracker['speed'][0] / 1000000, self.bot.matchtracker['speed'][1] / 1000000] }})
             self.bot.savePending = True # just in case
         if len(self.bot.matchtracker['plot']) > 1: # generate chart
+            await asyncio.sleep(0.1)
             chart = leather.Chart('Speed Chart')
             chart.add_line(self.bot.matchtracker['plot'], x=self.x, y=self.yA, name="(You)")
             chart.add_line(self.bot.matchtracker['plot'], x=self.x, y=self.yB, name="Opponent")
             chart.to_svg('chart.svg')
             cairosvg.svg2png(url="chart.svg", write_to="chart.png")
-            with open("chart.png", "rb") as f:
-                try:
-                    future = asyncio.run_coroutine_threadsafe(self.bot.send('image', file=discord.File(f)), self.bot.loop)
-                    future.result()
-                    message = future.result()
+            await asyncio.sleep(0.1)
+            try:
+                with open("chart.png", "rb") as f:
+                    message = await self.bot.send('image', file=discord.File(f))
                     self.bot.matchtracker['chart'] = message.attachments[0].url
-                except:
-                    pass
+            except:
+                pass
             self.bot.savePending = True
+        await asyncio.sleep(0.01)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isYou()
@@ -2516,7 +2517,7 @@ class GBF_Access(commands.Cog):
                     with self.scraplockOut:
                         item = self.scrap_qo.pop() # retrieve an item
                 except:
-                    await asyncio.sleep(0.001)
+                    await asyncio.sleep(0.01)
                     continue # skip if error or no item in the queue
 
                 if self.scrap_mode: # if crew, update the existing crew (if it exists) or create a new entry
@@ -2529,8 +2530,8 @@ class GBF_Access(commands.Cog):
                 else: # if player, just add to the table
                     c.execute("INSERT INTO players VALUES ({},{},'{}',{})".format(int(item['rank']), int(item['user_id']), item['name'].replace("'", "''"), int(item['point'])))
                 i += 1
-                if i % 25 == 0:
-                    await asyncio.sleep(0.001)
+                if i % 100 == 0:
+                    await asyncio.sleep(0.01)
                 if i == count: # if we reached the end, commit
                     c.execute("COMMIT")
                     conn.close()
@@ -2540,7 +2541,8 @@ class GBF_Access(commands.Cog):
 
             if self.scrap_mode: # update tracker
                 try:
-                    self.updateYouTracker(update_time)
+                    await asyncio.sleep(0.001)
+                    await self.updateYouTracker(update_time)
                 except Exception as ue:
                     await self.bot.sendError('updateyoutracker', str(ue))
             
@@ -2579,7 +2581,7 @@ class GBF_Access(commands.Cog):
                 conn.close()
 
             state = "" # return value
-            max_thread = 60
+            max_thread = 75
             for n in [0, 1]: # n == 0 (crews) or 1 (players)
                 current_time = self.bot.getJST()
                 if n == 0 and current_time >= self.bot.gw['dates']["Interlude"] and current_time < self.bot.gw['dates']["Day 1"]:
