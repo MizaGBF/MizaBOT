@@ -1678,6 +1678,7 @@ class GBF_Access(commands.Cog):
                 if pdata is not None and pdata[1] is not None and 'result' in pdata[1] and len(pdata[1]['result']) == 1:
                     if gwid is None: gwid = pdata[1].get('gw', None)
                     members.append([pdata[1]['result'][0][1], pdata[1]['result'][0][2], pdata[1]['result'][0][3]]) # id, name, honor
+                await asyncio.sleep(0.001)
         if len(members) < 1:
             await ctx.send(embed=self.bot.buildEmbed(title="{} Top 30 of {}".format(self.bot.getEmote('gw'), ctx.guild.name), description="Unavailable", inline=True, thumbnail=ctx.guild.icon_url, color=self.color))
             return
@@ -1689,6 +1690,7 @@ class GBF_Access(commands.Cog):
                     members[j] = tmp
         fields = []
         total = 0
+        await asyncio.sleep(0.001)
         for i in range(0, min(30, len(members))):
             if i % 10 == 0:
                 fields.append({'name':'{}'.format(self.bot.getEmote(str(len(fields)+1))), 'value':''})
@@ -2367,8 +2369,8 @@ class GBF_Access(commands.Cog):
             if data is None or len(data) == 0: raise Exception("Failed to retrieve data")
             d = [4, 5, 6, 7]
             infos.append([data[0][2], data[0][d[day-2]]-data[0][d[day-2]-1]]) # name and score of the day
-            await asyncio.sleep(0.01)
         conn.close()
+
         if self.bot.matchtracker['init']:
             d = t - self.bot.matchtracker['last']
             speed = [(infos[0][1] - self.bot.matchtracker['scores'][0]) / (d.seconds//60), (infos[1][1] - self.bot.matchtracker['scores'][1]) / (d.seconds//60)]
@@ -2388,13 +2390,11 @@ class GBF_Access(commands.Cog):
             self.bot.matchtracker['plot'].append({'x': t, 'q': { 'y': [self.bot.matchtracker['speed'][0] / 1000000, self.bot.matchtracker['speed'][1] / 1000000] }})
             self.bot.savePending = True # just in case
         if len(self.bot.matchtracker['plot']) > 1: # generate chart
-            await asyncio.sleep(0.1)
             chart = leather.Chart('Speed Chart')
             chart.add_line(self.bot.matchtracker['plot'], x=self.x, y=self.yA, name="(You)")
             chart.add_line(self.bot.matchtracker['plot'], x=self.x, y=self.yB, name="Opponent")
             chart.to_svg('chart.svg')
             cairosvg.svg2png(url="chart.svg", write_to="chart.png")
-            await asyncio.sleep(0.1)
             try:
                 with open("chart.png", "rb") as f:
                     message = await self.bot.send('image', file=discord.File(f))
@@ -2402,7 +2402,6 @@ class GBF_Access(commands.Cog):
             except:
                 pass
             self.bot.savePending = True
-        await asyncio.sleep(0.01)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isYou()
@@ -2478,7 +2477,7 @@ class GBF_Access(commands.Cog):
                 with self.scraplockOut:
                     self.scrap_qo.append(item)
 
-    async def gwdbbuilder(self, count, update_time):
+    def gwdbbuilder(self, count, update_time):
         try:
             day = self.getCurrentGWDayID() # calculate which day it is (0 being prelim, 1 being interlude/day 1, etc...)
             if day is None or day >= 10:
@@ -2489,6 +2488,7 @@ class GBF_Access(commands.Cog):
             conn = sqlite3.connect('temp.sql', isolation_level=None) # open temp.sql
             c = conn.cursor()
             c.execute("BEGIN")
+
             c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'") # create info table (contains gw id and db version)
             if c.fetchone()[0] < 1:
                  c.execute('CREATE TABLE info (gw int, ver int)')
@@ -2517,7 +2517,6 @@ class GBF_Access(commands.Cog):
                     with self.scraplockOut:
                         item = self.scrap_qo.pop() # retrieve an item
                 except:
-                    await asyncio.sleep(0.01)
                     continue # skip if error or no item in the queue
 
                 if self.scrap_mode: # if crew, update the existing crew (if it exists) or create a new entry
@@ -2530,30 +2529,16 @@ class GBF_Access(commands.Cog):
                 else: # if player, just add to the table
                     c.execute("INSERT INTO players VALUES ({},{},'{}',{})".format(int(item['rank']), int(item['user_id']), item['name'].replace("'", "''"), int(item['point'])))
                 i += 1
-                if i % 100 == 0:
-                    await asyncio.sleep(0.01)
                 if i == count: # if we reached the end, commit
                     c.execute("COMMIT")
                     conn.close()
                 elif i % 1000 == 0:
                     c.execute("COMMIT")
                     c.execute("BEGIN") # start next one
-
-            if self.scrap_mode: # update tracker
-                try:
-                    await asyncio.sleep(0.001)
-                    await self.updateYouTracker(update_time)
-                except Exception as ue:
-                    await self.bot.sendError('updateyoutracker', str(ue))
             
             return ""
         except Exception as err:
             self.stoprankupdate = True # send the stop signal if a critical error happened
-            try:
-                c.execute("commit")
-                conn.close()
-            except:
-                pass
             return 'gwdbbuilder() exception:\n' + str(err)
 
     async def gwscrap(self, update_time):
@@ -2581,7 +2566,7 @@ class GBF_Access(commands.Cog):
                 conn.close()
 
             state = "" # return value
-            max_thread = 75
+            max_thread = 99
             for n in [0, 1]: # n == 0 (crews) or 1 (players)
                 current_time = self.bot.getJST()
                 if n == 0 and current_time >= self.bot.gw['dates']["Interlude"] and current_time < self.bot.gw['dates']["Day 1"]:
@@ -2602,15 +2587,24 @@ class GBF_Access(commands.Cog):
                 for item in data['list']: # queue what we already retrieved on the first page
                     self.scrap_qo.append(item)
                 self.stoprankupdate = False # if true, this flag will stop the threads
-                with concurrent.futures.ThreadPoolExecutor(max_workers=max_thread) as executor:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=max_thread+1) as executor:
                     futures = [executor.submit(self.scrapProcess) for i in range(max_thread)]
-                    state = await self.gwdbbuilder(count, update_time)
+                    builder_future = executor.submit(self.gwdbbuilder, count, update_time)
+                    while not builder_future.done():
+                        await asyncio.sleep(1)
+                    state = builder_future.result()
                     for future in concurrent.futures.as_completed(futures):
                         future.result()
-                    
                 self.stoprankupdate = True # to be safe
                 if state != "":
                     return state
+                    
+                if self.scrap_mode: # update tracker
+                    try:
+                        await self.updateYouTracker(update_time)
+                    except Exception as ue:
+                        await self.bot.sendError('updateyoutracker', str(ue))
+
             return ""
         except Exception as e:
             return "Exception: " + str(e)
