@@ -880,9 +880,7 @@ class GBF_Game(commands.Cog):
             elif c == 3: m = 666
             elif c == 4: m = 6666
 
-        if random.randint(1, 100) < 31: dogimg = "https://cdn.discordapp.com/attachments/261864133161385984/829057364124368896/dog_controls_your_destiny.png"
-        else: dogimg = ""
-        final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} {}'s daily quota".format(self.bot.getEmote('gw'), ctx.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.avatar_url, image=dogimg,color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="{} {}'s daily quota".format(self.bot.getEmote('gw'), ctx.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.avatar_url, color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 40)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)

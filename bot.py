@@ -332,7 +332,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "7.16" # version number
+        self.botversion = "7.17" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Added `$roll`", "Added `$srssr`", "Rewrote `$scratcher`", "Added the chance of double Mukku to `$roulette`", "Removed `$dragon`"] # bot changelog
         self.running = True # if True, the bot is running
@@ -1144,7 +1144,6 @@ async def on_message(message): # to do something with a message
 @bot.check # authorize or not a command on a global scale
 async def global_check(ctx):
     if ctx.guild is None:
-        await bot.send('debug', 'debug global check\n' + str(ctx.author) + '\n' + str(ctx.message))
         return False
     try:
         id = str(ctx.guild.id)

@@ -49,8 +49,15 @@ class GBF_Access(commands.Cog):
         self.scrap_mode = False
         self.scrap_qi = None
         self.scrap_qo = None
+        self.scrap_count = 0
+        self.scrap_update_time = None
+        self.scrap_max_thread = 99
+        self.scrap_executor = concurrent.futures.ThreadPoolExecutor(max_workers=self.scrap_max_thread+1)
         self.loadinggw = False
         self.loadinggacha = False
+        self.ranking_executor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
+        self.rankingtargets = []
+        self.rankingtempdata = []
         self.rankinglock = threading.Lock()
         self.stoprankupdate = False
         self.dad_running = False
@@ -74,27 +81,35 @@ class GBF_Access(commands.Cog):
             return ctx.bot.isServer(ctx, 'you_server')
         return commands.check(predicate)
 
-    def updateRankingThread(self, data, diff, iscrew, mode, rank):
+    async def request_async(self, executor, func):
+        return await self.bot.loop.run_in_executor(executor, func)
+
+    def updateRankingThread(self):
         r = None
         errc = 0
-        while errc < 5 and (r is None or 'list' not in r):
-            if iscrew:
-                r = self.requestRanking(rank // 10, mode)
-                if r is not None and 'list' in r and len(r['list']) > 0:
-                    with self.rankinglock:
-                        data[0][str(rank)] = int(r['list'][-1]['point'])
-                        if diff > 0 and self.bot.gw['ranking'] is not None and str(rank) in self.bot.gw['ranking'][0]:
-                            data[2][str(rank)] = (data[0][str(rank)] - self.bot.gw['ranking'][0][str(rank)]) / diff
-            else:
-                r = self.requestRanking(rank // 10, 2)
-                if r is not None and 'list' in r and len(r['list']) > 0:
-                    with self.rankinglock:
-                        data[1][str(rank)] = int(r['list'][-1]['point'])
-                        if diff > 0 and self.bot.gw['ranking'] is not None and str(rank) in self.bot.gw['ranking'][1]:
-                            data[3][str(rank)] = (data[1][str(rank)] - self.bot.gw['ranking'][1][str(rank)]) / diff
-            if r is None:
-                errc += 1
-                time.sleep(0.01)
+        try:
+            with self.rankinglock:
+                diff, iscrew, mode, rank = self.rankingtargets.pop()
+            while errc < 5 and (r is None or 'list' not in r):
+                if iscrew:
+                    r = self.requestRanking(rank // 10, mode)
+                    if r is not None and 'list' in r and len(r['list']) > 0:
+                        with self.rankinglock:
+                            self.rankingtempdata[0][str(rank)] = int(r['list'][-1]['point'])
+                            if diff > 0 and self.bot.gw['ranking'] is not None and str(rank) in self.bot.gw['ranking'][0]:
+                                self.rankingtempdata[2][str(rank)] = (self.rankingtempdata[0][str(rank)] - self.bot.gw['ranking'][0][str(rank)]) / diff
+                else:
+                    r = self.requestRanking(rank // 10, 2)
+                    if r is not None and 'list' in r and len(r['list']) > 0:
+                        with self.rankinglock:
+                            self.rankingtempdata[1][str(rank)] = int(r['list'][-1]['point'])
+                            if diff > 0 and self.bot.gw['ranking'] is not None and str(rank) in self.bot.gw['ranking'][1]:
+                                self.rankingtempdata[3][str(rank)] = (self.rankingtempdata[1][str(rank)] - self.bot.gw['ranking'][1][str(rank)]) / diff
+                if r is None:
+                    errc += 1
+                    time.sleep(0.01)
+        except:
+            return
 
     async def checkGWRanking(self):
         cog = self.bot.get_cog('GuildWar')
@@ -149,25 +164,25 @@ class GBF_Access(commands.Cog):
                             # update $ranking and $estimation
                             try:
                                 update_time = current_time - timedelta(seconds=60 * (current_time.minute % 20))
-                                data = [{}, {}, {}, {}, update_time]
+                                self.rankingtempdata = [{}, {}, {}, {}, update_time]
                                 if self.bot.gw['ranking'] is not None:
-                                    diff = data[4] - self.bot.gw['ranking'][4]
+                                    diff = self.rankingtempdata[4] - self.bot.gw['ranking'][4]
                                     diff = round(diff.total_seconds() / 60.0)
                                 else: diff = 0
-                                with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
-                                    futures = []
-                                    for c in crews:
-                                        futures.append(executor.submit(self.updateRankingThread, data, diff, True, mode, c))
-                                    for p in players:
-                                        futures.append(executor.submit(self.updateRankingThread, data, diff, False, 2, p))
-                                    await asyncio.sleep(1)
-                                    for future in concurrent.futures.as_completed(futures):
-                                        future.result()
+                                self.rankingtargets = []
+                                for c in crews:
+                                    self.rankingtargets.append([ diff, True, mode, c])
+                                for p in players:
+                                    self.rankingtargets.append([diff, False, 2, p])
+                                n_thread = len(self.rankingtargets)
+                                
+                                coros = [self.request_async(self.ranking_executor, self.updateRankingThread) for _i in range(n_thread)]
+                                results = await asyncio.gather(*coros)
 
                                 for i in range(0, 4):
-                                    data[i] = dict(sorted(data[i].items(), reverse=True, key=lambda item: int(item[1])))
+                                    self.rankingtempdata[i] = dict(sorted(self.rankingtempdata[i].items(), reverse=True, key=lambda item: int(item[1])))
 
-                                self.bot.gw['ranking'] = data
+                                self.bot.gw['ranking'] = self.rankingtempdata
                                 self.bot.savePending = True
                             except Exception as ex:
                                 await self.bot.sendError('checkgwranking sub', str(ex))
@@ -2468,7 +2483,10 @@ class GBF_Access(commands.Cog):
         while len(self.scrap_qi) > 0: # until the input queue is empty
             if self.bot.exit_flag or self.stoprankupdate: return 
             with self.scraplockIn:
-                page = self.scrap_qi.pop() # retrieve the page number
+                try:
+                    page = self.scrap_qi.pop() # retrieve the page number
+                except:
+                    continue
             data = None
             while data is None:
                 data = self.getRanking(page, self.scrap_mode) # request the page
@@ -2477,7 +2495,7 @@ class GBF_Access(commands.Cog):
                 with self.scraplockOut:
                     self.scrap_qo.append(item)
 
-    def gwdbbuilder(self, count, update_time):
+    def gwdbbuilder(self):
         try:
             day = self.getCurrentGWDayID() # calculate which day it is (0 being prelim, 1 being interlude/day 1, etc...)
             if day is None or day >= 10:
@@ -2504,8 +2522,8 @@ class GBF_Access(commands.Cog):
                     c.execute('DROP TABLE players')
                 c.execute('CREATE TABLE players (ranking int, id int, name text, current_total int)')
             i = 0
-            while i < count: # count is the number of entries to process
-                if self.bot.exit_flag or self.bot.maintenance['state'] or self.stoprankupdate or (self.bot.getJST() - update_time > timedelta(seconds=1150)): # stop if the bot is stopping
+            while i < self.scrap_count: # count is the number of entries to process
+                if self.bot.exit_flag or self.bot.maintenance['state'] or self.stoprankupdate or (self.bot.getJST() - self.scrap_update_time > timedelta(seconds=1150)): # stop if the bot is stopping
                     self.stoprankupdate = True # send the stop signal
                     try:
                         c.execute("commit")
@@ -2529,7 +2547,7 @@ class GBF_Access(commands.Cog):
                 else: # if player, just add to the table
                     c.execute("INSERT INTO players VALUES ({},{},'{}',{})".format(int(item['rank']), int(item['user_id']), item['name'].replace("'", "''"), int(item['point'])))
                 i += 1
-                if i == count: # if we reached the end, commit
+                if i == self.scrap_count: # if we reached the end, commit
                     c.execute("COMMIT")
                     conn.close()
                 elif i % 1000 == 0:
@@ -2570,6 +2588,7 @@ class GBF_Access(commands.Cog):
 
             state = "" # return value
             max_thread = 99
+            self.scrap_update_time = update_time
             for n in [0, 1]: # n == 0 (crews) or 1 (players)
                 current_time = self.bot.getJST()
                 if n == 0 and current_time >= self.bot.gw['dates']["Interlude"] and current_time < self.bot.gw['dates']["Day 1"]:
@@ -2580,7 +2599,7 @@ class GBF_Access(commands.Cog):
                 data = self.getRanking(1, self.scrap_mode) # get the first page
                 if data is None or data['count'] == False:
                     return "gwscrap() can't access the ranking"
-                count = int(data['count']) # number of crews/players
+                self.scrap_count = int(data['count']) # number of crews/players
                 last = data['last'] # number of pages
 
                 self.scrap_qi = [] # input queue (contains id of each page not processed yet)
@@ -2590,14 +2609,13 @@ class GBF_Access(commands.Cog):
                 for item in data['list']: # queue what we already retrieved on the first page
                     self.scrap_qo.append(item)
                 self.stoprankupdate = False # if true, this flag will stop the threads
-                with concurrent.futures.ThreadPoolExecutor(max_workers=max_thread+1) as executor:
-                    futures = [executor.submit(self.scrapProcess) for i in range(max_thread)]
-                    builder_future = executor.submit(self.gwdbbuilder, count, update_time)
-                    while not builder_future.done():
-                        await asyncio.sleep(1)
-                    state = builder_future.result()
-                    for future in concurrent.futures.as_completed(futures):
-                        future.result()
+                # run in threads
+                coros = [self.request_async(self.scrap_executor, self.scrapProcess) for _i in range(self.scrap_max_thread)]
+                coros.append(self.request_async(self.scrap_executor, self.gwdbbuilder))
+                results = await asyncio.gather(*coros)
+                for r in results:
+                    if r is not None: state = r
+                
                 self.stoprankupdate = True # to be safe
                 if state != "":
                     return state
@@ -2610,4 +2628,5 @@ class GBF_Access(commands.Cog):
 
             return ""
         except Exception as e:
+            self.stoprankupdate = True
             return "Exception: " + str(e)

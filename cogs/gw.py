@@ -333,7 +333,6 @@ class GuildWar(commands.Cog):
                     await ctx.send(embed=self.bot.buildEmbed(title="{} **Guild War {}** {}".format(self.bot.getEmote('gw'), self.bot.gw['id'], em), description="Estimations available in **{}**".format(self.bot.getTimedeltaStr(current_time_left)), inline=True, color=self.color))
                     return
                 time_left = self.getGWTimeLeft(self.bot.gw['ranking'][4])
-                time_modifier = (1.1 + 1.2 * (time_left.seconds // 3600) / 10)
                 fields = [{'name':'**Crew Ranking**', 'value':''}, {'name':'**Player Ranking**', 'value':''}]
                 for x in [0, 1]:
                     for c in self.bot.gw['ranking'][x]:
