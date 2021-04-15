@@ -832,7 +832,7 @@ class GBF_Access(commands.Cog):
                         crew['name'] = su.unescape(get['guild_name'])
                         crew['rank'] = get['guild_rank']
                         crew['ship'] = "http://game-a.granbluefantasy.jp/assets_en/img/sp/guild/thumb/top/{}.png".format(get['ship_img'])
-                        crew['ship_element'] = {"10001":"wind", "20001":"fire", "30001":"water", "40001":"earth"}.get(get['ship_img'].split('_')[0], 'gw')
+                        crew['ship_element'] = {"10001":"wind", "20001":"fire", "30001":"water", "40001":"earth", "50001":"light", "60001":"dark"}.get(get['ship_img'].split('_')[0], 'gw')
                         crew['leader'] = su.unescape(get['leader_name'])
                         crew['leader_id'] = get['leader_user_id']
                         crew['donator'] = su.unescape(get['most_donated_name'])
