@@ -907,6 +907,51 @@ class GBF_Utility(commands.Cog):
         delta = target - c
         await ctx.send(embed=self.bot.buildEmbed(title="{} Kore Kara".format(self.bot.getEmote('clock')), description="Release approximately in **{}**".format(self.bot.getTimedeltaStr(delta, 2)),  url="https://granbluefantasy.jp/news/index.php", thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['crits', 'critical', 'criticals'])
+    @commands.cooldown(2, 5, commands.BucketType.user)
+    async def crit(self, ctx, *, weapons : str = ""):
+        """Calculate critical rate"""
+        values = {'small10':2, 'small15':3, 'small20':4, 'medium10':5, 'medium15':6.5, 'medium20':7.5, 'big10':8, 'big15':10, 'big20':11, 'bigII15':12, 'wamdus':20, 'hercules':11.5}
+        ts = {'small':'small15', 'med':'medium15', 'medium':'medium15', 'big':'big15', 'big2':'bigII15', 's10':'small10', 's15':'small15', 's20':'small20', 'm10':'medium10', 'm15':'medium15', 'm20':'medium20', 'med10':'medium10', 'med15':'medium15', 'med20':'medium20', 'b10':'big10', 's15':'big15', 's20':'big20', 'bII10':'bigII10', 'bII15':'bigII15', 'b210':'bigII10', 'b215':'bigII15', 'big210':'bigII10', 'big215':'bigII15', 'ameno':'medium20', 'gaebulg':'medium20', 'bulg':'medium20', 'bulge':'medium20', 'gae':'medium20', 'mjollnir':'small20', 'herc':'hercules', 'ecke':'medium15', 'eckesachs':'medium15', 'sachs':'medium15', 'blut':'small15', 'blutgang':'small15', 'indra':'medium15', 'ivory':'bigII15', 'ivoryark':'bigII15', 'ark':'bigII15', 'auberon':'medium15', 'aub':'medium15', 'taisai':'big15', 'galilei':'medium15'}
+        flats = ['wamdus']
+        try:
+            if weapons == "": raise Exception("Empty Parameter")
+            mods = weapons.lower().split(' ')
+            s1 = ""
+            s2 = ""
+            base = 0
+            flat = 0
+            for m in mods:
+                if ts.get(m, m) in flats:
+                    flat += values[ts.get(m, m)]
+                    s2 += "{}+".format(values[ts.get(m, m)])
+                else:
+                    base += values[ts.get(m, m)]
+                    s1 += "{}+".format(values[ts.get(m, m)])
+            if s1 != "": s1 = "Boosted " + s1[:-1]
+            if s2 != "":
+                if s1 != "": s1 += ", "
+                s1 = s1 + "Flat " + s2[:-1]
+            msg = "**{} {} ▫️ Magna ▫️ Primal**\n".format(self.bot.getEmote('SSR'), self.bot.getEmote('summon'))
+            msg += "1x 3★ ▫️ {:.1f}% ▫️ {:.1f}%\n".format(base*2 + flat, base*2.2 + flat)
+            msg += "2x 3★ ▫️ {:.1f}% ▫️ {:.1f}%\n".format(base*3 + flat, base*3.4 + flat)
+            msg += "1x 4★ ▫️ {:.1f}% ▫️ {:.1f}%\n".format(base*2.2 + flat, base*2.4 + flat)
+            msg += "2x 4★ ▫️ {:.1f}% ▫️ {:.1f}%\n".format(base*3.4 + flat, base*3.8 + flat)
+            msg += "1x 5★ ▫️ {:.1f}% ▫️ {:.1f}%\n".format(base*2.4 + flat, base*2.5 + flat)
+            msg += "2x 5★ ▫️ {:.1f}% ▫️ {:.1f}%\n".format(base*3.8 + flat, base*4 + flat)
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Critical Calculator", description=msg, footer=s1, color=self.color))
+        except Exception as e:
+            if str(e) == "Empty Parameter":
+                modstr = ""
+                for m in values:
+                    modstr += "`{}`, ".format(m)
+                for m in ts:
+                    modstr += "`{}`, ".format(m)
+                final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Critical Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces" , color=self.color))
+            else:
+                final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Critical Calculator", description="Error", footer=str(e), color=self.color))
+        await self.bot.cleanMessage(ctx, final_msg, 40)
+
     def getSkillUpValue(self, type, sl): # calculate what's needed to raise a weapon skill level from a given skill level. return a list containing two dicts: first one contains the summary, second contains the details
         use = {}
         total = {}
