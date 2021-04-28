@@ -787,8 +787,15 @@ class GBF_Access(commands.Cog):
                 sk = data.get(key, [])
                 if sk is not None and len(sk) > 0:
                     msg += "{} **{}**".format(self.bot.getEmote('skill2'), sk['name'])
-                    if 'masterable_level' in sk and sk['masterable_level'] != '1':
-                        msg += " (at lvl {})".format(sk['masterable_level'])
+                    if 'masterable_level' in sk:
+                        if ',' in sk['masterable_level']:
+                            base = sk['masterable_level'].split(',')[0]
+                            if base != '1': msg += " (unlocks at lvl {}, upgrades at lvl ".format(base)
+                            else: msg += " (upgrades at lvl "
+                            msg += ', '.join(sk['masterable_level'].split(',')[1:])
+                            msg += ')'
+                        elif sk['masterable_level'] != '1':
+                            msg += " (unlocks at lvl {})".format(sk['masterable_level'])
                     msg += "\n{}\n".format(sk['comment'].replace('<span class=text-blue>', '').replace('</span>', ''))
             url = 'http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/weapon/m/{}.jpg'.format(data['id'])
         elif type == 2:
