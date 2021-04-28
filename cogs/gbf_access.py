@@ -306,7 +306,7 @@ class GBF_Access(commands.Cog):
                 await asyncio.sleep(0.001)
                 last = await self.check4koma()
                 if '4koma' in self.bot.gbfdata:
-                    if last is not None and last['id'] != self.bot.gbfdata['4koma']:
+                    if last is not None and int(last['id']) > int(self.bot.gbfdata['4koma']):
                         self.bot.gbfdata['4koma'] = last['id']
                         self.bot.savePending = True
                         title = last['title_en']
@@ -626,12 +626,12 @@ class GBF_Access(commands.Cog):
             self.dad_running = False
             return ["", {}, {}, thf]
 
-    async def dadp(self, c, data, tt): # black magic
+    async def dadp(self, c, data, tt, x=None): # black magic
         fields = []
-
+        if x is None: x = tt
         tmp = ""
         for k in data[2]:
-            tmp += "[{}]({})\n".format(k.replace(tt, ''), data[2][k])
+            tmp += "[{}]({})\n".format(k.replace(x, ''), data[2][k])
         if len(tmp) > 0:
             fields.append({'name':'Sprites', 'value':tmp})
 
@@ -702,7 +702,7 @@ class GBF_Access(commands.Cog):
                     errc = 0
 
                     if not silent:
-                        await self.dadp(channel, data, "{} : {}".format(crt[i][0], str(cid + id * 1000)))
+                        await self.dadp(channel, data, "{} : {}".format(crt[i][0], str(cid + id * 1000)), str(cid + id * 1000))
                         
                 id += 1
 
@@ -754,7 +754,8 @@ class GBF_Access(commands.Cog):
                         found[tt] += 1
 
                     if not silent:
-                        await channel.send(embed=self.bot.buildEmbed(title=ws[x], description='{} ▫️ {}'.format(tt, id), thumbnail=wl[0].format(id), color=self.color))
+                        try: await self.atr(channel, str(id), True)
+                        except: await channel.send(embed=self.bot.buildEmbed(title=ws[x], description='{} ▫️ {}'.format(tt, id), thumbnail=wl[0].format(id), color=self.color))
 
                     stid += 1
 
@@ -763,6 +764,46 @@ class GBF_Access(commands.Cog):
                 self.bot.savePending = True
 
         return found
+
+    async def atr(self, target, id, turbo=False):
+        atr = self.bot.gbfwatch['atr']
+        type = int(id[0])
+        id = int(id)
+        if type not in [1, 2]: raise Exception()
+        if turbo and type == 1:
+            data = await self.bot.sendRequest(atr[0], account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True, payload={"special_token":None,"weapon_id":str(id)})
+        else:
+            data = (await self.bot.sendRequest(atr[1], account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True, payload={"special_token":None,"item_id":id,"item_kind":type}))['data']
+
+        rarity = "{}".format(self.bot.getEmote({"2":"R", "3":"SR", "4":"SSR"}.get(data['rarity'], '')))
+        msg = '{} {} {} {} at \⭐\⭐\⭐\n'.format(self.bot.getEmote('hp'), data['max_hp'], self.bot.getEmote('atk'), data['max_attack'])
+        if type == 1:
+            kind = "{}".format(self.bot.getEmote({'1': 'sword','2': 'dagger','3': 'spear','4': 'axe','5': 'staff','6': 'gun','7': 'melee','8': 'bow','9': 'harp','10': 'katana'}.get(data.get('kind', ''), '')))
+            if 'special_skill' in data:
+                msg += "{} **{}**\n".format(self.bot.getEmote('skill1'), data['special_skill']['name'])
+                msg += "{}\n".format(data['special_skill']['comment'].replace('<span class=text-blue>', '').replace('</span>', ''))
+            for i in range(1, 4):
+                key = 'skill{}'.format(i)
+                sk = data.get(key, [])
+                if sk is not None and len(sk) > 0:
+                    msg += "{} **{}**".format(self.bot.getEmote('skill2'), sk['name'])
+                    if 'masterable_level' in sk and sk['masterable_level'] != '1':
+                        msg += " (at lvl {})".format(sk['masterable_level'])
+                    msg += "\n{}\n".format(sk['comment'].replace('<span class=text-blue>', '').replace('</span>', ''))
+            url = 'http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/weapon/m/{}.jpg'.format(data['id'])
+        elif type == 2:
+            kind = '{}'.format(self.bot.getEmote('summon'))
+            msg += "{} **{}**\n".format(self.bot.getEmote('skill1'), data['special_skill']['name'])
+            msg += "{}\n".format(data['special_skill']['comment'])
+            if 'recast_comment' in data['special_skill']:
+                msg += "{}\n".format(data['special_skill']['recast_comment'])
+            msg += "{} **{}**\n".format(self.bot.getEmote('skill2'), data['skill1']['name'])
+            msg += "{}\n".format(data['skill1']['comment'])
+            if 'sub_skill' in data:
+                msg += "{} **Sub Aura**\n".format(self.bot.getEmote('skill2'))
+                msg += "{}\n".format(data['sub_skill']['comment'])
+            url = 'http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/summon/m/{}.jpg'.format(data['id'])
+        await target.send(embed=self.bot.buildEmbed(title="{}{}{} {}".format(rarity, kind, data['name'], data.get('series_name', '')), description=msg, thumbnail=url, footer=data['id'], color=self.color))
 
     async def getCrewSummary(self, id):
         res = await self.bot.sendRequest("http://game.granbluefantasy.jp/guild_main/content/detail/{}?PARAMS".format(id), account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
@@ -1286,48 +1327,14 @@ class GBF_Access(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwnerOrDebug()
-    @commands.cooldown(1, 10, commands.BucketType.default)
+    @commands.cooldown(1, 8, commands.BucketType.default)
     async def loot(self, ctx, id : str):
         """Retrieve a weapon or summon description (Owner or Bot only)"""
         try:
-            type = int(id[0])
-            id = int(id)
-            if type not in [1, 2]: raise Exception()
-            data = await self.bot.sendRequest('http://game.granbluefantasy.jp/result/detail?PARAMS', account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True, payload={"special_token":None,"item_id":id,"item_kind":type})
-            data = data['data']
-
-            rarity = "{}".format(self.bot.getEmote({"2":"R", "3":"SR", "4":"SSR"}.get(data['rarity'], '')))
-            msg = '{} {} {} {}\n'.format(self.bot.getEmote('hp'), data['max_hp'], self.bot.getEmote('atk'), data['max_attack'])
-            if type == 1:
-                kind = "{}".format(self.bot.getEmote({'1': 'sword','2': 'dagger','3': 'spear','4': 'axe','5': 'staff','6': 'gun','7': 'melee','8': 'bow','9': 'harp','10': 'katana'}.get(data.get('kind', ''), '')))
-                if 'special_skill' in data:
-                    msg += "{} **{}**\n".format(self.bot.getEmote('skill1'), data['special_skill']['name'])
-                    msg += "{}\n".format(data['special_skill']['comment'].replace('<span class=text-blue>', '').replace('</span>', ''))
-                for i in range(1, 4):
-                    key = 'skill{}'.format(i)
-                    if len(data.get(key, [])) > 0:
-                        msg += "{} **{}**".format(self.bot.getEmote('skill2'), data[key]['name'])
-                        if 'masterable_level' in data[key] and data[key]['masterable_level'] != '1':
-                            msg += " (at lvl {})".format(data[key]['masterable_level'])
-                        msg += "\n{}\n".format(data[key]['comment'].replace('<span class=text-blue>', '').replace('</span>', ''))
-                url = 'http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/weapon/m/{}.jpg'.format(data['id'])
-            elif type == 2:
-                kind = '{}'.format(self.bot.getEmote('summon'))
-                msg += "{} **{}**\n".format(self.bot.getEmote('skill1'), data['special_skill']['name'])
-                msg += "{}\n".format(data['special_skill']['comment'])
-                if 'recast_comment' in data['special_skill']:
-                    msg += "{}\n".format(data['special_skill']['recast_comment'])
-                msg += "{} **{}**\n".format(self.bot.getEmote('skill2'), data['skill1']['name'])
-                msg += "{}\n".format(data['skill1']['comment'])
-                if 'sub_skill' in data:
-                    msg += "{} **Sub Aura**\n".format(self.bot.getEmote('skill2'))
-                    msg += "{}\n".format(data['sub_skill']['comment'])
-                url = 'http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/summon/m/{}.jpg'.format(data['id'])
-
-            await ctx.reply(embed=self.bot.buildEmbed(title="{}{}{}".format(rarity, kind, data['name']), description=msg, thumbnail=url, footer=data['id'], color=self.color))
+            await self.atr(ctx, id)
         except:
             await self.bot.react(ctx.message, '❎') # white negative mark
-            
+
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def coop(self, ctx):

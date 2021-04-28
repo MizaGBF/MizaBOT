@@ -257,11 +257,14 @@ class GBF_Game(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 15, commands.BucketType.user)
-    async def roll(self, ctx, count : int = 0, double : str = ""):
+    async def roll(self, ctx, count : str = "0", double : str = ""):
         """Do an user-specified number gacha rolls
         6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
         3% keywords: "normal", "x1", "3%", "gacha", "1"."""
-        if count <= 0 or count > 600:
+        try:
+            count = int(count)
+            if count <= 0 or count > 600: raise Exception()
+        except:
             msg = await ctx.reply(embed=self.bot.buildEmbed(title="Roll Error", description="Please specify a valid number of rolls (between **1** and **600** included)", color=self.color))
             await self.bot.cleanMessage(ctx, msg, 20)
             return

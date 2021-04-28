@@ -1104,7 +1104,7 @@ class GBF_Utility(commands.Cog):
         c = self.bot.getJST()
         grands = {
             "Water": c.replace(year=2018, month=10, day=17, hour=19, minute=0, second=0, microsecond=0),
-            "Wind": c.replace(year=2019, month=9, day=30, hour=19, minute=0, second=0, microsecond=0)
+            "Wind": c.replace(year=2021, month=4, day=30, hour=19, minute=0, second=0, microsecond=0)
         }
         for e in grands:
             msg += "**{} days** since the last {} Grand\n".format(self.bot.getTimedeltaStr(c - grands[e], 3).split('d')[0], e)
