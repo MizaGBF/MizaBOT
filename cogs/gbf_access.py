@@ -777,6 +777,7 @@ class GBF_Access(commands.Cog):
 
         rarity = "{}".format(self.bot.getEmote({"2":"R", "3":"SR", "4":"SSR"}.get(data['rarity'], '')))
         msg = '{} {} {} {} at \⭐\⭐\⭐\n'.format(self.bot.getEmote('hp'), data['max_hp'], self.bot.getEmote('atk'), data['max_attack'])
+        if turbo: msg += '*{}*\n'.format(data['comment'])
         if type == 1:
             kind = "{}".format(self.bot.getEmote({'1': 'sword','2': 'dagger','3': 'spear','4': 'axe','5': 'staff','6': 'gun','7': 'melee','8': 'bow','9': 'harp','10': 'katana'}.get(data.get('kind', ''), '')))
             if 'special_skill' in data:
