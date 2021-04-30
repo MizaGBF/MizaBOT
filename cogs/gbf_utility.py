@@ -932,14 +932,13 @@ class GBF_Utility(commands.Cog):
             if s2 != "":
                 if s1 != "": s1 += ", "
                 s1 = s1 + "Flat " + s2[:-1]
-            msg = "**{} {} ▫️ Magna ▫️ Primal**\n".format(self.bot.getEmote('SSR'), self.bot.getEmote('summon'))
-            msg += "1x 3★ ▫️ {:.1f}% ▫️ {:.1f}%\n".format(base*2 + flat, base*2.2 + flat)
-            msg += "2x 3★ ▫️ {:.1f}% ▫️ {:.1f}%\n".format(base*3 + flat, base*3.4 + flat)
-            msg += "1x 4★ ▫️ {:.1f}% ▫️ {:.1f}%\n".format(base*2.2 + flat, base*2.4 + flat)
-            msg += "2x 4★ ▫️ {:.1f}% ▫️ {:.1f}%\n".format(base*3.4 + flat, base*3.8 + flat)
-            msg += "1x 5★ ▫️ {:.1f}% ▫️ {:.1f}%\n".format(base*2.4 + flat, base*2.5 + flat)
-            msg += "2x 5★ ▫️ {:.1f}% ▫️ {:.1f}%\n".format(base*3.8 + flat, base*4 + flat)
-            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Critical Calculator", description=msg, footer=s1, color=self.color))
+            msg =  "**Aura ▫️ Critical ▫️▫️ Aura ▫️ Critical**\n"
+            msg += "140% ▫️ {:.1f}% ▫️▫️ 290% ▫️ {:.1f}%\n".format(min(base*2.4 + flat, 100), min(base*3.9 + flat, 100))
+            msg += "150% ▫️ {:.1f}% ▫️▫️ 300% ▫️ {:.1f}%\n".format(min(base*2.5 + flat, 100), min(base*4 + flat, 100))
+            msg += "160% ▫️ {:.1f}% ▫️▫️ 310% ▫️ {:.1f}%\n".format(min(base*2.6 + flat, 100), min(base*4.1 + flat, 100))
+            msg += "170% ▫️ {:.1f}% ▫️▫️ 320% ▫️ {:.1f}%\n".format(min(base*2.7 + flat, 100), min(base*4.2 + flat, 100))
+            msg += "280% ▫️ {:.1f}%\n".format(min(base*3.8 + flat, 100))
+            final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Critical Calculator", description=msg.replace('.0%', '%').replace('100%', '**100%**'), footer=s1, color=self.color))
         except Exception as e:
             if str(e) == "Empty Parameter":
                 modstr = ""

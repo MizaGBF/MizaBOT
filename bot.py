@@ -1231,7 +1231,9 @@ async def on_raw_reaction_add(payload):
                 dict = {}
                 dict['color'] = 0xf20252
                 dict['title'] = str(message.author)
-                if len(content) > 0: dict['description'] = content + "\n\n"
+                if len(content) > 0: 
+                    if len(content) > 1900: dict['description'] = content[:1900] + "...\n\n"
+                    else: dict['description'] = content + "\n\n"
                 else: dict['description'] = ""
                 dict['thumbnail'] = {'url':str(message.author.avatar_url)}
                 dict['fields'] = []
