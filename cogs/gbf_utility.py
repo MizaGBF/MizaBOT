@@ -910,9 +910,11 @@ class GBF_Utility(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['crits', 'critical', 'criticals'])
     @commands.cooldown(2, 5, commands.BucketType.user)
     async def crit(self, ctx, *, weapons : str = ""):
-        """Calculate critical rate"""
-        values = {'small10':2, 'small15':3, 'small20':4, 'medium10':5, 'medium15':6.5, 'medium20':7.5, 'big10':8, 'big15':10, 'big20':11, 'bigII15':12, 'wamdus':20, 'hercules':11.5, 'sephira':25}
-        ts = {'small':'small15', 'med':'medium15', 'medium':'medium15', 'big':'big15', 'big2':'bigII15', 's10':'small10', 's15':'small15', 's20':'small20', 'm10':'medium10', 'm15':'medium15', 'm20':'medium20', 'med10':'medium10', 'med15':'medium15', 'med20':'medium20', 'b10':'big10', 's15':'big15', 's20':'big20', 'bII10':'bigII10', 'bII15':'bigII15', 'b210':'bigII10', 'b215':'bigII15', 'big210':'bigII10', 'big215':'bigII15', 'ameno':'medium20', 'gaebulg':'medium20', 'bulg':'medium20', 'bulge':'medium20', 'gae':'medium20', 'mjollnir':'small20', 'herc':'hercules', 'ecke':'medium15', 'eckesachs':'medium15', 'sachs':'medium15', 'blut':'small15', 'blutgang':'small15', 'indra':'medium15', 'ivory':'bigII15', 'ivoryark':'bigII15', 'ark':'bigII15', 'auberon':'medium15', 'aub':'medium15', 'taisai':'big15', 'pholia':'big15', 'galilei':'medium15', 'europa':'medium15', 'benedia':'medium15', 'thunderbolt':'big15', 'shibow':'big15', 'fawn':'big15', 'rein':'bigII15', 'babel':'bigII15', 'mandeb':'bigII15', 'bab-el-mandeb':'bigII15', 'arca':'sephira', 'arcarum':'sephira'}
+        """Calculate critical rate
+        Do the command without parameters for the full modifier list
+        Add `f` before a modifier to make it unboosted"""
+        values = {'small10':2, 'small15':3, 'small20':4, 'medium10':5, 'medium15':6.5, 'medium20':7.5, 'big10':8, 'big15':10, 'big20':11, 'bigii15':12, 'wamdus':20, 'hercules':11.5, 'sephira':25}
+        ts = {'small':'small15', 'med':'medium15', 'medium':'medium15', 'big':'big15', 'big2':'bigii15', 's10':'small10', 's15':'small15', 's20':'small20', 'm10':'medium10', 'm15':'medium15', 'm20':'medium20', 'med10':'medium10', 'med15':'medium15', 'med20':'medium20', 'b10':'big10', 's15':'big15', 's20':'big20', 'bii10':'bigii10', 'bii15':'bigii15', 'b210':'bigii10', 'b215':'bigii15', 'big210':'bigii10', 'big215':'bigii15', 'ameno':'medium20', 'gaebulg':'medium20', 'bulg':'medium20', 'bulge':'medium20', 'gae':'medium20', 'mjollnir':'small20', 'herc':'hercules', 'ecke':'medium15', 'eckesachs':'medium15', 'sachs':'medium15', 'blut':'small15', 'blutgang':'small15', 'indra':'medium15', 'ivory':'bigii15', 'ivoryark':'bigii15', 'ark':'bigii15', 'auberon':'medium15', 'aub':'medium15', 'taisai':'big15', 'pholia':'big15', 'galilei':'medium15', 'europa':'medium15', 'benedia':'medium15', 'thunderbolt':'big15', 'shibow':'big15', 'rein':'bigii15', 'babel':'bigii15', 'mandeb':'bigii15', 'bab-el-mandeb':'bigii15', 'arca':'sephira', 'arcarum':'sephira', 'spoon':'medium15', 'coruscant':'medium15', 'crozier':'medium15', 'eva':'bigii15', 'evanescence':'bigii15'}
         flats = ['wamdus', 'sephira']
         try:
             if weapons == "": raise Exception("Empty Parameter")
@@ -926,8 +928,12 @@ class GBF_Utility(commands.Cog):
                     flat += values[ts.get(m, m)]
                     s2 += "{}+".format(values[ts.get(m, m)])
                 else:
-                    base += values[ts.get(m, m)]
-                    s1 += "{}+".format(values[ts.get(m, m)])
+                    if len(m) > 0 and m[0] == 'f':
+                        flat += values[ts.get(m[1:], m[1:])]
+                        s2 += "{}+".format(values[ts.get(m[1:], m[1:])])
+                    else:
+                        base += values[ts.get(m, m)]
+                        s1 += "{}+".format(values[ts.get(m, m)])
             if s1 != "": s1 = "Boosted " + s1[:-1]
             if s2 != "":
                 if s1 != "": s1 += ", "
@@ -946,7 +952,7 @@ class GBF_Utility(commands.Cog):
                     modstr += "`{}`, ".format(m)
                 for m in ts:
                     modstr += "`{}`, ".format(m)
-                final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Critical Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces" , color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Critical Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `f` before a modifier to make it unboosted" , color=self.color))
             else:
                 final_msg = await ctx.reply(embed=self.bot.buildEmbed(title="Critical Calculator", description="Error", footer=str(e), color=self.color))
         await self.bot.cleanMessage(ctx, final_msg, 40)
