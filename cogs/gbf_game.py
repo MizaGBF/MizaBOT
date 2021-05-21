@@ -505,6 +505,7 @@ class GBF_Game(commands.Cog):
             elif not nofinal and grid[-1][0] == keys[0]:
                 win = ""
                 break
+            await asyncio.sleep(0.001)
 
         # play the game
         win_flag = False
@@ -654,6 +655,7 @@ class GBF_Game(commands.Cog):
                             game_over = True
                             display_chest = False
                         break
+                await asyncio.sleep(0.001)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 180, commands.BucketType.user)

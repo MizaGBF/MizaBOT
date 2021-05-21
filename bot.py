@@ -153,28 +153,34 @@ class MizabotDrive():
     def __init__(self, bot):
         self.saving = False
         self.bot = bot # it's the bot
+        self.gauth = None
 
-    def login(self): # check credential, update if needed. Run this function on your own once to get the json, before pushing it to heroku
+    def access(self): # check credential, update if needed. Run this function on your own once to get the json, before pushing it to heroku
         try:
-            gauth = GoogleAuth()
-            gauth.LoadCredentialsFile("credentials.json") # load credentials
-            if gauth.credentials is None: # if failed, get them
-                gauth.LocalWebserverAuth()
-            elif gauth.access_token_expired: # or if expired, refresh
-                gauth.Refresh()
+            if self.gauth is None:
+                self.gauth = GoogleAuth()
+                self.gauth.LoadCredentialsFile("credentials.json") # load credentials
+                if self.gauth.credentials is None: # if failed, get them
+                    self.gauth.LocalWebserverAuth()
+                elif self.gauth.access_token_expired: # or if expired, refresh
+                    self.gauth.Refresh()
+                else:
+                    self.gauth.Authorize() # good
+                self.gauth.SaveCredentialsFile("credentials.json") # save
             else:
-                gauth.Authorize() # good
-            gauth.SaveCredentialsFile("credentials.json") # save
-            return GoogleDrive(gauth)
+                if self.gauth.access_token_expired: # if expired, refresh
+                    self.gauth.Refresh()
+                    self.gauth.SaveCredentialsFile("credentials.json") # save
+            return GoogleDrive(self.gauth)
         except Exception as e:
             print('Exception: ' + str(e))
             return None
 
     def load(self): # load save.json from the folder id in bot.tokens
         if self.saving: return False
-        drive = self.login()
+        drive = self.access()
         if not drive:
-            print("Can't login into Google Drive")
+            print("Can't access Google Drive")
             return False
         try:
             file_list = drive.ListFile({'q': "'" + self.bot.tokens['drive'] + "' in parents and trashed=false"}).GetList() # get the file list in our folder
@@ -196,7 +202,7 @@ class MizabotDrive():
 
     def save(self, data): # write save.json to the folder id in bot.tokens
         if self.saving: return False
-        drive = self.login()
+        drive = self.access()
         if not drive: return False
         try:
             self.saving = True
@@ -227,7 +233,7 @@ class MizabotDrive():
 
     def saveFile(self, data, name, folder): # write a json file to a folder
         try:
-            drive = self.login()
+            drive = self.access()
             s = drive.CreateFile({'title':name, 'mimeType':'text/JSON', "parents": [{"kind": "drive#file", "id": folder}]})
             s.SetContentString(data)
             s.Upload()
@@ -237,7 +243,7 @@ class MizabotDrive():
 
     def saveDiskFile(self, target, mime, name, folder): # write a file from the local storage to a drive folder
         try:
-            drive = self.login()
+            drive = self.access()
             s = drive.CreateFile({'title':name, 'mimeType':mime, "parents": [{"kind": "drive#file", "id": folder}]})
             s.SetContentFile(target)
             s.Upload()
@@ -246,9 +252,9 @@ class MizabotDrive():
             return False
 
     def overwriteFile(self, target, mime, name, folder): # write a file from the local storage to a drive folder (replacing an existing one, if it exists)
-        drive = self.login()
+        drive = self.access()
         if not drive:
-            print("Can't login into Google Drive")
+            print("Can't access Google Drive")
             return False
         try:
             file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
@@ -265,9 +271,9 @@ class MizabotDrive():
             return False
 
     def mvFile(self, name, folder, new): # rename a file from a folder
-        drive = self.login()
+        drive = self.access()
         if not drive:
-            print("Can't login into Google Drive")
+            print("Can't access Google Drive")
             return False
         try:
             file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
@@ -282,9 +288,9 @@ class MizabotDrive():
             return False
 
     def cpyFile(self, name, folder, new): # rename a file from a folder
-        drive = self.login()
+        drive = self.access()
         if not drive:
-            print("Can't login into Google Drive")
+            print("Can't access Google Drive")
             return False
         try:
             file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
@@ -298,9 +304,9 @@ class MizabotDrive():
             return False
 
     def dlFile(self, name, folder): # load a file from a folder to the local storage
-        drive = self.login()
+        drive = self.access()
         if not drive:
-            print("Can't login into Google Drive")
+            print("Can't access Google Drive")
             return False
         try:
             file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
@@ -314,9 +320,9 @@ class MizabotDrive():
             return False
 
     def delFiles(self, names, folder): # delete matching files from a folder
-        drive = self.login()
+        drive = self.access()
         if not drive:
-            print("Can't login into Google Drive")
+            print("Can't access Google Drive")
             return False
         try:
             file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
@@ -332,7 +338,7 @@ class MizabotDrive():
 # Bot
 class Mizabot(commands.Bot):
     def __init__(self):
-        self.botversion = "7.18" # version number
+        self.botversion = "7.19" # version number
         self.saveversion = 0 # save version
         self.botchangelog = ["Added `$crit`", "Added `$roll`", "Added `$srssr`"] # bot changelog
         self.running = True # if True, the bot is running
@@ -1140,6 +1146,10 @@ async def on_message(message): # to do something with a message
     if await bot.runOnMessageCallback(message):
         # end
         await bot.process_commands(message) # don't forget
+
+@bot.event
+async def on_command(ctx): #DEBUG
+    print(ctx.message.content)
 
 @bot.check # authorize or not a command on a global scale
 async def global_check(ctx):

@@ -674,13 +674,13 @@ class GBF_Access(commands.Cog):
         except:
             return found
 
-        nc = await self.bot.sendRequest(self.bot.gbfwatch['num'], account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
+        """nc = await self.bot.sendRequest(self.bot.gbfwatch['num'], account=self.bot.gbfcurrent, decompress=True, load_json=True, check=True)
         if nc is not None:
             if 'count' not in self.bot.gbfdata:
                 self.bot.gbfdata['count'] = ['?', '?', '?']
                 self.bot.savePending = True
             if self.bot.gbfdata['count'][0] != nc['archive']['npc_num']['max']: found[ns[0].format(self.bot.gbfdata['count'][0], nc['archive']['npc_num']['max'])] = ""
-            if self.bot.gbfdata['count'][1] != nc['archive']['summon_num']['max']: found[ns[1].format(self.bot.gbfdata['count'][1], nc['archive']['summon_num']['max'])] = ""
+            if self.bot.gbfdata['count'][1] != nc['archive']['summon_num']['max']: found[ns[1].format(self.bot.gbfdata['count'][1], nc['archive']['summon_num']['max'])] = "" """
 
         for i in range(0, len(self.bot.gbfdata['c'])):
             cid = crt[i][1]
@@ -706,10 +706,10 @@ class GBF_Access(commands.Cog):
                         
                 id += 1
 
-        if nc is not None:
+        """if nc is not None:
             if self.bot.gbfdata['count'][2] != nc['archive']['weapon_num']['max']: found[ns[2].format(self.bot.gbfdata['count'][2], nc['archive']['weapon_num']['max'])] = ""
             self.bot.gbfdata['count'] = [nc['archive']['npc_num']['max'], nc['archive']['summon_num']['max'], nc['archive']['weapon_num']['max']]
-            self.bot.savePending = True
+            self.bot.savePending = True"""
 
         for k in self.bot.gbfdata['w']:
             try:
@@ -1473,8 +1473,9 @@ class GBF_Access(commands.Cog):
         file_jpgdata = BytesIO(url_handle.read())
         url_handle.close()
         dt = Image.open(file_jpgdata)
+        dt = dt.convert('RGBA')
         if resize is not None: dt = dt.resize(resize)
-        img.paste(dt, offset, dt.convert('RGBA'))
+        img.paste(dt, offset, dt)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['id'])
     @commands.cooldown(5, 30, commands.BucketType.guild)
@@ -1670,7 +1671,7 @@ class GBF_Access(commands.Cog):
                     with open(ifn, 'rb') as infile:
                         message = await self.bot.send('image', file=discord.File(infile))
                         thumbnail = message.attachments[0].url
-                        self.bot.delFile(ifn)
+                    self.bot.delFile(ifn)
                 except:
                     thumbnail = None
 
