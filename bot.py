@@ -1,962 +1,221 @@
-﻿import discord
+from components.data import Data
+from components.drive import Drive
+from components.util import Util
+from components.gbf import GBF
+from components.twitter import Twitter
+from components.pinboard import Pinboard
+from components.emote import Emote
+from components.help import Help
+from components.calc import Calc
+from components.channel import Channel
+from components.file import File
+from components.sql import SQL
+from components.ranking import Ranking
+import cogs
+
+import discord
 from discord.ext import commands
-import asyncio
-import tweepy
 import signal
-import zlib
-import json
-import random
-from datetime import datetime, timedelta
-from urllib.request import urlopen
-from urllib import request, parse
-from urllib.parse import unquote
-import ssl
-from pydrive2.auth import GoogleAuth
-from pydrive2.drive import GoogleDrive
-import itertools
-import psutil
 import time
-import re
-import os
-from shutil import copyfile
-import cogs # our cogs folder
+import concurrent.futures
 
-# ########################################################################################
-# custom help command used by the bot
-class MizabotHelp(commands.DefaultHelpCommand):
+"""
+    TODO:
+        check save data in bot startup
+        task system
+        fix test prefix
+        change autosave?
+        ctrl F review
+        gw task
+"""
+
+"""
+    discord.py 2.0:
+        Blurple
+        https://github.com/Rapptz/discord.py/projects/3
+
+"""
+
+# Main Bot Class (overload commands.Bot)
+class MizaBot(commands.Bot):
     def __init__(self):
-        super().__init__()
-        self.dm_help = True # force dm only (although our own functions only send in dm, so it should be unneeded)
-
-    async def send_error_message(self, error):
-        try: await self.context.message.add_reaction('❎') # white negative mark
-        except: pass
-
-    async def send_bot_help(self, mapping): # main help command (called when you do $help). this function reuse the code from the commands.DefaultHelpCommand class
-        ctx = self.context # get $help context
-        bot = ctx.bot
-        me = ctx.author.guild.me # bot own user infos
-
-        try:
-            await bot.react(ctx.message, '📬')
-        except:
-            await ctx.send(embed=bot.buildEmbed(title="Help Error", description="Unblock me to receive the Help"))
-            return
-
-        if bot.description: # send the bot description first
-            try:
-                await ctx.author.send(embed=bot.buildEmbed(title=me.name + " Help", description=bot.description, thumbnail=me.avatar_url)) # author.send = dm
-            except:
-                await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
-                await bot.unreact(ctx.message, '📬')
-                return
-
-        no_category = "No Category:"
-        def get_category(command, *, no_category=no_category): # function to retrieve the command category
-            cog = command.cog
-            return cog.qualified_name + ':' if cog is not None else no_category
-
-        filtered = await self.filter_commands(bot.commands, sort=True, key=get_category) # sort all category and commands
-        to_iterate = itertools.groupby(filtered, key=get_category)
-
-        for category, commands in to_iterate: # iterate on them
-            if category != no_category:
-                commands = sorted(commands, key=lambda c: c.name) if self.sort_commands else list(commands) # sort
-                embed = discord.Embed(title="{} **{}** Category".format(bot.getEmote('mark'), category[:-1]), color=random.randint(0, 16777216)) # make an embed, random color
-                for c in commands: # fill the embed fields with the command infos
-                    if c.short_doc == "": embed.add_field(name="{} ▫ {}".format(c.name, self.get_command_signature(c)), value="No description", inline=False)
-                    else: embed.add_field(name="{} ▫ {}".format(c.name, self.get_command_signature(c)), value=c.short_doc, inline=False)
-                    if len(embed) > 5800 or len(embed.fields) > 24: # embeds have a 6000 and 25 fields characters limit, I send and make a new embed if needed
-                        try:
-                            await ctx.author.send(embed=embed) # author.send = dm
-                        except:
-                            await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
-                            await bot.unreact(ctx.message, '📬')
-                            return
-                        embed = discord.Embed(title="{} **{}** Category".format(bot.getEmote('mark'), category[:-1]), color=embed.colour)
-                if len(embed.fields) > 0: # only send if there is at least one field
-                    try:
-                        await ctx.author.send(embed=embed) # author.send = dm
-                    except:
-                        await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
-                        await bot.unreact(ctx.message, '📬')
-                        return
-
-        # final words
-        await ctx.author.send(embed=bot.buildEmbed(title="{} Need more help?".format(bot.getEmote('question')), description="Use help <command name>\nOr help <category name>"))
-
-        try:
-            await bot.unreact(ctx.message, '📬')
-            await bot.react(ctx.message, '✅') # white check mark
-        except:
-            await ctx.send(embed=bot.buildEmbed(title="Help Error", description="Did {} delete its message?".format(ctx.author)))
-
-    async def send_command_help(self, command): # same thing, but for a command ($help <command>)
-        ctx = self.context
-        bot = ctx.bot
-        try:
-            await bot.react(ctx.message, '📬')
-        except:
-            await ctx.send(embed=bot.buildEmbed(title="Help Error", description="Unblock me to receive the Help"))
-            return
-
-        # send the help
-        embed = discord.Embed(title="{} **{}** Command".format(bot.getEmote('mark'), command.name), description=command.help, color=random.randint(0, 16777216)) # random color
-        embed.add_field(name="Usage", value=self.get_command_signature(command), inline=False)
-
-        try:
-            await ctx.author.send(embed=embed) # author.send = dm
-        except:
-            await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
-            await bot.unreact(ctx.message, '📬')
-            return
-
-        await bot.unreact(ctx.message, '📬')
-        await self.context.message.add_reaction('✅') # white check mark
-
-    async def send_cog_help(self, cog): # category help ($help <category)
-        ctx = self.context
-        bot = ctx.bot
-        try:
-            await bot.react(ctx.message, '📬')
-        except:
-            await ctx.send(embed=bot.buildEmbed(title="Help Error", description="Unblock me to receive the Help"))
-            return
-
-        filtered = await self.filter_commands(cog.get_commands(), sort=self.sort_commands) # sort
-        embed = discord.Embed(title="{} **{}** Category".format(bot.getEmote('mark'), cog.qualified_name), description=cog.description, color=random.randint(0, 16777216)) # random color
-        for c in filtered:
-            if c.short_doc == "": embed.add_field(name="{} ▫ {}".format(c.name, self.get_command_signature(c)), value="No description", inline=False)
-            else: embed.add_field(name="{} ▫ {}".format(c.name, self.get_command_signature(c)), value=c.short_doc, inline=False)
-            if len(embed) > 5800 or len(embed.fields) > 24: # embeds have a 6000 and 25 fields characters limit, I send and make a new embed if needed
-                try:
-                    await ctx.author.send(embed=embed) # author.send = dm
-                except:
-                    await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
-                    await bot.unreact(ctx.message, '📬')
-                    return
-                embed = discord.Embed(title="{} **{}** Category".format(bot.getEmote('mark'), cog.qualified_name), description=cog.description, color=embed.colour)
-        if len(embed.fields) > 0:
-            try:
-                await ctx.author.send(embed=embed) # author.send = dm
-            except:
-                await ctx.send(embed=bot.buildEmbed(title="Help Error", description="I can't send you a direct message"))
-                await bot.unreact(ctx.message, '📬')
-                return
-
-        await bot.unreact(ctx.message, '📬')
-        await bot.react(ctx.message, '✅') # white check mark
-
-# #####################################################################################
-# Google Drive Access (to save/load the data)
-class MizabotDrive():
-    def __init__(self, bot):
-        self.saving = False
-        self.bot = bot # it's the bot
-        self.gauth = None
-
-    def access(self): # check credential, update if needed. Run this function on your own once to get the json, before pushing it to heroku
-        try:
-            if self.gauth is None:
-                self.gauth = GoogleAuth()
-                self.gauth.LoadCredentialsFile("credentials.json") # load credentials
-                if self.gauth.credentials is None: # if failed, get them
-                    self.gauth.LocalWebserverAuth()
-                elif self.gauth.access_token_expired: # or if expired, refresh
-                    self.gauth.Refresh()
-                else:
-                    self.gauth.Authorize() # good
-                self.gauth.SaveCredentialsFile("credentials.json") # save
-            else:
-                if self.gauth.access_token_expired: # if expired, refresh
-                    self.gauth.Refresh()
-                    self.gauth.SaveCredentialsFile("credentials.json") # save
-            return GoogleDrive(self.gauth)
-        except Exception as e:
-            print('Exception: ' + str(e))
-            return None
-
-    def load(self): # load save.json from the folder id in bot.tokens
-        if self.saving: return False
-        drive = self.access()
-        if not drive:
-            print("Can't access Google Drive")
-            return False
-        try:
-            file_list = drive.ListFile({'q': "'" + self.bot.tokens['drive'] + "' in parents and trashed=false"}).GetList() # get the file list in our folder
-            # search the save file
-            for s in file_list:
-                if s['title'] == "save.json":
-                    s.GetContentFile(s['title']) # iterate until we find save.json and download it
-                    return True
-            #if no save file on google drive, make an empty one
-            with open('save.json', 'w') as outfile:
-                data = {}
-                json.dump(data, outfile, default=self.bot.json_serial)
-                self.bot.savePending = True
-                self.bot.boot_msg += "Created an empty save file\n"
-            return True
-        except Exception as e:
-            print(e)
-            return False
-
-    def save(self, data): # write save.json to the folder id in bot.tokens
-        if self.saving: return False
-        drive = self.access()
-        if not drive: return False
-        try:
-            self.saving = True
-            prev = []
-            # backup
-            file_list = drive.ListFile({'q': "'" + self.bot.tokens['drive'] + "' in parents and trashed=false"}).GetList()
-            if len(file_list) > 9: # delete if we have too many backups
-                for f in file_list:
-                    if f['title'].find('backup') == 0:
-                        f.Delete()
-            for f in file_list: # search the previous save(s)
-                if f['title'] == "save.json":
-                    prev.append(f)
-            # saving
-            s = drive.CreateFile({'title':'save.json', 'mimeType':'text/JSON', "parents": [{"kind": "drive#file", "id": self.bot.tokens['drive']}]})
-            s.SetContentString(data)
-            s.Upload()
-            # rename the previous save(s)
-            for f in prev:
-                f['title'] = "backup_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".json"
-                f.Upload()
-            self.saving = False
-            return True
-        except Exception as e:
-            print(e)
-            self.saving = False
-            return False
-
-    def saveFile(self, data, name, folder): # write a json file to a folder
-        try:
-            drive = self.access()
-            s = drive.CreateFile({'title':name, 'mimeType':'text/JSON', "parents": [{"kind": "drive#file", "id": folder}]})
-            s.SetContentString(data)
-            s.Upload()
-            return True
-        except:
-            return False
-
-    def saveDiskFile(self, target, mime, name, folder): # write a file from the local storage to a drive folder
-        try:
-            drive = self.access()
-            s = drive.CreateFile({'title':name, 'mimeType':mime, "parents": [{"kind": "drive#file", "id": folder}]})
-            s.SetContentFile(target)
-            s.Upload()
-            return True
-        except:
-            return False
-
-    def overwriteFile(self, target, mime, name, folder): # write a file from the local storage to a drive folder (replacing an existing one, if it exists)
-        drive = self.access()
-        if not drive:
-            print("Can't access Google Drive")
-            return False
-        try:
-            file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
-            for s in file_list:
-                if s['title'] == name:
-                    new_file = drive.CreateFile({'id': s['id']})
-                    new_file.SetContentFile(target)
-                    new_file.Upload()
-                    return True
-            # not found
-            return self.saveDiskFile(target, mime, name, folder)
-        except Exception as e:
-            print(e)
-            return False
-
-    def mvFile(self, name, folder, new): # rename a file from a folder
-        drive = self.access()
-        if not drive:
-            print("Can't access Google Drive")
-            return False
-        try:
-            file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
-            for s in file_list:
-                if s['title'] == name:
-                    s['title'] = new # iterate until we find the file and change name
-                    s.Upload()
-                    return True
-            return False
-        except Exception as e:
-            print(e)
-            return False
-
-    def cpyFile(self, name, folder, new): # rename a file from a folder
-        drive = self.access()
-        if not drive:
-            print("Can't access Google Drive")
-            return False
-        try:
-            file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
-            for s in file_list:
-                if s['title'] == name:
-                    drive.auth.service.files().copy(fileId=s['id'], body={"parents": [{"kind": "drive#fileLink", "id": folder}], 'title': new}).execute()
-                    return True
-            return False
-        except Exception as e:
-            print(e)
-            return False
-
-    def dlFile(self, name, folder): # load a file from a folder to the local storage
-        drive = self.access()
-        if not drive:
-            print("Can't access Google Drive")
-            return False
-        try:
-            file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
-            for s in file_list:
-                if s['title'] == name:
-                    s.GetContentFile(s['title']) # iterate until we find the file and download it
-                    return True
-            return False
-        except Exception as e:
-            print(e)
-            return False
-
-    def delFiles(self, names, folder): # delete matching files from a folder
-        drive = self.access()
-        if not drive:
-            print("Can't access Google Drive")
-            return False
-        try:
-            file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
-            for s in file_list:
-                if s['title'] in names:
-                    s.Delete()
-            return True
-        except Exception as e:
-            print(e)
-            return False
-
-# #####################################################################################
-# Bot
-class Mizabot(commands.Bot):
-    def __init__(self):
-        self.botversion = "7.19" # version number
-        self.saveversion = 0 # save version
-        self.botchangelog = ["Added `$crit`", "Added `$roll`", "Added `$srssr`"] # bot changelog
-        self.running = True # if True, the bot is running
-        self.boot_flag = False # if True, the bot has booted before
-        self.boot_msg = "" # msg to be displayed on the debug channel after boot
-        self.retcode = 0 # return code when the bot exit
-        self.starttime = datetime.utcnow() # used to check the uptime
-        self.process = psutil.Process(os.getpid()) # script process
-        self.process.cpu_percent() # called once to initialize
-        self.errn = 0 # count the number of errors
-        self.cogn = 0 # will store how many cogs are expected to be in memory
-        self.exit_flag = False # set to true when sigterm is received
-        self.savePending = False # set to true when a change is made to a variable
-        self.tasks = {} # store my tasks
-        self.autosaving = False # set to true during a save
-        self.drive = MizabotDrive(self) # google drive instance
-        self.channels = {} # store my channels
-        self.guilddata = {'banned':[], 'owners':[], 'pending':{}} # banned servers, banned owners, pending servers
-        self.gw = {'state':False} # guild war data
-        self.valiant = {'state':False} # march of valiant data
-        self.maintenance = {"state" : False, "time" : None, "duration" : "0"} # gbf maintenance data
-        self.spark = [{}, []] # user spark data, banned users
-        self.stream = {'time':None, 'content':[]} # stream command content
-        self.schedule = [] # gbf schedule
-        self.prefixes = {} # guild prefixes
-        self.st = {} # guild strike times
-        self.bot_maintenance = None # bot maintenance day
-        self.reminders = {} # user reminders
-        self.tokens = {} # bot tokens
-        self.gbfaccounts = [] # gbf bot accounts
-        self.gbfcurrent = 0  # gbf current bot account
-        self.gbfversion = None  # gbf version
-        self.gbfwatch = {}  # gbf special data
-        self.twitter = {} # twitter credentials
-        self.twitter_api = None # twitter api object
-        self.ids = {} # discord ids used by the bot
-        self.gbfids = {} # gbf profile ids linked to discord ids
-        self.summonlast = None # support summon database last update
-        self.permitted = {} # guild permitted channels
-        self.news = {} # guild news channels
-        self.games = {} # bot status messages
-        self.strings = {} # bot strings
-        self.emotes = {} # bot custom emote ids
-        self.emote_cache = {} # store used emotes
-        self.pinned_cache = [] # store pinned messages
-        self.matchtracker = None # to store gw data for match against our crew
-        self.granblue = {} # store player/crew ids
-        self.assignablerole = {} # self assignable role
-        self.bannedusers = [] # user banned from using the bot
-        self.extra = {} # extra data storage for plug'n'play cogs
-        self.on_message_high = {} # on message callback (high priority)
-        self.on_message_low = {} # on message callback
-        self.memmonitor = {0, None} # for monitoring the memory
-        self.vregex = re.compile("Game\.version = \"(\d+)\";") # for the gbf version check
-        self.ssl = ssl.create_default_context() # default context for urllib
-
-        # graceful exit
-        signal.signal(signal.SIGTERM, self.exit_gracefully)
-
-        # enable intents - see https://github.com/Rapptz/discord.py/issues/5867
-        intents = discord.Intents.default()
-        intents.members = True
+        self.version = "8.0-beta-1" # bot version
+        self.changelog = ["Bot structure overhaul"] # changelog lines
+        self.running = True # is False when the bot is shutting down
+        self.booted = False # goes up to True after the first on_ready event
+        self.tasks = {} # contain our user tasks
+        self.cogn = 0 # number of cog loaded
+        self.errn = 0 # number of internal errors
+        self.retcode = 0 # return code
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=30) # thread pool for blocking codes
         
-        # load
-        self.loadConfig() # load the config
+        # components
+        self.data = Data(self)
+        self.drive = Drive(self)
+        self.util = Util(self)
+        self.gbf = GBF(self)
+        self.twitter = Twitter(self)
+        self.pinboard = Pinboard(self)
+        self.emote = Emote(self)
+        self.calc = Calc(self)
+        self.channel = Channel(self)
+        self.file = File(self)
+        self.sql = SQL(self)
+        self.ranking = Ranking(self)
+        
+        # loading data (TODO: drive stuff?)
+        self.data.loadConfig()
+
         for i in range(0, 100): # try multiple times in case google drive is unresponsive
-            if self.drive.load(): break
+            if self.drive.load(): break # attempt to download the save file
             elif i == 99:
                 print("Google Drive might be unavailable")
                 exit(3)
             time.sleep(20) # wait 20 sec
-        if not self.load(): exit(2) # first loading of the save file must succeed, if not we exit
-        # start tweepy
-        try:
-            auth = tweepy.OAuthHandler(self.twitter['key'], self.twitter['secret'])
-            auth.set_access_token(self.twitter['access'], self.twitter['access_secret'])
-            self.twitter_api = tweepy.API(auth)
-            if self.twitter_api.verify_credentials() is None: raise Exception()
-        except:
-            self.twitter_api = None # disable if error
-        # init bot
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\nSource code: https://github.com/MizaGBF/MizaBOT.\nDefault command prefix is '$', use $setPrefix to change it on your server.".format(self.botversion), help_command=MizabotHelp(), owner=self.ids['owner'], max_messages=None, intents=intents)
+        if not self.data.loadData(): exit(2) # load the save file
+        
+        # initialize components
+        self.data.init()
+        self.drive.init()
+        self.util.init()
+        self.gbf.init()
+        self.twitter.init()
+        self.pinboard.init()
+        self.emote.init()
+        self.calc.init()
+        self.channel.init()
+        self.file.init()
+        self.sql.init()
+        self.ranking.init()
 
-    def exit_gracefully(self, signum, frame): # graceful exit (when SIGTERM is received)
-        self.exit_flag = True
-        if self.savePending:
-            self.autosaving = False
-            if self.save():
-                print('Autosave Success')
-            else:
-                print('Autosave Failed')
-        exit(0)
+        # graceful exit
+        signal.signal(signal.SIGTERM, self.exit_gracefully) # SIGTERM is called by heroku when shutting down
 
-    def mainLoop(self): # main loop of the bot
+        # intents (for guilds and stuff)
+        intents = discord.Intents.default()
+        intents.members = True
+        
+        # init base class
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\nSource code: https://github.com/MizaGBF/MizaBOT.\nDefault command prefix is `$`, use `$setPrefix` to change it on your server.".format(self.version), help_command=Help(), owner=self.data.config['ids']['owner'], max_messages=None, intents=intents)
+
+    def go(self): # main loop
         self.cogn = cogs.load(self) # load cogs
         while self.running:
             try:
-                self.loop.run_until_complete(self.start(self.tokens['discord']))
+                self.loop.run_until_complete(self.start(self.data.config['tokens']['discord'])) # start the bot
             except Exception as e: # handle exceptions here to avoid the bot dying
-                if self.savePending:
-                    self.save()
-                    self.savePending = False
-                self.errn += 1
-                print("Main Loop Exception: " + str(e))
-                if str(e).startswith("429 Too Many Requests"): time.sleep(80)
-        if self.save():
+                if self.data.pending: # save if anything weird happened (if needed)
+                    self.data.saveData()
+                if str(e).startswith("429 Too Many Requests"): # ignore the rate limit error
+                    time.sleep(100)
+                else:
+                    self.errn += 1
+                    print("Main Loop Exception: " + str(e))
+        if self.data.saveData():
             print('Autosave Success')
         else:
             print('Autosave Failed')
         return self.retcode
 
+    def exit_gracefully(self, signum, frame): # graceful exit (when SIGTERM is received)
+        self.running = False
+        if self.data.pending:
+            self.data.autosaving = False
+            if self.data.saveData():
+                print('Autosave Success')
+            else:
+                print('Autosave Failed')
+        exit(self.retcode)
+
     def prefix(self, client, message): # command prefix check
         try:
-            return self.prefixes.get(str(message.guild.id), '$') # get the guild prefix if it exists
+            return self.data.save['prefixes'][str(message.guild.id)] # get the guild prefix if set
         except:
             return '$' # else, return the default prefix $
 
-    def json_deserial_array(self, array): # deserialize a list from a json
-        a = []
-        for v in array:
-            if isinstance(v, list):
-                a.append(self.json_deserial_array(v))
-            elif isinstance(v, dict):
-                a.append(self.json_deserial_dict(list(v.items())))
-            elif isinstance(v, str):
-                try:
-                    a.append(datetime.strptime(v, "%Y-%m-%dT%H:%M:%S")) # needed for datetimes
-                except ValueError:
-                    a.append(v)
-            else:
-                a.append(v)
-        return a
-
-    def json_deserial_dict(self, pairs): # deserialize a dict from a json
-        d = {}
-        for k, v in pairs:
-            if isinstance(v, list):
-                d[k] = self.json_deserial_array(v)
-            elif isinstance(v, dict):
-                d[k] = self.json_deserial_dict(list(v.items()))
-            elif isinstance(v, str):
-                try:
-                    d[k] = datetime.strptime(v, "%Y-%m-%dT%H:%M:%S") # needed for datetimes
-                except ValueError:
-                    d[k] = v
-            else:
-                d[k] = v
-        return d
-
-    def json_serial(self, obj): # serialize everything including datetime objects
-        if isinstance(obj, datetime):
-            return obj.replace(microsecond=0).isoformat()
-        raise TypeError ("Type %s not serializable" % type(obj))
-
-    def loadConfig(self): # pretty simple, load the config file
-        try:
-            with open('config.json') as f:
-                data = json.load(f, object_pairs_hook=self.json_deserial_dict) # deserializer here
-                self.tokens = data['tokens']
-                self.ids = data.get('ids', {})
-                self.bannedusers = data.get('banned', [])
-                self.games = data.get('games', ['Granblue Fantasy'])
-                self.strings = data.get('strings', {})
-                self.emotes = data.get('emotes', {})
-                self.granblue = data.get('granblue', {"gbfgcrew":{}})
-                self.gbfwatch = data.get('gbfwatch', {})
-                self.twitter = data.get('twitter', {"key" : "", "secret" : "", "access" : "", "access_secret" : ""})
-        except Exception as e:
-            print('loadConfig(): {}\nCheck your \'config.json\' for the above error.'.format(e))
-            exit(1) # instant quit if error
-
-    def load(self): # same thing but for save.json
-        try:
-            with open('save.json') as f:
-                data = json.load(f, object_pairs_hook=self.json_deserial_dict) # deserializer here
-                ver = data.get('version', None)
-                if ver is None:
-                    self.guilddata = data.get('newserver', {'servers':[], 'owners':[], 'pending':{}})
-                    self.guilddata['banned'] = self.guilddata['servers']
-                    self.guilddata.pop('servers', None)
-                elif ver > self.saveversion:
-                    raise Exception("Save file version higher than the expected version")
-                else:
-                    self.guilddata = data.get('guilds', {'banned':[], 'owners':[], 'pending':{}})
-                self.prefixes = data.get('prefixes', {})
-                self.gbfaccounts = data.get('gbfaccounts', [])
-                self.gbfcurrent = data.get('gbfcurrent', 0)
-                self.gbfversion = data.get('gbfversion', None)
-                self.gbfdata = data.get('gbfdata', {})
-                self.bot_maintenance = data.get('bot_maintenance', None)
-                if 'maintenance' in data:
-                    if data['maintenance'].get('state', False) == True:
-                        self.maintenance = data['maintenance']
-                    else:
-                        self.maintenance = {"state" : False, "time" : None, "duration" : 0}
-                else: self.maintenance = {"state" : False, "time" : None, "duration" : 0}
-                self.stream = data.get('stream', {'time':None, 'content':[]})
-                self.schedule = data.get('schedule', [])
-                self.st = data.get('st', {})
-                self.spark = data.get('spark', [{}, []])
-                self.gw = data.get('gw', {'state':False})
-                self.valiant = data.get('valiant', {'state':False})
-                self.reminders = data.get('reminders', {})
-                self.permitted = data.get('permitted', {})
-                self.news = data.get('news', {})
-                self.extra = data.get('extra', {})
-                self.gbfids = data.get('gbfids', {})
-                self.summonlast = data.get('summonlast', None)
-                self.assignablerole = data.get('assignablerole', {})
-                self.matchtracker = data.get('youtracker', None)
-                return True
-        except Exception as e:
-            self.errn += 1
-            print('load(): {}'.format(e))
-            return False
-
-    def save(self): # saving
-        try:
-            with open('save.json', 'w') as outfile:
-                data = {}
-                data['version'] = self.saveversion
-                data['guilds'] = self.guilddata
-                data['prefixes'] = self.prefixes
-                data['gbfaccounts'] = self.gbfaccounts
-                data['gbfcurrent'] = self.gbfcurrent
-                data['gbfversion'] = self.gbfversion
-                data['gbfdata'] = self.gbfdata
-                data['bot_maintenance'] = self.bot_maintenance
-                data['maintenance'] = self.maintenance
-                data['stream'] = self.stream
-                data['schedule'] = self.schedule
-                data['st'] = self.st
-                data['spark'] = self.spark
-                data['gw'] = self.gw
-                data['valiant'] = self.valiant
-                data['reminders'] = self.reminders
-                data['news'] = self.news
-                data['permitted'] = self.permitted
-                data['extra'] = self.extra
-                data['gbfids'] = self.gbfids
-                data['summonlast'] = self.summonlast
-                data['assignablerole'] = self.assignablerole
-                data['youtracker'] = self.matchtracker
-                json.dump(data, outfile, default=self.json_serial) # locally first
-                if not self.drive.save(json.dumps(data, default=self.json_serial)): # sending to the google drive
-                    raise Exception("Couldn't save to google drive")
-            return True
-        except Exception as e:
-            self.errn += 1
-            print('save(): {}'.format(e))
-            return False
-
-    async def autosave(self, discordDump = False): # called when savePending is true by statustask()
-        if self.autosaving: return
-        self.autosaving = True
-        result = False
-        for i in range(0, 3):
-            if self.save():
-                self.savePending = False
-                result = True
-                break
-            await asyncio.sleep(0.001)
-        if not result:
-            await self.send('debug', embed=self.buildEmbed(title="Failed Save", timestamp=datetime.utcnow()))
-            discordDump = True
-        if discordDump:
-            try:
-                with open('save.json', 'r') as infile:
-                    await self.send('debug', 'save.json', file=discord.File(infile))
-            except Exception as e:
-                pass
-        self.autosaving = False
-
-    async def statustask(self): # background task changing the bot status and calling autosave()
-        while True:
-            try:
-                await asyncio.sleep(1200)
-                await self.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=random.choice(self.games)))
-                # check if it's time for the bot maintenance for me (every 2 weeks or so)
-                c = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-                if self.bot_maintenance and c > self.bot_maintenance and c.day == 16:
-                    await self.send('debug', self.get_user(self.ids['owner']).mention + " ▫️ Time for maintenance!")
-                    self.bot_maintenance = c
-                    self.savePending = True
-                # autosave
-                if self.savePending and not self.exit_flag:
-                    await self.autosave()
-            except asyncio.CancelledError:
-                await self.sendError('statustask', 'cancelled')
-                return
-            except Exception as e:
-                await self.sendError('statustask', str(e))
-
-    async def cleansave(self): # background task to clean up the save data, once per boot
-        await asyncio.sleep(1000) # after 1000 seconds
-        if self.exit_flag: return
-        try:
-            # clean up spark data
-            count = 0
-            c = datetime.utcnow()
-            for id in list(self.spark[0].keys()):
-                if len(self.spark[0][id]) == 3: # backward compatibility
-                    self.spark[0][id].append(c)
-                    self.savePending = True
-                else:
-                    d = c - self.spark[0][id][3]
-                    if d.days >= 30:
-                        del self.spark[0][id]
-                        count += 1
-            if count > 0:
-                self.savePending = True
-                await self.send('debug', embed=self.buildEmbed(title="cleansave()", description="Cleaned {} unused spark saves".format(count), timestamp=datetime.utcnow()))
-
-            # clean up profiles
-            count = 0
-            for uid in list(self.gbfids.keys()):
-                found = False
-                for g in self.guilds:
-                     if g.get_member(int(uid)) is not None:
-                        found = True
-                        break
-                if not found:
-                    count += 1
-                    self.gbfids.pop(uid)
-            if count > 0:
-                self.savePending = True
-                await self.send('debug', embed=self.buildEmbed(title="cleansave()", description="Cleaned {} unused profiles".format(count), timestamp=datetime.utcnow()))
-            # clean up schedule
-            c = self.getJST()
-            fd = c.replace(day=1, hour=12, minute=15, second=0, microsecond=0) # day of the next schedule drop, 15min after
-            if fd < c:
-                if fd.month == 12: fd = fd.replace(year=fd.year+1, month=1)
-                else: fd = fd.replace(month=fd.month+1)
-            d = fd - c
-            new_schedule = []
-            if self.twitter_api is not None and d.days < 1: # retrieve schedule from @granblue_en if we are close to the date
-                await asyncio.sleep(d.seconds) # wait until koregra to try to get the schedule
-                tw = self.getTwitterTimeline('granblue_en')
-                if tw is not None:
-                    for t in tw:
-                        txt = t.full_text
-                        if txt.find(" = ") != -1 and txt.find("chedule\n") != -1:
-                            try:
-                                s = txt.find("https://t.co/")
-                                if s != -1: txt = txt[:s]
-                                txt = txt.replace('\n\n', '\n')
-                                txt = txt[txt.find("chedule\n")+len("chedule\n"):]
-                                new_schedule = txt.replace('\n', ' = ').split(' = ')
-                                while len(new_schedule) > 0 and new_schedule[0] == '': new_schedule.pop(0)
-                            except: pass
-                            break
-            else: # else, just clean up old entries
-                for i in range(0, ((len(self.schedule)//2)*2), 2):
-                    try:
-                        date = self.schedule[i].replace(" ", "").split("-")[-1].split("/")
-                        x = c.replace(month=int(date[0]), day=int(date[1])+1, microsecond=0)
-                        if c - x > timedelta(days=160):
-                            x = x.replace(year=x.year+1)
-                        if c >= x:
-                            continue
-                    except:
-                        pass
-                    new_schedule.append(self.schedule[i])
-                    new_schedule.append(self.schedule[i+1])
-            if len(new_schedule) != 0 and len(new_schedule) != len(self.schedule):
-                self.schedule = new_schedule
-                self.savePending = True
-                await self.send('debug', embed=self.buildEmbed(title="cleansave()", description="The schedule has been cleaned up", timestamp=datetime.utcnow()))
-        except asyncio.CancelledError:
-            await self.sendError('cleansave', 'cancelled')
-            return
-        except Exception as e:
-            await self.sendError('cleansave', str(e))
-
     def isAuthorized(self, ctx): # check if the command is authorized in the channel
         id = str(ctx.guild.id)
-        if id in self.permitted: # if id is found, it means the check is enabled
-            if ctx.channel.id in self.permitted[id]:
+        if id in self.data.save['permitted']: # if id is found, it means the check is enabled
+            if ctx.channel.id in self.data.save['permitted'][id]:
                 return True # permitted
             return False # not permitted
         return True # default
 
-    def isServer(self, ctx, id_string : str): # check if the context is in the targeted guild (must be in config.json)
-        if ctx.message.author.guild.id == self.ids.get(id_string, -1):
+    def isServer(self, ctx, id_string : str): # check if the context is in the targeted guild (guild id must be in config.json)
+        if ctx.message.author.guild.id == self.data.config['ids'].get(id_string, -1):
             return True
         return False
 
-    def isChannel(self, ctx, id_string : str): # check if the context is in the targeted channel (must be in config.json)
-        if ctx.channel.id == self.ids.get(id_string, -1):
+    def isChannel(self, ctx, id_string : str): # check if the context is in the targeted channel (channel is must be in config.json)
+        if ctx.channel.id == self.data.config['ids'].get(id_string, -1):
             return True
         return False
 
     def isMod(self, ctx): # check if the member has the manage_message permission
-        if ctx.author.guild_permissions.manage_messages or ctx.author.id == self.ids.get('owner', -1):
+        if ctx.author.guild_permissions.manage_messages or ctx.author.id == self.data.config['ids'].get('owner', -1):
             return True
         return False
 
-    def isOwner(self, ctx): # return true if the author is the bot owner
-        if ctx.message.author.id == self.ids.get('owner', -1): # must be defined in config.json
+    def isOwner(self, ctx): # check if the member is the bot owner
+        if ctx.message.author.id == self.data.config['ids'].get('owner', -1): # must be defined in config.json
             return True
         return False
 
-    def getEmote(self, key): # retrieve a custom emote
-        if key in self.emote_cache:
-            return self.emote_cache[key]
-        elif key in self.emotes:
+    async def callCommand(self, ctx, command, *args, **kwargs): #call a command from another cog or command
+        for cn in self.cogs:
+            cmds = self.get_cog(cn).get_commands()
+            for cm in cmds:
+                if cm.name == command:
+                    await ctx.invoke(cm, *args, **kwargs)
+                    return
+        raise Exception("Command `{}` not found".format(command))
+
+    async def send(self, channel_name : str, msg : str = "", embed : discord.Embed = None, file : discord.File = None): # send something to a registered channel
+        try:
+            return await self.channel.get(channel_name).send(msg, embed=embed, file=file)
+        except Exception as e:
+            self.errn += 1
+            print("Channel {} error: {}".format(channel_name, e))
+            return None
+
+    async def sendMulti(self, channel_names : list, msg : str = "", embed : discord.Embed = None, file : discord.File = None): # send to multiple registered channel at the same time
+        r = []
+        for c in channel_names:
             try:
-                e = self.get_emoji(self.emotes[key]) # ids are defined in config.json
-                if e is not None:
-                    self.emote_cache[key] = e
-                    return e
-                return ""
+                r.append(await self.send(c, msg, embed, file))
             except:
-                return ""
-        return key
+                await self.sendError('sendMulti', 'Failed to send a message to channel `{}`'.format(c))
+                r.append(None)
+        return r
 
-    async def react(self, msg, key): # add a reaction using a custom emote defined in config.json
-        try:
-            await msg.add_reaction(self.getEmote(key))
-            return True
-        except Exception as e:
-            if str(e) != "404 Not Found (error code: 10008): Unknown Message":
-                await self.sendError('react', str(e))
-            return False
+    async def sendError(self, func_name : str, msg : str, id = None): # send an error to the debug channel
+        if msg.startswith("403 FORBIDDEN"): return # I'm tired of those errors because people didn't set their channel permissions right so I ignore it
+        if self.errn >= 30: return # disable error messages if too many messages got sent
+        if id is None: id = ""
+        else: id = " {}".format(id)
+        self.errn += 1
+        await self.send('debug', embed=self.util.embed(title="Error in {}() {}".format(func_name, id), description=msg, timestamp=self.util.timestamp()))
 
-    async def unreact(self, msg, key): # remove a reaction using a custom emote defined in config.json
-        try:
-            await msg.remove_reaction(self.getEmote(key), msg.guild.me)
-            return True
-        except Exception as e:
-            if str(e) != "404 Not Found (error code: 10008): Unknown Message":
-                await self.sendError('unreact', str(e))
-            return False
+    async def on_ready(self): # called when the bot starts
+        if not self.booted:
+            # set our used channels for the send function
+            self.channel.setMultiple([['debug', 'debug_channel'], ['image', 'image_upload'], ['debug_update', 'debug_update'], ['you_pinned', 'you_pinned'], ['gbfg_pinned', 'gbfg_pinned'], ['gbfglog', 'gbfg_log'], ['youlog', 'you_log']])
+            await self.send('debug', embed=self.util.embed(title="{} is Ready".format(self.user.display_name), description=self.util.statusString(), thumbnail=self.user.avatar_url, timestamp=self.util.timestamp()))
+            # start the task
+            await self.startTasks()
+            self.booted = True
 
-    async def cleanMessage(self, ctx, msg, timeout, all=False): # delete a message after X amount of time if posted in an unauthorized channel (all = False) or everywhere (all = True)
-        try:
-            if all or not self.isAuthorized(ctx):
-                if timeout is None or timeout > 0: await asyncio.sleep(timeout)
-                await msg.delete()
-                await self.react(ctx.message, '✅') # white check mark
-        except:
-            pass
+    async def do(self, func, *args): # routine to run blocking code in a separate thread
+        return await self.loop.run_in_executor(self.executor, func, *args)
 
-    def buildEmbed(self, **options): # make a full embed
-        embed = discord.Embed(title=options.get('title', ""), description=options.pop('description', ""), url=options.pop('url', ""), color=options.pop('color', random.randint(0, 16777216)))
-        fields = options.pop('fields', [])
-        inline = options.pop('inline', False)
-        for f in fields:
-            embed.add_field(name=f.get('name'), value=f.get('value'), inline=f.pop('inline', inline))
-        buffer = options.pop('thumbnail', None)
-        if buffer is not None: embed.set_thumbnail(url=buffer)
-        buffer1 = options.pop('footer', None)
-        buffer2 = options.pop('footer_url', None)
-        if buffer1 is not None and buffer2 is not None: embed.set_footer(text=buffer1, icon_url=buffer2)
-        elif buffer1 is not None: embed.set_footer(text=buffer1)
-        elif buffer2 is not None: embed.set_footer(icon_url=buffer2)
-        buffer = options.pop('image', None)
-        if buffer is not None: embed.set_image(url=buffer)
-        buffer = options.pop('timestamp', None)
-        if buffer is not None: embed.timestamp=buffer
-        if 'author' in options:
-            embed.set_author(name=options['author'].pop('name', ""), url=options['author'].pop('url', ""), icon_url=options['author'].pop('icon_url', ""))
-        return embed
+    def doAsync(self, coro): # add a task to the event loop (return the task)
+        return self.loop.create_task(coro)
 
-    def getTwitterUser(self, screen_name : str): # return twitter profile (api must be enabled)
-        try: return self.twitter_api.get_user(screen_name)
-        except: return None
-
-    def getTwitterTimeline(self, screen_name : str): # return twitter user timeline (api must be enabled)
-        try: return self.twitter_api.user_timeline(screen_name, tweet_mode='extended')
-        except: return None
-
-    async def sendRequest(self, url, **options): # to send a complicated request over the internet
-        try:
-            data = None
-            headers = {}
-            if not options.get('no_base_headers', False):
-                headers['Accept'] = 'application/json, text/javascript, */*; q=0.01'
-                headers['Accept-Encoding'] = 'gzip, deflate'
-                headers['Accept-Language'] = 'en'
-                headers['Connection'] = 'close'
-                headers['Host'] = 'game.granbluefantasy.jp'
-                headers['Origin'] = 'http://game.granbluefantasy.jp'
-                headers['Referer'] = 'http://game.granbluefantasy.jp/'
-            if "headers" in options:
-                headers = {**headers, **options["headers"]}
-            id = options.get('account', None)
-            if id is not None:
-                acc = self.getGBFAccount(id)
-                if not options.get('force_down', False) and acc[3] == 2: return "Down"
-            if options.get('check', False):
-                ver = await self.getGameversion()
-            else:
-                ver = self.gbfversion
-            url = url.replace("PARAMS", "_=TS1&t=TS2&uid=ID")
-            if ver == "Maintenance": return "Maintenance"
-            elif ver is not None:
-                url = url.replace("VER", "{}".format(ver))
-            ts = int(datetime.utcnow().timestamp() * 1000)
-            url = url.replace("TS1", "{}".format(ts))
-            url = url.replace("TS2", "{}".format(ts+300))
-            if id is not None:
-                if ver is None or acc is None:
-                    return None
-                url = url.replace("ID", "{}".format(acc[0]))
-                if 'Cookie' not in headers: headers['Cookie'] = acc[1]
-                if 'User-Agent' not in headers: headers['User-Agent'] = acc[2]
-                if 'X-Requested-With' not in headers: headers['X-Requested-With'] = 'XMLHttpRequest'
-                if 'X-VERSION' not in headers: headers['X-VERSION'] = ver
-            payload = options.get('payload', None)
-            if payload is None: req = request.Request(url, headers=headers)
-            else:
-                if not options.get('no_base_headers', False) and 'Content-Type' not in headers: headers['Content-Type'] = 'application/json'
-                if 'user_id' in payload and payload['user_id'] == "ID": payload['user_id'] = acc[0]
-                req = request.Request(url, headers=headers, data=json.dumps(payload).encode('utf-8'))
-            url_handle = request.urlopen(req, context=self.ssl)
-            if id is not None:
-                self.refreshGBFAccount(id, url_handle.info()['Set-Cookie'])
-            if options.get('decompress', False): data = zlib.decompress(url_handle.read(), 16+zlib.MAX_WBITS)
-            else: data = url_handle.read()
-            url_handle.close()
-            if options.get('load_json', False): data = json.loads(data)
-            return data
-        except Exception as e:
-            if options.get('error', False):
-                await self.sendError('sendRequest', 'Request failed for url `{}`\nCause \▫️ {}'.format(url, e))
-            return None
-
-    def getGBFAccount(self, id : int = 0): # retrive one of our gbf account
-        if id < 0 or id >= len(self.gbfaccounts):
-            return None
-        return self.gbfaccounts[id]
-
-    def addGBFAccount(self, uid : int, ck : str, ua : str): # add a gbf account
-        self.gbfaccounts.append([uid, ck, ua, 0, 0, None])
-        self.savePending = True
-        return True
-
-    def updateGBFAccount(self, id : int, **options): # update a part of a gbf account
-        if id < 0 or id >= len(self.gbfaccounts):
-            return False
-        uid = options.pop('uid', None)
-        ck = options.pop('ck', None)
-        ua = options.pop('ua', None)
-        if uid is not None:
-            self.gbfaccounts[id][0] = uid
-            self.gbfaccounts[id][4] = 0
-        if ck is not None:
-            self.gbfaccounts[id][1] = ck
-            self.gbfaccounts[id][5] = None
-        if ua is not None:
-            self.gbfaccounts[id][2] = ua
-        self.gbfaccounts[id][3] = 0
-        self.savePending = True
-        return True
-
-    def delGBFAccount(self, id : int): # del a gbf account
-        if id < 0 or id >= len(self.gbfaccounts):
-            return False
-        self.gbfaccounts.pop(id)
-        if self.gbfcurrent >= id and self.gbfcurrent >= 0: self.gbfcurrent -= 1
-        self.savePending = True
-        return True
-
-    def refreshGBFAccount(self, id : int, ck : str): # refresh a valid gbf account
-        if id < 0 or id >= len(self.gbfaccounts):
-            return False
-        A = self.gbfaccounts[id][1].split(';')
-        B = ck.split(';')
-        for c in B:
-            tA = c.split('=')
-            if tA[0][0] == " ": tA[0] = tA[0][1:]
-            f = False
-            for i in range(0, len(A)):
-                tB = A[i].split('=')
-                if tB[0][0] == " ": tB[0] = tB[0][1:]
-                if tA[0] == tB[0]:
-                    A[i] = c
-                    f = True
-                    break
-        self.gbfaccounts[id][1] = ";".join(A)
-        self.gbfaccounts[id][3] = 1
-        self.gbfaccounts[id][5] = self.getJST()
-        self.savePending = True
-        return True
-
-    def versionToDateStr(self, version_number): # convert gbf version number to its timestamp
-        try: return "{0:%Y/%m/%d %H:%M} JST".format(datetime.fromtimestamp(int(version_number)) + timedelta(seconds=32400)) # JST
-        except: return ""
-
-    async def getGameversion(self): # retrieve the game version
-        res = await self.sendRequest('http://game.granbluefantasy.jp/', headers={'User-Agent':'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36', 'Accept-Language':'en', 'Accept-Encoding':'gzip, deflate', 'Host':'game.granbluefantasy.jp', 'Connection':'keep-alive'}, decompress=True, no_base_headers=True)
-        if res is None: return None
-        try:
-            return int(self.vregex.findall(str(res))[0])
-        except:
-            return "Maintenance" # if not found on the page, return "Maintenance"
-
-    async def isGameAvailable(self): # use the above to check if the game is up
-        v = await self.getGameversion()
-        return ((v is not None) and (v != "Maintenance"))
-
-    def updateGameversion(self, v): # update self.gbfversion and return a value depending on what happened
-        try:
-            i = int(v)
-            if v is None:
-                return 1 # unchanged because of invalid parameter
-            elif self.gbfversion is None:
-                self.gbfversion = v
-                self.savePending = True
-                return 2 # value is set
-            elif self.gbfversion != v:
-                self.gbfversion = v
-                self.savePending = True
-                return 3 # update happened
-            return 0 # unchanged
-        except:
-            return -1 # v isn't an integer
+    def doAsTask(self, coro): # run a coroutine from a normal function (slow, don't abuse it for small functions)
+        task = self.doAsync(coro)
+        while not task.done():
+            time.sleep(0.01)
+        return task.result()
 
     def runTask(self, name, func): # start a task (cancel a previous one with the same name)
         self.cancelTask(name)
@@ -966,438 +225,181 @@ class Mizabot(commands.Bot):
         if name in self.tasks:
             self.tasks[name].cancel()
 
-    async def startTasks(self): # start our tasks
-        self.runTask('status', self.statustask)
-        self.runTask('cleansave', self.cleansave)
+    async def startTasks(self): # start all our tasks
         for c in self.cogs:
-            try:
-                self.get_cog(c).startTasks()
-            except:
-                pass
+            try: self.get_cog(c).startTasks()
+            except: pass
         msg = ""
         for t in self.tasks:
             msg += "\▫️ {}\n".format(t)
         if msg != "":
-            await bot.send('debug', embed=bot.buildEmbed(title="{} user tasks started".format(len(self.tasks)), description=msg, timestamp=datetime.utcnow()))
+            await bot.send('debug', embed=bot.util.embed(title="{} user tasks started".format(len(self.tasks)), description=msg, timestamp=self.util.timestamp()))
 
-    def setOnMessageCallback(self, name, callback, high_prio=False): # register a function to be called by on_message (high prio ones will be called first). Must return True (or False to interrupt on_message) and take message as parameter
-        if high_prio:
-            self.on_message_high[name] = callback
-        else:
-            self.on_message_low[name] = callback
+    async def on_message(self, message): # to do something with a message
+        await self.process_commands(message) # never forget this line
 
-    async def runOnMessageCallback(self, message): # dynamic callback system for on_message
-        for name in self.on_message_high:
-            try:
-                if not await self.on_message_high[name](message): return False
-            except:
-                pass
-        for name in self.on_message_low:
-            try:
-                if not await self.on_message_low[name](message): return False
-            except:
-                pass
-        return True
-
-    def setChannel(self, name, id_key : str): # "register" a channel to use with send()
-        try:
-            c = self.get_channel(self.ids[id_key])
-            if c is not None: self.channels[name] = c
-        except:
-            self.errn += 1
-            print("Invalid key: {}".format(id_key))
-
-    def setChannelID(self, name, id : int): # same but using an id instead of an id defined in config.json
-        try:
-            c = self.get_channel(id)
-            if c is not None: self.channels[name] = c
-        except:
-            self.errn += 1
-            print("Invalid ID: {}".format(id))
-
-    def setChannels(self, channel_list: list): # the above, all in one, format is [[channel_name, channel_id], ...]
-        for c in channel_list:
-            if len(c) == 2 and isinstance(c[0], str):
-                if isinstance(c[1], str): self.setChannel(c[0], c[1])
-                elif isinstance(c[1], int): self.setChannelID(c[0], c[1])
-
-    async def callCommand(self, ctx, command, *args, **kwargs): #call a command in a cog
-        for cn in self.cogs:
-            cmds = self.get_cog(cn).get_commands()
-            for cm in cmds:
-                if cm.name == command:
-                    await ctx.invoke(cm, *args, **kwargs)
-                    return
-        raise Exception("Command `{}` not found".format(command))
-
-    async def send(self, channel_name : str, msg : str = "", embed : discord.Embed = None, file : discord.File = None): # send something to a channel
-        try:
-            return await self.channels[channel_name].send(msg, embed=embed, file=file)
-        except Exception as e:
-            self.errn += 1
-            print("Channel {} error: {}".format(channel_name, e))
-            return None
-
-    async def sendMulti(self, channel_names : list, msg : str = "", embed : discord.Embed = None, file : discord.File = None): # send to multiple channel at the same time
-        r = []
-        for c in channel_names:
-            try:
-                r.append(await self.send(c, msg, embed, file))
-            except:
-                await self.sendError('sendMulti', 'Failed to send a message to channel `{}`'.format(c))
-        return r
-
-    async def sendError(self, func_name : str, msg : str, id = None): # send an error to the debug channel
-        if msg.startswith("403 FORBIDDEN"): return # I'm tired of those errors because people didn't set their channel permissions right
-        if self.errn >= 30: return # disable error messages if too many messages got sent
-        if id is None: id = ""
-        else: id = " {}".format(id)
-        self.errn += 1
-        await self.send('debug', embed=self.buildEmbed(title="Error in {}() {}".format(func_name, id), description=msg, timestamp=datetime.utcnow()))
-
-    def getJST(self, nomicro=False): # get the time in jst
-        if nomicro: return datetime.utcnow().replace(microsecond=0) + timedelta(seconds=32400) - timedelta(seconds=30)
-        return datetime.utcnow() + timedelta(seconds=32400) - timedelta(seconds=30)
-
-    def uptime(self, string=True): # get the uptime
-        delta = datetime.utcnow() - self.starttime
-        if string: return "{}".format(self.getTimedeltaStr(delta, 3))
-        else: return delta
-
-    def getTimedeltaStr(self, delta, mode=1):
-        if mode == 3: return "{}d{}h{}m{}s".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60, delta.seconds % 60)
-        elif mode == 2: return "{}d{}h{}m".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60)
-        elif mode == 1: return "{}h{}m".format(delta.seconds // 3600, (delta.seconds // 60) % 60)
-        elif mode == 0: return "{}m".format(delta.seconds // 60)
-
-    # function to build a timedelta from a string (for $remind)
-    def makeTimedelta(self, d): # return None if error
-        flags = {'d':False,'h':False,'m':False}
-        tmp = 0 # buffer
-        sum = 0 # delta in seconds
-        for i in range(0, len(d)):
-            if d[i].isdigit():
-                tmp = (tmp * 10) + int(d[i])
-            elif d[i].lower() in flags:
-                c = d[i].lower()
-                if flags[c]:
-                    return None
-                if tmp < 0:
-                    return None
-                flags[c] = True
-                if c == 'd':
-                    sum += tmp * 86400
-                elif c == 'h':
-                    sum += tmp * 3600
-                elif c == 'm':
-                    sum += tmp * 60
-                tmp = 0
-            else:
-                return None
-        if tmp != 0: return None
-        return timedelta(days=sum//86400, seconds=sum%86400)
-
-    def delFile(self, filename):
-        try: os.remove(filename)
-        except: pass
-
-    def cpyFile(self, src, dst):
-        try: copyfile(src, dst)
-        except: pass
-
-# #####################################################################################
-# Prepare the bot
-bot = Mizabot()
-
-# #####################################################################################
-# bot events
-@bot.event
-async def on_ready(): # when the bot starts or reconnects
-    await bot.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=random.choice(bot.games)))
-    if not bot.boot_flag:
-        # send a pretty message
-        bot.setChannels([['debug', 'debug_channel'], ['image', 'image_upload'], ['debug_update', 'debug_update'], ['you_pinned', 'you_pinned'], ['gbfg_pinned', 'gbfg_pinned'], ['gbfglog', 'gbfg_log'], ['youlog', 'you_log']]) # register to-be-used channels for the send function
-        await bot.send('debug', embed=bot.buildEmbed(title="{} is Ready".format(bot.user.display_name), description="**Version** {}\n**CPU**▫️{}%\n**Memory**▫️{}MB\n**Tasks Count**▫️{}\n**Servers Count**▫️{}\n**Pending Servers**▫️{}\n**Cogs Loaded**▫️{}/{}\n**Twitter**▫️{}".format(bot.botversion, bot.process.cpu_percent(), bot.process.memory_info()[0] >> 20, len(asyncio.all_tasks()), len(bot.guilds), len(bot.guilddata['pending']), len(bot.cogs), bot.cogn, (bot.twitter_api is not None)), thumbnail=bot.user.avatar_url, timestamp=datetime.utcnow()))
-        await bot.startTasks() # start the tasks
-        bot.boot_flag = True
-    if bot.boot_msg != "":
-        await bot.send('debug', embed=bot.buildEmbed(title="Boot message", description=bot.boot_msg, timestamp=datetime.utcnow()))
-        bot.boot_msg = ""
-
-@bot.event
-async def on_guild_join(guild): # when the bot joins a new guild
-    id = str(guild.id)
-    if id == str(bot.ids['debug_server']):
-        return
-    elif id in bot.guilddata['banned'] or str(guild.owner.id) in bot.guilddata['owners']: # leave if the server is blacklisted
-        try:
-            await bot.send('debug', embed=bot.buildEmbed(title="Banned guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
-        except Exception as e:
-            await bot.send('debug', "on_guild_join(): {}".format(e))
-        await guild.leave()
-    else: # notify me and add to the pending servers
-        bot.guilddata['pending'][id] = guild.name
-        bot.savePending = True
-        await guild.owner.send(embed=bot.buildEmbed(title="Pending guild request", description="Wait until my owner approve the new server", thumbnail=guild.icon_url))
-        await bot.send('debug', embed=bot.buildEmbed(title="Pending guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
-
-@bot.event
-async def on_message(message): # to do something with a message
-    if await bot.runOnMessageCallback(message):
-        # end
-        await bot.process_commands(message) # don't forget
-
-@bot.event
-async def on_command(ctx): #DEBUG
-    print(ctx.message.content)
-
-@bot.check # authorize or not a command on a global scale
-async def global_check(ctx):
-    if ctx.guild is None:
-        return False
-    try:
-        id = str(ctx.guild.id)
-        if id in bot.guilddata['banned'] or str(ctx.guild.owner.id) in bot.guilddata['owners']: # ban check
-            await ctx.guild.leave() # leave the server if banned
-            return False
-        elif id in bot.guilddata['pending']: # pending check
-            await bot.react(ctx.message, 'cooldown')
-            return False
-        elif ctx.guild.owner.id in bot.bannedusers:
-            await bot.send('debug', embed=bot.buildEmbed(title="[TEST] Banned message by {}".format(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=datetime.utcnow()))
-            return False
-        return True
-    except Exception as e:
-        await bot.sendError('global_check', 'Context: ' + str(ctx) + '\n' + str(e))
-        return False
-
-@bot.event # if an error happens
-async def on_command_error(ctx, error):
-    msg = str(error)
-    if msg.find('You are on cooldown.') == 0:
-        await bot.react(ctx.message, 'cooldown')
-    elif msg.find('required argument that is missing') != -1:
-        return
-    elif msg.find('check functions for command') != -1:
-        return
-    elif msg.find('Member "') == 0 or msg.find('Command "') == 0 or msg.startswith('Command raised an exception: Forbidden: 403'):
-        return
-    else:
-        await bot.react(ctx.message, '❎')
-        bot.errn += 1
-        await bot.send('debug', embed=bot.buildEmbed(title="⚠ Error caused by {}".format(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=datetime.utcnow()))
-
-# (You) & /gbfg/ pinboard system
-@bot.event
-async def on_raw_reaction_add(payload):
-    servers = [
-        {'tracked' : [bot.ids.get('you_general', -1)], 'emoji': '📌', 'mod_bypass':True, 'threshold':3, 'output': 'you_pinned'},
-        {'tracked' : [bot.ids.get('gbfg_general', -1)], 'emoji': '⭐', 'mod_bypass':False, 'threshold':5, 'output': 'gbfg_pinned'}
-    ]
-    try:
-        idx = None
-        for i in range(0, len(servers)):
-            if payload.channel_id in servers[i]['tracked']:
-                idx = i
-                break
-        if idx is None:
+    async def on_guild_join(self, guild): # when the bot joins a new guild
+        id = str(guild.id)
+        if id == str(self.data.config['ids']['debug_server']):
             return
-        message = await bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
-        if message.id in bot.pinned_cache: return
-        reactions = message.reactions
-    except Exception as e:
-        await bot.sendError('raw_react', str(e))
-        return
-    me = message.guild.me
-    count = 0
-    for reaction in reactions:
-        if reaction.emoji == servers[idx]['emoji']:
-            users = await reaction.users().flatten()
-            count = len(users)
-            guild = message.guild
-            content = message.content
-            isMod = False
-            count = 0
-            if me in users: return
-            for u in users:
-                if servers[idx]['mod_bypass']: # mod check
-                    m = guild.get_member(u.id)
-                    if m.guild_permissions.manage_messages: 
-                        isMod = True
+        elif id in self.data.save['guilds']['banned'] or str(guild.owner.id) in self.data.save['guilds']['owners']: # leave if the server is blacklisted
+            try:
+                await self.send('debug', embed=self.util.embed(title="Banned guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
+            except Exception as e:
+                await self.send('debug', "on_guild_join(): {}".format(e))
+            await guild.leave()
+        else: # notify me and add to the pending servers
+            self.data.save['guilds']['pending'][id] = guild.name
+            self.data.pending = True
+            await guild.owner.send(embed=self.util.embed(title="Pending guild request", description="Wait until my owner approve the new server", thumbnail=guild.icon_url))
+            await self.send('debug', embed=self.util.embed(title="Pending guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
+
+    async def global_check(self, ctx): # called whenever a command is used
+        if ctx.guild is None: # if none, the command has been sent via a direct message
+            return False # so we ignore
+        try:
+            id = str(ctx.guild.id)
+            if id in self.data.save['guilds']['banned'] or str(ctx.guild.owner.id) in self.data.save['guilds']['owners']: # ban check
+                await ctx.guild.leave() # leave the server if banned
+                return False
+            elif id in self.data.save['guilds']['pending']: # pending check
+                await self.util.react(ctx.message, 'cooldown')
+                return False
+            elif ctx.guild.owner.id in self.data.config['banned']:
+                return False
+            return True
+        except Exception as e:
+            await self.sendError('global_check', 'Context: ' + str(ctx) + '\n' + str(e))
+            return False
+
+    async def on_command_error(self, ctx, error): # called when an uncatched exception happens in a command
+        msg = str(error)
+        if msg.find('You are on cooldown.') == 0:
+            await self.util.react(ctx.message, 'cooldown')
+        elif msg.find('required argument that is missing') != -1:
+            return
+        elif msg.find('check functions for command') != -1:
+            return
+        elif msg.find('Member "') == 0 or msg.find('Command "') == 0 or msg.startswith('Command raised an exception: Forbidden: 403'):
+            return
+        else:
+            await self.util.react(ctx.message, '❎')
+            self.errn += 1
+            await self.send('debug', embed=self.util.embed(title="⚠ Error caused by {}".format(ctx.message.author), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=self.util.timestamp()))
+
+    # call the pinboard system when a reaction is received
+    async def on_raw_reaction_add(self, payload):
+        await self.pinboard.check(payload)
+
+    # under is the log system used by my crew and another server, remove if you don't need those
+    # it's a sort of live audit log
+
+    async def on_member_update(self, before, after):
+        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
+        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
+        if before.guild.id in guilds:
+            channel = guilds[before.guild.id]
+            if before.display_name != after.display_name:
+                    await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Name change".format(after.display_name), 'icon_url':after.avatar_url}, description="{}\n**Before** ▫️ {}\n**After** ▫️ {}".format(after.mention, before.display_name, after.display_name), footer="User ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
+            elif len(before.roles) < len(after.roles):
+                for r in after.roles:
+                    if r not in before.roles:
+                        await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Role added".format(after.name), 'icon_url':after.avatar_url}, description="{} was given the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x1b55b3, timestamp=self.util.timestamp()))
                         break
-                    else:
-                        count += 1
+            elif len(before.roles) > len(after.roles):
+                for r in before.roles:
+                    if r not in after.roles:
+                        await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Role removed".format(after.name), 'icon_url':after.avatar_url}, description="{} was removed from the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x0b234a, timestamp=self.util.timestamp()))
+                        break
+
+    async def on_member_remove(self, member):
+        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
+        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
+        if member.guild.id in guilds:
+            await self.send(guilds[member.guild.id], embed=self.util.embed(author={'name':"{} ▫️ Left the server".format(member.name), 'icon_url':member.avatar_url}, footer="User ID: {}".format(member.id), timestamp=self.util.timestamp(), color=0xff0000))
+
+    async def on_member_join(self, member):
+        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
+        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
+        if member.guild.id in guilds:
+            channel = guilds[member.guild.id]
+            await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Joined the server".format(member.name), 'icon_url':member.avatar_url}, footer="User ID: {}".format(member.id), timestamp=self.util.timestamp(), color=0x00ff3c))
+
+    async def on_member_ban(self, guild, user):
+        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
+        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
+        if guild.id in guilds:
+            await self.send(guilds[guild.id], embed=self.util.embed(author={'name':"{} ▫️ Banned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=self.util.timestamp(), color=0xff0000))
+
+    async def on_member_unban(self, guild, user):
+        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
+        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
+        if guild.id in guilds:
+            await self.send(guilds[guild.id], embed=self.util.embed(author={'name':"{} ▫️ Unbanned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=self.util.timestamp(), color=0x00ff3c))
+
+    async def on_guild_emojis_update(self, guild, before, after):
+        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
+        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
+        if guild.id in guilds:
+            channel = guilds[guild.id]
+            if len(before) < len(after):
+                for e in after:
+                    if e not in before:
+                        await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Emoji added".format(e.name), 'icon_url':e.url}, footer="Emoji ID: {}".format(e.id), timestamp=self.util.timestamp(), color=0x00ff3c))
+                        break
+            else:
+                for e in before:
+                    if e not in after:
+                        await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Emoji removed".format(e.name), 'icon_url':e.url}, footer="Emoji ID: {}".format(e.id), timestamp=self.util.timestamp(), color=0xff0000))
+                        break
+
+    async def on_guild_role_create(self, role):
+        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
+        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
+        if role.guild.id in guilds:
+            channel = guilds[role.guild.id]
+            await self.send(channel, embed=self.util.embed(title="Role created ▫️ `{}`".format(role.name), footer="Role ID: {}".format(role.id), timestamp=self.util.timestamp(), color=0x00ff3c))
+
+    async def on_guild_role_delete(self, role):
+        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
+        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
+        if role.guild.id in guilds:
+            channel = guilds[role.guild.id]
+            await self.send(channel, embed=self.util.embed(title="Role deleted ▫️ `{}`".format(role.name), footer="Role ID: {}".format(role.id), timestamp=self.util.timestamp(), color=0xff0000))
+
+    async def on_guild_role_update(self, before, after):
+        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
+        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
+        if before.guild.id in guilds:
+            channel = guilds[before.guild.id]
+            if before.name != after.name:
+                await self.send(channel, embed=self.util.embed(title="Role name updated", fields=[{'name':"Before", 'value':before.name}, {'name':"After", 'value':after.name}], footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
+            elif before.colour != after.colour:
+                await self.send(channel, embed=self.util.embed(title="Role updated ▫️ `" + after.name + "`", description="Color changed", footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
+            elif before.hoist != after.hoist:
+                if after.hoist:
+                    await self.send(channel, embed=self.util.embed(title="Role updated ▫️ `{}`".format(after.name), description="Role is displayed separately from other members", footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
                 else:
-                    count += 1
-            if not isMod and count < servers[idx]['threshold']:
-                return
+                    await self.send(channel, embed=self.util.embed(title="Role updated ▫️ `{}`".format(after.name), description="Role is displayed as the other members", footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
+            elif before.mentionable != after.mentionable:
+                if after.mentionable:
+                    await self.send(channel, embed=self.util.embed(title="Role updated ▫️ `{}`".format(after.name), description="Role is mentionable", footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
+                else:
+                    await self.send(channel, embed=self.util.embed(title="Role updated ▫️ `{}`".format(after.name), description="Role isn't mentionable", footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
 
-            if message.id in bot.pinned_cache: return # anti dupe safety
-            bot.pinned_cache.append(message.id)
-            if len(bot.pinned_cache) > 20: bot.pinned_cache = bot.pinned_cache[-20:] # limited to 20 entries
-            await message.add_reaction(servers[idx]['emoji'])
+    async def on_guild_channel_create(self, channel):
+        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
+        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
+        if channel.guild.id in guilds:
+            await self.send(guilds[channel.guild.id], embed=self.util.embed(title="Channel created ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=self.util.timestamp(), color=0xebe007))
 
-            try:
-                dict = {}
-                dict['color'] = 0xf20252
-                dict['title'] = str(message.author)
-                if len(content) > 0: 
-                    if len(content) > 1900: dict['description'] = content[:1900] + "...\n\n"
-                    else: dict['description'] = content + "\n\n"
-                else: dict['description'] = ""
-                dict['thumbnail'] = {'url':str(message.author.avatar_url)}
-                dict['fields'] = []
-                # for attachments
-                if message.attachments:
-                    for file in message.attachments:
-                        if file.is_spoiler():
-                            dict['fields'].append({'inline': True, 'name':'Attachment', 'value':f'[{file.filename}]({file.url})'})
-                        elif file.url.lower().endswith(('.png', '.jpeg', '.jpg', '.gif', '.webp')) and 'image' not in dict:
-                            dict['image'] = {'url':file.url}
-                        else:
-                            dict['fields'].append({'inline': True, 'name':'Attachment', 'value':f'[{file.filename}]({file.url})'})
-                # search for image url if no attachment
-                if 'image' not in dict:
-                    s = content.find("http")
-                    for ext in ['.png', '.jpeg', '.jpg', '.gif', '.webp']:
-                        e = content.find(ext, s)
-                        if e != -1:
-                            e += len(ext)
-                            break
-                    if content.find(' ', s, e) == -1 and s != -1:
-                        dict['image'] = {'url':content[s:e]}
-                # check embed
-                if len(message.embeds) > 0:
-                    if dict['description'] == "" and len(message.embeds[0].description) > 0: dict['description'] = message.embeds[0].description + "\n\n"
-                    if 'image' not in dict and message.embeds[0].image.url != discord.Embed.Empty: dict['image'] = {'url':message.embeds[0].image.url}
-                    if len(message.embeds[0].title) > 0: dict['title'] += " :white_small_square: " + message.embeds[0].title
-                    elif message.embeds[0].author.name != discord.Embed.Empty: dict['title'] += " :white_small_square: " + message.embeds[0].author.name
-                # add link to description
-                dict['description'] += ":earth_asia: [**Link**](https://discordapp.com/channels/{}/{}/{})\n".format(message.guild.id, message.channel.id, message.id)
-                embed = discord.Embed.from_dict(dict)
-                embed.timestamp=message.created_at
-                await bot.send(servers[idx]['output'], embed=embed)
-            except Exception as x:
-                await bot.sendError("on_raw_reaction_add", str(x))
-            return
+    async def on_guild_channel_delete(self, channel):
+        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
+        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
+        if channel.guild.id in guilds:
+            await self.send(guilds[channel.guild.id], embed=self.util.embed(title="Channel deleted ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=self.util.timestamp(), color=0x8a8306))
 
-# used by /gbfg/ and (You)
-@bot.event
-async def on_member_update(before, after):
-    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
-    guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if before.guild.id in guilds:
-        channel = guilds[before.guild.id]
-        if before.display_name != after.display_name:
-                await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▫️ Name change".format(after.display_name), 'icon_url':after.avatar_url}, description="{}\n**Before** ▫️ {}\n**After** ▫️ {}".format(after.mention, before.display_name, after.display_name), footer="User ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
-        elif len(before.roles) < len(after.roles):
-            for r in after.roles:
-                if r not in before.roles:
-                    await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▫️ Role added".format(after.name), 'icon_url':after.avatar_url}, description="{} was given the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x1b55b3, timestamp=datetime.utcnow()))
-                    break
-        elif len(before.roles) > len(after.roles):
-            for r in before.roles:
-                if r not in after.roles:
-                    await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▫️ Role removed".format(after.name), 'icon_url':after.avatar_url}, description="{} was removed from the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x0b234a, timestamp=datetime.utcnow()))
-                    break
 
-@bot.event
-async def on_member_remove(member):
-    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
-    guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if member.guild.id in guilds:
-        await bot.send(guilds[member.guild.id], embed=bot.buildEmbed(author={'name':"{} ▫️ Left the server".format(member.name), 'icon_url':member.avatar_url}, footer="User ID: {}".format(member.id), timestamp=datetime.utcnow(), color=0xff0000))
-
-@bot.event
-async def on_member_join(member):
-    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
-    guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if member.guild.id in guilds:
-        channel = guilds[member.guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▫️ Joined the server".format(member.name), 'icon_url':member.avatar_url}, footer="User ID: {}".format(member.id), timestamp=datetime.utcnow(), color=0x00ff3c))
-
-@bot.event
-async def on_member_ban(guild, user):
-    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
-    guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if guild.id in guilds:
-        await bot.send(guilds[guild.id], embed=bot.buildEmbed(author={'name':"{} ▫️ Banned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=datetime.utcnow(), color=0xff0000))
-
-@bot.event
-async def on_member_unban(guild, user):
-    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
-    guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if guild.id in guilds:
-        await bot.send(guilds[guild.id], embed=bot.buildEmbed(author={'name':"{} ▫️ Unbanned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=datetime.utcnow(), color=0x00ff3c))
-
-@bot.event
-async def on_guild_emojis_update(guild, before, after):
-    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
-    guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if guild.id in guilds:
-        channel = guilds[guild.id]
-        if len(before) < len(after):
-            for e in after:
-                if e not in before:
-                    await bot.send(channel, embed=bot.buildEmbed(author={'name':"{} ▫️ Emoji added".format(e.name), 'icon_url':e.url}, footer="Emoji ID: {}".format(e.id), timestamp=datetime.utcnow(), color=0x00ff3c))
-                    break
-        else:
-            for e in before:
-                if e not in after:
-                    await bot.send(channel, embed=bot.buildEmbed(author={'name':" ▫️ Emoji removed".format(e.name), 'icon_url':e.url}, footer="Emoji ID: {}".format(e.id), timestamp=datetime.utcnow(), color=0xff0000))
-                    break
-
-@bot.event
-async def on_guild_role_create(role):
-    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
-    guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if role.guild.id in guilds:
-        channel = guilds[role.guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(title="Role created ▫️ `{}`".format(role.name), footer="Role ID: {}".format(role.id), timestamp=datetime.utcnow(), color=0x00ff3c))
-
-@bot.event
-async def on_guild_role_delete(role):
-    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
-    guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if role.guild.id in guilds:
-        channel = guilds[role.guild.id]
-        await bot.send(channel, embed=bot.buildEmbed(title="Role deleted ▫️ `{}`".format(role.name), footer="Role ID: {}".format(role.id), timestamp=datetime.utcnow(), color=0xff0000))
-
-@bot.event
-async def on_guild_role_update(before, after):
-    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
-    guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if before.guild.id in guilds:
-        channel = guilds[before.guild.id]
-        if before.name != after.name:
-            await bot.send(channel, embed=bot.buildEmbed(title="Role name updated", fields=[{'name':"Before", 'value':before.name}, {'name':"After", 'value':after.name}], footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
-        elif before.colour != after.colour:
-            await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▫️ `" + after.name + "`", description="Color changed", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
-        elif before.hoist != after.hoist:
-            if after.hoist:
-                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▫️ `{}`".format(after.name), description="Role is displayed separately from other members", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
-            else:
-                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▫️ `{}`".format(after.name), description="Role is displayed as the other members", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
-        elif before.mentionable != after.mentionable:
-            if after.mentionable:
-                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▫️ `{}`".format(after.name), description="Role is mentionable", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
-            else:
-                await bot.send(channel, embed=bot.buildEmbed(title="Role updated ▫️ `{}`".format(after.name), description="Role isn't mentionable", footer="Role ID: {}".format(after.id), timestamp=datetime.utcnow(), color=0x1ba6b3))
-
-@bot.event
-async def on_guild_channel_create(channel):
-    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
-    guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if channel.guild.id in guilds:
-        await bot.send(guilds[channel.guild.id], embed=bot.buildEmbed(title="Channel created ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=datetime.utcnow(), color=0xebe007))
-
-@bot.event
-async def on_guild_channel_delete(channel):
-    if 'you_server' not in bot.ids or 'gbfg' not in bot.ids: return
-    guilds = {bot.ids['you_server'] : 'youlog', bot.ids['gbfg'] : 'gbfglog'}
-    if channel.guild.id in guilds:
-        await bot.send(guilds[channel.guild.id], embed=bot.buildEmbed(title="Channel deleted ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=datetime.utcnow(), color=0x8a8306))
-
-# #####################################################################################
-# Start the bot
-exit(bot.mainLoop())
+if __name__ == "__main__":
+    bot = MizaBot()
+    exit(bot.go())
