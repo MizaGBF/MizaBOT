@@ -918,19 +918,6 @@ class Games(commands.Cog):
         final_msg = await ctx.send(embed=self.bot.util.embed(title="Today, Xil's main element is", description="{} **{}**".format(self.bot.emote.get(e), e.capitalize()), color=self.color))
         await self.bot.util.clean(ctx, final_msg, 30)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['chose'])
-    @commands.cooldown(2, 10, commands.BucketType.guild)
-    async def choose(self, ctx, *, choices : str):
-        """Select a random string from the user's choices
-        Example: $choose I'm Alice ; Bob"""
-        try:
-            possible = choices.split(";")
-            if len(possible) < 2: raise Exception()
-            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}'s choice".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=random.choice(possible), color=self.color))
-        except:
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Give me a list of something to choose from, separated by `;`", color=self.color))
-        await self.bot.util.clean(ctx, final_msg, 30)
-
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['math'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def calc(self, ctx, *terms : str):
