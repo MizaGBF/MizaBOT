@@ -21,19 +21,7 @@ import concurrent.futures
 
 """
     TODO:
-        check save data in bot startup
-        task system
-        fix test prefix
-        change autosave?
-        ctrl F review
-        gw task
-"""
-
-"""
-    discord.py 2.0:
-        Blurple
-        https://github.com/Rapptz/discord.py/projects/3
-
+        ctrl+F all NOTE
 """
 
 # Main Bot Class (overload commands.Bot)

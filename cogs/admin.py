@@ -69,13 +69,26 @@ class Admin(commands.Cog):
         msg = ""
         for s in self.bot.guilds:
             msg += "**{}** `{} `owned by **{}** `{}`\n".format(s.name, s.id, s.owner.name, s.owner.id)
+            if len(msg) > 1800:
+                await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
+                msg = ""
         for s in self.bot.data.save['guilds']['pending']:
             msg += "**{}** {} is **Pending**\n".format(s, self.bot.data.save['guilds']['pending'][s])
+            if len(msg) > 1800:
+                await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
+                msg = ""
         if len(self.bot.data.save['guilds']['banned']) > 0:
             msg += "Banned Guilds are `" + "` `".join(str(x) for x in self.bot.data.save['guilds']['banned']) + "`\n"
+            if len(msg) > 1800:
+                await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
+                msg = ""
         if len(self.bot.data.save['guilds']['owners']) > 0:
             msg += "Banned Owners are `" + "` `".join(str(x) for x in self.bot.data.save['guilds']['owners']) + "`\n"
-        await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
+            if len(msg) > 1800:
+                await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
+                msg = ""
+        if len(msg) > 0:
+            await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -96,15 +109,6 @@ class Admin(commands.Cog):
             await ctx.send(embed=self.bot.util.embed(title="Exec", description="Ran `{}` with success".format(expression), color=self.color))
         except Exception as e:
             await ctx.send(embed=self.bot.util.embed(title="Exec Error", description="Exception\n{}".format(e), footer=expression, color=self.color))
-            
-    @commands.command(no_pm=True)
-    @isOwner()
-    async def clear(self, ctx):
-        """Clear the debug channel"""
-        try:
-            await self.bot.channels['debug'].purge()
-        except Exception as e:
-            await self.bot.sendError('clear', str(e))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
@@ -117,7 +121,7 @@ class Admin(commands.Cog):
             for m in g.members:
                 for mr in m.roles:
                     if r.id == mr.id: count += 1
-            await ctx.send("Role `{}` has {} users".format(r.name, count))
+            await ctx.send("Role `{}` has {} users".format(r.name, count)) # NOTE: possibly use the discord thread later?
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -138,8 +142,9 @@ class Admin(commands.Cog):
         id = str(id)
         try:
             if id not in self.bot.data.save['guilds']['banned']:
-                self.bot.data.save['guilds']['banned'].append(id)
-                self.bot.data.pending = True
+                with self.bot.data.lock:
+                    self.bot.data.save['guilds']['banned'].append(id)
+                    self.bot.data.pending = True
             try:
                 toleave = self.bot.get_guild(id)
                 await toleave.leave()
@@ -157,8 +162,9 @@ class Admin(commands.Cog):
         id = str(id)
         try:
             if id not in self.bot.data.save['guilds']['owners']:
-                self.bot.data.save['guilds']['owners'].append(id)
-                self.bot.data.pending = True
+                with self.bot.data.lock:
+                    self.bot.data.save['guilds']['owners'].append(id)
+                    self.bot.data.pending = True
             for g in self.bot.guilds:
                 try:
                     if str(g.owner.id) == id:
@@ -177,8 +183,9 @@ class Admin(commands.Cog):
         sid = str(id)
         try:
             if sid in self.bot.data.save['guilds']['pending']:
-                self.bot.data.save['guilds']['pending'].pop(sid)
-                self.bot.data.pending = True
+                with self.bot.data.lock:
+                    self.bot.data.save['guilds']['pending'].pop(sid)
+                    self.bot.data.pending = True
                 guild = self.bot.get_guild(id)
                 if guild:
                     await guild.owner.send(embed=self.bot.util.embed(title="I'm now available for use in {}".format(guild.name), description="Use `$help` for my list of commands, `$help Management` for mod only commands.\nUse `$setPrefix` to change the command prefix (default: `$`)\nIf you encounter an issue, use `$bug_report` and describe the problem.\nIf I'm down or slow, I might be rebooting, in maintenance or Discord itself might be acting up.", thumbnail=guild.icon_url))
@@ -194,8 +201,9 @@ class Admin(commands.Cog):
         id = str(id)
         try:
             if id in self.bot.data.save['guilds']['pending']:
-                self.bot.data.save['guilds']['pending'].pop(id)
-                self.bot.data.pending = True
+                with self.bot.data.lock:
+                    self.bot.data.save['guilds']['pending'].pop(id)
+                    self.bot.data.pending = True
                 guild = self.bot.get_guild(id)
                 if guild:
                     await guild.leave()
@@ -386,11 +394,11 @@ class Admin(commands.Cog):
     async def banRollID(self, ctx, id: int):
         """ID based Ban for $rollranking (Owner only)"""
         id = str(id)
-        with self.bot.data.lock:
-            if id not in self.bot.data.save['spark'][1]:
+        if id not in self.bot.data.save['spark'][1]:
+            with self.bot.data.lock:
                 self.bot.data.save['spark'][1].append(id)
                 self.bot.data.pending = True
-                await self.bot.util.react(ctx.message, '✅') # white check mark
+            await self.bot.util.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, aliases=['unbanspark'])
     @isOwner()
@@ -398,14 +406,14 @@ class Admin(commands.Cog):
         """Unban an user from all the roll ranking (Owner only)
         Ask me for an unban (to avoid abuses)"""
         id = str(id)
-        with self.bot.data.lock:
-            if id in self.bot.data.save['spark'][1]:
-                i = 0
+        if id in self.bot.data.save['spark'][1]:
+            i = 0
+            with self.bot.data.lock:
                 while i < len(self.bot.data.save['spark'][1]):
                     if id == self.bot.data.save['spark'][1][i]: self.bot.data.save['spark'][1].pop(i)
                     else: i += 1
                 self.bot.data.pending = True
-                await self.bot.util.react(ctx.message, '✅') # white check mark
+            await self.bot.util.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -422,7 +430,7 @@ class Admin(commands.Cog):
                 self.bot.data.pending = True
         await self.bot.util.react(ctx.message, '✅') # white check mark
 
-    @commands.command(no_pm=True)
+    @commands.command(no_pm=True, aliases=['clearGacha'])
     @isOwner()
     async def resetGacha(self, ctx):
         """Reset the gacha settings"""
@@ -461,24 +469,6 @@ class Admin(commands.Cog):
                 await self.bot.send('debug', 'config.json', file=discord.File(infile))
         except Exception as e:
             await self.bot.sendError('config', str(e))
-
-    @commands.command(no_pm=True)
-    @isOwner()
-    async def cleanSave(self, ctx):
-        """Do some clean up (Owner only)"""
-        guild_ids = []
-        for s in self.bot.guilds:
-            guild_ids.append(str(s.id))
-        with self.bot.data.lock:
-            for k in list(self.bot.data.save['permitted'].keys()):
-                if k not in guild_ids:
-                    self.bot.data.save['permitted'].pop(k)
-                    self.bot.data.pending = True
-            for k in list(self.bot.data.save['news'].keys()):
-                if k not in guild_ids or len(self.bot.data.save['news'][k]) == 0:
-                    self.bot.data.save['news'].pop(k)
-                    self.bot.data.pending = True
-        await self.bot.util.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True)
     @isOwner()
