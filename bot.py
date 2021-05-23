@@ -28,7 +28,7 @@ import concurrent.futures
 class MizaBot(commands.Bot):
     def __init__(self):
         self.version = "8.0-beta-1" # bot version
-        self.changelog = ["Added `$dice`", "Bot structure overhaul"] # changelog lines
+        self.changelog = ["Added `$dice` and `$coin`", "Bot structure overhaul"] # changelog lines
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
         self.tasks = {} # contain our user tasks

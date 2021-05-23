@@ -253,7 +253,7 @@ class Casino(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(10, 30, commands.BucketType.guild)
     async def dice(self, ctx, dice_string : str):
-        """Throw some dices (format is NdN)
+        """Roll some dies (format is NdN)
         Minimum is 1d6, Maximum is 10d100"""
         try:
             tmp = dice_string.lower().split('d')
@@ -270,9 +270,30 @@ class Casino(commands.Cog):
                     if j == (len(rolls) - 1): msg = msg[:-2]
                 if len(rolls) == n:
                     msg += "\n**Total**: {:}, **Average**: {:}, **Percentile**: {:.1f}%".format(sum(rolls), round(sum(rolls)/len(rolls)), sum(rolls) * 100 / (n * d)).replace('.0%', '%')
-                if final_msg is None: final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"🎲 {} rolled...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color))
-                else: await final_msg.edit(embed=self.bot.util.embed(author={'name':"🎲 {} rolled...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color))
+                if final_msg is None: final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"🎲 {} rolled {}...".format(ctx.author.display_name, dice_string), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color))
+                else: await final_msg.edit(embed=self.bot.util.embed(author={'name':"🎲 {} rolled {}...".format(ctx.author.display_name, dice_string), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color))
                 await asyncio.sleep(1)
         except:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="🎲 Dice Rolls", description="Invalid string `{}`\nFormat must be `NdN` (minimum is `1d6`, maximum is `10d100`)".format(dice_string), color=self.color))
         await self.bot.util.clean(ctx, final_msg, 80)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['flip'])
+    @commands.cooldown(10, 30, commands.BucketType.guild)
+    async def coin(self, ctx):
+        """Flip a coin"""
+        coin = random.randint(0, 1)
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} flipped a coin...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=(":coin: It landed on **Head**" if (coin == 0) else ":coin: It landed on **Tail**"), color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 60)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['chose', 'choice'])
+    @commands.cooldown(2, 10, commands.BucketType.guild)
+    async def choose(self, ctx, *, choices : str):
+        """Select a random string from the user's choices
+        Example: $choose I'm Alice ; Bob"""
+        try:
+            possible = choices.split(";")
+            if len(possible) < 2: raise Exception()
+            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}'s choice".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=random.choice(possible), color=self.color))
+        except:
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Give me a list of something to choose from, separated by `;`", color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 30)
