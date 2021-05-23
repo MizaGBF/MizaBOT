@@ -2,6 +2,7 @@
 import asyncio
 import random
 from collections import defaultdict
+from datetime import datetime, timedelta
 
 # ----------------------------------------------------------------------------------------------------------------
 # Casino Cog
@@ -17,7 +18,13 @@ class Casino(commands.Cog):
         self.pokergames = {}
         self.blackjackgames = {}
 
-    def checkPokerHand(self, hand):
+    def value2head(self, value):
+        return str(value).replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
+
+    def valueNsuit2head(self, value):
+        return str(value).replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
+
+    def checkPokerHand(self, hand): # check hand strengh and return a string indicating its value
         flush = False
         # flush detection
         suits = [h[-1] for h in hand]
@@ -31,22 +38,22 @@ class Casino(commands.Cog):
         value_range = max(rank_values) - min(rank_values) # and get the difference
         # determinate hand from their
         if flush and set(values) == set(["10", "11", "12", "13", "14"]): return "**Royal Straight Flush**"
-        elif flush and ((len(set(value_counts.values())) == 1 and (value_range==4)) or set(values) == set(["14", "2", "3", "4", "5"])): return "**Straight Flush, high {}**".format(self.highestCardStripped(list(value_counts.keys())).replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
-        elif sorted(value_counts.values()) == [1,4]: return "**Four of a Kind of {}**".format(list(value_counts.keys())[list(value_counts.values()).index(4)].replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
-        elif sorted(value_counts.values()) == [2,3]: return "**Full House, high {}**".format(list(value_counts.keys())[list(value_counts.values()).index(3)].replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
+        elif flush and ((len(set(value_counts.values())) == 1 and (value_range==4)) or set(values) == set(["14", "2", "3", "4", "5"])): return "**Straight Flush, high {}**".format(self.value2head(self.highestCardStripped(list(value_counts.keys()))))
+        elif sorted(value_counts.values()) == [1,4]: return "**Four of a Kind of {}**".format(self.value2head(list(value_counts.keys())[list(value_counts.values()).index(4)]))
+        elif sorted(value_counts.values()) == [2,3]: return "**Full House, high {}**".format(self.value2head(list(value_counts.keys())[list(value_counts.values()).index(3)]))
         elif flush: return "**Flush**"
-        elif (len(set(value_counts.values())) == 1 and (value_range==4)) or set(values) == set(["14", "2", "3", "4", "5"]): return "**Straight, high {}**".format(self.highestCardStripped(list(value_counts.keys())).replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
-        elif set(value_counts.values()) == set([3,1]): return "**Three of a Kind of {}**".format(list(value_counts.keys())[list(value_counts.values()).index(3)].replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
+        elif (len(set(value_counts.values())) == 1 and (value_range==4)) or set(values) == set(["14", "2", "3", "4", "5"]): return "**Straight, high {}**".format(self.value2head(self.highestCardStripped(list(value_counts.keys()))))
+        elif set(value_counts.values()) == set([3,1]): return "**Three of a Kind of {}**".format(self.value2head(list(value_counts.keys())[list(value_counts.values()).index(3)]))
         elif sorted(value_counts.values())==[1,2,2]:
             k = list(value_counts.keys())
             k.pop(list(value_counts.values()).index(1))
-            return "**Two Pairs, high {}**".format(self.highestCardStripped(k).replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
-        elif 2 in value_counts.values(): return "**Pair of {}**".format(list(value_counts.keys())[list(value_counts.values()).index(2)].replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
-        else: return "**Highest card is {}**".format(self.highestCard(hand).replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
+            return "**Two Pairs, high {}**".format(self.value2head(self.highestCardStripped(k)))
+        elif 2 in value_counts.values(): return "**Pair of {}**".format(self.value2head(list(value_counts.keys())[list(value_counts.values()).index(2)]))
+        else: return "**Highest card is {}**".format(self.value2head(self.highestCard(hand).replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️")))
 
-    def highestCardStripped(self, selection):
-        ic = [int(i) for i in selection]
-        return str(sorted(ic)[-1])
+    def highestCardStripped(self, selection): # return the highest card
+        ic = [int(i) for i in selection] # convert to int
+        return str(sorted(ic)[-1]) # sort and then convert back to str
 
     def highestCard(self, selection):
         for i in range(0, len(selection)): selection[i] = '0'+selection[i] if len(selection[i]) == 2 else selection[i]
@@ -70,7 +77,7 @@ class Casino(commands.Cog):
             msg = ""
             for i in range(len(hand)):
                 if i > x: msg += "🎴"
-                else: msg += hand[i].replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
+                else: msg += self.valueNsuit2head(hand[i])
                 if i < 4: msg += ", "
                 else: msg += "\n"
             if x == 4:
@@ -105,13 +112,14 @@ class Casino(commands.Cog):
         else:
             self.pokergames[id] = {'state':'waiting', 'players':[ctx.author.id]}
             msg = await ctx.reply(embed=self.bot.util.embed(title="♠️ Multiplayer Poker ♥️", description="Starting in 30s\n1/6 players", footer="Use the poker command to join", color=self.color))
-            cd = 29
-            while cd >= 0:
+            timer = self.bot.util.JST() + timedelta(seconds=30)
+            while True:
                 await asyncio.sleep(1)
-                await msg.edit(embed=self.bot.util.embed(title="♠️ Multiplayer Poker ♥️", description="Starting in {}s\n{}/6 players".format(cd, len(self.pokergames[id]['players'])), footer="Use the poker command to join", color=self.color))
-                cd -= 1
+                c = self.bot.util.JST()
+                if c >= timer: break
                 if len(self.pokergames[id]['players']) >= 6:
                     break
+                await msg.edit(embed=self.bot.util.embed(title="♠️ Multiplayer Poker ♥️", description="Starting in {}s\n{}/6 players".format((timer - c).seconds, len(self.pokergames[id]['players'])), footer="Use the poker command to join", color=self.color))
             self.pokergames[id]['state'] = "playing"
             if len(self.pokergames[id]['players']) > 6: self.pokergames[id]['players'] = self.pokergames[id]['players'][:6]
             await self.bot.util.clean(ctx, msg, 0, True)
@@ -127,9 +135,9 @@ class Casino(commands.Cog):
                 n = s - 2
                 for j in range(0, 3):
                     if j > n: msg += "🎴"
-                    else: msg += draws[j].replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
+                    else: msg += self.valueNsuit2head(draws[j])
                     if j < 2: msg += ", "
-                    else: msg += "\n\n"
+                    else: msg += "\n"
                 n = max(1, s)
                 for x in range(0, len(self.pokergames[id]['players'])):
                     pid = self.pokergames[id]['players'][x]
@@ -138,8 +146,8 @@ class Casino(commands.Cog):
                         highest = self.highestCard(draws[3+2*x:5+2*x])
                     for j in range(0, 2):
                         if j > s: msg += "🎴"
-                        elif s == 4 and draws[3+j+2*x] == highest: msg += "__" + draws[3+j+2*x].replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A") + "__"
-                        else: msg += draws[3+j+2*x].replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
+                        elif s == 4 and draws[3+j+2*x] == highest: msg += "__" + self.valueNsuit2head(draws[3+j+2*x]) + "__"
+                        else: msg += self.valueNsuit2head(draws[3+j+2*x])
                         if j == 0: msg += ", "
                         else:
                             if s == 4:
@@ -147,7 +155,7 @@ class Casino(commands.Cog):
                                 hand = draws[0:3] + draws[3+2*x:5+2*x]
                                 hstr = await self.bot.do(self.checkPokerHand, hand)
                                 if hstr.startswith("**Highest"):
-                                    msg += "**Highest card is {}**".format(self.highestCard(draws[3+2*x:5+2*x]).replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A"))
+                                    msg += "**Highest card is {}**".format(self.valueNsuit2head(self.highestCard(draws[3+2*x:5+2*x])))
                                 else:
                                     msg += hstr
                             msg += "\n"
@@ -177,21 +185,22 @@ class Casino(commands.Cog):
         else:
             self.blackjackgames[id] = {'state':'waiting', 'players':[ctx.author.id]}
             msg = await ctx.reply(embed=self.bot.util.embed(title="♠️ Multiplayer Blackjack ♥️", description="Starting in 30s\n1/6 players", footer="Use the blackjack command to join", color=self.color))
-            cd = 29
-            while cd >= 0:
+            timer = self.bot.util.JST() + timedelta(seconds=30)
+            while True:
                 await asyncio.sleep(1)
-                await msg.edit(embed=self.bot.util.embed(title="♠️ Multiplayer Blackjack ♥️", description="Starting in {}s\n{}/6 players".format(cd, len(self.blackjackgames[id]['players'])), footer="Use the blackjack command to join", color=self.color))
-                cd -= 1
+                c = self.bot.util.JST()
+                if c >= timer: break
                 if len(self.blackjackgames[id]['players']) >= 6:
                     break
+                await msg.edit(embed=self.bot.util.embed(title="♠️ Multiplayer Blackjack ♥️", description="Starting in {}s\n{}/6 players".format((timer - c).seconds, len(self.blackjackgames[id]['players'])), footer="Use the blackjack command to join", color=self.color))
             self.blackjackgames[id]['state'] = "playing"
             if len(self.blackjackgames[id]['players']) > 6: self.blackjackgames[id]['players'] = self.blackjackgames[id]['players'][:6]
             await self.bot.util.clean(ctx, msg, 0, True)
             # game start
-            status = []
+            # state: 0 = playing card down, 1 = playing card up, 2 = lost, 3 = won, 4 = blackjack
+            status = [{'name':'Dealer', 'score':0, 'cards':[], 'state':0}]
             for p in self.blackjackgames[id]['players']:
                 status.append({'name':ctx.guild.get_member(p).display_name, 'score':0, 'cards':[], 'state':0})
-            status.append({'name':'Dealer', 'score':0, 'cards':[], 'state':0}) # 0 = playing card down, 1 = playing card up, 2 = lost, 3 = won, 4 = blackjack
             final_msg = None
             deck = []
             kind = ["D", "S", "H", "C"]
@@ -219,8 +228,8 @@ class Casino(commands.Cog):
                         else:
                             status[p]['score'] += value
                         status[p]['cards'].append(c)
-                    if p == len(status) - 1: msg += "\n:spy: "
-                    else: msg += "{} ".format(self.bot.emote.get(str(p+1)))
+                    if p == 0: msg += ":spy: "
+                    else: msg += "{} ".format(self.bot.emote.get(str(p)))
                     msg += self.pokerNameStrip(status[p]['name'])
                     msg += " \▫️ "
                     for i in range(len(status[p]['cards'])):
@@ -240,3 +249,30 @@ class Casino(commands.Cog):
                 await asyncio.sleep(2)
             self.blackjackgames.pop(id)
             await self.bot.util.clean(ctx, final_msg, 45)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(10, 30, commands.BucketType.guild)
+    async def dice(self, ctx, dice_string : str):
+        """Throw some dices (format is NdN)
+        Minimum is 1d6, Maximum is 10d100"""
+        try:
+            tmp = dice_string.lower().split('d')
+            n = int(tmp[0])
+            d = int(tmp[1])
+            if n <= 0 or n> 10 or d < 6 or d > 100: raise Exception()
+            final_msg = None
+            rolls = []
+            for i in range(n):
+                rolls.append(random.randint(1, d))
+                msg = ""
+                for j in range(len(rolls)):
+                    msg += "{}, ".format(rolls[j])
+                    if j == (len(rolls) - 1): msg = msg[:-2]
+                if len(rolls) == n:
+                    msg += "\n**Total**: {:}, **Average**: {:}, **Percentile**: {:.1f}%".format(sum(rolls), round(sum(rolls)/len(rolls)), sum(rolls) * 100 / (n * d)).replace('.0%', '%')
+                if final_msg is None: final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"🎲 {} rolled...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color))
+                else: await final_msg.edit(embed=self.bot.util.embed(author={'name':"🎲 {} rolled...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color))
+                await asyncio.sleep(1)
+        except:
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="🎲 Dice Rolls", description="Invalid string `{}`\nFormat must be `NdN` (minimum is `1d6`, maximum is `10d100`)".format(dice_string), color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 80)

@@ -232,6 +232,13 @@ class GuildWar(commands.Cog):
                     return msg
         return ""
 
+    @commands.command(no_pm=True)
+    @isOwner()
+    async def newgwtask(self, ctx):
+        """Start a new checkGWBuff() task (Owner only)"""
+        self.bot.runTask('check_buff', self.bot.get_cog('GuildWar').checkGWBuff)
+        await self.bot.util.react(ctx.message, '✅') # white check mark
+
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def GW(self, ctx, gmt :str = "9"):

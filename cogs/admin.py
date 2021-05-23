@@ -46,13 +46,13 @@ class Admin(commands.Cog):
         try:
             await asyncio.sleep(1000) # after 1000 seconds
             if not self.bot.running: return
-            count = await self.bot.do(self.bot.data.clean_spark)
+            count = await self.bot.do(self.bot.data.clean_spark) # clean up spark data
             if count > 0:
                 await self.bot.send('debug', embed=self.bot.buildEmbed(title="cleansave()", description="Cleaned {} unused spark saves".format(count), timestamp=datetime.utcnow()))
-            count = await self.bot.do(self.bot.data.clean_profile)
+            count = await self.bot.do(self.bot.data.clean_profile) # clean up profile data
             if count > 0:
                 await self.bot.send('debug', embed=self.bot.buildEmbed(title="cleansave()", description="Cleaned {} unused profiles".format(count), timestamp=datetime.utcnow()))
-            if await self.bot.do(self.bot.data.clean_schedule):
+            if await self.bot.do(self.bot.data.clean_schedule): # clean up schedule data
                 await self.bot.send('debug', embed=self.bot.buildEmbed(title="cleansave()", description="The schedule has been cleaned up", timestamp=datetime.utcnow()))
         except asyncio.CancelledError:
             await self.bot.sendError('cleansave', 'cancelled')
@@ -65,7 +65,7 @@ class Admin(commands.Cog):
             return ctx.bot.isOwner(ctx)
         return commands.check(predicate)
 
-    async def guildList(self):
+    async def guildList(self): # list all guilds the bot is in and send it in the debug channel
         msg = ""
         for s in self.bot.guilds:
             msg += "**{}** `{} `owned by **{}** `{}`\n".format(s.name, s.id, s.owner.name, s.owner.id)
@@ -77,23 +77,22 @@ class Admin(commands.Cog):
             if len(msg) > 1800:
                 await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
                 msg = ""
+        if msg != "":
+            await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
+            msg = ""
         if len(self.bot.data.save['guilds']['banned']) > 0:
             msg += "Banned Guilds are `" + "` `".join(str(x) for x in self.bot.data.save['guilds']['banned']) + "`\n"
-            if len(msg) > 1800:
-                await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
-                msg = ""
         if len(self.bot.data.save['guilds']['owners']) > 0:
             msg += "Banned Owners are `" + "` `".join(str(x) for x in self.bot.data.save['guilds']['owners']) + "`\n"
-            if len(msg) > 1800:
-                await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
-                msg = ""
-        if len(msg) > 0:
+        if msg != "":
             await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
 
     @commands.command(no_pm=True)
     @isOwner()
     async def eval(self, ctx, *, expression : str):
-        """Evaluate code at run time (Owner only)"""
+        """Evaluate code at run time (Owner only)
+        For Debug.
+        Use this to print things for example."""
         try:
             eval(expression)
             await ctx.send(embed=self.bot.util.embed(title="Eval", description="Ran `{}` with success".format(expression), color=self.color))
@@ -103,7 +102,9 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def exec(self, ctx, *, expression : str):
-        """Execute code at run time (Owner only)"""
+        """Execute code at run time (Owner only)
+        For Debug.
+        Use this to modify data for example."""
         try:
             exec(expression)
             await ctx.send(embed=self.bot.util.embed(title="Exec", description="Ran `{}` with success".format(expression), color=self.color))
@@ -114,7 +115,8 @@ class Admin(commands.Cog):
     @isOwner()
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def checkrole(self, ctx):
-        """List all the roles in use on a server (Owner only)"""
+        """List all the roles in use on a server (Owner only)
+        It will list how many users are in each role."""
         g = ctx.author.guild
         for r in g.roles:
             count = 0
@@ -488,16 +490,9 @@ class Admin(commands.Cog):
 
     @commands.command(no_pm=True)
     @isOwner()
-    async def newgwtask(self, ctx):
-        """Start a new checkGWBuff() task (Owner only)"""
-        self.bot.runTask('check_buff', self.bot.get_cog('GuildWar').checkGWBuff)
-        await self.bot.util.react(ctx.message, '✅') # white check mark
-
-    @commands.command(no_pm=True)
-    @isOwner()
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def invite(self, ctx):
-        """Post the invite link (Owner only)"""
+        """Send the MizaBOT invite link via direct messages (Owner only)"""
         await self.bot.send('debug', embed=self.bot.util.embed(title="Invite Request", description="{} ▫️ {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar_url, timestamp=datetime.utcnow(), color=self.color))
         await ctx.author.send(embed=self.bot.util.embed(title=ctx.guild.me.name, description="{}\nYou'll have to wait for my owner approval.\nMisuses will result in a ban.".format(self.bot.data.config['strings']["invite()"]), thumbnail=ctx.guild.me.avatar_url, timestamp=datetime.utcnow(), color=self.color))
 
