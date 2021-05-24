@@ -296,4 +296,12 @@ class Casino(commands.Cog):
             final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}'s choice".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=random.choice(possible), color=self.color))
         except:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Give me a list of something to choose from, separated by `;`", color=self.color))
-        await self.bot.util.clean(ctx, final_msg, 30)
+        await self.bot.util.clean(ctx, final_msg, 45)
+
+
+    @commands.command(no_pm=True, name="8ball", cooldown_after_parsing=True)
+    @commands.cooldown(2, 10, commands.BucketType.guild)
+    async def _8ball(self, ctx, *, question : str):
+        """Ask the magic ball a question"""
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} asked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="`{}`\n{}".format(question, random.choice(["It is Certain.","It is decidedly so.","Without a doubt.","Yes definitely.","You may rely on it.","As I see it, yes.","Most likely.","Outlook good.","Yes.","Signs point to yes.","Reply hazy, try again.","Ask again later.","Better not tell you now.","Cannot predict now.","Concentrate and ask again.","Don't count on it.","My reply is no.","My sources say no.","Outlook not so good.","Very doubtful."])), color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 45)

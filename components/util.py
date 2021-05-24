@@ -103,12 +103,24 @@ class Util():
         if tmp != 0: return None
         return timedelta(days=sum//86400, seconds=sum%86400)
 
+    def get_cpu_percent(self):
+        cpu = self.process.cpu_percent()
+        for child in self.process.children(recursive=True):
+            cpu += child.cpu_percent()
+        return cpu
+
+    def get_memory(self):
+        mem = self.process.memory_info()[0]
+        for child in self.process.children(recursive=True):
+            mem += child.memory_info()()[0]
+        return mem
+
     def status(self):
         return {
             "Version": self.bot.version,
             "Uptime": self.uptime(),
-            "CPU": "{}%".format(self.process.cpu_percent()),
-            "Memory": "{}MB".format(self.process.memory_info()[0]>>20),
+            "CPU": "{}%".format(self.get_cpu_percent()),
+            "Memory": "{}MB".format(self.get_memory()>>20),
             "Save": ("**Pending**" if self.bot.data.pending else "Ok"),
             "Errors": ("**{}**".format(self.bot.errn) if self.bot.errn > 0 else str(self.bot.errn)),
             "Task Count": str(len(asyncio.all_tasks())),

@@ -77,6 +77,8 @@ class GBF():
             if options.get('load_json', False): data = json.loads(data)
             return data
         except:
+            try: url_handle.close()
+            except: pass
             return None
 
     def get(self, id : int = 0):

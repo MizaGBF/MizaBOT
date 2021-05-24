@@ -48,12 +48,12 @@ class Admin(commands.Cog):
             if not self.bot.running: return
             count = await self.bot.do(self.bot.data.clean_spark) # clean up spark data
             if count > 0:
-                await self.bot.send('debug', embed=self.bot.buildEmbed(title="cleansave()", description="Cleaned {} unused spark saves".format(count), timestamp=datetime.utcnow()))
+                await self.bot.send('debug', embed=self.bot.util.embed(title="cleansave()", description="Cleaned {} unused spark saves".format(count), timestamp=datetime.utcnow()))
             count = await self.bot.do(self.bot.data.clean_profile) # clean up profile data
             if count > 0:
-                await self.bot.send('debug', embed=self.bot.buildEmbed(title="cleansave()", description="Cleaned {} unused profiles".format(count), timestamp=datetime.utcnow()))
+                await self.bot.send('debug', embed=self.bot.util.embed(title="cleansave()", description="Cleaned {} unused profiles".format(count), timestamp=datetime.utcnow()))
             if await self.bot.do(self.bot.data.clean_schedule): # clean up schedule data
-                await self.bot.send('debug', embed=self.bot.buildEmbed(title="cleansave()", description="The schedule has been cleaned up", timestamp=datetime.utcnow()))
+                await self.bot.send('debug', embed=self.bot.util.embed(title="cleansave()", description="The schedule has been cleaned up", timestamp=datetime.utcnow()))
         except asyncio.CancelledError:
             await self.bot.sendError('cleansave', 'cancelled')
             return

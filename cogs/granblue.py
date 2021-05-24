@@ -952,9 +952,8 @@ class GranblueFantasy(commands.Cog):
     def getGacha(self): # get current gacha
         if not self.bot.gbf.isAvailable():
             return False
-        # ADD LOCK HERE
-        c = self.bot.util.JST()
         try:
+            c = self.bot.util.JST()
             #gacha page
             data = self.bot.gbf.request("http://game.granbluefantasy.jp/gacha/list?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
             if data is None: raise Exception()
