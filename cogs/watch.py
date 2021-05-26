@@ -396,9 +396,9 @@ class Watch(commands.Cog):
             id = int(id)
             if type not in [1, 2]: raise Exception()
             if turbo and type == 1:
-                data = await self.bot.gbf.arequest(atr[0], account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"weapon_id":str(id)})
+                data = await self.bot.do(self.bot.gbf.request, atr[0], account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"weapon_id":str(id)})
             else:
-                data = (await self.bot.gbf.arequest(atr[1], account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"item_id":id,"item_kind":type}))['data']
+                data = (await self.bot.do(self.bot.gbf.request, atr[1], account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"item_id":id,"item_kind":type}))['data']
 
             rarity = "{}".format(self.bot.emote.get({"2":"R", "3":"SR", "4":"SSR"}.get(data['rarity'], '')))
             msg = '{} {} {} {} at \⭐\⭐\⭐\n'.format(self.bot.emote.get('hp'), data['max_hp'], self.bot.emote.get('atk'), data['max_attack'])
@@ -676,7 +676,7 @@ class Watch(commands.Cog):
     async def item(self, ctx, id : int):
         """Retrieve an item description (Owner or Debug Server only)"""
         try:
-            data = await self.bot.gbf.arequest('http://game.granbluefantasy.jp/rest/quest/droplist/drop_item_detail?PARAMS', account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"item_id":id,"item_kind":10})
+            data = await self.bot.do(self.bot.gbf.request, 'http://game.granbluefantasy.jp/rest/quest/droplist/drop_item_detail?PARAMS', account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"item_id":id,"item_kind":10})
             await ctx.reply(embed=self.bot.util.embed(title=data['name'], description=data['comment'].replace('<br>', ' '), thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/item/article/s/{}.jpg".format(id), footer=data['id'], color=self.color))
         except:
             await self.bot.util.react(ctx.message, '❎') # white negative mark

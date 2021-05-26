@@ -846,7 +846,7 @@ class GranblueFantasy(commands.Cog):
             if acc is None:
                 await ctx.send(embed=self.bot.util.embed(title="GBF Account status", description="No accounts set in slot {}".format(id), color=self.color))
                 return
-            r = await self.bot.gbf.arequest(self.bot.data.config['gbfwatch']['test'], account=id, decompress=True, load_json=True, check=True, force_down=True)
+            r = await self.bot.do(self.bot.gbf.request, self.bot.data.config['gbfwatch']['test'], account=id, decompress=True, load_json=True, check=True, force_down=True)
             if r is None or r.get('user_id', None) != acc[0]:
                 await self.bot.send('debug', embed=self.bot.util.embed(title="GBF Account status", description="Account #{} is down\nck: `{}`\nuid: `{}`\nua: `{}`\n".format(id, acc[0], acc[1], acc[2]) , color=self.color))
                 with self.bot.data.lock:
@@ -1381,7 +1381,7 @@ class GranblueFantasy(commands.Cog):
     async def coop(self, ctx):
         """Retrieve the current coop daily missions"""
         try:
-            data = await self.bot.gbf.arequest('http://game.granbluefantasy.jp/coopraid/daily_mission?PARAMS', account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True)['daily_mission']
+            data = await self.bot.do(self.bot.gbf.request, 'http://game.granbluefantasy.jp/coopraid/daily_mission?PARAMS', account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True)['daily_mission']
             msg = ""
             for i in range(len(data)):
                 if data[i]['category'] == '2':
@@ -1409,7 +1409,7 @@ class GranblueFantasy(commands.Cog):
             if id in self.badprofilecache:
                 await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Profile not found", color=self.color))
                 return
-            data = await self.bot.gbf.arequest("http://game.granbluefantasy.jp/forum/search_users_id?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"user_id":id})
+            data = await self.bot.do(self.bot.gbf.request, "http://game.granbluefantasy.jp/forum/search_users_id?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"user_id":id})
             if data == "Maintenance":
                 await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Game is in maintenance", color=self.color))
                 return

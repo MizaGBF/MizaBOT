@@ -18,6 +18,7 @@ from discord.ext import commands
 import signal
 import time
 import concurrent.futures
+import functools
 
 """
     TODO:
@@ -193,15 +194,15 @@ class MizaBot(commands.Bot):
             await self.startTasks()
             self.booted = True
 
-    async def do(self, func, *args): # routine to run blocking code in a separate thread
-        return await self.loop.run_in_executor(self.executor, func, *args)
+    async def do(self, func, *args, **kwargs): # routine to run blocking code in a separate thread
+        return await self.loop.run_in_executor(self.executor, functools.partial(func, *args, **kwargs))
 
     def doAsync(self, coro): # add a task to the event loop (return the task)
         return self.loop.create_task(coro)
 
     def doAsTask(self, coro): # run a coroutine from a normal function (slow, don't abuse it for small functions)
         task = self.doAsync(coro)
-        while not task.done():
+        while not task.done(): # NOTE: is there a way to make it faster?
             time.sleep(0.01)
         return task.result()
 

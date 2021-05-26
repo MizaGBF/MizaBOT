@@ -14,6 +14,8 @@ class Games(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.color = 0xeb6b34
+        self.legfest = {"double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2"}
+        self.notfest = {"normal", "x1", "3%", "gacha", "1"}
         self.scratcher_loot = {
             100 : ['Siero Ticket'],
             300 : ['Sunlight Stone', 'Gold Brick'],
@@ -39,104 +41,109 @@ class Games(commands.Cog):
             if self.scratcher_loot[r][0] == rare_divider1: self.scratcher_total_rare1 = self.scratcher_total
             if self.scratcher_loot[r][0] == rare_divider2: self.scratcher_total_rare2 = self.scratcher_total
 
-    # used by the gacha games
-    def getRoll(self, ssr, sr_mode = False): # return 0 for ssr, 1 for sr, 2 for r
-        d = random.randint(1, 10000)
-        if d < ssr: return 0
-        elif (not sr_mode and d < 1500 + ssr) or sr_mode: return 1
-        return 2
+    def gachaRateUp(self):
+        try:
+            self.bot.get_cog('GranblueFantasy').getCurrentGacha()
+            data = self.bot.data.save['gbfdata']['rateup']
+            if len(data) == 0: raise Exception()
+            rateups = self.bot.data.save['gbfdata']['gacharateups']
+            ssrrate = int(data[2]['rate'])
+            extended = True
+        except:
+            data = [{}, {'rate':15}, {'rate':3}]
+            rateups = None
+            ssrrate = 3
+            extended = False
+        return data, rateups, ssrrate, extended
 
-    async def checkGacha(self): # no exception check on purpose
-        await self.bot.do((self.bot.get_cog('GranblueFantasy')).getCurrentGacha)
-        if self.bot.data.save['gbfdata'].get('rateup', None) is None: raise Exception()
+    def gachaRoll(self, **options):
+        mode = {'single':0, 'srssr':1, 'memerollA':2, 'memerollB':3, 'ten':10, 'gachapin':11, 'mukku':12, 'supermukku':13}[options['mode']]
+        count = options.get('count', 300)
+        data, rateups, ssrrate, extended = self.gachaRateUp() # get current gacha (dummy one if error)
+        legfest = options.get('legfest', True if ssrrate == 6 else False) # legfest parameter
+        ssrrate = 15 if mode == 13 else (9 if mode == 12 else (6 if legfest else 3)) # set the ssr rate
+        result = {'list':[], 'detail':[0, 0, 0], 'extended':extended, 'rate':ssrrate} # result container
+        tenrollsr = False # flag for guaranted SR in ten rolls
+        for i in range(0, count):
+            d = random.randint(1, 10000000) / 100000 # random value (don't use .random(), it doesn't work well with this)
+            if mode == 1 or (mode >= 10 and (i % 10 == 9) and not tenrollsr): sr_mode = True # force sr in srssr mode OR when 10th roll of ten roll)
+            else: sr_mode = False # else doesn't set
+            if d < ssrrate: # SSR CASE
+                r = 2
+                if extended and ssrrate != data[r]['rate']:
+                    d = d * (data[r]['rate'] / ssrrate)
+                tenrollsr = True
+            elif (not sr_mode and d < 15 + ssrrate) or sr_mode: # SR CASE
+                r = 1
+                d -= ssrrate
+                while d >= 15: d -= 15
+                tenrollsr = True
+            else: # R CASE
+                r = 0
+                d -= ssrrate + 15
+            if i % 10 == 9: tenrollsr = False # unset flag if we did 10 rolls
+            if extended: # if we have a real gacha
+                roll = None
+                for rate in data[r]['list']: # find which item we rolled
+                    fr = float(rate)
+                    for item in data[r]['list'][rate]:
+                        if r == 2 and rate in rateups: last = "**" + item + "**"
+                        else: last = item
+                        if d < fr:
+                            roll = [r, last]
+                            break
+                        d -= fr
+                    if roll is not None:
+                        break
+                if roll is None:
+                    roll = [r, last]
+                result['list'].append(roll) # store roll
+                result['detail'][r] += 1
+                if r == 2:
+                    if mode == 2: break # memeroll mode A
+                    elif mode == 3 and result['list'][-1][1].startswith("**"): break # memeroll mode B
+            else: # using dummy gacha
+                result['list'].append([r])
+                result['detail'][r] += 1
+                if r == 2:
+                    if mode == 2 or mode == 3: break  # memeroll mode A and B
+            if i % 10 == 9:
+                if (mode == 11 or mode == 12) and result['detail'][2] >= 1: break # gachapin and mukku mode
+                elif mode == 13 and result['detail'][2] >= 5: break # super mukku mode
+        return result
 
-    def getRollExtended(self, ssr, sr_mode = False): # use the real gacha, return 2 for ssr, 1 for sr, 0 for r
-        rateups = self.bot.data.save['gbfdata'].get('gacharateups', [])
-        d = random.randint(1, 100000) / 1000
-        if d < ssr:
-            r = 2
-            if ssr != self.bot.data.save['gbfdata']['rateup'][r]['rate']:
-                d = d * (self.bot.data.save['gbfdata']['rateup'][r]['rate'] / ssr)
-        elif (not sr_mode and d < 15 + ssr) or sr_mode:
-            r = 1
-            d -= ssr
-            while d >= 15: d -= 15
-        else:
-            r = 0
-            d -= ssr + 15
-        for rate in self.bot.data.save['gbfdata']['rateup'][r]['list']:
-            fr = float(rate)
-            for item in self.bot.data.save['gbfdata']['rateup'][r]['list'][rate]:
-                if r == 2 and rate in rateups: last = "**" + item + "**"
-                else: last = item
-                if d < fr: return [r, last]
-                d -= fr
-        return [r, last]
-
-    legfestWord = {"double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2"}
-    notfestWord = {"normal", "x1", "3%", "gacha", "1"}
-    def isLegfest(self, word):
+    def checkLegfest(self, word):
         word = word.lower()
         s = self.bot.data.save['gbfdata'].get('gachacontent', '') # check the real gacha
         if s is None or s.find("**Premium Gala**") == -1: isleg = False
         else: isleg = True
-        if word not in self.notfestWord and (word in self.legfestWord or isleg): return 2 # 2 because the rates are doubled
-        return 1
+        if word not in self.notfest and (word in self.legfest or isleg): return True
+        return False
 
-    def tenDraws(self, rate, draw, mode = 0):
-        result = [0, 0, 0]
-        x = 0
-        while mode > 0 or (mode == 0 and x < draw):
-            i = 0
-            while i < 10:
-                r = self.getRoll(rate, i == 9)
-                result[r] += 1
-                i += 1
-            if mode == 1 and result[0] > 0: break # gachapin / mukku
-            elif mode == 2 and result[0] >= 5: break # super mukku
-            x += 1
-        return result
-
-    def tenDrawsExtended(self, rate, draw, mode = 0):
-        result = [0, 0, 0, {}]
-        x = 0
-        while mode > 0 or (mode == 0 and x < draw):
-            i = 0
-            while i < 10:
-                r = self.getRollExtended(rate, i == 9)
-                result[r[0]] += 1
-                if r[0] == 2: result[3][r[1]] = result[3].get(r[1], 0) + 1
-                i += 1
-            if mode == 1 and result[2] > 0: break # gachapin / mukku
-            elif mode == 2 and result[2] >= 5: break # super mukku
-            x += 1
-        return result
+    def getSSRList(self, result):
+        rolls = {}
+        for r in result['list']:
+            if r[0] == 2: rolls[r[1]] = rolls.get(r[1], 0) + 1
+        return rolls
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def single(self, ctx, double : str = ""):
         """Do a single roll
         6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
-        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
-        l = self.isLegfest(double)
-        if l == 2: footer = "6% SSR rate"
-        else: footer = "3% SSR rate"
-        try:
-            await self.checkGacha()
-            r = self.getRollExtended(3*l)
-            msg = "{} {}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
-            if r[0] == 2: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
-            elif r[0] == 1: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
-            else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969231323070494/0_s.png'
-            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} did a single roll...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
-            await asyncio.sleep(5)
-            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} did a single roll".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        except: # legacy mode
-            r = self.getRoll(300*l)
-            if r == 0: msg = "Luckshitter! It's a {}".format(self.bot.emote.get('SSR'))
-            elif r == 1: msg = "It's a {}".format(self.bot.emote.get('SR'))
-            else: msg = "It's a {}, too bad!".format(self.bot.emote.get('R'))
-            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} did a single roll".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        3% keywords: "normal", "x1", "3%", "gacha", "1"."""        
+        result = self.gachaRoll(count=1, mode='single', legfest=self.checkLegfest(double))
+        footer = "{}% SSR rate".format(result['rate'])
+        r = result['list'][0]
+        if r[0] == 2: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
+        elif r[0] == 1: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
+        else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969231323070494/0_s.png'
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} did a single roll...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
+        await asyncio.sleep(5)
+        if result['extended']:
+            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} did a single roll".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="{} {}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1]), color=self.color, footer=footer))
+        else:
+            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} did a single roll".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="{}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0]))), color=self.color, footer=footer))
         await self.bot.util.clean(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -145,26 +152,18 @@ class Games(commands.Cog):
         """Do a single SR/SSR ticket roll
         6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
         3% keywords: "normal", "x1", "3%", "gacha", "1"."""
-        l = self.isLegfest(double)
-        if l == 2: footer = "6% SSR rate"
-        else: footer = "3% SSR rate"
-        try:
-            await self.checkGacha()
-            r = self.getRollExtended(3*l, True)
-            msg = "{} {}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
-            if r[0] == 2: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
-            elif r[0] == 1: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
-            else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969231323070494/0_s.png'
-            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} used a SR/SSR ticket...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
-            await asyncio.sleep(5)
-            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} used a SR/SSR ticket".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        except: # legacy mode
-            r = 2
-            r = self.getRoll(300*l, True)
-            if r == 0: msg = "Luckshitter! It's a {}".format(self.bot.emote.get('SSR'))
-            elif r == 1: msg = "It's a {}".format(self.bot.emote.get('SR'))
-            else: msg = "It's a {}, too bad!".format(self.bot.emote.get('R'))
-            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}  used a SR/SSR ticket".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        result = self.gachaRoll(count=1, mode='srssr', legfest=self.checkLegfest(double))
+        footer = "{}% SSR rate".format(result['rate'])
+        r = result['list'][0]
+        if r[0] == 2: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
+        elif r[0] == 1: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
+        else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969231323070494/0_s.png'
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} did a single roll...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
+        await asyncio.sleep(5)
+        if result['extended']:
+            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} used a SR/SSR ticket".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="{} {}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1]), color=self.color, footer=footer))
+        else:
+            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} used a SR/SSR ticket".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="{}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0]))), color=self.color, footer=footer))
         await self.bot.util.clean(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['memerolls'])
@@ -176,41 +175,32 @@ class Games(commands.Cog):
         Add R at the end of the keyword to target rate up SSRs (example: doubleR, it's not compatible with the legacy mode)."""
         if len(double) > 0 and double[-1] in ['r', 'R']:
             rateup = True
-            double = double[:-1]
-        else: rateup = False
-        l = self.isLegfest(double)
-        if l == 2: footer = "6% SSR rate"
-        else: footer = "3% SSR rate"
-        if rateup: footer += " - stopping at rate up"
-        try:
-            await self.checkGacha()
-            result = [0, 0, 0]
-            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is memerolling...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="0 {} ▫️ 0 {} ▫️ 0 {}".format(self.bot.emote.get('SSR'), self.bot.emote.get('SR'), self.bot.emote.get('R')), color=self.color, footer=footer))
-            msg = ""
-            while True:
-                r = self.getRollExtended(3*l)
-                result[r[0]] += 1
-                msg = "{} {} ▫️ {} {} ▫️ {} {}\n" + "{} {}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
-                while rateup and (r[0] != 2 or not r[1].startswith('**')) and sum(result) % 5 != 0: # roll twice for slower modes if no rate up ssr
-                    r = self.getRollExtended(3*l)
-                    result[r[0]] += 1
-                    msg += "\n{} {}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1])
-                msg = msg.format(result[2], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[0], self.bot.emote.get('R'))
-                if sum(result) == 300 or (r[0] == 2 and (not rateup or (rateup and r[1].startswith('**')))): msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/sum(result))
-                if sum(result) == 300: title = "sparked"
-                elif r[0] == 2: title = "memerolled until a SSR"
-                else: title = "is memerolling..."
-                await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} {}".format(ctx.author.display_name, title), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-                if sum(result) == 300 or (r[0] == 2 and (not rateup or (rateup and r[1].startswith('**')))): break
-                await asyncio.sleep(0.5*l)
-        except: # legacy mode
-            result = [0, 0, 0]
-            while True:
-                r = self.getRoll(300*l)
-                result[r] += 1
-                if r == 0: break
-            msg = "{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate".format(result[0], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[2], self.bot.emote.get('R'), 100*result[0]/(result[0]+result[1]+result[2]))
-            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} memerolled until a SSR".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+            double = double[:-1].replace(' ', '')
+        else:
+            rateup = False
+        result = await self.bot.do(self.gachaRoll, mode='memerollB' if rateup else 'memerollA', legfest=self.checkLegfest(double))
+        footer = "{}% SSR rate".format(result['rate'])
+        final_msg = None
+        counter = [0, 0, 0]
+        text = ""
+        for i in range(0, len(result['list'])):
+            if i > 0 and i % 3 == 0:
+                if final_msg is None:
+                    final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is memerolling...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer))
+                else:
+                    await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} is memerolling...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer))
+                await asyncio.sleep(1)
+                text = ""
+            if result['extended']:
+                text += "{} {}\n".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(result['list'][i][0])), result['list'][i][1])
+            else:
+                text += "{} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(result['list'][i][0])))
+            counter[result['list'][i][0]] += 1
+        title = "{} memerolled".format(ctx.author.display_name) if (len(result['list']) < 300) else "{} sparked".format(ctx.author.display_name)
+        if final_msg is None:
+            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer))
+        else:
+            await final_msg.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer))
         await self.bot.util.clean(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -219,43 +209,33 @@ class Games(commands.Cog):
         """Do ten gacha rolls
         6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
         3% keywords: "normal", "x1", "3%", "gacha", "1"."""
-        l = self.isLegfest(double)
-        if l == 2: footer = "6% SSR rate"
-        else: footer = "3% SSR rate"
-        try:
-            await self.checkGacha()
-            hasSSR = False
-            rolls = []
-            while len(rolls) < 10:
-                rolls.append(self.getRollExtended(3*l, len(rolls) == 9))
-                if rolls[-1][0] == 2: hasSSR = True
-            if hasSSR: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
-            else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
-            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} did ten rolls...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
-            await asyncio.sleep(5)
+        result = self.gachaRoll(count=10, mode='ten', legfest=self.checkLegfest(double))
+        footer = "{}% SSR rate".format(result['rate'])
+        if result['detail'][2] > 0: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
+        else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} did ten rolls...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
+        if result['extended']:
             for i in range(0, 11):
                 msg = ""
                 for j in range(0, i):
-                    if j == 11: break
-                    msg += "{} {} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(rolls[j][0])), rolls[j][1])
+                    if j >= 10: break
+                    msg += "{} {} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(result['list'][j][0])), result['list'][j][1])
                     if j % 2 == 1: msg += "\n"
                 for j in range(i, 10):
-                    if j == 11: break
-                    msg += '{}'.format(self.bot.emote.get('crystal{}'.format(rolls[j][0])))
+                    msg += '{}'.format(self.bot.emote.get('crystal{}'.format(result['list'][j][0])))
                     if j % 2 == 1: msg += "\n"
                 await asyncio.sleep(0.75)
                 await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} did ten rolls".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        except: #legacy mode
+        else:
             msg = ""
             i = 0
-            while i < 10:
-                r = self.getRoll(300*l, i == 9)
+            for i in len(result['list']):
+                r = result['list'][i][0]
                 if i == 5: msg += '\n'
-                if r == 0: msg += '{}'.format(self.bot.emote.get('SSR'))
+                if r == 2: msg += '{}'.format(self.bot.emote.get('SSR'))
                 elif r == 1: msg += '{}'.format(self.bot.emote.get('SR'))
                 else: msg += '{}'.format(self.bot.emote.get('R'))
-                i += 1
-            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} did ten rolls".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} did ten rolls".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         await self.bot.util.clean(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -271,43 +251,31 @@ class Games(commands.Cog):
             msg = await ctx.reply(embed=self.bot.util.embed(title="Roll Error", description="Please specify a valid number of rolls (between **1** and **600** included)", color=self.color))
             await self.bot.util.clean(ctx, msg, 20)
             return
-        l = self.isLegfest(double)
-        if l == 2: base_rate = 6
-        else: base_rate = 3
-        footer = "{}% SSR rate".format(base_rate)
-        try:
-            await self.checkGacha()
-            result = self.tenDrawsExtended(3*l, count // 10)
-            for i in range(0, count % 10):
-                r = self.getRollExtended(3*l)
-                result[r[0]] += 1
-                if r[0] == 2: result[3][r[1]] = result[3].get(r[1], 0) + 1
-            rate = (100*result[2]/count)
-            if rate == 0: crystal = 'https://cdn.discordapp.com/attachments/614716155646705676/761969231323070494/0_s.png'
-            elif rate >= base_rate * 1.2: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'
-            elif rate >= base_rate: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
-            elif rate >= base_rate * 0.9: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
-            else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761976275706445844/1_s.png'
-            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is rolling {} times...".format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
-            await asyncio.sleep(5)
-            msg = "{} {} ▫️ {} {} ▫️ {} {}\n".format(result[2], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[0], self.bot.emote.get('R'))
-            if result[2] > 0: msg += '{} '.format(self.bot.emote.get('SSR'))
-            for i in result[3]:
-                msg += i
-                if result[3][i] > 1: msg += " x{}".format(result[3][i])
-                msg += ", "
-                if i is list(result[3])[-1]: msg = msg[:-2] + "\n**{:.2f}%** SSR rate".format(rate)
-                await asyncio.sleep(0.75)
-                await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} rolled {} times".format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-            await asyncio.sleep(0.75)
-            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} rolled {} times".format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        except: #legacy mode
-            result = self.tenDraws(300*l, count // 10)
-            for i in range(0, count % 10):
-                r = self.getRoll(300*l)
-                result[r] += 1
-            msg = "{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate".format(result[0], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[2], self.bot.emote.get('R'), 100*result[0]/count)
-            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} rolled {} times".format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        result = await self.bot.do(self.gachaRoll, count=count, mode='ten', legfest=self.checkLegfest(double))
+        footer = "{}% SSR rate".format(result['rate'])
+        base_rate = result['rate']
+        rate = (100*result['detail'][2]/count)
+        if rate == 0: crystal = 'https://cdn.discordapp.com/attachments/614716155646705676/761969231323070494/0_s.png'
+        elif rate >= base_rate * 1.2: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'
+        elif rate >= base_rate: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
+        elif rate >= base_rate * 0.9: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
+        else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761976275706445844/1_s.png'
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is rolling {} times...".format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
+        await asyncio.sleep(5)
+        msg = ""
+        if result['extended']:
+            rolls = self.getSSRList(result)
+            if len(rolls) > 0:
+                msg = "{} ".format(self.bot.emote.get('SSR'))
+                for item in rolls:
+                    msg += item
+                    if rolls[item] > 1: msg += " x{}".format(rolls[item])
+                    await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} rolled {} times".format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+                    await asyncio.sleep(0.75)
+                    msg += ", "
+                msg = msg[:-2]
+        msg = "{:} {:} ▫️ {:} {:} ▫️ {:} {:}\n{:}\n**{:.2f}%** SSR rate".format(result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), msg, rate)
+        await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} rolled {} times".format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         await self.bot.util.clean(ctx, final_msg, 30)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -316,43 +284,32 @@ class Games(commands.Cog):
         """Do thirty times ten gacha rolls
         6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
         3% keywords: "normal", "x1", "3%", "gacha", "1"."""
-        l = self.isLegfest(double)
-        if l == 2: base_rate = 6
-        else: base_rate = 3
-        footer = "{}% SSR rate".format(base_rate)
-        try:
-            await self.checkGacha()
-            result = self.tenDrawsExtended(3*l, 30)
-            rate = (100*result[2]/300)
-            if rate >= base_rate * 1.2: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'
-            elif rate >= base_rate: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
-            elif rate >= base_rate * 0.9: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
-            else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761976275706445844/1_s.png'
-            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is sparking...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
-            await asyncio.sleep(5)
-            msg = "{} {} ▫️ {} {} ▫️ {} {}\n".format(result[2], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[0], self.bot.emote.get('R'))
-            if result[2] > 0: msg += '{} '.format(self.bot.emote.get('SSR'))
-            for i in result[3]:
-                msg += i
-                if result[3][i] > 1: msg += " x{}".format(result[3][i])
-                msg += ", "
-                if i is list(result[3])[-1]: msg = msg[:-2] + "\n**{:.2f}%** SSR rate".format(rate)
-                await asyncio.sleep(0.75)
-                await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} sparked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-            await asyncio.sleep(0.75)
-            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} sparked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        except: #legacy mode
-            result = self.tenDraws(300*l, 30)
-            msg = "{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate".format(result[0], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[2], self.bot.emote.get('R'), 100*result[0]/300)
-            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} sparked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        result = await self.bot.do(self.gachaRoll, count=300, mode='ten', legfest=self.checkLegfest(double))
+        footer = "{}% SSR rate".format(result['rate'])
+        base_rate = result['rate']
+        rate = (100*result['detail'][2]/300)
+        if rate == 0: crystal = 'https://cdn.discordapp.com/attachments/614716155646705676/761969231323070494/0_s.png'
+        elif rate >= base_rate * 1.2: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'
+        elif rate >= base_rate: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
+        elif rate >= base_rate * 0.9: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
+        else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761976275706445844/1_s.png'
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is sparking...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
+        await asyncio.sleep(5)
+        msg = ""
+        if result['extended']:
+            rolls = self.getSSRList(result)
+            if len(rolls) > 0:
+                msg = "{} ".format(self.bot.emote.get('SSR'))
+                for item in rolls:
+                    msg += item
+                    if rolls[item] > 1: msg += " x{}".format(rolls[item])
+                    await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} sparked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+                    await asyncio.sleep(0.75)
+                    msg += ", "
+                msg = msg[:-2]
+        msg = "{:} {:} ▫️ {:} {:} ▫️ {:} {:}\n{:}\n**{:.2f}%** SSR rate".format(result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), msg, rate)
+        await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} sparked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         await self.bot.util.clean(ctx, final_msg, 30)
-
-    async def genGachapin(self, mode):
-        try:
-            await self.checkGacha()
-            return 0, self.tenDrawsExtended(3*mode, 0, 1)
-        except: #legacy mode
-            return 1, self.tenDraws(300*mode, 0, 1)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['frenzy'])
     @commands.cooldown(15, 30, commands.BucketType.guild)
@@ -360,63 +317,192 @@ class Games(commands.Cog):
         """Do ten rolls until you get a ssr
         6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
         3% keywords: "normal", "x1", "3%", "gacha", "1"."""
-        l = self.isLegfest(double)
-        if l == 2: footer = "6% SSR rate"
-        else: footer = "3% SSR rate"
-        gtype, result = await self.genGachapin(l)
-        if gtype == 0:
-            count = sum(result[:3])
-            msg = "Gachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[0], self.bot.emote.get('R'), self.bot.emote.get('SSR'))
-            for i in result[3]:
-                msg += i
-                if result[3][i] > 1: msg += " x{}".format(result[3][i])
-                msg += ", "
-            if len(result[3]) > 0: msg = msg[:-2]
-            msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/count)
-        elif gtype == 1: #legacy mode
-            count = sum(result)
-            msg = "Gachapin stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[2], self.bot.emote.get('R'), 100*result[0]/count)
-
-        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} rolled the Gachapin".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        await self.bot.util.clean(ctx, final_msg, 25)
-
-    async def genMukku(self, rate, mode):
-        try:
-            await self.checkGacha()
-            return 0, self.tenDrawsExtended(rate//100, 0, mode)
-        except: #legacy mode
-            return 1, self.tenDraws(rate, 0, mode)
+        result = await self.bot.do(self.gachaRoll, count=300, mode='gachapin', legfest=self.checkLegfest(double))
+        footer = "{}% SSR rate".format(result['rate'])
+        base_rate = result['rate']
+        rate = (100*result['detail'][2]/len(result['list']))
+        msg = ""
+        final_msg = None
+        if result['extended']:
+            rolls = self.getSSRList(result)
+            if len(rolls) > 0:
+                msg = "{} ".format(self.bot.emote.get('SSR'))
+                for item in rolls:
+                    msg += item
+                    if rolls[item] > 1: msg += " x{}".format(rolls[item])
+                    if final_msg is None:
+                        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} rolled the Gachapin".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+                    else:
+                        await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} rolled the Gachapin".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+                    await asyncio.sleep(0.75)
+                    msg += ", "
+                msg = msg[:-2]
+        msg = "Gachapin stopped after **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}\n{:}\n**{:.2f}%** SSR rate".format(len(result['list']), result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), msg, rate)
+        if final_msg is None:
+            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} rolled the Gachapin".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        else:
+            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} rolled the Gachapin".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        await self.bot.util.clean(ctx, final_msg, 30)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['mook'])
     @commands.cooldown(15, 30, commands.BucketType.guild)
     async def mukku(self, ctx, super : str = ""):
         """Do ten rolls until you get a ssr, 9% ssr rate
         You can add "super" for a 9% rate and 5 ssr mukku"""
-        if super.lower() == "super":
-            footer = "Super Mukku ▫️ 15% SSR Rate and at least 5 SSRs"
-            rate = 1500
-            mode = 2
+        result = await self.bot.do(self.gachaRoll, count=300, mode=('supermukku' if (super.lower() == "super") else 'mukku'))
+        footer = "{}% SSR rate".format(result['rate'])
+        base_rate = result['rate']
+        rate = (100*result['detail'][2]/len(result['list']))
+        msg = ""
+        final_msg = None
+        if result['extended']:
+            rolls = self.getSSRList(result)
+            if len(rolls) > 0:
+                msg = "{} ".format(self.bot.emote.get('SSR'))
+                for item in rolls:
+                    msg += item
+                    if rolls[item] > 1: msg += " x{}".format(rolls[item])
+                    if final_msg is None:
+                        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} rolled the Mukku".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+                    else:
+                        await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} rolled the Mukku".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+                    await asyncio.sleep(0.75)
+                    msg += ", "
+                msg = msg[:-2]
+        msg = "Mukku stopped after **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}\n{:}\n**{:.2f}%** SSR rate".format(len(result['list']), result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), msg, rate)
+        if final_msg is None:
+            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} rolled the Mukku".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
         else:
-            footer = "9% SSR rate"
-            rate = 900
-            mode = 1
-        gtype, result = await self.genMukku(rate, mode)
-        if gtype == 0:
-            result = self.tenDrawsExtended(rate//100, 0, mode)
-            count = sum(result[:3])
-            msg = "Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[0], self.bot.emote.get('R'), self.bot.emote.get('SSR'))
-            for i in result[3]:
-                msg += i
-                if result[3][i] > 1: msg += " x{}".format(result[3][i])
-                msg += ", "
-            if len(result[3]) > 0: msg = msg[:-2]
-            msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/count)
-        elif gtype == 1: #legacy mode
-            count = sum(result)
-            msg = "Mukku stopped after **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n".format(count, result[0], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[2], self.bot.emote.get('R'), 100*result[0]/count)
+            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} rolled the Mukku".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        await self.bot.util.clean(ctx, final_msg, 30)
 
-        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} rolled the Mukku".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        await self.bot.util.clean(ctx, final_msg, 25)
+    def getRoulette(self, count, mode, double):
+        result = self.gachaRoll(count=count, mode=mode, legfest=self.checkLegfest(double))
+        footer = "{}% SSR rate".format(result['rate'])
+        count = len(result['list'])
+        rate = (100*result['detail'][2]/count)
+        tmp = ""
+        if result['extended']:
+            ssrs = self.getSSRList(result)
+            if len(ssrs) > 0:
+                tmp = "\n{} ".format(self.bot.emote.get('SSR'))
+                for item in ssrs:
+                    tmp += item
+                    if ssrs[item] > 1: tmp += " x{}".format(ssrs[item])
+                    tmp += ", "
+                tmp = tmp[:-2]
+        return result, rate, tmp, count
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 180, commands.BucketType.user)
+    async def roulette(self, ctx, double : str = ""):
+        """Imitate the GBF roulette
+        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
+        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
+        footer = ""
+        roll = 0
+        rps = ['rock', 'paper', 'scissor']
+        ct = self.bot.util.JST()
+        # customization settings
+        fixedS = ct.replace(year=2021, month=3, day=29, hour=19, minute=0, second=0, microsecond=0) # beginning of fixed rolls
+        fixedE = fixedS.replace(day=31, hour=19) # end of fixed rolls
+        forced3pc = True # force 3%
+        forcedRollCount = 100 # number of rolls during fixed rolls
+        forcedSuperMukku = True
+        enable200 = False # add 200 on wheel
+        enableJanken = False
+        maxJanken = 2 # number of RPS
+        doubleMukku = True
+        # settings end
+        state = 0
+        superFlag = False
+        if ct >= fixedS and ct < fixedE:
+            msg = "{} {} :confetti_ball: :tada: Guaranteed **{} 0 0** R O L L S :tada: :confetti_ball: {} {}\n".format(self.bot.emote.get('crystal'), self.bot.emote.get('crystal'), forcedRollCount//100, self.bot.emote.get('crystal'), self.bot.emote.get('crystal'))
+            roll = forcedRollCount
+            if forcedSuperMukku: superFlag = True
+            if l == 2 and forced3pc:
+                l = self.isLegfest("")
+                if l == 2: footer = "6% SSR rate ▪️ Fixed rate"
+                else: footer = "3% SSR rate ▪️ Fixed rate"
+            d = 0
+            state = 1
+        else:
+            d = random.randint(1, 36000)
+            if enable200 and d < 300:
+                msg = "{} {} :confetti_ball: :tada: **2 0 0 R O L L S** :tada: :confetti_ball: {} {}\n".format(self.bot.emote.get('crystal'), self.bot.emote.get('crystal'), self.bot.emote.get('crystal'), self.bot.emote.get('crystal'))
+                roll = 200
+            elif d < 3000:
+                msg = "**Gachapin Frenzy** :four_leaf_clover:\n"
+                roll = -1
+                state = 2
+            elif d < 4500:
+                msg = ":confetti_ball: :tada: **100** rolls!! :tada: :confetti_ball:\n"
+                roll = 100
+            elif d < 7700:
+                msg = "**30** rolls! :clap:\n"
+                roll = 30
+            elif d < 19500:
+                msg = "**20** rolls :open_mouth:\n"
+                roll = 20
+            else:
+                msg = "**10** rolls :pensive:\n"
+                roll = 10
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is spinning the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        if not enableJanken and state < 2: state = 1
+        running = True
+        while running:
+            await asyncio.sleep(2)
+            if state == 0: # RPS
+                if enableJanken and d >= 2000 and random.randint(0, 2) > 0:
+                    a = 0
+                    b = 0
+                    while a == b:
+                        a = random.randint(0, 2)
+                        b = random.randint(0, 2)
+                    msg += "You got **{}**, Gachapin got **{}**".format(rps[a], rps[b])
+                    if (a == 1 and b == 0) or (a == 2 and b == 1) or (a == 0 and b == 2):
+                        msg += " :thumbsup:\nYou **won** rock paper scissor, your rolls are **doubled** :confetti_ball:\n"
+                        roll = roll * 2
+                        if roll > (200 if enable200 else 100): roll = (200 if enable200 else 100)
+                        maxJanken -= 1
+                        if maxJanken == 0:
+                            state = 1
+                    else:
+                        msg += " :pensive:\n"
+                        state = 1
+                else:
+                    state = 1
+            elif state == 1: # normal rolls
+                result, rate, tmp, count = await self.bot.do(self.getRoulette, roll, 'ten', double)
+                footer = "{}% SSR rate".format(result['rate'])
+                msg += "{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
+                if superFlag: state = 4
+                else: running = False
+            elif state == 2: # gachapin
+                result, rate, tmp, count = await self.bot.do(self.getRoulette, 300, 'gachapin', double)
+                footer = "{}% SSR rate".format(result['rate'])
+                msg += "Gachapin ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
+                if count == 10 and random.randint(1, 100) < 99: state = 3
+                elif count == 20 and random.randint(1, 100) < 60: state = 3
+                elif count == 30 and random.randint(1, 100) < 30: state = 3
+                else: running = False
+            elif state == 3:
+                result, rate, tmp, count = await self.bot.do(self.getRoulette, 300, 'mukku', double)
+                msg += ":confetti_ball: Mukku ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
+                if doubleMukku:
+                    if random.randint(1, 100) < 25: pass
+                    else: running = False
+                    doubleMukku = False
+                else:
+                    running = False
+            elif state == 4:
+                result, rate, tmp, count = await self.bot.do(self.getRoulette, 300, 'supermukku', double)
+                msg += ":confetti_ball: **Super Mukku** ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
+                running = False
+
+            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+
+        await self.bot.util.clean(ctx, final_msg, 45)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['scratcher'])
     @commands.cooldown(1, 300, commands.BucketType.user)
@@ -656,168 +742,6 @@ class Games(commands.Cog):
                             display_chest = False
                         break
                 await asyncio.sleep(0.001)
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(1, 180, commands.BucketType.user)
-    async def roulette(self, ctx, double : str = ""):
-        """Imitate the GBF roulette
-        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
-        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
-        try:
-            l = self.isLegfest(double)
-        except: # nothing if can't use extended mode
-            return
-        if l == 2: footer = "6% SSR rate"
-        else: footer = "3% SSR rate"
-        roll = 0
-        rps = ['rock', 'paper', 'scissor']
-        ct = self.bot.util.JST()
-        # customization settings
-        fixedS = ct.replace(year=2021, month=3, day=29, hour=19, minute=0, second=0, microsecond=0) # beginning of fixed rolls
-        fixedE = fixedS.replace(day=31, hour=19) # end of fixed rolls
-        forced3pc = True # force 3%
-        forcedRollCount = 100 # number of rolls during fixed rolls
-        forcedSuperMukku = True
-        enable200 = False # add 200 on wheel
-        enableJanken = False
-        maxJanken = 2 # number of RPS
-        doubleMukku = True
-        # settings end
-        state = 0
-        superFlag = False
-        if ct >= fixedS and ct < fixedE:
-            msg = "{} {} :confetti_ball: :tada: Guaranteed **{} 0 0** R O L L S :tada: :confetti_ball: {} {}\n".format(self.bot.emote.get('crystal'), self.bot.emote.get('crystal'), forcedRollCount//100, self.bot.emote.get('crystal'), self.bot.emote.get('crystal'))
-            roll = forcedRollCount
-            if forcedSuperMukku: superFlag = True
-            if l == 2 and forced3pc:
-                l = self.isLegfest("")
-                if l == 2: footer = "6% SSR rate ▪️ Fixed rate"
-                else: footer = "3% SSR rate ▪️ Fixed rate"
-            d = 0
-            state = 1
-        else:
-            d = random.randint(1, 36000)
-            if enable200 and d < 300:
-                msg = "{} {} :confetti_ball: :tada: **2 0 0 R O L L S** :tada: :confetti_ball: {} {}\n".format(self.bot.emote.get('crystal'), self.bot.emote.get('crystal'), self.bot.emote.get('crystal'), self.bot.emote.get('crystal'))
-                roll = 200
-            elif d < 3000:
-                msg = "**Gachapin Frenzy** :four_leaf_clover:\n"
-                roll = -1
-                state = 2
-            elif d < 4500:
-                msg = ":confetti_ball: :tada: **100** rolls!! :tada: :confetti_ball:\n"
-                roll = 100
-            elif d < 7700:
-                msg = "**30** rolls! :clap:\n"
-                roll = 30
-            elif d < 19500:
-                msg = "**20** rolls :open_mouth:\n"
-                roll = 20
-            else:
-                msg = "**10** rolls :pensive:\n"
-                roll = 10
-        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is spinning the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-        if not enableJanken and state < 2: state = 1
-        running = True
-        while running:
-            await asyncio.sleep(2)
-            if state == 0: # RPS
-                if enableJanken and d >= 2000 and random.randint(0, 2) > 0:
-                    a = 0
-                    b = 0
-                    while a == b:
-                        a = random.randint(0, 2)
-                        b = random.randint(0, 2)
-                    msg += "You got **{}**, Gachapin got **{}**".format(rps[a], rps[b])
-                    if (a == 1 and b == 0) or (a == 2 and b == 1) or (a == 0 and b == 2):
-                        msg += " :thumbsup:\nYou **won** rock paper scissor, your rolls are **doubled** :confetti_ball:\n"
-                        roll = roll * 2
-                        if roll > (200 if enable200 else 100): roll = (200 if enable200 else 100)
-                        maxJanken -= 1
-                        if maxJanken == 0:
-                            state = 1
-                    else:
-                        msg += " :pensive:\n"
-                        state = 1
-                else:
-                    state = 1
-            elif state == 1: # normal rolls
-                try:
-                    await self.checkGacha()
-                    result = self.tenDrawsExtended(3*l, roll//10)
-                    count = sum(result[:3])
-                    rate = (100*result[2]/count)
-                    msg += "{} {} ▫️ {} {} ▫️ {} {}\n".format(result[2], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[0], self.bot.emote.get('R'))
-                    if result[2] > 0:
-                        msg += "{} ".format(self.bot.emote.get('SSR'))
-                        for i in result[3]:
-                            msg += i
-                            if result[3][i] > 1: msg += " x{}".format(result[3][i])
-                            if i is list(result[3])[-1]: msg += "\n**{:.2f}%** SSR rate\n\n".format(rate)
-                            else: msg += ", "
-                except: # legacy mode
-                    count = sum(result)
-                    result = self.tenDraws(300*l, roll//10)
-                    msg += "{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n\n".format(result[0], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[2], self.bot.emote.get('R'), 100*result[0]/count)
-                if superFlag: state = 4
-                else: running = False
-            elif state == 2: # gachapin
-                gtype, result = await self.genGachapin(l)
-                if gtype == 0:
-                    count = sum(result[:3])
-                    msg += "Gachapin ▫️ **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[0], self.bot.emote.get('R'), self.bot.emote.get('SSR'))
-                    for i in result[3]:
-                        msg += i
-                        if result[3][i] > 1: msg += " x{}".format(result[3][i])
-                        msg += ", "
-                    if len(result[3]) > 0: msg = msg[:-2]
-                    msg += "\n**{:.2f}%** SSR rate\n\n".format(100*result[2]/count)
-                elif gtype == 1: #legacy mode
-                    count = sum(result)
-                    msg += "Gachapin ▫️ **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n\n".format(count, result[0], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[2], self.bot.emote.get('R'), 100*result[0]/count)
-                if count == 10 and random.randint(1, 100) < 99: state = 3
-                elif count == 20 and random.randint(1, 100) < 60: state = 3
-                elif count == 30 and random.randint(1, 100) < 30: state = 3
-                else: running = False
-            elif state == 3:
-                gtype, result = await self.genMukku(900, 1)
-                if gtype == 0:
-                    count = sum(result[:3])
-                    msg += ":confetti_ball: Mukku ▫️ **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[0], self.bot.emote.get('R'), self.bot.emote.get('SSR'))
-                    for i in result[3]:
-                        msg += i
-                        if result[3][i] > 1: msg += " x{}".format(result[3][i])
-                        msg += ", "
-                    if len(result[3]) > 0: msg = msg[:-2]
-                    msg += "\n**{:.2f}%** SSR rate\n\n".format(100*result[2]/count)
-                elif gtype == 1: #legacy mode
-                    count = sum(result)
-                    msg += "\n:confetti_ball: Mukku ▫️ **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate\n\n".format(count, result[0], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[2], self.bot.emote.get('R'), 100*result[0]/count)
-                if doubleMukku:
-                    if random.randint(1, 100) < 25: pass
-                    else: running = False
-                    doubleMukku = False
-                else:
-                    running = False
-            elif state == 4:
-                gtype, result = await self.genMukku(1500, 2)
-                if gtype == 0:
-                    count = sum(result[:3])
-                    msg += ":confetti_ball: **Super Mukku** ▫️ **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n{} ".format(count, result[2], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[0], self.bot.emote.get('R'), self.bot.emote.get('SSR'))
-                    for i in result[3]:
-                        msg += i
-                        if result[3][i] > 1: msg += " x{}".format(result[3][i])
-                        msg += ", "
-                    if len(result[3]) > 0: msg = msg[:-2]
-                    msg += "\n**{:.2f}%** SSR rate".format(100*result[2]/count)
-                elif gtype == 1: #legacy mode
-                    count = sum(result)
-                    msg += ":confetti_ball: **Super Mukku** ▫️ **{}** rolls\n{} {} ▫️ {} {} ▫️ {} {}\n**{:.2f}%** SSR rate".format(count, result[0], self.bot.emote.get('SSR'), result[1], self.bot.emote.get('SR'), result[2], self.bot.emote.get('R'), 100*result[0]/count)
-                running = False
-
-            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
-
-        await self.bot.util.clean(ctx, final_msg, 45)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 600, commands.BucketType.user)

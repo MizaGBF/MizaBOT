@@ -4,7 +4,6 @@ import json
 import zlib
 from urllib import request
 from datetime import datetime, timedelta
-import functools
 
 # ----------------------------------------------------------------------------------------------------------------
 # GBF Component
@@ -21,9 +20,6 @@ class GBF():
 
     def init(self):
         self.data = self.bot.data
-
-    async def arequest(self, url, **options):
-        return await self.bot.do(functools.partial(self.request, url, **options))
 
     def request(self, url, **options):
         try:

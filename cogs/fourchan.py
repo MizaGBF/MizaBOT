@@ -1,7 +1,6 @@
 ﻿from discord.ext import commands
-import aiohttp
 import re
-from xml.sax import saxutils as su
+import html
 
 # ----------------------------------------------------------------------------------------------------------------
 # FourChan Cog
@@ -17,23 +16,19 @@ class FourChan(commands.Cog):
 
     def cleanhtml(self, raw):
       cleaner = re.compile('<.*?>')
-      return su.unescape(re.sub(cleaner, '', raw.replace('<br>', ' '))).replace('>', '')
+      return html.unescape(re.sub(cleaner, '', raw.replace('<br>', ' '))).replace('>', '')
 
     # get a 4chan thread
-    async def get4chan(self, board : str, search : str): # be sure to not abuse it, you are not supposed to call the api more than once per second
+    def get4chan(self, board : str, search : str): # be sure to not abuse it, you are not supposed to call the api more than once per second
         try:
             search = search.lower()
-            url = 'http://a.4cdn.org/{}/catalog.json'.format(board) # board catalog url
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as r:
-                    if r.status == 200:
-                        data = await r.json()
+            data = self.bot.gbf.request('http://a.4cdn.org/{}/catalog.json'.format(board), no_base_headers=True, load_json=True)
             threads = []
             for p in data:
                 for t in p["threads"]:
                     try:
                         if t.get("sub", "").lower().find(search) != -1 or t.get("com", "").lower().find(search) != -1:
-                            threads.append([t["no"], t["replies"], su.unescape(self.cleanhtml(t.get("com", "")))]) # store the thread ids matching our search word
+                            threads.append([t["no"], t["replies"], self.cleanhtml(t.get("com", ""))]) # store the thread ids matching our search word
                     except:
                         pass
             threads.sort(reverse=True)
@@ -48,14 +43,14 @@ class FourChan(commands.Cog):
         if not ctx.channel.is_nsfw():
             await ctx.reply(embed=self.bot.util.embed(title=':underage: NSFW channels only'))
             return
-        threads = await self.get4chan('vg', '/hgg2d/')
+        threads = await self.bot.do(self.get4chan, 'vg', '/hgg2d/')
         if len(threads) > 0:
             msg = ""
             for t in threads:
-                if len(t[2]) > 23:
-                    msg += '🔞 [{}](https://boards.4channel.org/vg/thread/{}) ▫️ *{} replies* ▫️ {}...\n'.format(t[0], t[0], t[1], t[2][:23])
+                if len(t[2]) > 34:
+                    msg += '🔞 [{} replies](https://boards.4channel.org/vg/thread/{}) ▫️ {}...\n'.format(t[1], t[0], t[2][:33])
                 else:
-                    msg += '🔞 [{}](https://boards.4channel.org/vg/thread/{}) ▫️ *{} replies* ▫️ {}\n'.format(t[0], t[0], t[1], t[2])
+                    msg += '🔞 [{} replies](https://boards.4channel.org/vg/thread/{}) ▫️ {}\n'.format(t[1], t[0], t[2])
                 if len(msg) > 1800:
                     msg += 'and more...'
                     break
@@ -67,14 +62,14 @@ class FourChan(commands.Cog):
     @commands.cooldown(1, 3, commands.BucketType.default)
     async def gbfg(self, ctx):
         """Post the latest /gbfg/ threads"""
-        threads = await self.get4chan('vg', '/gbfg/')
+        threads = await self.bot.do(self.get4chan, 'vg', '/gbfg/')
         if len(threads) > 0:
             msg = ""
             for t in threads:
-                if len(t[2]) > 23:
-                    msg += ':poop: [{}](https://boards.4channel.org/vg/thread/{}) ▫️ *{} replies* ▫️ {}...\n'.format(t[0], t[0], t[1], t[2][:23])
+                if len(t[2]) > 34:
+                    msg += ':poop: [{} replies](https://boards.4channel.org/vg/thread/{}) ▫️ {}...\n'.format(t[1], t[0], t[2][:33])
                 else:
-                    msg += ':poop: [{}](https://boards.4channel.org/vg/thread/{}) ▫️ *{} replies* ▫️ {}\n'.format(t[0], t[0], t[1], t[2])
+                    msg += ':poop: [{} replies](https://boards.4channel.org/vg/thread/{}) ▫️ {}\n'.format(t[1], t[0], t[2])
                 if len(msg) > 1800:
                     msg += 'and more...'
                     break
@@ -91,14 +86,14 @@ class FourChan(commands.Cog):
         if board in nsfw and not ctx.channel.is_nsfw():
             await ctx.reply(embed=self.bot.util.embed(title=":underage: The board `{}` is restricted to NSFW channels".format(board)))
             return
-        threads = await self.get4chan(board, term)
+        threads = await self.bot.do(self.get4chan, board, term)
         if len(threads) > 0:
             msg = ""
             for t in threads:
-                if len(t[2]) > 23:
-                    msg += ':four_leaf_clover: [{}](https://boards.4channel.org/{}/thread/{}) ▫️ *{} replies* ▫️ {}...\n'.format(t[0], board, t[0], t[1], t[2][:23])
+                if len(t[2]) > 34:
+                    msg += ':four_leaf_clover: [{} replies](https://boards.4channel.org/{}/thread/{}) ▫️ {}...\n'.format(t[1], board, t[0], t[2][:33])
                 else:
-                    msg += ':four_leaf_clover: [{}](https://boards.4channel.org/{}/thread/{}) ▫️ *{} replies* ▫️ {}\n'.format(t[0], board, t[0], t[1], t[2])
+                    msg += ':four_leaf_clover: [{} replies](https://boards.4channel.org/{}/thread/{}) ▫️ {}\n'.format(t[1], board, t[0], t[2])
                 if len(msg) > 1800:
                     msg += 'and more...'
                     break
