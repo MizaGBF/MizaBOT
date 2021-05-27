@@ -112,7 +112,7 @@ class Util():
     def get_memory(self):
         mem = self.process.memory_info()[0]
         for child in self.process.children(recursive=True):
-            mem += child.memory_info()()[0]
+            mem += child.memory_info()[0]
         return mem
 
     def status(self):
