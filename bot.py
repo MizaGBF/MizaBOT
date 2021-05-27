@@ -28,7 +28,7 @@ import functools
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "8.0-beta-1" # bot version
+        self.version = "8.0-beta-2" # bot version
         self.changelog = ["Added `$dice`, `$8ball` and `$coin`", "Bot structure overhaul"] # changelog lines
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
