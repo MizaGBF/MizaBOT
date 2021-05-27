@@ -175,6 +175,7 @@ class Drive():
         p = multiprocessing.Process(target=func, args=args + (ret,))
         p.start()
         p.join()
+        p.close()
         if ret.value == 0: return False
         elif ret.value > 0: return True
         return None
