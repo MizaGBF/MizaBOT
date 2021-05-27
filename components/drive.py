@@ -4,7 +4,7 @@ import threading
 import json
 from datetime import datetime
 import multiprocessing
-from ctypes import c_bool
+from ctypes import c_int
 
 # ----------------------------------------------------------------------------------------------------------------
 # Drive Component
@@ -37,12 +37,12 @@ def load(folder, ret): # load save.json from the folder id in bot.tokens
         for s in file_list:
             if s['title'] == "save.json":
                 s.GetContentFile(s['title']) # iterate until we find save.json and download it
-                ret = 1
+                ret.value = 1
                 return
-        ret = -1
+        ret.value = -1
     except Exception as e:
         print(e)
-        ret = 0
+        ret.value = 0
 
 def save(data, folder, ret): # write save.json to the folder id in bot.tokens
     try:
@@ -65,10 +65,10 @@ def save(data, folder, ret): # write save.json to the folder id in bot.tokens
         for f in prev:
             f['title'] = "backup_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".json"
             f.Upload()
-        ret = 1
+        ret.value = 1
     except Exception as e:
         print(e)
-        ret = 0
+        ret.value = 0
 
 def saveFile(data, name, folder, ret): # write a json file to a folder
     try:
@@ -76,9 +76,9 @@ def saveFile(data, name, folder, ret): # write a json file to a folder
         s = drive.CreateFile({'title':name, 'mimeType':'text/JSON', "parents": [{"kind": "drive#file", "id": folder}]})
         s.SetContentString(data)
         s.Upload()
-        ret = 1
+        ret.value = 1
     except:
-        ret = 0
+        ret.value = 0
 
 def saveDiskFile(target, mime, name, folder, ret): # write a file from the local storage to a drive folder
     try:
@@ -86,9 +86,9 @@ def saveDiskFile(target, mime, name, folder, ret): # write a file from the local
         s = drive.CreateFile({'title':name, 'mimeType':mime, "parents": [{"kind": "drive#file", "id": folder}]})
         s.SetContentFile(target)
         s.Upload()
-        ret = 1
+        ret.value = 1
     except:
-        ret = 0
+        ret.value = 0
 
 def overwriteFile(target, mime, name, folder, ret): # write a file from the local storage to a drive folder (replacing an existing one, if it exists)
     try:
@@ -99,13 +99,13 @@ def overwriteFile(target, mime, name, folder, ret): # write a file from the loca
                 new_file = drive.CreateFile({'id': s['id']})
                 new_file.SetContentFile(target)
                 new_file.Upload()
-                ret = 1
+                ret.value = 1
                 return
         # not found
         saveDiskFile(target, mime, name, folder, ret)
     except Exception as e:
         print(e)
-        ret = 0
+        ret.value = 0
 
 def mvFile(name, folder, new, ret): # rename a file from a folder
     try:
@@ -115,12 +115,12 @@ def mvFile(name, folder, new, ret): # rename a file from a folder
             if s['title'] == name:
                 s['title'] = new # iterate until we find the file and change name
                 s.Upload()
-                ret = 1
+                ret.value = 1
                 return
-        ret = 0
+        ret.value = 0
     except Exception as e:
         print(e)
-        ret = 0
+        ret.value = 0
 
 def cpyFile(name, folder, new, ret): # rename a file from a folder
     try:
@@ -129,11 +129,11 @@ def cpyFile(name, folder, new, ret): # rename a file from a folder
         for s in file_list:
             if s['title'] == name:
                 drive.auth.service.files().copy(fileId=s['id'], body={"parents": [{"kind": "drive#fileLink", "id": folder}], 'title': new}).execute()
-                ret = 1
-        ret = 0
+                ret.value = 1
+        ret.value = 0
     except Exception as e:
         print(e)
-        ret = 0
+        ret.value = 0
 
 def dlFile(name, folder, ret): # load a file from a folder to the local storage
     try:
@@ -142,12 +142,12 @@ def dlFile(name, folder, ret): # load a file from a folder to the local storage
         for s in file_list:
             if s['title'] == name:
                 s.GetContentFile(s['title']) # iterate until we find the file and download it
-                ret = 1
+                ret.value = 1
                 return
-        ret = 0
+        ret.value = 0
     except Exception as e:
         print(e)
-        ret = 0
+        ret.value = 0
 
 def delFiles(names, folder, ret): # delete matching files from a folder
     try:
@@ -156,10 +156,10 @@ def delFiles(names, folder, ret): # delete matching files from a folder
         for s in file_list:
             if s['title'] in names:
                 s.Delete()
-        ret = 1
+        ret.value = 1
     except Exception as e:
         print(e)
-        ret = 0
+        ret.value = 0
 
 # component
 class Drive():
@@ -171,11 +171,13 @@ class Drive():
         pass
 
     def do(self, func, *args):
-        ret = multiprocessing.Value(c_bool, False)
+        ret = multiprocessing.Value(c_int, 0)
         p = multiprocessing.Process(target=func, args=args + (ret,))
         p.start()
         p.join()
-        return ret
+        if ret.value == 0: return False
+        elif ret.value > 0: return True
+        return None
 
     def load(self): # load save.json from the folder id in bot.tokens
         with self.lock:
