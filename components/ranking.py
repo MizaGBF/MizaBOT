@@ -310,9 +310,12 @@ class Ranking():
                             ver = int(row[1])
                             break
                         if gw != self.bot.data.save['gw']['id'] or ver != 2: raise Exception()
+                    c.close()
+                    conn.close()
                 except:
+                    c.close()
+                    conn.close()
                     self.bot.file.rm('temp.sql')
-                conn.close()
 
             state = "" # return value
             self.scrap_update_time = update_time
@@ -377,6 +380,7 @@ class Ranking():
             if data is None or len(data) == 0: raise Exception("Failed to retrieve data")
             d = [4, 5, 6, 7]
             infos.append([data[0][2], data[0][d[day-2]]-data[0][d[day-2]-1]]) # name and score of the day
+        c.close()
         conn.close()
         return infos
 

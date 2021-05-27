@@ -1148,12 +1148,14 @@ class GranblueFantasy(commands.Cog):
     def dlAndPasteImage(self, img, url, offset, resize):
         req = request.Request(url)
         url_handle = request.urlopen(req)
-        file_jpgdata = BytesIO(url_handle.read())
-        url_handle.close()
-        dt = Image.open(file_jpgdata)
-        dt = dt.convert('RGBA')
-        if resize is not None: dt = dt.resize(resize)
-        img.paste(dt, offset, dt)
+        with BytesIO(url_handle.read()) as file_jpgdata:
+            url_handle.close()
+            buffers = [Image.open(file_jpgdata)]
+            buffers.append(buffers[-1].convert('RGBA'))
+            if resize is not None: buffers.append(buffers[-1].resize(resize))
+            img.paste(buffers[-1], offset, buffers[-1])
+            for buf in buffers: buf.close()
+            del buffers
 
     def processProfile(self, id, data):
         soup = BeautifulSoup(data, 'html.parser')
@@ -1299,8 +1301,11 @@ class GranblueFantasy(commands.Cog):
                 d.text((0, 0), "{}".format(id), fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
                 thumbnail = "{}_{}.png".format(id, datetime.utcnow().timestamp())
                 img.save(thumbnail, "PNG")
+                img.close()
             except:
                 thumbnail = ""
+                try: img.close()
+                except: pass
 
             if trophy == "No Trophy Displayed": title = "\u202d{} **{}**".format(self.bot.emote.get(rarity), name)
             else: title = "\u202d{} **{}**▫️{}".format(self.bot.emote.get(rarity), name, trophy)

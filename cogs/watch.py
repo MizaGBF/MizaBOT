@@ -652,8 +652,11 @@ class Watch(commands.Cog):
                 if ts is None: ts = self.genTS()
                 fst = "{}_{}.png".format(ff, ts)
                 i.save(fst, "PNG")
+                i.close()
                 iul.append(fst)
             except:
+                try: i.close()
+                except: pass
                 if counter >= 3 and len(paste) == 0:
                     return ["", {}, {}, thf, ""]
             counter+=1

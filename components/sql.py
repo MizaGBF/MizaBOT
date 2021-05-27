@@ -31,6 +31,7 @@ class Database():
             return None
 
     def close(self):
+        self.cursor.close()
         self.conn.close()
         self.conn = None
         self.cursor = None
