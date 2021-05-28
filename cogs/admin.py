@@ -4,6 +4,8 @@ import asyncio
 from datetime import datetime, timedelta
 import random
 import html
+import gc
+import os
 
 # ----------------------------------------------------------------------------------------------------------------
 # Admin Cog
@@ -25,6 +27,7 @@ class Admin(commands.Cog):
         while True:
             try:
                 await self.bot.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=random.choice(self.bot.data.config['games'])))
+                gc.collect()
                 await asyncio.sleep(1200)
                 # check if it's time for the bot maintenance for me (every 2 weeks or so)
                 c = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -468,7 +471,9 @@ class Admin(commands.Cog):
         """Post the current config file in the debug channel (Owner only)"""
         try:
             with open('config.json', 'rb') as infile:
-                await self.bot.send('debug', 'config.json', file=discord.File(infile))
+                df = discord.File(infile)
+                await self.bot.send('debug', 'config.json', file=df)
+                df.close()
         except Exception as e:
             await self.bot.sendError('config', str(e))
 
@@ -510,7 +515,9 @@ class Admin(commands.Cog):
         """Retrieve a bot file remotely (Owner only)"""
         try:
             with open(filename, 'rb') as infile:
-                await self.bot.send('debug', file=discord.File(infile))
+                df = discord.File(infile)
+                await self.bot.send('debug', file=df)
+                df.close()
             await self.bot.util.react(ctx.message, '✅') # white check mark
         except Exception as e:
             await self.bot.sendError('getfile', str(e))

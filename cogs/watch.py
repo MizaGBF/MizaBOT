@@ -278,7 +278,7 @@ class Watch(commands.Cog):
     async def do(self, executor, func, *args):
         return await self.bot.loop.run_in_executor(executor, func, *args)
 
-    def ce(self, ct, o, i, silent): # crt[i][1], o, i, False
+    def ce(self, ct, o, i, silent):
         try:
             found = {'type':0, 'ct':ct, 'count':0}
             cid = ct[1]
@@ -448,7 +448,9 @@ class Watch(commands.Cog):
         for k in data[2]:
             try:
                 with open(k, 'rb') as infile:
-                    message = await self.bot.send('image', file=discord.File(infile))
+                    df = discord.File(infile)
+                    message = await self.bot.send('image', file=df)
+                    df.close()
                 tmp += "[{}]({})\n".format('_'.join(k.replace(x, '').split('_')[:-1]), message.attachments[0].url)
                 self.bot.file.rm(k)
             except:
@@ -469,7 +471,9 @@ class Watch(commands.Cog):
                 f['value'] = f['value'][:1019] + '...'
         try:
             with open(data[0], "rb") as f:
-                await c.send(embed=self.bot.util.embed(title=tt, fields=fields, color=self.color, thumbnail=data[3]), file=discord.File(f))
+                df = discord.File(f)
+                await c.send(embed=self.bot.util.embed(title=tt, fields=fields, color=self.color, thumbnail=data[3]), file=df)
+                df.close()
             self.bot.file.rm(data[0])
         except:
             await c.send(embed=self.bot.util.embed(title=tt, description=data[0], fields=fields, color=self.color, thumbnail=data[3]))

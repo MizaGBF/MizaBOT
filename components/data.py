@@ -130,7 +130,9 @@ class Data():
         if discordDump:
             try:
                 with open('save.json', 'r') as infile:
-                    await self.bot.send('debug', 'save.json', file=discord.File(infile))
+                    df = discord.File(infile)
+                    await self.bot.send('debug', 'save.json', file=df)
+                    df.close()
             except:
                 pass
         self.autosaving = False

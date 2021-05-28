@@ -1370,7 +1370,9 @@ class GranblueFantasy(commands.Cog):
             title, description, thumbnail = await self.bot.do(self.processProfile, id, data)
             try:
                 with open(thumbnail, 'rb') as infile:
-                    message = await self.bot.send('image', file=discord.File(infile))
+                    df = discord.File(infile)
+                    message = await self.bot.send('image', file=df)
+                    df.close()
                 self.bot.file.rm(thumbnail)
                 thumbnail = message.attachments[0].url
             except:

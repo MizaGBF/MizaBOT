@@ -428,7 +428,9 @@ class Ranking():
             cairosvg.svg2png(url="chart.svg", write_to="chart.png")
             try:
                 with open("chart.png", "rb") as f:
-                    message = await self.bot.send('image', file=discord.File(f))
+                    df = discord.File(f)
+                    message = await self.bot.send('image', file=df)
+                    df.close()
                     newtracker['chart'] = message.attachments[0].url
             except:
                 pass
