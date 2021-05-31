@@ -20,7 +20,7 @@ def load(bot): # load all cogs in the 'cog' folder
                             _class = getattr(module, class_name) # make
                             bot.add_cog(_class(bot)) # instantiate and add to the bot
                         except Exception as e:
-                            print("Cog Import Exception in file", p, ":", e)
+                            print("Cog Import Exception in file", p, ":", bot.util.pexc(e))
                         count += 1
             except:
                 pass

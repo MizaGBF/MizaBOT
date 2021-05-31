@@ -36,7 +36,7 @@ class Data():
                 self.config = data
             return True
         except Exception as e:
-            print('loadConfig(): {}\nCheck your \'config.json\' for the above error.'.format(e))
+            print('loadConfig(): {}\nCheck your \'config.json\' for the above error.'.format(self.bot.util.pexc(e)))
             return False
 
     def loadData(self): # same thing but for save.json
@@ -65,7 +65,7 @@ class Data():
                 return True
         except Exception as e:
             self.errn += 1
-            print('load(): {}'.format(e))
+            print('load(): {}'.format(self.bot.util.pexc(e)))
             return False
 
     def saveData(self): # saving (lock isn't used, use it outside!)
@@ -77,7 +77,7 @@ class Data():
             return True
         except Exception as e:
             self.errn += 1
-            print('save(): {}'.format(e))
+            print('save(): {}'.format(self.bot.util.pexc(e)))
             return False
 
     def checkData(self, data): # used to initialize missing data or remove useless data from the save file

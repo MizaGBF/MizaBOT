@@ -99,7 +99,7 @@ class MizaBot(commands.Bot):
                     time.sleep(100)
                 else:
                     self.errn += 1
-                    print("Main Loop Exception: " + str(e))
+                    print("Main Loop Exception:\n" + self.bot.util.pexc(e))
         if self.data.saveData():
             print('Autosave Success')
         else:
@@ -164,7 +164,7 @@ class MizaBot(commands.Bot):
             return await self.channel.get(channel_name).send(msg, embed=embed, file=file)
         except Exception as e:
             self.errn += 1
-            print("Channel {} error: {}".format(channel_name, e))
+            print("Channel {} error: {}".format(channel_name, self.bot.util.pexc(e)))
             return None
 
     async def sendMulti(self, channel_names : list, msg : str = "", embed : discord.Embed = None, file : discord.File = None): # send to multiple registered channel at the same time

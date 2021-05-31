@@ -639,7 +639,7 @@ class GuildWar(commands.Cog):
                     data[n]['result'] = c.fetchall()
                     random.shuffle(data[n]['result'])
                 except Exception as e:
-                    print('searchGWDB', n, 'mode', mode, ':', e)
+                    print('searchGWDB', n, 'mode', mode, ':', self.bot.util.pexc(e))
                     self.bot.errn += 1
                     data[n] = None
                 dbs[n].close()
@@ -792,7 +792,7 @@ class GuildWar(commands.Cog):
                 else: desc = ""
                 final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War {}**".format(self.bot.emote.get('gw'), gwnum), description=desc, fields=fields, inline=True, footer="help find{} for details".format(txt), color=self.color))
             except Exception as e:
-                print(e)
+                print(self.bot.util.pexc(e))
         await self.bot.util.clean(ctx, final_msg, 45)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwcrew'])

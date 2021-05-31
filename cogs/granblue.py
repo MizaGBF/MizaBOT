@@ -1044,7 +1044,7 @@ class GranblueFantasy(commands.Cog):
                 self.bot.data.pending = True
             return True
         except Exception as e:
-            print('updategacha(): ', e)
+            print('updategacha(): ', self.bot.util.pexc(e))
             self.bot.errn += 1
             with self.bot.data.lock:
                 self.bot.data.save['gbfdata']['gachatime'] = None
