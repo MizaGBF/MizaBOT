@@ -1330,14 +1330,13 @@ class GranblueFantasy(commands.Cog):
                 for k in self.possiblesum:
                     x = (int(k[0]) + 6) % 7
                     y = int(k[1])
-                    if k in sumimg:
-                        s = sumimg.get(k, ['2999999999', '', '', '', None])
-                        url = "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/summon/ls/{}.jpg".format(s[0])
-                        self.dlAndPasteImage(img, url, (sup_X_offset+x*sup_summon_size[0], sup_summon_size[1]*y), sup_summon_size)
-                        if s[4] is not None:
-                            if s[4] == "": sumstar = "assets/star_0.png"
-                            else: sumstar = "assets/star_{}.png".format(s[4][-1])
-                            self.pasteImage(img, sumstar, (sup_X_offset+(x+1)*sup_summon_size[0]-33, sup_summon_size[1]*(y+1)-33))
+                    s = sumimg.get(k, ['2999999999', '', '', '', None])
+                    url = "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/summon/ls/{}.jpg".format(s[0])
+                    self.dlAndPasteImage(img, url, (sup_X_offset+x*sup_summon_size[0], sup_summon_size[1]*y), sup_summon_size)
+                    if s[4] is not None:
+                        if s[4] == "": sumstar = "assets/star_0.png"
+                        else: sumstar = "assets/star_{}.png".format(s[4][-1])
+                        self.pasteImage(img, sumstar, (sup_X_offset+(x+1)*sup_summon_size[0]-33, sup_summon_size[1]*(y+1)-33))
                         
 
                 # id and stats
