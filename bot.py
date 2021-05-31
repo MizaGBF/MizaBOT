@@ -29,7 +29,7 @@ import functools
 class MizaBot(commands.Bot):
     def __init__(self):
         self.version = "8.0-beta-2" # bot version
-        self.changelog = ["**This MizaBOT version is a Beta**, please use `$bug_report` if you see anything wrong", "Added `$addRoll`", "Added `$dice`, `$8ball` and `$coin`"] # changelog lines
+        self.changelog = ["**This MizaBOT version is a Beta**, please use `$bug_report` if you see anything wrong", "Reworked `$profile`", "Added `$addRoll`", "Added `$dice`, `$8ball` and `$coin`"] # changelog lines
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
         self.tasks = {} # contain our user tasks

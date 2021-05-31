@@ -23,7 +23,8 @@ class GranblueFantasy(commands.Cog):
         self.bot = bot
         self.color = 0x34aeeb
         self.rankre = re.compile("Rank ([0-9])+")
-        self.sumre = re.compile("<div id=\"js-fix-summon([0-9]{2})-name\" class=\"prt-fix-name\" name=\"[A-Za-z'-. ]+\">(Lvl [0-9]+ [A-Za-z'-. ]+)<\\/div>")
+        self.rankre = re.compile("Rank ([0-9])+")
+        self.sumre = re.compile("alt=\"([0-9]{10}|[0-9]{10}_0[1-9])\" />\\s*(<div class=\"prt-quality\">\\+[0-9]+</div>\\s*)?</div>\\s*<div class=\"prt-fix-spec\">\\s*<div id=\"js-fix-summon([0-9]{2})-name\" class=\"prt-fix-name\" name=\"[A-Za-z'-. ]+\">(Lvl [0-9]+ [A-Za-z'-. ]+)<\\/div>\\s*<div id=\"js-fix-summon[0-9]{2}-info\" class=\"prt-fix-info( bless-rank[0-4])?")
         self.starre = re.compile("<span class=\"prt-current-npc-name\">\\s*(Lvl [0-9]+ [A-Za-z'-.μ ]+)\\s*<\\/span>")
         self.starcomre = re.compile("<div class=\"prt-pushed-info\">(.+)<\\/div>")
         self.empre = re.compile("<div class=\"txt-npc-rank\">([0-9]+)<\\/div>")
@@ -1139,17 +1140,21 @@ class GranblueFantasy(commands.Cog):
         except Exception as e:
             await self.bot.sendError("setprofile", e)
 
-    def dlAndPasteImage(self, img, url, offset, resize=None):
+    def pasteImage(self, img, file, offset, resize=None): # paste and image onto another
+        buffers = [Image.open(file)]
+        buffers.append(buffers[-1].convert('RGBA'))
+        if resize is not None: buffers.append(buffers[-1].resize(resize, Image.LANCZOS))
+        img.paste(buffers[-1], offset, buffers[-1])
+        for buf in buffers: buf.close()
+        del buffers
+
+    def dlAndPasteImage(self, img, url, offset, resize=None): # dl an image and call pasteImage()
         req = request.Request(url)
         url_handle = request.urlopen(req)
-        with BytesIO(url_handle.read()) as file_jpgdata:
-            url_handle.close()
-            buffers = [Image.open(file_jpgdata)]
-            buffers.append(buffers[-1].convert('RGBA'))
-            if resize is not None: buffers.append(buffers[-1].resize(resize))
-            img.paste(buffers[-1], offset, buffers[-1])
-            for buf in buffers: buf.close()
-            del buffers
+        data = url_handle.read()
+        url_handle.close()
+        with BytesIO(data) as file_jpgdata:
+            self.pasteImage(img, file_jpgdata, offset, resize)
 
     def processProfile(self, id, data):
         soup = BeautifulSoup(data, 'html.parser')
@@ -1165,8 +1170,12 @@ class GranblueFantasy(commands.Cog):
                     rarity = h[1]
                 except:
                     pass
-            if header is not None: rank = "**{}**".format(self.rankre.search(str(header)).group(0))
-            else: rank = ""
+            if header is not None:
+                brank = self.rankre.search(str(header)).group(0)
+                rank = "**{}**".format(brank)
+            else:
+                brank = " "
+                rank = ""
             trophy = soup.find_all("div", class_="prt-title-name")[0].string
             comment = su.unescape(soup.find_all("div", class_="prt-other-comment")[0].string).replace('\t', '').replace('\n', '')
             if comment == "": pass
@@ -1174,11 +1183,10 @@ class GranblueFantasy(commands.Cog):
             else: comment = " ▫️ 💬 `{}`".format(comment.replace('`', '\''))
             mc_url = soup.find_all("img", class_="img-pc")[0]['src'].replace("/po/", "/talk/").replace("/img_low/", "/img/")
             # Unused
-            #stats = soup.find_all("div", class_="num")
-            #hp = int(stats[0].string)
-            #atk = int(stats[1].string)
-            #job = soup.find_all("div", class_="txt-other-job-info")[0].string
-            #job_lvl = soup.find_all("div", class_="txt-other-job-level")[0].string.replace("  ", " ")
+            stats = soup.find_all("div", class_="num")
+            hp = stats[0].string
+            atk = stats[1].string
+            job_icon = soup.find_all("img", class_="img-job-icon")[0].attrs['src'].replace("img_low", "img")
 
             try:
                 try:
@@ -1209,9 +1217,11 @@ class GranblueFantasy(commands.Cog):
             try:
                 summons_res = self.sumre.findall(data)
                 sortsum = {}
+                sumimg = {}
                 for s in summons_res:
-                    if self.possiblesum[s[0]] not in sortsum: sortsum[self.possiblesum[s[0]]] = s[1]
-                    else: sortsum[self.possiblesum[s[0]]] += ' ▫️ ' + s[1]
+                    if self.possiblesum[s[2]] not in sortsum: sortsum[self.possiblesum[s[2]]] = s[3]
+                    else: sortsum[self.possiblesum[s[2]]] += ' ▫️ ' + s[3]
+                    sumimg[s[2]] = s
                 try:
                     misc = sortsum.pop('misc')
                     sortsum['misc'] = misc
@@ -1222,6 +1232,7 @@ class GranblueFantasy(commands.Cog):
                     summons += "\n{} {}".format(self.bot.emote.get(k), sortsum[k])
                 if summons != "": summons = "\n{} **Summons**{}".format(self.bot.emote.get('summon'), summons)
             except:
+                sumimg = {}
                 summons = ""
 
             try:
@@ -1240,70 +1251,116 @@ class GranblueFantasy(commands.Cog):
                 except: pass
                 starcom = self.starcomre.findall(star_section)
                 if starcom is not None and starcom[0] != "(Blank)": msg += "\n\u202d💬 `{}`".format(su.unescape(starcom[0].replace('`', '\'')))
-                star = "\n\n{} **Star Character**\n{}".format(self.bot.emote.get('skill2'), msg)
+                star = "{} **Star Character**\n{}".format(self.bot.emote.get('skill2'), msg)
             except:
                 star = ""
 
             try: # image processing
-                img = Image.new('RGB', (410, 370), "black")
+                # calculating sizes
+                portrait_size = (78, 142)
+                equip_size = (280, 160)
+                ratio = portrait_size[0] * 2 / equip_size[0]
+                equip_size = (int(equip_size[0]*ratio), int(equip_size[1]*ratio))
+                lvl_box_height = 30
+                sup_summon_size = (200, 420)
+                ratio = (portrait_size[1] + lvl_box_height + equip_size[1]) / (sup_summon_size[1] * 2)
+                sup_summon_size = (int(sup_summon_size[0]*ratio), int(sup_summon_size[1]*ratio))
+                sup_X_offset = portrait_size[0]*6
+                # creating image
+                img = Image.new('RGB', (portrait_size[0]*6+sup_summon_size[0]*7, portrait_size[1] + lvl_box_height + equip_size[1]), "black")
                 d = ImageDraw.Draw(img, 'RGBA')
-                font = ImageFont.truetype("assets/font.ttf", 16)
-                self.dlAndPasteImage(img, mc_url.replace("/talk/", "/po/"), (-40, -80), None)
+                font = ImageFont.truetype("assets/font.ttf", 18)
 
+                # MC
+                self.dlAndPasteImage(img, mc_url.replace("/talk/", "/quest/").replace(".png", ".jpg"), (0, 0), None)
+                self.pasteImage(img, "assets/chara_stat.png", (0, portrait_size[1]), (portrait_size[0], lvl_box_height))
+                d.text((3, portrait_size[1]+6), brank.replace(' ', ''), fill=(255, 255, 255), font=font)
+
+                # mh and main summon
+                self.dlAndPasteImage(img, "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/1999999999.jpg", (0, portrait_size[1]+lvl_box_height), equip_size)
+                self.dlAndPasteImage(img, "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/2999999999.jpg", (equip_size[0], portrait_size[1]+lvl_box_height), equip_size)
                 equip = soup.find_all('div', class_='prt-equip-image')
                 for eq in equip:
                     mh = eq.findChildren('img', class_='img-weapon', recursive=True)
                     if len(mh) > 0: # mainhand
-                        self.dlAndPasteImage(img, mh[0].attrs['src'].replace('img_low', 'img'), (244, 20), (78, 164))
+                        self.dlAndPasteImage(img, mh[0].attrs['src'].replace('img_low', 'img').replace('/ls/', '/m/'), (0, portrait_size[1]+lvl_box_height), equip_size)
                         plus = eq.findChildren("div", class_="prt-weapon-quality", recursive=True)
                         if len(plus) > 0:
-                            d.text((274, 154), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
+                            d.text((equip_size[0]-50, portrait_size[1]+lvl_box_height+equip_size[1]-30), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
                         continue
                     ms = eq.findChildren('img', class_='img-summon', recursive=True)
                     if len(ms) > 0: # main summon
-                        self.dlAndPasteImage(img, ms[0].attrs['src'].replace('img_low', 'img'), (322, 20), (78, 164))
+                        self.dlAndPasteImage(img, ms[0].attrs['src'].replace('img_low', 'img').replace('/ls/', '/m/'), (equip_size[0], portrait_size[1]+lvl_box_height), equip_size)
                         plus = eq.findChildren("div", class_="prt-summon-quality", recursive=True)
-                        if len(plus) > 0:
-                            d.text((352, 154), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
+                        #if len(plus) > 0:
+                        if True:
+                            plus = ["+99"]
+                            d.text((equip_size[0]+equip_size[0]-50, portrait_size[1]+lvl_box_height+equip_size[1]-30), plus[0], fill=(255, 255, 95), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
                         continue
                 
                 # party members
                 party_section = soup.find_all("div", class_="prt-party-npc")[0]
                 party = party_section.findChildren("div", class_="prt-npc-box", recursive=True)
-                count = 0
-                for npc in party:
-                    imtag = npc.findChildren("img", class_="img-npc", recursive=True)[0]
-                    ring = npc.findChildren("div", class_="ico-augment2-m", recursive=True)
-                    self.dlAndPasteImage(img, imtag['src'].replace('img_low', 'img'), (10+78*count, 202), (78, 142))
-                    if len(ring) > 0:
-                        self.dlAndPasteImage(img, "http://game-a.granbluefantasy.jp/assets_en/img/sp/ui/icon/augment2/icon_augment2_l.png", (10+78*count, 202), (30, 30))
-                    
-                    plus = npc.findChildren("div", class_="prt-quality", recursive=True)
-                    if len(plus) > 0:
-                        d.text((40+78*count, 314), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
-                    count += 1
+                party_lvl = party_section.findChildren("div", class_="prt-npc-level", recursive=True)
+                for i in range(0, 5):
+                    pos = (portrait_size[0]*(i+1), 0)
+                    if i >= len(party):
+                        imgtag = "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/npc/quest/3999999999.jpg"
+                        lvl = ""
+                        ring = False
+                        plus = ""
+                    else:
+                        npc = party[i]
+                        imtag = npc.findChildren("img", class_="img-npc", recursive=True)[0]
+                        lvl = party_lvl[i].text.strip()
+                        ring = len(npc.findChildren("div", class_="ico-augment2-m", recursive=True)) > 0
+                        plus = npc.findChildren("div", class_="prt-quality", recursive=True)
+                        if len(plus) > 0: plus = plus[0].text
+                        else: plus = ""
+                    self.dlAndPasteImage(img, imtag['src'].replace('img_low', 'img'), pos)
+                    if ring:
+                        self.pasteImage(img, 'assets/ring.png', pos, (30, 30))
+                    if plus != "":
+                        d.text((pos[0]+portrait_size[0]-50, pos[1]+portrait_size[1]-30), plus, fill=(255, 255, 95), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
+                    self.pasteImage(img, "assets/chara_stat.png", (portrait_size[0]*(i+1), portrait_size[1]), (portrait_size[0], lvl_box_height))
+                    if lvl != "":
+                        d.text((portrait_size[0]*(i+1)+3, portrait_size[1]+6), lvl, fill=(255, 255, 255), font=font)
 
-                # levels
-                party = party_section.findChildren("div", class_="prt-npc-level", recursive=True)
-                count = 0
-                for lvl in party:
-                    d.rectangle([(10+78*count, 344), (10+78*(count+1), 364)], fill=(0, 0, 0, 150), outline=(255, 255, 255), width=1)
-                    d.text((16+78*count, 341), lvl.text.strip(), fill=(255, 255, 255), font=font)
-                    count += 1
+                # support summons
+                for k in self.possiblesum:
+                    x = (int(k[0]) + 6) % 7
+                    y = int(k[1])
+                    if k in sumimg:
+                        s = sumimg.get(k, ['2999999999', '', '', '', None])
+                        url = "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/summon/ls/{}.jpg".format(s[0])
+                        self.dlAndPasteImage(img, url, (sup_X_offset+x*sup_summon_size[0], sup_summon_size[1]*y), sup_summon_size)
+                        if s[4] is not None:
+                            if s[4] == "": sumstar = "assets/star_0.png"
+                            else: sumstar = "assets/star_{}.png".format(s[4][-1])
+                            self.pasteImage(img, sumstar, (sup_X_offset+(x+1)*sup_summon_size[0]-33, sup_summon_size[1]*(y+1)-33))
+                        
 
-                # id
-                d.text((0, 0), "{}".format(id), fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
+                # id and stats
+                self.pasteImage(img, "assets/chara_stat.png", (equip_size[0]*2, portrait_size[1]+lvl_box_height), (portrait_size[0]*2, equip_size[1]))
+                self.pasteImage(img, "assets/atk.png", (equip_size[0]*2+5, portrait_size[1]+lvl_box_height+10), (30, 13))
+                self.pasteImage(img, "assets/hp.png", (equip_size[0]*2+5, portrait_size[1]+lvl_box_height*2), (24, 14))
+                d.text((equip_size[0]*2+30+10, portrait_size[1]+lvl_box_height+10), atk, fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
+                d.text((equip_size[0]*2+30+10, portrait_size[1]+lvl_box_height*2), hp, fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
+                d.text((equip_size[0]*2+10, portrait_size[1]+lvl_box_height*3), "{}".format(id), fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
+                self.dlAndPasteImage(img, job_icon, (0, portrait_size[1]-30), (36, 30))
+                
+                # saving
                 thumbnail = "{}_{}.png".format(id, datetime.utcnow().timestamp())
                 img.save(thumbnail, "PNG")
                 img.close()
-            except:
+            except Exception as e:
+                print(e)
                 thumbnail = ""
                 try: img.close()
                 except: pass
-
             if trophy == "No Trophy Displayed": title = "\u202d{} **{}**".format(self.bot.emote.get(rarity), name)
             else: title = "\u202d{} **{}**▫️{}".format(self.bot.emote.get(rarity), name, trophy)
-            return title, "{}{}\n{} Crew ▫️ {}\n{}{}{}".format(rank, comment, self.bot.emote.get('gw'), crew, scores, summons, star), thumbnail
+            return title, "{}{}\n{} Crew ▫️ {}\n{}\n{}".format(rank, comment, self.bot.emote.get('gw'), crew, scores, star), thumbnail
         else:
             return None, "Profile is private", ""
 
@@ -1372,7 +1429,7 @@ class GranblueFantasy(commands.Cog):
             except:
                 thumbnail = ""
             await self.bot.util.unreact(ctx.message, 'time')
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=description, thumbnail=thumbnail, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=description, image=thumbnail, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             await self.bot.util.clean(ctx, final_msg, 45)
         except Exception as e:
             await self.bot.sendError("profile", e)

@@ -533,7 +533,7 @@ class Watch(commands.Cog):
         paste = ""
         iul = []
         counter = 0
-        font = ImageFont.truetype("assets/font.ttf", 16)
+        font = ImageFont.truetype("assets/font.ttf", 18)
         for f in files[type]:
             if mode == 1: ff = f[0] + id + f[1] + '_s2'
             else: ff = f[0] + id + f[1]
@@ -649,7 +649,7 @@ class Watch(commands.Cog):
                             bbx[1] += diff
                             bbx[3] += diff
                     txsb.append(bbx)
-                    try: d.text((bbx[0], bbx[1]),txc[2],font=font,fill=(255,255,255))
+                    try: d.text((bbx[0]+1, bbx[1]+1),txc[2],font=font,fill=(255,255,255), stroke_width=1, stroke_fill=(0, 0, 0))
                     except: pass
                 txsb.clear()
                 txcs.clear()
