@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import psutil
 import os
 from shutil import copyfile
+import traceback
 
 # ----------------------------------------------------------------------------------------------------------------
 # Utility Component
@@ -139,7 +140,7 @@ class Util():
             return True
         except Exception as e:
             if str(e) != "404 Not Found (error code: 10008): Unknown Message":
-                await self.bot.sendError('react', str(e))
+                await self.bot.sendError('react', e)
             return False
 
     async def unreact(self, msg, key): # remove a reaction using a custom emote defined in config.json
@@ -148,7 +149,7 @@ class Util():
             return True
         except Exception as e:
             if str(e) != "404 Not Found (error code: 10008): Unknown Message":
-                await self.bot.sendError('unreact', str(e))
+                await self.bot.sendError('unreact', e)
             return False
 
     async def clean(self, ctx, msg, timeout, all=False): # delete a message after X amount of time if posted in an unauthorized channel (all = False) or everywhere (all = True)
@@ -180,3 +181,9 @@ class Util():
         if 'author' in options:
             embed.set_author(name=options['author'].pop('name', ""), url=options['author'].pop('url', ""), icon_url=options['author'].pop('icon_url', ""))
         return embed
+
+    def pexc(self, exception): # format an exception
+        try:
+            return "".join(traceback.format_exception(type(e), e, e.__traceback__))
+        except:
+            return exception

@@ -64,6 +64,9 @@ class DreadBarrage(commands.Cog):
         else:
             return ""
 
+    def formatElement(self, elem):
+        return "{}⚔️{}".format(self.bot.emote.get(elem), self.bot.emote.get({'fire':'wind', 'water':'fire', 'earth':'water', 'wind':'earth', 'light':'dark', 'dark':'light'}.get(elem)))
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['march', 'valiant', 'dread', 'db', 'dreadbarrage'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def Barrage(self, ctx, gmt :str = "9"):
@@ -74,8 +77,7 @@ class DreadBarrage(commands.Cog):
             try:
                 if gmt < -12 or gmt > 14: gmt = 9
                 current_time = self.bot.util.JST()
-                em = self.bot.emote.get(self.bot.data.save['valiant'].get('element', ''))
-                if em == "": em = ":white_small_square:"
+                em = self.formatElement(self.bot.data.save['valiant']['element'])
                 title = "{} **Dread Barrage {}** {} **{:%a. %m/%d %H:%M} TZ**\n".format(self.bot.emote.get('crew'), self.bot.data.save['valiant']['id'], em, current_time + timedelta(seconds=3600*(gmt-9)))
                 if gmt == 9: title = title.replace('TZ', 'JST')
                 elif gmt == 0: title = title.replace('TZ', 'GMT')
@@ -97,11 +99,11 @@ class DreadBarrage(commands.Cog):
                 try:
                     description += self.getBarrageState()
                 except Exception as e:
-                    await self.bot.sendError("getBarrageState", str(e))
+                    await self.bot.sendError("getBarrageState", e)
 
                 await ctx.send(embed=self.bot.util.embed(title=title, description=description, color=self.color))
             except Exception as e:
-                await self.bot.sendError("valiant", str(e))
+                await self.bot.sendError("valiant", e)
         else:
             await ctx.send(embed=self.bot.util.embed(title="{} **Dread Barrage**".format(self.bot.emote.get('crew')), description="Not available", color=self.color))
 
@@ -112,23 +114,22 @@ class DreadBarrage(commands.Cog):
         try:
             d = self.getBarrageState()
             if d != "":
-                em = self.bot.emote.get(self.bot.data.save['valiant'].get('element', ''))
-                if em == "": em = ":white_small_square:"
+                em = self.formatElement(self.bot.data.save['valiant']['element'])
                 await ctx.reply(embed=self.bot.util.embed(title="{} **Dread Barrage {}** {} status".format(self.bot.emote.get('crew'), self.bot.data.save['valiant']['id'], em), description=d, color=self.color))
         except Exception as e:
             await ctx.reply(embed=self.bot.util.embed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
-            await self.bot.sendError("fugdidbarragestart", str(e))
+            await self.bot.sendError("fugdidbarragestart", e)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setDread', 'setDreadBarrage', 'setBarrage'])
     @isYouModOrOwner()
-    async def setValiant(self, ctx, id : int, element : str, day : int, month : int, year : int):
+    async def setValiant(self, ctx, id : int, advElement : str, day : int, month : int, year : int):
         """Set the Valiant date ((You) Mod only)"""
         try:
             # stop the task
             with self.bot.data.lock:
                 self.bot.data.save['valiant']['state'] = False
                 self.bot.data.save['valiant']['id'] = id
-                self.bot.data.save['valiant']['element'] = element.lower()
+                self.bot.data.save['valiant']['element'] = advElement.lower()
                 # build the calendar
                 self.bot.data.save['valiant']['dates'] = {}
                 self.bot.data.save['valiant']['dates']["Day 1"] = datetime.utcnow().replace(year=year, month=month, day=day, hour=19, minute=0, second=0, microsecond=0)
@@ -152,7 +153,7 @@ class DreadBarrage(commands.Cog):
                 self.bot.data.save['valiant']['state'] = False
                 self.bot.data.pending = True
             await ctx.send(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", footer=str(e), color=self.color))
-            await self.bot.sendError('setgw', str(e))
+            await self.bot.sendError('setgw', e)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['disableDread', 'disableBarrage', 'disableDreadBarrage'])
     @isYouModOrOwner()

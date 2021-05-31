@@ -43,7 +43,7 @@ class Admin(commands.Cog):
                 await self.bot.sendError('statustask', 'cancelled')
                 return
             except Exception as e:
-                await self.bot.sendError('statustask', str(e))
+                await self.bot.sendError('statustask', e)
 
     async def clean(self): # background task cleaning the save file from useless data
         try:
@@ -61,7 +61,7 @@ class Admin(commands.Cog):
             await self.bot.sendError('cleansave', 'cancelled')
             return
         except Exception as e:
-            await self.bot.sendError('cleansave', str(e))
+            await self.bot.sendError('cleansave', e)
 
     def isOwner(): # for decorators
         async def predicate(ctx):
@@ -138,7 +138,7 @@ class Admin(commands.Cog):
             await self.bot.util.react(ctx.message, '✅') # white check mark
             await self.guildList()
         except Exception as e:
-            await self.bot.sendError('leave', str(e))
+            await self.bot.sendError('leave', e)
 
     @commands.command(no_pm=True, aliases=['banS', 'ban', 'bs'])
     @isOwner()
@@ -158,7 +158,7 @@ class Admin(commands.Cog):
             await self.bot.util.react(ctx.message, '✅') # white check mark
             await self.guildList()
         except Exception as e:
-            await self.bot.sendError('ban_server', str(e))
+            await self.bot.sendError('ban_server', e)
 
     @commands.command(no_pm=True, aliases=['banO', 'bo'])
     @isOwner()
@@ -179,7 +179,7 @@ class Admin(commands.Cog):
             await self.bot.util.react(ctx.message, '✅') # white check mark
             await self.guildList()
         except Exception as e:
-            await self.bot.sendError('ban_owner', str(e))
+            await self.bot.sendError('ban_owner', e)
 
     @commands.command(no_pm=True, aliases=['a'])
     @isOwner()
@@ -197,7 +197,7 @@ class Admin(commands.Cog):
                     await self.bot.util.react(ctx.message, '✅') # white check mark
                     await self.guildList()
         except Exception as e:
-            await self.bot.sendError('accept', str(e))
+            await self.bot.sendError('accept', e)
 
     @commands.command(no_pm=True, aliases=['r'])
     @isOwner()
@@ -215,7 +215,7 @@ class Admin(commands.Cog):
                 await self.bot.util.react(ctx.message, '✅') # white check mark
                 await self.guildList()
         except Exception as e:
-            await self.bot.sendError('refuse', str(e))
+            await self.bot.sendError('refuse', e)
 
     @commands.command(name='save', no_pm=True, aliases=['s'])
     @isOwner()
@@ -276,7 +276,7 @@ class Admin(commands.Cog):
                 self.bot.data.pending = True
             await self.bot.util.react(ctx.message, '✅') # white check mark
         except Exception as e:
-            await self.bot.sendError('setmaintenance', str(e))
+            await self.bot.sendError('setmaintenance', e)
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -308,7 +308,7 @@ class Admin(commands.Cog):
                 self.bot.data.pending = True
             await self.bot.util.react(ctx.message, '✅') # white check mark
         except Exception as e:
-            await self.bot.sendError('setstreamtime', str(e))
+            await self.bot.sendError('setstreamtime', e)
 
     @commands.command(no_pm=True, aliases=['cs'])
     @isOwner()
@@ -475,7 +475,7 @@ class Admin(commands.Cog):
                 await self.bot.send('debug', 'config.json', file=df)
                 df.close()
         except Exception as e:
-            await self.bot.sendError('config', str(e))
+            await self.bot.sendError('config', e)
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -490,7 +490,7 @@ class Admin(commands.Cog):
                     channel = self.bot.get_channel(id)
                     await channel.send(embed=embed)
                 except Exception as e:
-                    self.bot.sendError('broadcast', str(e))
+                    self.bot.sendError('broadcast', e)
         await self.bot.util.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True)
@@ -520,7 +520,7 @@ class Admin(commands.Cog):
                 df.close()
             await self.bot.util.react(ctx.message, '✅') # white check mark
         except Exception as e:
-            await self.bot.sendError('getfile', str(e))
+            await self.bot.sendError('getfile', e)
 
     @commands.command(no_pm=True)
     @isOwner()

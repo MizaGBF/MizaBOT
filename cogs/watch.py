@@ -42,7 +42,7 @@ class Watch(commands.Cog):
                 await self.bot.sendError('gbfwatch', 'cancelled')
                 return
             except Exception as e:
-                await self.bot.sendError('gbfwatch Maintenance', str(e))
+                await self.bot.sendError('gbfwatch Maintenance', e)
 
             try: # account refresh
                 res = await self.bot.do(self._refresh)
@@ -52,7 +52,7 @@ class Watch(commands.Cog):
                 await self.bot.sendError('gbfwatch', 'cancelled')
                 return
             except Exception as e:
-                await self.bot.sendError('gbfwatch Account', str(e))
+                await self.bot.sendError('gbfwatch Account', e)
 
             try: # news checker
                 news = await self.bot.do(self.checkNews)
@@ -62,7 +62,7 @@ class Watch(commands.Cog):
                 await self.bot.sendError('gbfwatch', 'cancelled')
                 return
             except Exception as e:
-                await self.bot.sendError('gbfwatch News', str(e))
+                await self.bot.sendError('gbfwatch News', e)
 
             # check if it's possible to continue
             try:
@@ -82,7 +82,7 @@ class Watch(commands.Cog):
                 await self.bot.sendError('gbfwatch', 'cancelled')
                 return
             except Exception as e:
-                await self.bot.sendError('gbfwatch 4koma', str(e))
+                await self.bot.sendError('gbfwatch 4koma', e)
 
             try: # update check
                 v = await self.bot.do(self.bot.gbf.version)
@@ -123,7 +123,7 @@ class Watch(commands.Cog):
                 await self.bot.sendError('gbfwatch', 'cancelled')
                 return
             except Exception as e:
-                await self.bot.sendError('gbfwatch Update', str(e))
+                await self.bot.sendError('gbfwatch Update', e)
 
     def _checkMaintenance(self):
         maintenance_time = self.bot.util.JST()

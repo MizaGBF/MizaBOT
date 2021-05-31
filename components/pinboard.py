@@ -32,7 +32,7 @@ class Pinboard():
             if message.id in self.cache: return
             reactions = message.reactions
         except Exception as e:
-            await self.bot.sendError('raw_react', str(e))
+            await self.bot.sendError('raw_react', e)
             return
         me = message.guild.me
         count = 0
@@ -104,5 +104,5 @@ class Pinboard():
                     embed.timestamp=message.created_at
                     await self.bot.send(self.servers[idx]['output'], embed=embed)
                 except Exception as x:
-                    await self.bot.sendError("pinboard check", str(x))
+                    await self.bot.sendError("pinboard check",x)
                 return

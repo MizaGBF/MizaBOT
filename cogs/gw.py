@@ -80,7 +80,7 @@ class GuildWar(commands.Cog):
         except asyncio.CancelledError:
             await self.bot.sendError('checkgwbuff', 'cancelled')
         except Exception as e:
-            await self.bot.sendError('checkgwbuff', str(e))
+            await self.bot.sendError('checkgwbuff', e)
         await self.bot.send('debug', embed=self.bot.util.embed(color=self.color, title="User task ended", description="check_buff", timestamp=datetime.utcnow()))
 
     def buildDayList(self): # used by the gw schedule command
@@ -194,6 +194,9 @@ class GuildWar(commands.Cog):
         else:
             return ""
 
+    def formatElement(self, elem):
+        return "{}⚔️{}".format(self.bot.emote.get(elem), self.bot.emote.get({'fire':'wind', 'water':'fire', 'earth':'water', 'wind':'earth', 'light':'dark', 'dark':'light'}.get(elem)))
+        
     def getGWTimeLeft(self, current_time = None):
         if self.bot.data.save['gw']['state'] == False:
             return None
@@ -249,8 +252,7 @@ class GuildWar(commands.Cog):
             try:
                 if gmt < -12 or gmt > 14: gmt = 9
                 current_time = self.bot.util.JST()
-                em = self.bot.emote.get(self.bot.data.save['gw'].get('element', ''))
-                if em == "": em = ":white_small_square:"
+                em = self.formatElement(self.bot.data.save['gw']['element'])
                 title = "{} **Guild War {}** {} **{:%a. %m/%d %H:%M} TZ**\n".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em, current_time + timedelta(seconds=3600*(gmt-9)))
                 if gmt == 9: title = title.replace('TZ', 'JST')
                 elif gmt == 0: title = title.replace('TZ', 'GMT')
@@ -279,16 +281,16 @@ class GuildWar(commands.Cog):
                 try:
                     description += self.getGWState()
                 except Exception as e:
-                    await self.bot.sendError("getgwstate", str(e))
+                    await self.bot.sendError("getgwstate", e)
 
                 try:
                     description += '\n' + self.getNextBuff(ctx)
                 except Exception as e:
-                    await self.bot.sendError("getnextbuff", str(e))
+                    await self.bot.sendError("getnextbuff", e)
 
                 await ctx.send(embed=self.bot.util.embed(title=title, description=description, color=self.color))
             except Exception as e:
-                await self.bot.sendError("gw", str(e))
+                await self.bot.sendError("gw", e)
         else:
             await ctx.send(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Not available", color=self.color))
 
@@ -299,12 +301,11 @@ class GuildWar(commands.Cog):
         try:
             d = self.getGWState()
             if d != "":
-                em = self.bot.emote.get(self.bot.data.save['gw'].get('element', ''))
-                if em == "": em = ":white_small_square:"
+                em = self.formatElement(self.bot.data.save['gw']['element'])
                 await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War {}** {} status".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description=d, color=self.color))
         except Exception as e:
             await ctx.reply(embed=self.bot.util.embed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
-            await self.bot.sendError("fugdidgwstart", str(e))
+            await self.bot.sendError("fugdidgwstart", e)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['buff'])
     @isYou()
@@ -319,7 +320,7 @@ class GuildWar(commands.Cog):
                 await ctx.reply(embed=self.bot.util.embed(title="{} Guild War (You) Buff status".format(self.bot.emote.get('gw')), description="Only available when Guild War is on going", color=self.color))
         except Exception as e:
             await ctx.send(embed=self.bot.util.embed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
-            await self.bot.sendError("gwbuff", str(e))
+            await self.bot.sendError("gwbuff", e)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rankings', 'cutoff', 'cutoffs'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -350,12 +351,11 @@ class GuildWar(commands.Cog):
                         fields[x]['value'] += "\n"
                     if fields[x]['value'] == '': fields[0]['value'] = 'Unavailable'
 
-                em = self.bot.emote.get(self.bot.data.save['gw'].get('element', ''))
-                if em == "": em = ""
+                em = self.formatElement(self.bot.data.save['gw']['element'])
                 d = self.bot.util.JST() - self.bot.data.save['gw']['ranking'][4]
                 await ctx.send(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Updated: **{}** ago".format(self.bot.util.delta2str(d, 0)), fields=fields, footer="Update on minute 5, 25 and 45", inline=True, color=self.color))
         except Exception as e:
-            await self.bot.sendError("ranking", str(e))
+            await self.bot.sendError("ranking", e)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['estimate', 'estimates', 'estim', 'predict', 'prediction', 'predictions'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -365,8 +365,7 @@ class GuildWar(commands.Cog):
             if self.bot.data.save['gw']['state'] == False or self.bot.util.JST() < self.bot.data.save['gw']['dates']["Preliminaries"] or self.bot.data.save['gw']['ranking'] is None:
                 await ctx.send(embed=self.bot.util.embed(title="Estimation unavailable", color=self.color))
             else:
-                em = self.bot.emote.get(self.bot.data.save['gw'].get('element', ''))
-                if em == "": em = ""
+                em = self.formatElement(self.bot.data.save['gw']['element'])
                 current_time_left = self.getGWTimeLeft()
                 if current_time_left is None:
                     await ctx.send(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Estimations are currently unavailable", inline=True, color=self.color))
@@ -426,11 +425,11 @@ class GuildWar(commands.Cog):
                 d = self.bot.util.JST() - self.bot.data.save['gw']['ranking'][4]
                 await ctx.send(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Time left: **{}** \▫️ Updated: **{}** ago\nThis is a simple estimation, take it with a grain of salt.".format(self.bot.util.delta2str(current_time_left), self.bot.util.delta2str(d, 0)), fields=fields, footer="Update on minute 5, 25 and 45", timestamp=datetime.utcnow(), inline=True, color=self.color))
         except Exception as e:
-            await self.bot.sendError("estimation", str(e))
+            await self.bot.sendError("estimation", e)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isYouModOrOwner()
-    async def setGW(self, ctx, id : int, element : str, day : int, month : int, year : int):
+    async def setGW(self, ctx, id : int, advElement : str, day : int, month : int, year : int):
         """Set the GW date ((You) Mod only)"""
         try:
             # stop the task
@@ -439,7 +438,7 @@ class GuildWar(commands.Cog):
                 self.bot.data.save['gw']['state'] = False
                 self.bot.data.save['gw']['id'] = id
                 self.bot.data.save['gw']['ranking'] = ""
-                self.bot.data.save['gw']['element'] = element.lower()
+                self.bot.data.save['gw']['element'] = advElement.lower()
                 # build the calendar
                 self.bot.data.save['gw']['dates'] = {}
                 self.bot.data.save['gw']['dates']["Preliminaries"] = datetime.utcnow().replace(year=year, month=month, day=day, hour=19, minute=0, second=0, microsecond=0)
@@ -509,7 +508,7 @@ class GuildWar(commands.Cog):
                 self.bot.data.save['gw']['state'] = False
                 self.bot.data.pending = True
             await ctx.send(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", footer=str(e), color=self.color))
-            await self.bot.sendError('setgw', str(e))
+            await self.bot.sendError('setgw', e)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isYouModOrOwner()
@@ -1145,7 +1144,7 @@ class GuildWar(commands.Cog):
 
         except Exception as e:
             await self.bot.util.unreact(ctx.message, 'time')
-            await self.bot.sendError("postCrewData", str(e))
+            await self.bot.sendError("postCrewData", e)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(3, 30, commands.BucketType.guild)
@@ -1262,32 +1261,15 @@ class GuildWar(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.util.embed(title="{} /gbfg/ GW{} Dancho Ranking".format(self.bot.emote.get('gw'), gwid), fields=fields, inline=True, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 60)
 
-    def _sortSupercrew(self, tosort):
-        sorted = []
-        for c in tosort:
-            inserted = False
-            for i in range(0, len(sorted)):
-                if tosort[c][2] > sorted[i][2]:
-                    inserted = True
-                    sorted.insert(i, tosort[c])
-                    break
-            if not inserted: sorted.append(tosort[c])
-        return sorted
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(1, 60, commands.BucketType.guild)
-    async def gbfgranking(self, ctx):
-        """Sort and post all /gbfg/ crew per contribution"""
+    def _gbfgranking(self):
         crews = []
-        await self.bot.util.react(ctx.message, 'time')
         for e in self.bot.data.config['granblue']['gbfgcrew']:
             if self.bot.data.config['granblue']['gbfgcrew'][e] in crews: continue
             crews.append(self.bot.data.config['granblue']['gbfgcrew'][e])
         tosort = {}
-        data = await self.bot.do(self.GWDBver)
+        data = self.GWDBver()
         if data is None or data[1] is None:
-            await self.bot.util.unreact(ctx.message, 'time')
-            final_msg = await ctx.send(embed=self.bot.util.embed(title="{} /gbfg/ GW Ranking".format(self.bot.emote.get('gw')), description="Unavailable", color=self.color))
+            return None, None
         else:
             if data[1].get('ver', 0) != 2:
                 possible = {11:"Total Day 4", 9:"Total Day 3", 7:"Total Day 2", 5:"Total Day 1", 3:"Total Prelim."}
@@ -1298,7 +1280,7 @@ class GuildWar(commands.Cog):
                 last_id = 7
                 gwid = data[1].get('gw', None)
             for c in crews:
-                data = await self.bot.do(self.searchGWDBCrew, int(c), 2)
+                data = self.searchGWDBCrew(int(c), 2)
                 if data is None or data[1] is None or 'result' not in data[1] or len(data[1]['result']) == 0:
                     continue
                 result = data[1]['result'][0]
@@ -1310,8 +1292,15 @@ class GuildWar(commands.Cog):
                         else:
                             tosort[c] = [c, result[2], int(result[ps]), possible[ps]] # id, name, honor, day
                             break
-            sorted = await self.bot.do(self._sortSupercrew, tosort)
-            await self.bot.util.unreact(ctx.message, 'time')
+            sorted = []
+            for c in tosort:
+                inserted = False
+                for i in range(0, len(sorted)):
+                    if tosort[c][2] > sorted[i][2]:
+                        inserted = True
+                        sorted.insert(i, tosort[c])
+                        break
+                if not inserted: sorted.append(tosort[c])
             fields = []
             if gwid is None: gwid = ""
             for i in range(0, len(sorted)):
@@ -1320,35 +1309,51 @@ class GuildWar(commands.Cog):
                     fields[-1]['value'] += "{} \▫️ {} \▫️ **{}**\n".format(i+1, sorted[i][1], self.honorFormat(sorted[i][2]))
                 else:
                     fields[-1]['value'] += "#**{}** \▫️ {} \▫️ **{}**\n".format(self.honorFormat(sorted[i][3]), sorted[i][1], self.honorFormat(sorted[i][2]))
+            return fields, gwid
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 60, commands.BucketType.guild)
+    async def gbfgranking(self, ctx):
+        """Sort and post all /gbfg/ crew per contribution"""
+        await self.bot.util.react(ctx.message, 'time')
+        fields, gwid = await self.bot.do(self._gbfgranking)
+        await self.bot.util.unreact(ctx.message, 'time')
+        if fields is None:
+            final_msg = await ctx.send(embed=self.bot.util.embed(title="{} /gbfg/ GW Ranking".format(self.bot.emote.get('gw')), description="Unavailable", color=self.color))
+        else:
             final_msg = await ctx.send(embed=self.bot.util.embed(title="{} /gbfg/ GW{} Ranking".format(self.bot.emote.get('gw'), gwid), fields=fields, inline=True, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 60)
+
+    def _recruit(self):
+        crews = []
+        for e in self.bot.data.config['granblue']['gbfgcrew']:
+            if self.bot.data.config['granblue']['gbfgcrew'][e] in crews: continue
+            crews.append(self.bot.data.config['granblue']['gbfgcrew'][e])
+
+        sortedcrew = []
+        for c in crews:
+            data = self.getCrewData(int(c), 2)
+            if 'error' not in data and data['count'] != 30:
+                if len(sortedcrew) == 0: sortedcrew.append(data)
+                else:
+                    inserted = False
+                    for i in range(len(sortedcrew)):
+                        if data['average'] >= sortedcrew[i]['average']:
+                            sortedcrew.insert(i, data)
+                            inserted = True
+                            break
+                    if not inserted: sortedcrew.append(data)
+        return sortedcrew
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['recruiting', 'opencrew', 'opencrews'])
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def recruit(self, ctx):
         """Post all recruiting /gbfg/ crew"""
-        if not await self.bot.do(self.bot.gbf.isAvailable):
+        if not await self.bot.do(self.bot.gbf.isAvailable): # NOTE: slow?
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} /gbfg/ recruiting crews".format(self.bot.emote.get('crew')), description="Unavailable", color=self.color))
         else:
             await self.bot.util.react(ctx.message, 'time')
-            crews = []
-            for e in self.bot.data.config['granblue']['gbfgcrew']:
-                if self.bot.data.config['granblue']['gbfgcrew'][e] in crews: continue
-                crews.append(self.bot.data.config['granblue']['gbfgcrew'][e])
-
-            sortedcrew = []
-            for c in crews:
-                data = await self.bot.do(self.getCrewData, int(c), 2)
-                if 'error' not in data and data['count'] != 30:
-                    if len(sortedcrew) == 0: sortedcrew.append(data)
-                    else:
-                        inserted = False
-                        for i in range(len(sortedcrew)):
-                            if data['average'] >= sortedcrew[i]['average']:
-                                sortedcrew.insert(i, data)
-                                inserted = True
-                                break
-                        if not inserted: sortedcrew.append(data)
+            sortedcrew = await self.bot.do(self._recruit)
             await self.bot.util.unreact(ctx.message, 'time')
             fields = []
             if len(sortedcrew) > 20: size = 15

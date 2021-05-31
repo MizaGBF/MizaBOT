@@ -378,7 +378,7 @@ class GranblueFantasy(commands.Cog):
             except Exception as e:
                 url = "https://gbf.wiki/index.php?title=Special:Search&search={}".format(parse.quote_plus(terms))
                 if str(e) != "HTTP Error 404: Not Found": # unknown error, we stop here
-                    await self.bot.sendError("wiki", str(e))
+                    await self.bot.sendError("wiki", e)
                     final_msg = await ctx.reply(embed=self.bot.util.embed(title="Unexpected error, click here to search", url=url, footer=str(e), color=self.color))
                 else: # failed, we try the search function
                     try:
@@ -444,7 +444,7 @@ class GranblueFantasy(commands.Cog):
             buf = self.getMaintenanceStatus()
             if len(buf) > 0: description += "\n" + buf
         except Exception as e:
-            await self.bot.sendError("getMaintenanceStatus", str(e))
+            await self.bot.sendError("getMaintenanceStatus", e)
 
         try:
             buf = await self.bot.do(self.getCurrentGacha)
@@ -453,7 +453,7 @@ class GranblueFantasy(commands.Cog):
                 if buf[0] != buf[1]:
                     description += " (Spark period ends in **{}**)".format(self.bot.util.delta2str(buf[1], 2))
         except Exception as e:
-            await self.bot.sendError("getgachatime", str(e))
+            await self.bot.sendError("getgachatime", e)
 
         try:
             if current_time < self.bot.data.save['stream']['time']:
@@ -465,19 +465,19 @@ class GranblueFantasy(commands.Cog):
             buf = self.bot.get_cog('GuildWar').getGWState()
             if len(buf) > 0: description += "\n" + buf
         except Exception as e:
-            await self.bot.sendError("getgwstate", str(e))
+            await self.bot.sendError("getgwstate", e)
 
         try:
             buf = self.bot.get_cog('DreadBarrage').getBarrageState()
             if len(buf) > 0: description += "\n" + buf
         except Exception as e:
-            await self.bot.sendError("getBarrageState", str(e))
+            await self.bot.sendError("getBarrageState", e)
 
         try:
             buf = self.bot.get_cog('GuildWar').getNextBuff(ctx)
             if len(buf) > 0: description += "\n" + buf
         except Exception as e:
-            await self.bot.sendError("getnextbuff", str(e))
+            await self.bot.sendError("getnextbuff", e)
 
         await ctx.send(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
 
@@ -492,7 +492,7 @@ class GranblueFantasy(commands.Cog):
             else:
                 await ctx.send(embed=self.bot.util.embed(title="Granblue Fantasy", description="No maintenance in my memory", color=self.color))
         except Exception as e:
-            await self.bot.sendError("getMaintenanceStatus", str(e))
+            await self.bot.sendError("getMaintenanceStatus", e)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['drive'])
     @isYou()
@@ -673,7 +673,7 @@ class GranblueFantasy(commands.Cog):
                     buf = self.getMaintenanceStatus()
                     if len(buf) > 0: msg += buf + '\n'
                 except Exception as e:
-                    await self.bot.sendError("getMaintenanceStatus", str(e))
+                    await self.bot.sendError("getMaintenanceStatus", e)
                 try:
                     current_time = self.bot.util.JST()
                     if current_time < self.bot.data.save['stream']['time']:
@@ -1068,7 +1068,7 @@ class GranblueFantasy(commands.Cog):
                 description += "\n" + content[2]
                 await ctx.send(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, thumbnail=content[3], color=self.color))
         except Exception as e:
-            await self.bot.sendError("getcurrentgacha", str(e))
+            await self.bot.sendError("getcurrentgacha", e)
             await ctx.send(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Unavailable", color=self.color))
 
     def getProfileData(self, id : int): # get player data
@@ -1143,9 +1143,9 @@ class GranblueFantasy(commands.Cog):
                 self.bot.data.pending = True
             await self.bot.util.react(ctx.message, '✅') # white check mark
         except Exception as e:
-            await self.bot.sendError("setprofile", str(e))
+            await self.bot.sendError("setprofile", e)
 
-    def dlAndPasteImage(self, img, url, offset, resize):
+    def dlAndPasteImage(self, img, url, offset, resize=None):
         req = request.Request(url)
         url_handle = request.urlopen(req)
         with BytesIO(url_handle.read()) as file_jpgdata:
@@ -1381,7 +1381,7 @@ class GranblueFantasy(commands.Cog):
             final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=description, thumbnail=thumbnail, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             await self.bot.util.clean(ctx, final_msg, 45)
         except Exception as e:
-            await self.bot.sendError("profile", str(e))
+            await self.bot.sendError("profile", e)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 60, commands.BucketType.guild)
@@ -1435,7 +1435,7 @@ class GranblueFantasy(commands.Cog):
             await ctx.reply(embed=self.bot.util.embed(title="{} {}".format(self.bot.emote.get('gw'), data['user']['nickname']), description=status, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/leader/talk/{}.png".format(data['user']['image']), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
         except Exception as e:
             await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Unavailable", color=self.color))
-            await self.bot.sendError("brand", str(e))
+            await self.bot.sendError("brand", e)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 30, commands.BucketType.guild)

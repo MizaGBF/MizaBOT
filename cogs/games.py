@@ -180,6 +180,8 @@ class Games(commands.Cog):
             rateup = False
         result = await self.bot.do(self.gachaRoll, mode='memerollB' if rateup else 'memerollA', legfest=self.checkLegfest(double))
         footer = "{}% SSR rate".format(result['rate'])
+        if rateup:
+            footer += " ▫️ until rate up"
         final_msg = None
         counter = [0, 0, 0]
         text = ""

@@ -177,13 +177,13 @@ class MizaBot(commands.Bot):
                 r.append(None)
         return r
 
-    async def sendError(self, func_name : str, msg : str, id = None): # send an error to the debug channel
-        if msg.startswith("403 FORBIDDEN"): return # I'm tired of those errors because people didn't set their channel permissions right so I ignore it
+    async def sendError(self, func_name : str, error, id = None): # send an error to the debug channel
+        if str(error).startswith("403 FORBIDDEN"): return # I'm tired of those errors because people didn't set their channel permissions right so I ignore it
         if self.errn >= 30: return # disable error messages if too many messages got sent
         if id is None: id = ""
         else: id = " {}".format(id)
         self.errn += 1
-        await self.send('debug', embed=self.util.embed(title="Error in {}() {}".format(func_name, id), description=msg, timestamp=self.util.timestamp()))
+        await self.send('debug', embed=self.util.embed(title="Error in {}() {}".format(func_name, id), description=self.util.pexc(error), timestamp=self.util.timestamp()))
 
     async def on_ready(self): # called when the bot starts
         if not self.booted:
@@ -258,7 +258,7 @@ class MizaBot(commands.Bot):
                 return False
             return True
         except Exception as e:
-            await self.sendError('global_check', 'Context: ' + str(ctx) + '\n' + str(e))
+            await self.sendError('global_check', e)
             return False
 
     async def on_command_error(self, ctx, error): # called when an uncatched exception happens in a command

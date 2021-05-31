@@ -53,13 +53,13 @@ class Reminder(commands.Cog):
                         try:
                             await u.send(embed=self.bot.util.embed(title="Reminder", description=m))
                         except Exception as e:
-                            await self.bot.sendError('remindertask', "User: {}\nReminder: {}\nError: {}".format(u.name, m, e))
+                            await self.bot.sendError('remindertask', "User: {}\nReminder: {}\nError: {}".format(u.name, m, self.bot.util.pexc(e)))
                             break
             except asyncio.CancelledError:
                 await self.bot.sendError('remindertask', 'cancelled')
                 return
             except Exception as e:
-                await self.bot.sendError('remindertask', str(e))
+                await self.bot.sendError('remindertask', e)
                 await asyncio.sleep(200)
             await asyncio.sleep(40)
 

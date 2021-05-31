@@ -150,7 +150,7 @@ class Ranking():
                                     self.bot.data.save['gw']['ranking'] = self.rankingtempdata
                                     self.bot.data.pending = True
                             except Exception as ex:
-                                await self.bot.sendError('checkgwranking sub', str(ex))
+                                await self.bot.sendError('checkgwranking sub', ex)
                                 with self.bot.data.lock:
                                     self.bot.data.save['gw']['ranking'] = None
                                     self.bot.data.pending = True
@@ -179,7 +179,7 @@ class Ranking():
                 await self.bot.sendError('checkgwranking', 'cancelled')
                 await asyncio.sleep(30)
             except Exception as e:
-                await self.bot.sendError('checkgwranking', str(e))
+                await self.bot.sendError('checkgwranking', e)
                 return
 
     def scrapProcess(self): # thread for ranking
@@ -354,7 +354,7 @@ class Ranking():
                     try:
                         await self.updateYouTracker(update_time)
                     except Exception as ue:
-                        await self.bot.sendError('updateyoutracker', str(ue))
+                        await self.bot.sendError('updateyoutracker', ue)
 
             return ""
         except Exception as e:

@@ -37,7 +37,7 @@ class Spark(commands.Cog):
                 await self.bot.callCommand(ctx, 'seeRoll')
             except Exception as e:
                 final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':ctx.author.display_name, 'icon_url':ctx.author.avatar_url}, description="**{} {} {} {} {} {}**".format(self.bot.emote.get("crystal"), crystal, self.bot.emote.get("singledraw"), single, self.bot.emote.get("tendraw"), ten), color=self.color))
-                await self.bot.sendError('setRoll', str(e), 'B')
+                await self.bot.sendError('setRoll', e, 'B')
         except:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color, footer="setRoll <crystal> [single] [ten]"))
         try:
@@ -101,7 +101,7 @@ class Spark(commands.Cog):
                 final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.avatar_url}, description="**{} {} {} {} {} {}**\n*Expecting {} to {} rolls in {}*".format(self.bot.emote.get("crystal"), s[0], self.bot.emote.get("singledraw"), s[1], self.bot.emote.get("tendraw"), s[2], expected[0], expected[1], now.strftime("%B")), footer="Next spark between {} and {}".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), timestamp=timestamp, color=self.color))
         except Exception as e:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="I warned my owner", color=self.color, footer=str(e)))
-            await self.bot.sendError('seeRoll', str(e))
+            await self.bot.sendError('seeRoll', e)
         await self.bot.util.clean(ctx, final_msg, 30)
 
     def _ranking(self, ctx, guild):
@@ -157,5 +157,5 @@ class Spark(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.util.embed(title="{} Spark ranking of {}".format(self.bot.emote.get('crown'), guild.name), color=self.color, description=msg, footer=footer, thumbnail=guild.icon_url))
         except Exception as e:
             final_msg = await ctx.send(embed=self.bot.util.embed(title="Sorry, something went wrong :bow:", footer=str(e)))
-            await self.bot.sendError("rollRanking", str(e))
+            await self.bot.sendError("rollRanking", e)
         await self.bot.util.clean(ctx, final_msg, 30)
