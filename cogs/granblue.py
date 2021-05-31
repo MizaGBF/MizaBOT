@@ -10,6 +10,7 @@ from urllib.parse import unquote
 from xml.sax import saxutils as su
 from PIL import Image, ImageFont, ImageDraw
 from io import BytesIO
+import threading
 
 # ----------------------------------------------------------------------------------------------------------------
 # GranblueFantasy Cog
@@ -32,6 +33,8 @@ class GranblueFantasy(commands.Cog):
         self.starplusre = re.compile("<div class=\"prt-quality\">(\\+[0-9]+)<\\/div>")
         self.badprofilecache = []
         self.possiblesum = {'10':'fire', '11':'fire', '20':'water', '21':'water', '30':'earth', '31':'earth', '40':'wind', '41':'wind', '50':'light', '51':'light', '60':'dark', '61':'dark', '00':'misc', '01':'misc'}
+        self.imgcache = {}
+        self.imglock = threading.Lock()
 
     def isOwner(): # for decorators
         async def predicate(ctx):
@@ -1149,10 +1152,21 @@ class GranblueFantasy(commands.Cog):
         del buffers
 
     def dlAndPasteImage(self, img, url, offset, resize=None): # dl an image and call pasteImage()
-        req = request.Request(url)
-        url_handle = request.urlopen(req)
-        data = url_handle.read()
-        url_handle.close()
+        self.imglock.acquire()
+        if url not in self.imgcache:
+            self.imglock.release()
+            req = request.Request(url)
+            url_handle = request.urlopen(req)
+            data = url_handle.read()
+            url_handle.close()
+            self.imglock.acquire()
+            self.imgcache[url] = data
+            if len(self.imgcache) >= 50:
+                keys = list(self.imgcache.keys())[:40]
+                for k in keys:
+                    self.imgcache.pop(k)
+        data = self.imgcache[url]
+        self.imglock.release()            
         with BytesIO(data) as file_jpgdata:
             self.pasteImage(img, file_jpgdata, offset, resize)
 
@@ -1251,7 +1265,7 @@ class GranblueFantasy(commands.Cog):
                 except: pass
                 starcom = self.starcomre.findall(star_section)
                 if starcom is not None and starcom[0] != "(Blank)": msg += "\n\u202d💬 `{}`".format(su.unescape(starcom[0].replace('`', '\'')))
-                star = "{} **Star Character**\n{}".format(self.bot.emote.get('skill2'), msg)
+                star = "\n{} **Star Character**\n{}".format(self.bot.emote.get('skill2'), msg)
             except:
                 star = ""
 
@@ -1266,8 +1280,10 @@ class GranblueFantasy(commands.Cog):
                 ratio = (portrait_size[1] + lvl_box_height + equip_size[1]) / (sup_summon_size[1] * 2)
                 sup_summon_size = (int(sup_summon_size[0]*ratio), int(sup_summon_size[1]*ratio))
                 sup_X_offset = portrait_size[0]*6
+                if len(sumimg) > 0: imgsize = (portrait_size[0]*6+sup_summon_size[0]*7, portrait_size[1] + lvl_box_height + equip_size[1])
+                else: imgsize = (portrait_size[0]*6, portrait_size[1] + lvl_box_height + equip_size[1])
                 # creating image
-                img = Image.new('RGB', (portrait_size[0]*6+sup_summon_size[0]*7, portrait_size[1] + lvl_box_height + equip_size[1]), "black")
+                img = Image.new('RGB', imgsize, "black")
                 d = ImageDraw.Draw(img, 'RGBA')
                 font = ImageFont.truetype("assets/font.ttf", 18)
 
@@ -1327,17 +1343,17 @@ class GranblueFantasy(commands.Cog):
                         d.text((portrait_size[0]*(i+1)+3, portrait_size[1]+6), lvl, fill=(255, 255, 255), font=font)
 
                 # support summons
-                for k in self.possiblesum:
-                    x = (int(k[0]) + 6) % 7
-                    y = int(k[1])
-                    s = sumimg.get(k, ['2999999999', '', '', '', None])
-                    url = "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/summon/ls/{}.jpg".format(s[0])
-                    self.dlAndPasteImage(img, url, (sup_X_offset+x*sup_summon_size[0], sup_summon_size[1]*y), sup_summon_size)
-                    if s[4] is not None:
-                        if s[4] == "": sumstar = "assets/star_0.png"
-                        else: sumstar = "assets/star_{}.png".format(s[4][-1])
-                        self.pasteImage(img, sumstar, (sup_X_offset+(x+1)*sup_summon_size[0]-33, sup_summon_size[1]*(y+1)-33))
-                        
+                if len(sumimg) > 0:
+                    for k in self.possiblesum:
+                        x = (int(k[0]) + 6) % 7
+                        y = int(k[1])
+                        s = sumimg.get(k, ['2999999999', '', '', '', None])
+                        url = "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/summon/ls/{}.jpg".format(s[0])
+                        self.dlAndPasteImage(img, url, (sup_X_offset+x*sup_summon_size[0], sup_summon_size[1]*y), sup_summon_size)
+                        if s[4] is not None:
+                            if s[4] == "": sumstar = "assets/star_0.png"
+                            else: sumstar = "assets/star_{}.png".format(s[4][-1])
+                            self.pasteImage(img, sumstar, (sup_X_offset+(x+1)*sup_summon_size[0]-33, sup_summon_size[1]*(y+1)-33))
 
                 # id and stats
                 self.pasteImage(img, "assets/chara_stat.png", (equip_size[0]*2, portrait_size[1]+lvl_box_height), (portrait_size[0]*2, equip_size[1]))
@@ -1359,7 +1375,7 @@ class GranblueFantasy(commands.Cog):
                 except: pass
             if trophy == "No Trophy Displayed": title = "\u202d{} **{}**".format(self.bot.emote.get(rarity), name)
             else: title = "\u202d{} **{}**▫️{}".format(self.bot.emote.get(rarity), name, trophy)
-            return title, "{}{}\n{} Crew ▫️ {}\n{}\n{}".format(rank, comment, self.bot.emote.get('gw'), crew, scores, star), thumbnail
+            return title, "{}{}\n{} Crew ▫️ {}\n{}{}\n\n[:earth_asia: Preview](#THUMBNAIL_HYPERLINK_PLACEHOLDER)".format(rank, comment, self.bot.emote.get('gw'), crew, scores, star), thumbnail
         else:
             return None, "Profile is private", ""
 
@@ -1428,7 +1444,7 @@ class GranblueFantasy(commands.Cog):
             except:
                 thumbnail = ""
             await self.bot.util.unreact(ctx.message, 'time')
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=description, image=thumbnail, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=description.replace("#THUMBNAIL_HYPERLINK_PLACEHOLDER", thumbnail), image=thumbnail, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             await self.bot.util.clean(ctx, final_msg, 45)
         except Exception as e:
             await self.bot.sendError("profile", e)
