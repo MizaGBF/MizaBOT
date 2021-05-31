@@ -193,7 +193,7 @@ class Admin(commands.Cog):
                     self.bot.data.pending = True
                 guild = self.bot.get_guild(id)
                 if guild:
-                    await guild.owner.send(embed=self.bot.util.embed(title="I'm now available for use in {}".format(guild.name), description="Use `$help` for my list of commands, `$help Management` for mod only commands.\nUse `$setPrefix` to change the command prefix (default: `$`)\nIf you encounter an issue, use `$bug_report` and describe the problem.\nIf I'm down or slow, I might be rebooting, in maintenance or Discord itself might be acting up.", thumbnail=guild.icon_url))
+                    await guild.owner.send(embed=self.bot.util.embed(title="I'm now available for use in {}".format(guild.name), description="Use `$help` for my list of commands, `$help Management` for mod only commands.\nUse `$setPrefix` to change the command prefix (default: `$`)\nIf you encounter an issue, use `$bugreport` and describe the problem.\nIf I'm down or slow, I might be rebooting, in maintenance or Discord itself might be acting up.", thumbnail=guild.icon_url))
                     await self.bot.util.react(ctx.message, '✅') # white check mark
                     await self.guildList()
         except Exception as e:

@@ -518,12 +518,6 @@ class GranblueFantasy(commands.Cog):
         """Post a link to my autistic Eternal Sheet"""
         await ctx.reply(embed=self.bot.util.embed(title="Eternal Transcendance Tracking Sheet", description=self.bot.data.config['strings']["eternal()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/npc/s/30400{}.jpg".format(random.choice(['30000_04', '31000_04', '32000_03', '33000_03', '34000_03', '35000_03', '36000_03', '37000_03', '38000_03', '39000_03'])), color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['sparktracker'])
-    @commands.cooldown(1, 5, commands.BucketType.guild)
-    async def rollTracker(self, ctx):
-        """Post a link to my autistic roll tracking Sheet"""
-        await ctx.reply(embed=self.bot.util.embed(title="{} GBF Roll Tracker".format(self.bot.emote.get('crystal')), description=self.bot.data.config['strings']["rolltracker()"], color=self.color))
-
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwskin', 'blueskin'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def stayBlue(self, ctx):
@@ -1135,7 +1129,7 @@ class GranblueFantasy(commands.Cog):
                 await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="Profile not found", color=self.color))
                 return
             elif (await self.bot.do(self.searchProfile, id)) is not None:
-                await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="This id is already in use", footer="use the bug_report command if it's a case of griefing", color=self.color))
+                await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="This id is already in use", footer="use the bugreport command if it's a case of griefing", color=self.color))
                 return
             # register
             with self.bot.data.lock:
@@ -1321,7 +1315,7 @@ class GranblueFantasy(commands.Cog):
         try:
             if target == "":
                 if str(ctx.author.id) not in self.bot.data.save['gbfids']:
-                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID".format(ctx.author.display_name), footer="setProfile <id>", color=self.color))
+                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(ctx.author.display_name), footer="setProfile <id>", color=self.color))
                     return
                 id = self.bot.data.save['gbfids'][str(ctx.author.id)]
             elif target.startswith('<@') and target.endswith('>'):
@@ -1330,7 +1324,7 @@ class GranblueFantasy(commands.Cog):
                     else: target = int(target[2:-1])
                     member = ctx.guild.get_member(target)
                     if str(member.id) not in self.bot.data.save['gbfids']:
-                        await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), footer="setProfile <id>", color=self.color))
+                        await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(member.display_name), footer="setProfile <id>", color=self.color))
                         return
                     id = self.bot.data.save['gbfids'][str(member.id)]
                 except:
@@ -1344,7 +1338,7 @@ class GranblueFantasy(commands.Cog):
                         await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Member not found", color=self.color))
                         return
                     elif str(member.id) not in self.bot.data.save['gbfids']:
-                        await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID".format(member.display_name), footer="setProfile <id>", color=self.color))
+                        await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(member.display_name), footer="setProfile <id>", color=self.color))
                         return
                     id = self.bot.data.save['gbfids'][str(member.id)]
             if id < 0 or id >= 100000000:

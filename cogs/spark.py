@@ -16,7 +16,13 @@ class Spark(commands.Cog):
         self.bot = bot
         self.color = 0xeba834
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setcrystal', 'setspark'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['sparktracker'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def rollTracker(self, ctx):
+        """Post a link to my autistic roll tracking Sheet"""
+        await ctx.reply(embed=self.bot.util.embed(title="{} GBF Roll Tracker".format(self.bot.emote.get('crystal')), description=self.bot.data.config['strings']["rolltracker()"], color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setcrystal', 'setspark', 'setdraw'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def setRoll(self, ctx, crystal : int, single : int = 0, ten : int = 0):
         """Set your roll count"""
@@ -37,7 +43,7 @@ class Spark(commands.Cog):
                 await self.bot.callCommand(ctx, 'seeRoll')
             except Exception as e:
                 final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':ctx.author.display_name, 'icon_url':ctx.author.avatar_url}, description="**{} {} {} {} {} {}**".format(self.bot.emote.get("crystal"), crystal, self.bot.emote.get("singledraw"), single, self.bot.emote.get("tendraw"), ten), color=self.color))
-                await self.bot.sendError('setRoll', e, 'B')
+                await self.bot.sendError('setRoll', e)
         except:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color, footer="setRoll <crystal> [single] [ten]"))
         try:
@@ -45,10 +51,47 @@ class Spark(commands.Cog):
         except:
             pass
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['seecrystal', 'seespark'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['addcrystal', 'addspark', 'adddraw', 'modRoll', 'modcrystal', 'modspark', 'moddraw', 'changeRoll', 'changecrystal', 'changespark', 'changedraw'])
+    @commands.cooldown(30, 30, commands.BucketType.guild)
+    async def addRoll(self, ctx, crystal : int, single : int = 0, ten : int = 0):
+        """Modify to your roll count"""
+        id = str(ctx.message.author.id)
+        try:
+            if id in self.bot.data.save['spark'][0]:
+                data = self.bot.data.save['spark'][0][id].copy()
+                data[0] += crystal
+                data[1] += single
+                data[2] += ten
+                if data[0] < 0 or data[1] < 0 or data[2] < 0:
+                    raise Exception('Negative numbers')
+                if data[0] > 500000 or data[1] > 1000 or data[2] > 100:
+                    raise Exception('Big numbers')
+                with self.bot.data.lock:
+                    data[3] = datetime.utcnow()
+                    self.bot.data.save['spark'][0][id] = data
+                    self.bot.data.pending = True
+                try:
+                    await self.bot.callCommand(ctx, 'seeRoll')
+                except Exception as e:
+                    final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':ctx.author.display_name, 'icon_url':ctx.author.avatar_url}, description="**{} {} {} {} {} {}**".format(self.bot.emote.get("crystal"), crystal, self.bot.emote.get("singledraw"), single, self.bot.emote.get("tendraw"), ten), color=self.color))
+                    await self.bot.sendError('addRoll', e, 'A')
+            else:
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color, footer="setRoll <crystal> [single] [ten]"))
+        except Exception as xe:
+            try:
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="An error occured\n`{}`\n**{} {} {} {} {} {}**".format(xe, self.bot.emote.get("crystal"), data[0], self.bot.emote.get("singledraw"), data[1], self.bot.emote.get("tendraw"), data[2]), color=self.color, footer="addRoll <crystal> [single] [ten]"))
+            except:
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="An error occured", color=self.color, footer="addRoll <crystal> [single] [ten]"))
+                await self.bot.sendError('addRoll', xe, 'B')
+        try:
+            await self.bot.util.clean(ctx, final_msg, 30)
+        except:
+            pass
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['seecrystal', 'seespark', 'seedraw'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def seeRoll(self, ctx, member : discord.Member = None):
-        """Post your roll count"""
+        """Post your (or the target) roll count"""
         if member is None: member = ctx.author
         id = str(member.id)
         try:
@@ -69,8 +112,9 @@ class Spark(commands.Cog):
 
             # calculate estimation
             # note: those numbers are from my own experimentation
-            month_min = [80, 80, 200, 80, 80, 80, 80, 250, 90, 80, 80, 160]
-            month_max = [60, 60, 120, 60, 60, 60, 60, 140, 60, 60, 60, 110]
+            # from january to december
+            month_min = [80, 80, 160, 90, 70, 80, 80, 200, 80, 80, 80, 160]
+            month_max = [70, 70, 120, 70, 50, 60, 60, 140, 60, 60, 60, 120]
             month_day = [31.0, 28.25, 31.0, 30.0, 31.0, 30.0, 31.0, 31.0, 30.0, 31.0, 30.0, 31.0]
 
             # get current day
