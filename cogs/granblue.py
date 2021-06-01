@@ -1309,9 +1309,8 @@ class GranblueFantasy(commands.Cog):
                         self.dlAndPasteImage(img, ms[0].attrs['src'].replace('img_low', 'img').replace('/ls/', '/m/'), (equip_size[0], portrait_size[1]+lvl_box_height), equip_size)
                         plus = eq.findChildren("div", class_="prt-summon-quality", recursive=True)
                         #if len(plus) > 0:
-                        if True:
-                            plus = ["+99"]
-                            d.text((equip_size[0]+equip_size[0]-50, portrait_size[1]+lvl_box_height+equip_size[1]-30), plus[0], fill=(255, 255, 95), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
+                        if len(plus) > 0:
+                            d.text((equip_size[0]+equip_size[0]-50, portrait_size[1]+lvl_box_height+equip_size[1]-30), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
                         continue
                 
                 # party members
@@ -1375,7 +1374,7 @@ class GranblueFantasy(commands.Cog):
                 except: pass
             if trophy == "No Trophy Displayed": title = "\u202d{} **{}**".format(self.bot.emote.get(rarity), name)
             else: title = "\u202d{} **{}**▫️{}".format(self.bot.emote.get(rarity), name, trophy)
-            return title, "{}{}\n{} Crew ▫️ {}\n{}{}\n\n[:earth_asia: Preview](#THUMBNAIL_HYPERLINK_PLACEHOLDER)".format(rank, comment, self.bot.emote.get('gw'), crew, scores, star), thumbnail
+            return title, "{}{}\n{} Crew ▫️ {}\n{}{}\n\n[:earth_asia: Preview]({})".format(rank, comment, self.bot.emote.get('gw'), crew, scores, star, thumbnail), thumbnail
         else:
             return None, "Profile is private", ""
 
@@ -1440,11 +1439,13 @@ class GranblueFantasy(commands.Cog):
                     message = await self.bot.send('image', file=df)
                     df.close()
                 self.bot.file.rm(thumbnail)
+                description = description.replace(thumbnail, message.attachments[0].url)
                 thumbnail = message.attachments[0].url
             except:
+                description = description.replace("\n[:earth_asia: Preview]({})".format(thumbnail), "")
                 thumbnail = ""
             await self.bot.util.unreact(ctx.message, 'time')
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=description.replace("#THUMBNAIL_HYPERLINK_PLACEHOLDER", thumbnail), image=thumbnail, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=description, image=thumbnail, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             await self.bot.util.clean(ctx, final_msg, 45)
         except Exception as e:
             await self.bot.sendError("profile", e)
