@@ -184,6 +184,6 @@ class Util():
 
     def pexc(self, exception): # format an exception
         try:
-            return "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            return "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
         except:
             return exception

@@ -158,7 +158,7 @@ class Games(commands.Cog):
         if r[0] == 2: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
         elif r[0] == 1: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
         else: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969231323070494/0_s.png'
-        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} did a single roll...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is using a SR/SSR ticket...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
         await asyncio.sleep(5)
         if result['extended']:
             await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} used a SR/SSR ticket".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="{} {}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1]), color=self.color, footer=footer))
