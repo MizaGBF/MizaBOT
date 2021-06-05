@@ -357,7 +357,7 @@ function openTab(evt, tabName) {
 filterSelection("all")
 </script>"""
     with open("index.html", "w", encoding="utf-8") as f:
-        f.write('<body>' + header + tabs + commandList + about + css + js + '</body>')
+        f.write('<head><link rel="icon" type="image/png" href="img/icon.png" /></head><body>' + header + tabs + commandList + about + css + js + '</body>')
 
 def load():
     r = re.compile("^class ([a-zA-Z0-9_]*)\\(commands\\.Cog\\):", re.MULTILINE)
