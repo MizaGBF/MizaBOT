@@ -152,7 +152,7 @@ def generate_html(command_list):
     '''
     css = """<style>
 html, body {
-  background: black;
+  background: #14041c;
   font-family: sans-serif;
   font-size: 16px;
 }
