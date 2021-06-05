@@ -25,7 +25,7 @@ class Bot(commands.Cog):
     @commands.cooldown(1, 20, commands.BucketType.guild)
     async def github(self, ctx):
         """Post the link to the bot code source"""
-        final_msg = await ctx.reply(embed=self.bot.util.embed(title=self.bot.description.splitlines()[0], description="Code source at https://github.com/MizaGBF/MizaBOT", thumbnail=ctx.guild.me.avatar_url, color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.util.embed(title=self.bot.description.splitlines()[0], description="Code source [here](https://github.com/MizaGBF/MizaBOT)\nCommand list available [here](https://mizagbf.github.io/MizaBOT/index.html)", thumbnail=ctx.guild.me.avatar_url, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['mizabot'])
