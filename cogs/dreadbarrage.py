@@ -69,7 +69,7 @@ class DreadBarrage(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['march', 'valiant', 'dread', 'db', 'dreadbarrage'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
-    async def Barrage(self, ctx, gmt :str = "9"):
+    async def Barrage(self, ctx, gmt : str = "9"):
         """Post the Dread Barrage schedule"""
         try: gmt = int(gmt)
         except: gmt = 9

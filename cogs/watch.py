@@ -309,6 +309,7 @@ class Watch(commands.Cog):
             wl = self.bot.data.config['gbfwatch']['wl']
             ws = self.bot.data.config['gbfwatch']['ws']
             wt = self.bot.data.config['gbfwatch']['wt']
+            wel = self.bot.data.config['gbfwatch']['wel']
             found = {'type':1, 'r':{}}
             errc = 0
             if len(self.bot.data.save['gbfdata']['w'][k][i]) == 0 or self.bot.data.save['gbfdata']['w'][k][i][-1] < 10:
@@ -339,7 +340,7 @@ class Watch(commands.Cog):
                     self.bot.data.save['gbfdata']['w'][k][i].append(stid)
                     self.bot.data.pending = True
 
-                tt = ws[x+2].format(self.bot.emote.get(wt.get(str(i+1), "Error")))
+                tt = ws[x%2].format(self.bot.emote.get(wt.get(str(i+1), "Error")))
                 if tt not in found['r']:
                     found['r'][tt] = 1
                 else:
@@ -347,8 +348,14 @@ class Watch(commands.Cog):
 
                 if not silent:
                     r = self.bot.doAsTask(self.atr(o, str(id), True))
-                    if not r:
+                    if r == 0:
                         self.bot.doAsTask(o.send(embed=self.bot.util.embed(title=ws[x], description='{} ▫️ {}'.format(tt, id), thumbnail=wl[0].format(id), color=self.color)))
+                    elif r >= 10:
+                        tt = ws[x%2].format(self.bot.emote.get(wel.get(str(r - 10), '')), self.bot.emote.get(wt.get(str(i+1), "Error")))
+                        if tt not in found['r']:
+                            found['r'][tt] = 1
+                        else:
+                            found['r'][tt] += 1
 
                 stid += 1
 
@@ -437,9 +444,24 @@ class Watch(commands.Cog):
                     msg += "{}\n".format(data['sub_skill']['comment'])
                 url = 'http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/summon/m/{}.jpg'.format(data['id'])
             await target.send(embed=self.bot.util.embed(title="{}{}{} {}".format(rarity, kind, data['name'], data.get('series_name', '')), description=msg, thumbnail=url, footer=data['id'], color=self.color))
-            return True
+            if 'grand' in data.get('series_name', '').lower():
+                try:
+                    sk = data['special_skill']['comment'].lower()
+                    for i in range(1, 4):
+                        key = 'skill{}'.format(i)
+                        if key in data:
+                            sk += data[key]['comment'].lower()
+                    if 'fire allies' in sk: return 10
+                    elif 'water allies' in sk: return 11
+                    elif 'earth allies' in sk: return 12
+                    elif 'wind allies' in sk: return 13
+                    elif 'light allies' in sk: return 14
+                    elif 'dark allies' in sk: return 15
+                except:
+                    pass
+            return 1
         except:
-            return False
+            return 0
 
     async def dadp(self, c, data, tt, x=None):
         fields = []

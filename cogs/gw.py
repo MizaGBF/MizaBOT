@@ -244,7 +244,7 @@ class GuildWar(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 10, commands.BucketType.guild)
-    async def GW(self, ctx, gmt :str = "9"):
+    async def GW(self, ctx, gmt : str = "9"):
         """Post the GW schedule"""
         try: gmt = int(gmt)
         except: gmt = 9
@@ -311,7 +311,8 @@ class GuildWar(commands.Cog):
     @isYou()
     @commands.cooldown(10, 10, commands.BucketType.guild)
     async def GWbuff(self, ctx):
-        """Check when is the next GW buff, (You) Only"""
+        """Check when is the next GW buff
+        (You) Server Only"""
         try:
             d = self.getNextBuff(ctx)
             if d != "":
@@ -1214,7 +1215,7 @@ class GuildWar(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["resetdancho"])
     @isOwner()
     async def resetleader(self, ctx):
-        """Reset the saved captain list"""
+        """Reset the saved captain list (Owner only)"""
         with self.bot.data.lock:
             self.bot.data.save['gbfdata'].pop('leader')
             self.bot.data.pending = True
@@ -1348,7 +1349,7 @@ class GuildWar(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['recruiting', 'opencrew', 'opencrews'])
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def recruit(self, ctx):
-        """Post all recruiting /gbfg/ crew"""
+        """Post all recruiting /gbfg/ crews"""
         if not await self.bot.do(self.bot.gbf.isAvailable): # NOTE: slow?
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} /gbfg/ recruiting crews".format(self.bot.emote.get('crew')), description="Unavailable", color=self.color))
         else:
@@ -1403,7 +1404,7 @@ class GuildWar(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwlead', 'gwcompare', 'gwcmp'])
     @commands.cooldown(2, 15, commands.BucketType.user)
     async def lead(self, ctx, IDcrewA : str, IDcrewB : str):
-        """Search two crews current score and compare them"""
+        """Search two crew current scores and compare them"""
         day = self.bot.ranking.getCurrentGWDayID()
         if day is None or (day % 10) <= 1:
             await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Unavailable", color=self.color))
@@ -1454,7 +1455,8 @@ class GuildWar(commands.Cog):
     @isYou()
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def youlead(self, ctx, opponent : str = ""):
-        """Show the current match of (You)"""
+        """Show the current match of (You)
+        (You) Server Only"""
         if opponent != "":
             if not self.bot.isMod(ctx):
                 await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Only moderators can set the opponent", color=self.color))

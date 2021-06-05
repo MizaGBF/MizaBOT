@@ -438,7 +438,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True, aliases=['clearGacha'])
     @isOwner()
     async def resetGacha(self, ctx):
-        """Reset the gacha settings"""
+        """Reset the gacha settings (Owner only)"""
         with self.bot.data.lock:
             self.bot.data.save['gbfdata']['gachabanner'] = None
             self.bot.data.save['gbfdata']['gachacontent'] = None
@@ -525,5 +525,5 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def punish(self, ctx):
-        """Punish the bot"""
+        """Punish the bot (Owner only)"""
         await ctx.send("Please, Master, make it hurt.")

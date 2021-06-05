@@ -23,6 +23,14 @@ import functools
 """
     TODO:
         ctrl+F all NOTE
+        rollback beta status in config.json
+    
+    discord.py 2.0 breaking changes:
+    https://github.com/Rapptz/discord.py/projects/3
+        * remove bot.logout() calls
+        * check the custom help
+        * remove permissions_in
+        * check timestamp timezone
 """
 
 # Main Bot Class (overload commands.Bot)
@@ -52,9 +60,8 @@ class MizaBot(commands.Bot):
         self.sql = SQL(self)
         self.ranking = Ranking(self)
         
-        # loading data (TODO: drive stuff?)
+        # loading data
         self.data.loadConfig()
-
         for i in range(0, 100): # try multiple times in case google drive is unresponsive
             if self.drive.load(): break # attempt to download the save file
             elif i == 99:

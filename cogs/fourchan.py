@@ -39,7 +39,7 @@ class FourChan(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['hgg2d'])
     @commands.cooldown(1, 10, commands.BucketType.default)
     async def hgg(self, ctx):
-        """Post the latest /hgg2d/ threads"""
+        """Post the latest /hgg2d/ threads (NSFW channels only)"""
         if not ctx.channel.is_nsfw():
             await ctx.reply(embed=self.bot.util.embed(title=':underage: NSFW channels only'))
             return
@@ -80,7 +80,8 @@ class FourChan(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, name='4chan')
     @commands.cooldown(1, 3, commands.BucketType.default)
     async def _4chan(self, ctx, board : str, *, term : str):
-        """Search 4chan threads"""
+        """Search 4chan threads
+        Pink boards are limited to NSFW channels only"""
         nsfw = ['b', 'r9k', 'pol', 'bant', 'soc', 's4s', 's', 'hc', 'hm', 'h', 'e', 'u', 'd', 'y', 't', 'hr', 'gif', 'aco', 'r']
         board = board.lower()
         if board in nsfw and not ctx.channel.is_nsfw():

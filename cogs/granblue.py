@@ -1507,7 +1507,7 @@ class GranblueFantasy(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 30, commands.BucketType.guild)
     async def news(self, ctx):
-        """Post the latest new posts gacha(s)"""
+        """Post the latest new posts"""
         if 'news_url' not in self.bot.data.save['gbfdata']:
             self.bot.data.save['gbfdata']['news_url'] = []
             self.bot.data.pending = True

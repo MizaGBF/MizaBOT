@@ -25,7 +25,8 @@ class Spark(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setcrystal', 'setspark', 'setdraw'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def setRoll(self, ctx, crystal : int, single : int = 0, ten : int = 0):
-        """Set your roll count"""
+        """Set your roll count
+        Example: setRoll 3000 10 1 to set 3000 crystals, ten single draw tickets and one ten draw ticket"""
         id = str(ctx.message.author.id)
         try:
             if crystal < 0 or single < 0 or ten < 0:
@@ -54,7 +55,8 @@ class Spark(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['addcrystal', 'addspark', 'adddraw', 'modRoll', 'modcrystal', 'modspark', 'moddraw', 'changeRoll', 'changecrystal', 'changespark', 'changedraw'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def addRoll(self, ctx, crystal : int, single : int = 0, ten : int = 0):
-        """Modify to your roll count"""
+        """Modify your roll count
+        Example: addRoll 500 1 to add 500 crystals and one single draw ticket"""
         id = str(ctx.message.author.id)
         try:
             if id in self.bot.data.save['spark'][0]:

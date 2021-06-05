@@ -81,7 +81,7 @@ class Moderation(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['banspark'])
     @isMod()
-    async def banRoll(self, ctx, member: discord.Member):
+    async def banRoll(self, ctx, member : discord.Member):
         """Ban an user from the roll ranking (Mod Only)
         To avoid idiots with fake numbers
         The ban is across all servers"""
