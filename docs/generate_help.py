@@ -121,7 +121,7 @@ def generate_html(command_list):
         if len(commands) == 0: continue
         filters += '<button class="btn" onclick="filterSelection(\'{}\')" style="background: #{};">{}</button>'.format(cog.lower(), commands[0].get('color', '615d5d'), cog)
         for c in commands:
-            containers += '<li class="command {}"><div class="command-name"><span style="display: inline-block;background: #{};padding: 5px;text-shadow: 2px 2px 2px rgba(0,0,0,0.5);">{}</span>&nbsp;&nbsp;{}</div><div class="command-use">{}</div><div class="command-description">{}</div></li>'.format(cog.lower(), c.get('color', '615d5d'), cog, make_name(c['name'], c['aliases']), make_parameters(c['name'], c['args']), c['comment'])
+            containers += '<li class="command {}"><div class="command-name"><span style="display: inline-block;background: #{};padding: 5px;text-shadow: 2px 2px 2px rgba(0,0,0,0.5);">{}</span>&nbsp;&nbsp;{}</div><div class="command-use">{}</div><div class="command-description">{}</div></li>'.format(cog.lower(), c.get('color', '615d5d'), cog, make_name(c['name'], c['aliases']), make_parameters(c['name'], c['args']), c['comment'].replace('(Mod Only)', '<b>(Mod Only)</b>').replace('((You) Mod Only)', '<b>((You) Mod Only)</b>').replace('(NSFW channels only)', '<b>(NSFW channels only)</b>'))
     filters += '</div><br><input type="text" id="textSelection" onkeyup="searchSelection()" placeholder="Search a command"><br>'
     containers += '</ul>'
     commandList = '<div id="Commands" class="tabcontent">' + filters + containers + '</div>'

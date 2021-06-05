@@ -70,7 +70,8 @@ class Moderation(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isMod()
     async def setST(self, ctx, st1 : int, st2 : int):
-        """Set the two ST of this server (Mod Only)"""
+        """Set the two ST of this server, JST Time (Mod Only)
+        Example: setST 7 23 for 7am and 11pm JST"""
         if st1 < 0 or st1 >= 24 or st2 < 0 or st2 >= 24:
             await ctx.send(embed=self.bot.util.embed(title="Error", description="Values must be between 0 and 23 included", color=self.color))
             return
@@ -84,7 +85,8 @@ class Moderation(commands.Cog):
     async def banRoll(self, ctx, member : discord.Member):
         """Ban an user from the roll ranking (Mod Only)
         To avoid idiots with fake numbers
-        The ban is across all servers"""
+        The ban is across all servers and can only be lifted by the owner
+        Measures might be taken against mods abusing it"""
         id = str(member.id)
         if id not in self.bot.data.save['spark'][1]:
             with self.bot.data.lock:
