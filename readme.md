@@ -1,6 +1,6 @@
 # MizaBOT  
 * [Granblue Fantasy](http://game.granbluefantasy.jp) Discord Bot.  
-* Command List available [Here](https://mizagbf.github.io/MizaBOT/index.html).  
+* Command List available [Here](https://mizagbf.github.io/MizaBOT/).  
 ### Requirements  
 * Python 3.9.  
 * [discord.py](https://github.com/Rapptz/discord.py) (formerly the rewrite branch).  

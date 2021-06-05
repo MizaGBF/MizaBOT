@@ -37,7 +37,7 @@ import functools
 class MizaBot(commands.Bot):
     def __init__(self):
         self.version = "8.0-beta-3" # bot version
-        self.changelog = ["**This MizaBOT version is a Beta**, please use `$bug_report` if you see anything wrong", "Online command list added [here](https://mizagbf.github.io/MizaBOT/index.html)""Reworked `$profile`", "Added `$addRoll`", "Added `$dice`, `$8ball` and `$coin`"] # changelog lines
+        self.changelog = ["**This MizaBOT version is a Beta**, please use `$bug_report` if you see anything wrong", "Online command list added [here](https://mizagbf.github.io/MizaBOT/)""Reworked `$profile`", "Added `$addRoll`", "Added `$dice`, `$8ball` and `$coin`"] # changelog lines
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
         self.tasks = {} # contain our user tasks
@@ -92,7 +92,7 @@ class MizaBot(commands.Bot):
         intents.members = True
         
         # init base class
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\nSource code: https://github.com/MizaGBF/MizaBOT.\nCommand List: https://mizagbf.github.io/MizaBOT/index.html\nDefault command prefix is `$`, use `$setPrefix` to change it on your server.".format(self.version), help_command=Help(), owner=self.data.config['ids']['owner'], max_messages=None, intents=intents)
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\nSource code: https://github.com/MizaGBF/MizaBOT.\nCommand List: https://mizagbf.github.io/MizaBOT/\nDefault command prefix is `$`, use `$setPrefix` to change it on your server.".format(self.version), help_command=Help(), owner=self.data.config['ids']['owner'], max_messages=None, intents=intents)
 
     def go(self): # main loop
         self.cogn = cogs.load(self) # load cogs
@@ -232,7 +232,8 @@ class MizaBot(commands.Bot):
             await bot.send('debug', embed=bot.util.embed(title="{} user tasks started".format(len(self.tasks)), description=msg, timestamp=self.util.timestamp()))
 
     async def on_message(self, message): # to do something with a message
-        await self.process_commands(message) # never forget this line
+        if self.running: # don't process commands if exiting
+            await self.process_commands(message) # never forget this line
 
     async def on_guild_join(self, guild): # when the bot joins a new guild
         id = str(guild.id)

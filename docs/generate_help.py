@@ -108,8 +108,13 @@ def make_parameters(name, args):
     else:
         return '$' + name + ' ' + msg[:-2]
 
+def get_version():
+    with open("../bot.py", "r", encoding="utf-8") as f:
+        data = f.read()
+    return search_interval(data, 0, len(data)-1, 'self.version = "', '"')
+
 def generate_html(command_list):
-    header = '<title>MizaBOT Online Command List</title><h1 style="width:630px;margin-left: auto; margin-right: auto;"><img src="img/icon.png" style="vertical-align:middle;border-radius: 50%;box-shadow: 0 0 0 2pt #981cd6">&nbsp;MizaBOT Online Command List</h1><br>'
+    header = '<title>MizaBOT Online Command List</title><h1 style="width:630px;margin-left: auto; margin-right: auto;"><img src="img/icon.png" style="vertical-align:middle;border-radius: 50%;box-shadow: 0 0 0 2pt #981cd6">&nbsp;MizaBOT Online Command List<br><small>v{}</small></h1><br>'.format(get_version())
     tabs = '''<div class="tab">
         <button class="tablinks" onclick="openTab(event, 'Commands')">Commands</button>
         <button class="tablinks" onclick="openTab(event, 'About')">About</button>
@@ -153,6 +158,7 @@ html, body {
 }
 
 h1 {
+  text-align: center;
   color: white;
 }
 
