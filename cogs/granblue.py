@@ -820,7 +820,7 @@ class GranblueFantasy(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
     async def account(self, ctx, id : int = -1):
-        """List GBF accounts used by the bot (Owner only)
+        """List GBF accounts used by the bot (Owner Only)
         Specify one to test it"""
         if len(self.bot.data.save['gbfaccounts']) == 0:
             await ctx.send(embed=self.bot.util.embed(title="GBF Account status", description="No accounts set", color=self.color))
@@ -863,7 +863,7 @@ class GranblueFantasy(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
     async def switch(self, ctx, id : int):
-        """Select the current GBF account to use (Owner only)"""
+        """Select the current GBF account to use (Owner Only)"""
         if self.bot.gbf.get(id) is not None:
             with self.bot.data.lock:
                 self.bot.data.save['gbfcurrent'] = id
@@ -875,7 +875,7 @@ class GranblueFantasy(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
     async def addAccount(self, ctx, uid : int, ck : str, ua : str):
-        """Add a GBF account to the bot (Owner only)"""
+        """Add a GBF account to the bot (Owner Only)"""
         if uid < 1:
             await ctx.send(embed=self.bot.util.embed(title="Error", description="Invalid parameter {}".format(uid), color=self.color))
             return
@@ -891,7 +891,7 @@ class GranblueFantasy(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
     async def delAccount(self, ctx, num : int):
-        """Add a GBF account to the bot (Owner only)"""
+        """Add a GBF account to the bot (Owner Only)"""
         if self.bot.gbf.remove(num):
             await self.bot.util.react(ctx.message, '✅') # white check mark
         else:
@@ -900,7 +900,7 @@ class GranblueFantasy(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
     async def sauid(self, ctx, num : int, uid : int = -1):
-        """Modify a GBF account (Owner only)"""
+        """Modify a GBF account (Owner Only)"""
         if uid < 0:
             acc = self.bot.gbf.get(num)
             if acc is None:
@@ -914,7 +914,7 @@ class GranblueFantasy(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
     async def sack(self, ctx, num : int, *, ck : str = ""):
-        """Modify a GBF account (Owner only)"""
+        """Modify a GBF account (Owner Only)"""
         if ck == "":
             acc = self.bot.gbf.get(num)
             if acc is None:
@@ -928,7 +928,7 @@ class GranblueFantasy(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
     async def saua(self, ctx, num : int, *, ua : str = ""):
-        """Modify a GBF account (Owner only)"""
+        """Modify a GBF account (Owner Only)"""
         if ua == "":
             acc = self.bot.gbf.get(num)
             if acc is None:
@@ -1086,7 +1086,7 @@ class GranblueFantasy(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['clearid'])
     @isOwner()
     async def clearProfile(self, ctx, gbf_id : int):
-        """Unlink a GBF id (Owner only)"""
+        """Unlink a GBF id (Owner Only)"""
         user_id = await self.bot.do(self.searchProfile, gbf_id)
         if user_id is None:
             await ctx.send(embed=self.bot.util.embed(title="Clear Profile Error", description="ID not found", color=self.color))

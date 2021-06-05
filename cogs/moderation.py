@@ -32,7 +32,7 @@ class Moderation(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['nitro', 'here'])
     @commands.cooldown(1, 30, commands.BucketType.guild)
     async def serverinfo(self, ctx):
-        """Get informations on the current guild (Owner only)"""
+        """Get informations on the current guild (Owner Only)"""
         guild = ctx.guild
         await ctx.send(embed=self.bot.util.embed(title=guild.name + " status", description="**ID** ▫️ {}\n**Owner** ▫️ {}\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon_url, timestamp=guild.created_at, color=self.color))
 
@@ -100,7 +100,7 @@ class Moderation(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isMod()
     async def toggleFullBot(self, ctx):
-        """Allow or not this channel to use all commands (Mod only)
+        """Allow or not this channel to use all commands (Mod Only)
         It cleans game/obnoxious commands outside of the whitelisted channels"""
         gid = str(ctx.guild.id)
         cid = ctx.channel.id
@@ -128,7 +128,7 @@ class Moderation(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isMod()
     async def allowBotEverywhere(self, ctx):
-        """Allow full bot access in every channel (Mod only)"""
+        """Allow full bot access in every channel (Mod Only)"""
         gid = str(ctx.guild.id)
         if gid in self.bot.data.save['permitted']:
             with self.bot.data.lock:
@@ -141,7 +141,7 @@ class Moderation(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isMod()
     async def seeBotPermission(self, ctx):
-        """See all channels permitted to use all commands (Mod only)"""
+        """See all channels permitted to use all commands (Mod Only)"""
         gid = str(ctx.guild.id)
         if gid in self.bot.data.save['permitted']:
             msg = ""

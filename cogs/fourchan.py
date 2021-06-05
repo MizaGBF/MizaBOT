@@ -39,7 +39,7 @@ class FourChan(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['hgg2d'])
     @commands.cooldown(1, 10, commands.BucketType.default)
     async def hgg(self, ctx):
-        """Post the latest /hgg2d/ threads (NSFW channels only)"""
+        """Post the latest /hgg2d/ threads (NSFW channels Only)"""
         if not ctx.channel.is_nsfw():
             await ctx.reply(embed=self.bot.util.embed(title=':underage: NSFW channels only'))
             return

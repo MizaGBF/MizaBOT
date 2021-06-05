@@ -93,7 +93,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def eval(self, ctx, *, expression : str):
-        """Evaluate code at run time (Owner only)
+        """Evaluate code at run time (Owner Only)
         For Debug.
         Use this to print things for example."""
         try:
@@ -105,7 +105,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def exec(self, ctx, *, expression : str):
-        """Execute code at run time (Owner only)
+        """Execute code at run time (Owner Only)
         For Debug.
         Use this to modify data for example."""
         try:
@@ -118,7 +118,7 @@ class Admin(commands.Cog):
     @isOwner()
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def checkrole(self, ctx):
-        """List all the roles in use on a server (Owner only)
+        """List all the roles in use on a server (Owner Only)
         It will list how many users are in each role."""
         g = ctx.author.guild
         for r in g.roles:
@@ -131,7 +131,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def leave(self, ctx, id: int):
-        """Make the bot leave a server (Owner only)"""
+        """Make the bot leave a server (Owner Only)"""
         try:
             toleave = self.bot.get_guild(id)
             await toleave.leave()
@@ -143,7 +143,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True, aliases=['banS', 'ban', 'bs'])
     @isOwner()
     async def ban_server(self, ctx, id: int):
-        """Command to leave and ban a server (Owner only)"""
+        """Command to leave and ban a server (Owner Only)"""
         id = str(id)
         try:
             if id not in self.bot.data.save['guilds']['banned']:
@@ -163,7 +163,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True, aliases=['banO', 'bo'])
     @isOwner()
     async def ban_owner(self, ctx, id: int):
-        """Command to ban a server owner and leave all its servers (Owner only)"""
+        """Command to ban a server owner and leave all its servers (Owner Only)"""
         id = str(id)
         try:
             if id not in self.bot.data.save['guilds']['owners']:
@@ -184,7 +184,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True, aliases=['a'])
     @isOwner()
     async def accept(self, ctx, id: int):
-        """Command to accept a pending server (Owner only)"""
+        """Command to accept a pending server (Owner Only)"""
         sid = str(id)
         try:
             if sid in self.bot.data.save['guilds']['pending']:
@@ -202,7 +202,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True, aliases=['r'])
     @isOwner()
     async def refuse(self, ctx, id: int):
-        """Command to refuse a pending server (Owner only)"""
+        """Command to refuse a pending server (Owner Only)"""
         id = str(id)
         try:
             if id in self.bot.data.save['guilds']['pending']:
@@ -220,14 +220,14 @@ class Admin(commands.Cog):
     @commands.command(name='save', no_pm=True, aliases=['s'])
     @isOwner()
     async def _save(self, ctx):
-        """Command to make a snapshot of the bot's settings (Owner only)"""
+        """Command to make a snapshot of the bot's settings (Owner Only)"""
         await self.bot.data.autosave(True)
         await self.bot.util.react(ctx.message, '✅') # white check mark
 
     @commands.command(name='load', no_pm=True, aliases=['l'])
     @isOwner()
     async def _load(self, ctx, drive : str = ""):
-        """Command to reload the bot settings (Owner only)
+        """Command to reload the bot settings (Owner Only)
         Add drive to load the file from the drive"""
         self.bot.cancelTask('check_buff')
         if drive == 'drive': 
@@ -245,14 +245,14 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True, aliases=['guilds'])
     @isOwner()
     async def servers(self, ctx):
-        """List all servers (Owner only)"""
+        """List all servers (Owner Only)"""
         await self.guildList()
         await self.bot.util.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, aliases=['checkbuff'])
     @isOwner()
     async def buffcheck(self, ctx): # debug stuff
-        """List the GW buff list for (You) (Owner only)"""
+        """List the GW buff list for (You) (Owner Only)"""
         await self.bot.util.react(ctx.message, '✅') # white check mark
         msg = ""
         for b in self.bot.gw['buffs']:
@@ -267,7 +267,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def setMaintenance(self, ctx, day : int, month : int, hour : int, duration : int):
-        """Set a maintenance date (Owner only)"""
+        """Set a maintenance date (Owner Only)"""
         try:
             with self.bot.data.lock:
                 self.bot.data.save['maintenance']['time'] = datetime.now().replace(month=month, day=day, hour=hour, minute=0, second=0, microsecond=0)
@@ -281,7 +281,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def delMaintenance(self, ctx):
-        """Delete the maintenance date (Owner only)"""
+        """Delete the maintenance date (Owner Only)"""
         with self.bot.data.lock:
             self.bot.data.save['maintenance'] = {"state" : False, "time" : None, "duration" : 0}
             self.bot.data.pending = True
@@ -290,7 +290,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True, aliases=['ss'])
     @isOwner()
     async def setStream(self, ctx, *, txt : str):
-        """Set the stream command text (Owner only)"""
+        """Set the stream command text (Owner Only)"""
         if txt == "": return
         with self.bot.data.lock:
             self.bot.data.save['stream']['content'] = txt.split('\n')
@@ -300,7 +300,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True, aliases=['sst'])
     @isOwner()
     async def setStreamTime(self, ctx, day : int, month : int, year : int, hour : int):
-        """Set the stream time (Owner only)
+        """Set the stream time (Owner Only)
         The text needs to contain {} for the cooldown to show up"""
         try:
             with self.bot.data.lock:
@@ -313,7 +313,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True, aliases=['cs'])
     @isOwner()
     async def clearStream(self, ctx):
-        """Clear the stream command text (Owner only)"""
+        """Clear the stream command text (Owner Only)"""
         with self.bot.data.lock:
             self.bot.data.save['stream']['content'] = []
             self.bot.data.save['stream']['time'] = None
@@ -323,7 +323,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def clearTracker(self, ctx):
-        """Clear the gw match tracker (Owner only)"""
+        """Clear the gw match tracker (Owner Only)"""
         with self.bot.data.lock:
             self.bot.data.save['youtracker'] = None
             self.bot.data.pending = True
@@ -332,7 +332,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def setSchedule(self, ctx, *, txt : str):
-        """Set the GBF schedule for the month (Owner only)
+        """Set the GBF schedule for the month (Owner Only)
         Use ; to separate elements"""
         with self.bot.data.lock:
             self.bot.data.save['schedule'] = txt.split(';')
@@ -342,7 +342,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def getSchedule(self, ctx):
-        """Retrieve the monthly schedule from @granble_en (Owner only / Tweepy only)
+        """Retrieve the monthly schedule from @granble_en (Owner Only / Tweepy Only)
         The tweet must be recent"""
         tw = self.bot.twitter.timeline('granblue_en')
         if tw is not None:
@@ -366,7 +366,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def cleanSchedule(self, ctx):
-        """Remove expired entries from the schedule (Owner only)"""
+        """Remove expired entries from the schedule (Owner Only)"""
         c = self.bot.util.JST()
         new_schedule = []
         for i in range(0, len(self.bot.data.save['schedule']), 2):
@@ -390,14 +390,14 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def setStatus(self, ctx, *, terms : str):
-        """Change the bot status (Owner only)"""
+        """Change the bot status (Owner Only)"""
         await self.bot.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=terms))
         await self.bot.util.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True)
     @isOwner()
     async def banRollID(self, ctx, id: int):
-        """ID based Ban for $rollranking (Owner only)"""
+        """ID based Ban for $rollranking (Owner Only)"""
         id = str(id)
         if id not in self.bot.data.save['spark'][1]:
             with self.bot.data.lock:
@@ -408,7 +408,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True, aliases=['unbanspark'])
     @isOwner()
     async def unbanRoll(self, ctx, id : int):
-        """Unban an user from all the roll ranking (Owner only)
+        """Unban an user from all the roll ranking (Owner Only)
         Ask me for an unban (to avoid abuses)"""
         id = str(id)
         if id in self.bot.data.save['spark'][1]:
@@ -423,7 +423,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def cleanRoll(self, ctx):
-        """Remove users with 0 rolls (Owner only)"""
+        """Remove users with 0 rolls (Owner Only)"""
         count = 0
         with self.bot.data.lock:
             for k in list(self.bot.data.save['spark'][0].keys()):
@@ -438,7 +438,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True, aliases=['clearGacha'])
     @isOwner()
     async def resetGacha(self, ctx):
-        """Reset the gacha settings (Owner only)"""
+        """Reset the gacha settings (Owner Only)"""
         with self.bot.data.lock:
             self.bot.data.save['gbfdata']['gachabanner'] = None
             self.bot.data.save['gbfdata']['gachacontent'] = None
@@ -451,7 +451,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def logout(self, ctx):
-        """Make the bot quit (Owner only)"""
+        """Make the bot quit (Owner Only)"""
         await self.bot.data.autosave()
         self.bot.running = False
         await self.bot.logout()
@@ -459,7 +459,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def reboot(self, ctx):
-        """Make the bot reboot (Owner only)"""
+        """Make the bot reboot (Owner Only)"""
         await self.bot.data.autosave()
         self.bot.retcode = 1 # heroku restart if the error code isn't 0
         self.bot.running = False
@@ -468,7 +468,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def config(self, ctx):
-        """Post the current config file in the debug channel (Owner only)"""
+        """Post the current config file in the debug channel (Owner Only)"""
         try:
             with open('config.json', 'rb') as infile:
                 df = discord.File(infile)
@@ -480,7 +480,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def broadcast(self, ctx, *, terms):
-        """Broadcast a message (Owner only)"""
+        """Broadcast a message (Owner Only)"""
         if len(terms) == 0:
             return
         embed=discord.Embed(title="{} Broadcast".format(ctx.guild.me.display_name), description=terms, thumbnail=ctx.guild.me.avatar_url, color=self.color)
@@ -497,14 +497,14 @@ class Admin(commands.Cog):
     @isOwner()
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def invite(self, ctx):
-        """Send the MizaBOT invite link via direct messages (Owner only)"""
+        """Send the MizaBOT invite link via direct messages (Owner Only)"""
         await self.bot.send('debug', embed=self.bot.util.embed(title="Invite Request", description="{} ▫️ {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar_url, timestamp=datetime.utcnow(), color=self.color))
         await ctx.author.send(embed=self.bot.util.embed(title=ctx.guild.me.name, description="{}\nYou'll have to wait for my owner approval.\nMisuses will result in a ban.".format(self.bot.data.config['strings']["invite()"]), thumbnail=ctx.guild.me.avatar_url, timestamp=datetime.utcnow(), color=self.color))
 
     @commands.command(no_pm=True)
     @isOwner()
     async def gbfg_invite(self, ctx):
-        """Generate an invite for the /gbfg/ server (Owner only)"""
+        """Generate an invite for the /gbfg/ server (Owner Only)"""
         c = self.bot.get_channel(self.bot.data.config['ids']['gbfg_new'])
         link = await c.create_invite(max_age = 3600)
         await ctx.send(embed=self.bot.util.embed(title="/gbfg/ invite", description="`{}`".format(link), color=self.color))
@@ -512,7 +512,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
     async def getfile(self, ctx, *, filename: str):
-        """Retrieve a bot file remotely (Owner only)"""
+        """Retrieve a bot file remotely (Owner Only)"""
         try:
             with open(filename, 'rb') as infile:
                 df = discord.File(infile)
@@ -525,5 +525,5 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def punish(self, ctx):
-        """Punish the bot (Owner only)"""
+        """Punish the bot (Owner Only)"""
         await ctx.send("Please, Master, make it hurt.")

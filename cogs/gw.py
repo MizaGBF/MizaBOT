@@ -238,7 +238,7 @@ class GuildWar(commands.Cog):
     @commands.command(no_pm=True)
     @isOwner()
     async def newgwtask(self, ctx):
-        """Start a new checkGWBuff() task (Owner only)"""
+        """Start a new checkGWBuff() task (Owner Only)"""
         self.bot.runTask('check_buff', self.bot.get_cog('GuildWar').checkGWBuff)
         await self.bot.util.react(ctx.message, '✅') # white check mark
 
@@ -429,7 +429,7 @@ class GuildWar(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isYouModOrOwner()
     async def setGW(self, ctx, id : int, advElement : str, day : int, month : int, year : int):
-        """Set the GW date ((You) Mod only)"""
+        """Set the GW date ((You) Mod Only)"""
         try:
             # stop the task
             self.bot.cancelTask('check_buff')
@@ -512,7 +512,7 @@ class GuildWar(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isYouModOrOwner()
     async def disableGW(self, ctx):
-        """Disable the GW mode ((You) Mod only)
+        """Disable the GW mode ((You) Mod Only)
         It doesn't delete the GW settings"""
         self.bot.cancelTask('check_buff')
         with self.bot.data.lock:
@@ -523,7 +523,7 @@ class GuildWar(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isYouModOrOwner()
     async def enableGW(self, ctx):
-        """Enable the GW mode ((You) Mod only)"""
+        """Enable the GW mode ((You) Mod Only)"""
         if self.bot.data.save['gw']['state'] == True:
             await ctx.send(embed=self.bot.util.embed(title="{} Guild War Mode".format(self.bot.emote.get('gw')), description="Already enabled", color=self.color))
         elif len(self.bot.data.save['gw']['dates']) == 8:
@@ -538,7 +538,7 @@ class GuildWar(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['skipGW'])
     @isYouModOrOwner()
     async def skipGWBuff(self, ctx):
-        """The bot will skip the next GW buff call ((You) Mod only)"""
+        """The bot will skip the next GW buff call ((You) Mod Only)"""
         if not self.bot.data.save['gw']['skip']:
             with self.bot.data.lock:
                 self.bot.data.save['gw']['skip'] = True
@@ -550,7 +550,7 @@ class GuildWar(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isYouModOrOwner()
     async def cancelSkipGWBuff(self, ctx):
-        """Cancel the GW buff call skipping ((You) Mod only)"""
+        """Cancel the GW buff call skipping ((You) Mod Only)"""
         if self.bot.data.save['gw']['skip']:
             with self.bot.data.lock:
                 self.bot.data.save['gw']['skip'] = False
@@ -653,7 +653,7 @@ class GuildWar(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
     async def reloadDB(self, ctx):
-        """Download GW.sql (Owner only)"""
+        """Download GW.sql (Owner Only)"""
         await self.bot.util.react(ctx.message, 'time')
         await self.bot.do(self.reloadGWDB)
         vers = await self.bot.do(self.GWDBver)
@@ -1213,7 +1213,7 @@ class GuildWar(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["resetdancho"])
     @isOwner()
     async def resetleader(self, ctx):
-        """Reset the saved captain list (Owner only)"""
+        """Reset the saved captain list (Owner Only)"""
         with self.bot.data.lock:
             self.bot.data.save['gbfdata'].pop('leader')
             self.bot.data.pending = True

@@ -121,7 +121,7 @@ class DreadBarrage(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setDread', 'setDreadBarrage', 'setBarrage'])
     @isYouModOrOwner()
     async def setValiant(self, ctx, id : int, advElement : str, day : int, month : int, year : int):
-        """Set the Valiant date ((You) Mod only)"""
+        """Set the Valiant date ((You) Mod Only)"""
         try:
             # stop the task
             with self.bot.data.lock:
@@ -156,7 +156,7 @@ class DreadBarrage(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['disableDread', 'disableBarrage', 'disableDreadBarrage'])
     @isYouModOrOwner()
     async def disableValiant(self, ctx):
-        """Disable the Valiant mode ((You) Mod only)
+        """Disable the Valiant mode ((You) Mod Only)
         It doesn't delete the Valiant settings"""
         with self.bot.data.lock:
             self.bot.data.save['valiant']['state'] = False
@@ -166,7 +166,7 @@ class DreadBarrage(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['enableDread', 'enableBarrage', 'enableDreadBarrage'])
     @isYouModOrOwner()
     async def enableValiant(self, ctx):
-        """Enable the Valiant mode ((You) Mod only)"""
+        """Enable the Valiant mode ((You) Mod Only)"""
         if self.bot.data.save['valiant']['state'] == True:
             await ctx.send(embed=self.bot.util.embed(title="{} Dread Barrage Mode".format(self.bot.emote.get('gw')), description="Already enabled", color=self.color))
         elif len(self.bot.data.save['valiant']['dates']) == 8:
