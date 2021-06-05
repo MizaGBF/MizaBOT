@@ -99,7 +99,7 @@ class Moderation(commands.Cog):
     @isMod()
     async def toggleFullBot(self, ctx):
         """Allow or not this channel to use all commands (Mod only)
-        It disables game/obnoxious commands outside of the whitelisted channels"""
+        It cleans game/obnoxious commands outside of the whitelisted channels"""
         gid = str(ctx.guild.id)
         cid = ctx.channel.id
         with self.bot.data.lock:
