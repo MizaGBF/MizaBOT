@@ -138,7 +138,7 @@ def generate_html(command_list):
     <h2>Privacy</h2>
     <p>
     The bot doesn't log/register any data related to you or your server beside:<br>
-    1) Your GBF ID if set using the <b>setProfile</b> command (It's deleted if you leave all servers where the bot is present or using the <b>unsetProfile</b> command.<br>
+    1) Your GBF ID if set using the <b>setProfile</b> command (It's deleted if you leave all servers where the bot is present or using the <b>unsetProfile</b> command).<br>
     2) Your spark data if set using the <b>setRoll</b> command (It's deleted after 30 days without an update).<br>
     3) Your Discord ID when reporting a bug using the <b>bugreport</b> command (for contacting you, if needed).<br>
     4) Your Discord ID, the channel name, the server name and the command used when a critical error is triggered.<br>
