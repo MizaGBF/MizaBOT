@@ -146,12 +146,12 @@ class Roles(commands.Cog):
             return
         id = str(ctx.guild.id)
         with self.bot.data.lock:
-            if id not in self.bot.assignablerole:
-                self.bot.assignablerole[id] = {}
-            if role.name.lower() in self.bot.assignablerole[id]:
+            if id not in self.bot.data.save['assignablerole']:
+                self.bot.data.save['assignablerole'][id] = {}
+            if role.name.lower() in self.bot.data.save['assignablerole'][id]:
                 await self.bot.util.react(ctx.message, '❎') # negative check mark
                 return
-            self.bot.assignablerole[id][role.name.lower()] = role.id
+            self.bot.data.save['assignablerole'][id][role.name.lower()] = role.id
             self.bot.data.pending = True
         await self.bot.util.react(ctx.message, '✅') # white check mark
 
@@ -172,11 +172,11 @@ class Roles(commands.Cog):
             return
         id = str(ctx.guild.id)
         with self.bot.data.lock:
-            if id not in self.bot.assignablerole:
-                self.bot.assignablerole[id] = {}
-            if role.name.lower() not in self.bot.assignablerole[id]:
+            if id not in self.bot.data.save['assignablerole']:
+                self.bot.data.save['assignablerole'][id] = {}
+            if role.name.lower() not in self.bot.data.save['assignablerole'][id]:
                 await self.bot.util.react(ctx.message, '❎') # negative check mark
                 return
-            self.bot.assignablerole[id].pop(role.name.lower())
+            self.bot.data.save['assignablerole'][id].pop(role.name.lower())
             self.bot.data.pending = True
         await self.bot.util.react(ctx.message, '✅') # white check mark
