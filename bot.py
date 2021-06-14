@@ -92,7 +92,7 @@ class MizaBot(commands.Bot):
         intents.members = True
         
         # init base class
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\nSource code: https://github.com/MizaGBF/MizaBOT.\nCommand List: https://mizagbf.github.io/MizaBOT/\nDefault command prefix is `$`, use `$setPrefix` to change it on your server.".format(self.version), help_command=Help(), owner=self.data.config['ids']['owner'], max_messages=None, intents=intents)
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\n[Source code](https://github.com/MizaGBF/MizaBOT)\n[Command List](https://mizagbf.github.io/MizaBOT/)\nDefault command prefix is `$`, use `$setPrefix` to change it on your server.".format(self.version), help_command=Help(), owner=self.data.config['ids']['owner'], max_messages=None, intents=intents)
 
     def go(self): # main loop
         self.cogn = cogs.load(self) # load cogs
@@ -243,13 +243,13 @@ class MizaBot(commands.Bot):
             try:
                 await self.send('debug', embed=self.util.embed(title="Banned guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
             except Exception as e:
-                await self.send('debug', "on_guild_join(): {}".format(e))
+                await self.sendError("on_guild_join", e)
             await guild.leave()
         else: # notify me and add to the pending servers
             self.data.save['guilds']['pending'][id] = guild.name
             self.data.pending = True
             await guild.owner.send(embed=self.util.embed(title="Pending guild request", description="Wait until my owner approve the new server", thumbnail=guild.icon_url))
-            await self.send('debug', embed=self.util.embed(title="Pending guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
+            await self.send('debug', embed=self.util.embed(title="Pending guild request", description="{} ▫️ {}\nUse `$accept {}` or `$refuse {}`".format(guild.name, id, id, id), thumbnail=guild.icon_url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
 
     async def global_check(self, ctx): # called whenever a command is used
         if ctx.guild is None: # if none, the command has been sent via a direct message
