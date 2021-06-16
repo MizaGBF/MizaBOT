@@ -137,14 +137,13 @@ class Watch(commands.Cog):
                     else:
                         d = m_end - current_time
                         time.sleep(d.seconds+1)
+                return 1
             else:
-                if self.bot.util.JST() - maintenance_time >= timedelta(seconds=500):
-                    with self.bot.data.lock:
-                        self.bot.data.save['maintenance']["state"] = True
-                        self.bot.data.save['maintenance']["duration"] = 0
-                        self.bot.data.pending = True
-                    return 2
-            return 1
+                with self.bot.data.lock:
+                    self.bot.data.save['maintenance']["state"] = True
+                    self.bot.data.save['maintenance']["duration"] = 0
+                    self.bot.data.pending = True
+                return 2
         else:
             if self.bot.data.save['maintenance']['state'] == True and (self.bot.data.save['maintenance']['duration'] == 0 or (self.bot.util.JST() > self.bot.data.save['maintenance']['time'] + timedelta(seconds=3600*self.bot.data.save['maintenance']['duration']))):
                 with self.bot.data.lock:

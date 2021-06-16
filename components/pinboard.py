@@ -27,13 +27,13 @@ class Pinboard():
                     idx = i
                     break
             if idx is None:
-                return
+                return False
             message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
-            if message.id in self.cache: return
+            if message.id in self.cache: return False
             reactions = message.reactions
         except Exception as e:
             await self.bot.sendError('raw_react', e)
-            return
+            return False
         me = message.guild.me
         count = 0
         for reaction in reactions:
@@ -44,7 +44,7 @@ class Pinboard():
                 content = message.content
                 isMod = False
                 count = 0
-                if me in users: return
+                if me in users: return False
                 for u in users:
                     if self.servers[idx]['mod_bypass']: # mod check
                         m = guild.get_member(u.id)
@@ -56,9 +56,9 @@ class Pinboard():
                     else:
                         count += 1
                 if not isMod and count < self.servers[idx]['threshold']:
-                    return
+                    return False
 
-                if message.id in self.cache: return # anti dupe safety
+                if message.id in self.cache: return False # anti dupe safety
                 self.cache.append(message.id)
                 if len(self.cache) > 20: self.cache = self.cache[5:] # limited to 20 entries
                 await message.add_reaction(self.servers[idx]['emoji'])
@@ -105,4 +105,5 @@ class Pinboard():
                     await self.bot.send(self.servers[idx]['output'], embed=embed)
                 except Exception as x:
                     await self.bot.sendError("pinboard check",x)
-                return
+                return True
+            return False

@@ -50,24 +50,25 @@ class GranblueFantasy(commands.Cog):
         current_time = self.bot.util.JST()
         msg = ""
         if self.bot.data.save['maintenance']['state'] == True:
-            if current_time < self.bot.data.save['maintenance']['time']:
+            if self.bot.data.save['maintenance']['time'] is not None and current_time < self.bot.data.save['maintenance']['time']:
                 d = self.bot.data.save['maintenance']['time'] - current_time
                 if self.bot.data.save['maintenance']['duration'] == 0:
                     msg = "{} Maintenance starts in **{}**".format(self.bot.emote.get('cog'), self.bot.util.delta2str(d, 2))
                 else:
                     msg = "{} Maintenance starts in **{}**, for **{} hour(s)**".format(self.bot.emote.get('cog'), self.bot.util.delta2str(d, 2), self.bot.data.save['maintenance']['duration'])
             else:
-                d = current_time - self.bot.data.save['maintenance']['time']
                 if self.bot.data.save['maintenance']['duration'] <= 0:
                     msg = "{} Emergency maintenance on going".format(self.bot.emote.get('cog'))
-                elif (d.seconds // 3600) >= self.bot.data.save['maintenance']['duration']:
-                    with self.bot.data.lock:
-                        self.bot.data.save['maintenance'] = {"state" : False, "time" : None, "duration" : 0}
-                        self.bot.data.pending = True
                 else:
-                    e = self.bot.data.save['maintenance']['time'] + timedelta(seconds=3600*self.bot.data.save['maintenance']['duration'])
-                    d = e - current_time
-                    msg = "{} Maintenance ends in **{}**".format(self.bot.emote.get('cog'), self.bot.util.delta2str(d, 2))
+                    d = current_time - self.bot.data.save['maintenance']['time']
+                    if (d.seconds // 3600) >= self.bot.data.save['maintenance']['duration']:
+                        with self.bot.data.lock:
+                            self.bot.data.save['maintenance'] = {"state" : False, "time" : None, "duration" : 0}
+                            self.bot.data.pending = True
+                    else:
+                        e = self.bot.data.save['maintenance']['time'] + timedelta(seconds=3600*self.bot.data.save['maintenance']['duration'])
+                        d = e - current_time
+                        msg = "{} Maintenance ends in **{}**".format(self.bot.emote.get('cog'), self.bot.util.delta2str(d, 2))
         return msg
 
     # function to fix the case (for $wiki)
