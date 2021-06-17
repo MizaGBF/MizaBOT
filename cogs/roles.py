@@ -30,7 +30,7 @@ class Roles(commands.Cog):
             for r in member.roles:
                 if r.name == name or (exact == False and r.name.lower().find(name.lower()) != -1):
                     i += 1
-        return i, exact, g
+        return i, exact, g, name
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['inrole', 'rolestat'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
@@ -38,7 +38,7 @@ class Roles(commands.Cog):
         """Search how many users have a matching role
         use quotes if your match contain spaces
         add 'exact' at the end to force an exact match"""
-        i, exact, g = await self.bot.do(self._roleStats, ctx, name)
+        i, exact, g, name = await self.bot.do(self._roleStats, ctx, name)
         if exact != "exact":
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Roles containing: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon_url, footer="on server {}".format(g.name), color=self.color))
         else:
