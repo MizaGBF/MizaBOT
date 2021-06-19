@@ -90,6 +90,33 @@ class Spark(commands.Cog):
         except:
             pass
 
+    def _estimate(self, r, timestamp):
+        # calculate estimation
+        # note: those numbers are from my own experimentation
+        # from january to december
+        month_min = [80, 80, 160, 90, 70, 80, 80, 200, 80, 80, 80, 160]
+        month_max = [70, 70, 120, 70, 50, 60, 60, 140, 60, 60, 60, 120]
+        month_day = [31.0, 28.25, 31.0, 30.0, 31.0, 30.0, 31.0, 31.0, 30.0, 31.0, 30.0, 31.0]
+
+        # get current day
+        if timestamp is None: now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+        else: now = timestamp.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+        t_min = now
+        t_max = now
+        r_min = r % 300
+        r_max = r_min
+        expected = [month_max[now.month-1], month_min[now.month-1]]
+        while r_min < 300 or r_max < 300: # increase the date until we reach the 300 target for both estimation
+            if r_min < 300:
+                m = (t_min.month-1) % 12
+                r_min += month_min[m] / month_day[m]
+                t_min += timedelta(days=1)
+            if r_max < 300:
+                m = (t_max.month-1) % 12
+                r_max += month_max[m] / month_day[m]
+                t_max += timedelta(days=1)
+        return t_min, t_max, expected, now
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['seecrystal', 'seespark', 'seedraw'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def seeRoll(self, ctx, member : discord.Member = None):
@@ -112,31 +139,7 @@ class Spark(commands.Cog):
                 s = None
                 timestamp = None
 
-            # calculate estimation
-            # note: those numbers are from my own experimentation
-            # from january to december
-            month_min = [80, 80, 160, 90, 70, 80, 80, 200, 80, 80, 80, 160]
-            month_max = [70, 70, 120, 70, 50, 60, 60, 140, 60, 60, 60, 120]
-            month_day = [31.0, 28.25, 31.0, 30.0, 31.0, 30.0, 31.0, 31.0, 30.0, 31.0, 30.0, 31.0]
-
-            # get current day
-            if timestamp is None: now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-            else: now = timestamp.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-            t_min = now
-            t_max = now
-            r_min = r % 300
-            r_max = r_min
-            expected = [month_max[now.month-1], month_min[now.month-1]]
-            while r_min < 300 or r_max < 300: # increase the date until we reach the 300 target for both estimation
-                if r_min < 300:
-                    m = (t_min.month-1) % 12
-                    r_min += month_min[m] / month_day[m]
-                    t_min += timedelta(days=1)
-                if r_max < 300:
-                    m = (t_max.month-1) % 12
-                    r_max += month_max[m] / month_day[m]
-                    t_max += timedelta(days=1)
-
+            t_min, t_max, expected, now = self._estimate(r, timestamp)
             # roll count text
             title = "{} has {} roll".format(member.display_name, fr)
             if fr != 1: title += "s"
@@ -148,6 +151,19 @@ class Spark(commands.Cog):
         except Exception as e:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="I warned my owner", color=self.color, footer=str(e)))
             await self.bot.sendError('seeRoll', e)
+        await self.bot.util.clean(ctx, final_msg, 30)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['zerospark', '0roll', '0spark'])
+    @commands.cooldown(30, 30, commands.BucketType.guild)
+    async def zeroroll(self, ctx, member : discord.Member = None):
+        """Post a spark estimation based on today date"""
+        try:
+            t_min, t_max, expected, now = self._estimate(0, None)
+            # roll count text
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title='{} Spark estimation from {}'.format(self.bot.emote.get("crystal"), now.strftime("%y/%m/%d")), description="Next spark between {} and {}\n*Expecting {} to {} rolls in {}*".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d"), expected[0], expected[1], now.strftime("%B")), color=self.color))
+        except Exception as e:
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="I warned my owner", color=self.color, footer=str(e)))
+            await self.bot.sendError('zeroRoll', e)
         await self.bot.util.clean(ctx, final_msg, 30)
 
     def _ranking(self, ctx, guild):
