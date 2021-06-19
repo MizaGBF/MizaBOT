@@ -114,6 +114,11 @@ def get_version():
     return search_interval(data, 0, len(data)-1, 'self.version = "', '"')
 
 def generate_html(command_list):
+    metadata = '''<meta property="og:type" content="website">
+    <meta property="og:url" content="https://mizagbf.github.io/MizaBOT/">
+    <meta property="og:title" content="MizaBOT Online Command List">
+    <meta property="og:description" content="Online Help and Command List for the Granblue Fantasy Discord bot MizaBOT.">
+    <meta property="og:image" content="img/card.png">'''
     header = '<title>MizaBOT Online Command List</title><h1 style="width:630px;margin-left: auto; margin-right: auto;"><img src="img/icon.png" style="vertical-align:middle;border-radius: 50%;box-shadow: 0 0 0 2pt #981cd6">&nbsp;MizaBOT Online Command List<br><small>v{}</small></h1><br>'.format(get_version())
     tabs = '''<div class="tab">
         <button class="tablinks" onclick="openTab(event, 'Commands')">Commands</button>
@@ -363,7 +368,7 @@ function openTab(evt, tabName) {
 filterSelection("all")
 </script>"""
     with open("index.html", "w", encoding="utf-8") as f:
-        f.write('<head><link rel="icon" type="image/png" href="img/icon.png" /></head><body>' + header + tabs + commandList + about + css + js + '</body>')
+        f.write(metadata + '<head><link rel="icon" type="image/png" href="img/icon.png" /></head><body>' + header + tabs + commandList + about + css + js + '</body>')
 
 def load():
     r = re.compile("^class ([a-zA-Z0-9_]*)\\(commands\\.Cog\\):", re.MULTILINE)
