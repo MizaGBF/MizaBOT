@@ -155,7 +155,7 @@ class Spark(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['zerospark', '0roll', '0spark'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
-    async def zeroroll(self, ctx, member : discord.Member = None):
+    async def zeroroll(self, ctx):
         """Post a spark estimation based on today date"""
         try:
             t_min, t_max, expected, now = self._estimate(0, None)
