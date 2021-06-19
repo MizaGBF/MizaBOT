@@ -118,7 +118,7 @@ def generate_html(command_list):
     <meta property="og:url" content="https://mizagbf.github.io/MizaBOT/">
     <meta property="og:title" content="MizaBOT Online Command List">
     <meta property="og:description" content="Online Help and Command List for the Granblue Fantasy Discord bot MizaBOT.">
-    <meta property="og:image" content="img/card.png">'''
+    <meta property="og:image" content="https://mizagbf.github.io/MizaBOT/img/card.png">'''
     header = '<title>MizaBOT Online Command List</title><h1 style="width:630px;margin-left: auto; margin-right: auto;"><img src="img/icon.png" style="vertical-align:middle;border-radius: 50%;box-shadow: 0 0 0 2pt #981cd6">&nbsp;MizaBOT Online Command List<br><small>v{}</small></h1><br>'.format(get_version())
     tabs = '''<div class="tab">
         <button class="tablinks" onclick="openTab(event, 'Commands')">Commands</button>
