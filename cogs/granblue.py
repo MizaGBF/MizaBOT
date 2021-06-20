@@ -747,8 +747,8 @@ class GranblueFantasy(commands.Cog):
         """Calculate critical rate
         Do the command without parameters for the full modifier list
         Add `f` before a modifier to make it unboosted"""
-        values = {'small10':2, 'small15':3, 'small20':4, 'medium10':5, 'medium15':6.5, 'medium20':7.5, 'big10':8, 'big15':10, 'big20':11, 'bigii15':12, 'wamdus':20, 'hercules':11.5, 'sephira':25}
-        ts = {'small':'small15', 'med':'medium15', 'medium':'medium15', 'big':'big15', 'big2':'bigii15', 's10':'small10', 's15':'small15', 's20':'small20', 'm10':'medium10', 'm15':'medium15', 'm20':'medium20', 'med10':'medium10', 'med15':'medium15', 'med20':'medium20', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'bii10':'bigii10', 'bii15':'bigii15', 'b210':'bigii10', 'b215':'bigii15', 'big210':'bigii10', 'big215':'bigii15', 'ameno':'medium20', 'gaebulg':'medium20', 'bulg':'medium20', 'bulge':'medium20', 'gae':'medium20', 'mjolnir':'small20', 'herc':'hercules', 'ecke':'medium15', 'eckesachs':'medium15', 'sachs':'medium15', 'blut':'small15', 'blutgang':'small15', 'indra':'medium15', 'ivory':'bigii15', 'ivoryark':'bigii15', 'ark':'bigii15', 'auberon':'medium15', 'aub':'medium15', 'taisai':'big15', 'pholia':'big15', 'galilei':'medium15', 'europa':'medium15', 'benedia':'medium15', 'thunderbolt':'big15', 'shibow':'big15', 'rein':'bigii15', 'babel':'bigii15', 'mandeb':'bigii15', 'bab-el-mandeb':'bigii15', 'arca':'sephira', 'arcarum':'sephira', 'spoon':'medium15', 'coruscant':'medium15', 'crozier':'medium15', 'eva':'bigii15', 'evanescence':'bigii15'}
+        values = {'small10':2, 'small15':3, 'small20':4, 'medium10':5, 'medium15':6.5, 'medium20':7.5, 'big10':8, 'big15':10, 'big20':11, 'bigii15':12, 'wamdus':20, 'hercules':11.5, 'sephira':30}
+        ts = {'small':'small15', 'med':'medium15', 'medium':'medium15', 'big':'big15', 'big2':'bigii15', 's10':'small10', 's15':'small15', 's20':'small20', 'm10':'medium10', 'm15':'medium15', 'm20':'medium20', 'med10':'medium10', 'med15':'medium15', 'med20':'medium20', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'bii10':'bigii10', 'bii15':'bigii15', 'b210':'bigii10', 'b215':'bigii15', 'big210':'bigii10', 'big215':'bigii15', 'ameno':'medium20', 'gaebulg':'medium20', 'bulg':'medium20', 'bulge':'medium20', 'gae':'medium20', 'mjolnir':'small20', 'herc':'hercules', 'ecke':'medium15', 'eckesachs':'medium15', 'sachs':'medium15', 'blut':'small15', 'blutgang':'small15', 'indra':'medium15', 'ivory':'bigii15', 'ivoryark':'bigii15', 'ark':'bigii15', 'auberon':'medium15', 'aub':'medium15', 'taisai':'big15', 'pholia':'big15', 'galilei':'medium15', 'europa':'medium15', 'benedia':'medium15', 'thunderbolt':'big15', 'shibow':'big15', 'rein':'bigii15', 'babel':'bigii15', 'mandeb':'bigii15', 'bab-el-mandeb':'bigii15', 'arca':'sephira', 'arcarum':'sephira', 'spoon':'medium15', 'coruscant':'medium15', 'crozier':'medium15', 'eva':'bigii15', 'evanescence':'bigii15', 'opus':'medium20'}
         flats = ['wamdus', 'sephira']
         try:
             if weapons == "": raise Exception("Empty Parameter")
@@ -812,8 +812,12 @@ class GranblueFantasy(commands.Cog):
         # grand (for memes, might remove later)
         c = self.bot.util.JST()
         grands = {
+            "Fire": c.replace(year=2020, month=4, day=30, hour=19, minute=0, second=0, microsecond=0),
             "Water": c.replace(year=2018, month=10, day=17, hour=19, minute=0, second=0, microsecond=0),
-            "Wind": c.replace(year=2021, month=4, day=30, hour=19, minute=0, second=0, microsecond=0)
+            "Earth": c.replace(year=2020, month=12, day=28, hour=19, minute=0, second=0, microsecond=0),
+            "Wind": c.replace(year=2021, month=4, day=30, hour=19, minute=0, second=0, microsecond=0),
+            "Light": c.replace(year=2021, month=6, day=18, hour=19, minute=0, second=0, microsecond=0),
+            "Dark": c.replace(year=2020, month=2, day=29, hour=19, minute=0, second=0, microsecond=0)
         }
         for e in grands:
             msg += "**{} days** since the last {} Grand\n".format(self.bot.util.delta2str(c - grands[e], 3).split('d')[0], e)
