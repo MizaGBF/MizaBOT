@@ -1364,37 +1364,6 @@ class GuildWar(commands.Cog):
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} /gbfg/ recruiting crews".format(self.bot.emote.get('crew')), fields=fields, inline=True, color=self.color, timestamp=datetime.utcnow()))
         await self.bot.util.clean(ctx, final_msg, 90)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['lightchads', 'lightards', 'lightard'])
-    @commands.cooldown(1, 40, commands.BucketType.guild)
-    async def lightchad(self, ctx):
-        """No comment on this thing"""
-        ids = [20570061, 1539029, 14506879, 21950001, 7636084, 8817744, 6272981, 6747425, 15627188, 18549435]
-        array = []
-
-        for id in ids:
-            data = await self.bot.do(self.searchGWDBPlayer, id, 2)
-            try:
-                if data is not None and data[1] is not None:
-                    if len(array) == 0: array.append(data[1]['result'][0])
-                    else:
-                        for i in range(0, len(array)):
-                            if array[i][3] < data[1]['result'][0][3]:
-                                array.insert(i, data[1]['result'][0])
-                                break
-                            if i == len(array) - 1:
-                                array.append(data[1]['result'][0])
-            except:
-                pass
-        
-        msg = ""
-        for p in array:
-            msg += "[{}](http://game.granbluefantasy.jp/#profile/{}) :white_small_square: {}\n".format(p[2], p[1], self.honorFormat(p[3]))
-        if msg == "":
-            msg = "No lightCHADs found in the ranking"
-        
-        final_msg = await ctx.send(embed=self.bot.util.embed(title="/gbfg/ LightCHADs", description=msg, thumbnail="https://media.discordapp.net/attachments/614716155646705676/800315410289262602/light.png", color=self.color))
-        await self.bot.util.clean(ctx, final_msg, 60)
-
     def requestCrew(self, id : int, page : int): # get crew data
         if page == 0: return self.bot.gbf.request("http://game.granbluefantasy.jp/guild_other/guild_info/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True)
         else: return self.bot.gbf.request("http://game.granbluefantasy.jp/guild_other/member_list/{}/{}?PARAMS".format(page, id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True)

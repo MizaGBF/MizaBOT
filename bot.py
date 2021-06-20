@@ -40,6 +40,7 @@ class MizaBot(commands.Bot):
         self.changelog = [ # changelog lines
             "**This MizaBOT version is a Beta**, please use `$bug_report` if you see anything wrong",
             "Online command list added [here](https://mizagbf.github.io/MizaBOT/)",
+            "Removed `$lightchad` (until next time...)",
             "Added `$zeroroll`",
             "Added `$belial`",
             "Reworked `$profile`",
