@@ -32,13 +32,13 @@ class GuildWar(commands.Cog):
         self.getGWState()
         if self.bot.data.save['gw']['state'] == False or len(self.bot.data.save['gw']['buffs']) == 0: return
         try:
-            guild = self.bot.get_guild(self.bot.data.save['ids'].get('you_server', 0))
+            guild = self.bot.get_guild(self.bot.data.config['ids'].get('you_server', 0))
             if guild is None:
                 await self.bot.sendError('checkgwbuff', 'cancelled, no guild found')
-            channel = self.bot.get_channel(self.bot.data.save['ids'].get('you_announcement', 0))
-            gl_role = guild.get_role(self.bot.data.save['ids'].get('gl', 0))
-            fo_role = guild.get_role(self.bot.data.save['ids'].get('fo', 0))
-            buff_role = [[guild.get_role(self.bot.data.save['ids'].get('atkace', 0)), 'atkace'], [guild.get_role(self.bot.data.save['ids'].get('deface', 0)), 'deface']]
+            channel = self.bot.get_channel(self.bot.data.config['ids'].get('you_announcement', 0))
+            gl_role = guild.get_role(self.bot.data.config['ids'].get('gl', 0))
+            fo_role = guild.get_role(self.bot.data.config['ids'].get('fo', 0))
+            buff_role = [[guild.get_role(self.bot.data.config['ids'].get('atkace', 0)), 'atkace'], [guild.get_role(self.bot.data.config['ids'].get('deface', 0)), 'deface']]
             msg = ""
             while self.bot.data.save['gw']['state'] and (len(self.bot.data.save['gw']['buffs']) > 0 or len(msg) != 0):
                 current_time = self.bot.util.JST() + timedelta(seconds=32)
@@ -218,7 +218,7 @@ class GuildWar(commands.Cog):
         return None
 
     def getNextBuff(self, ctx): # for the (you) crew, get the next set of buffs to be called
-        if self.bot.data.save['gw']['state'] == True and ctx.guild.id == self.bot.data.save['ids'].get('you_server', 0):
+        if self.bot.data.save['gw']['state'] == True and ctx.guild.id == self.bot.data.config['ids'].get('you_server', 0):
             current_time = self.bot.util.JST()
             if current_time < self.bot.data.save['gw']['dates']["Preliminaries"]:
                 return ""

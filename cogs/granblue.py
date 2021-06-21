@@ -812,12 +812,12 @@ class GranblueFantasy(commands.Cog):
         # grand (for memes, might remove later)
         c = self.bot.util.JST()
         grands = {
-            "fire": c.replace(year=2020, month=4, day=30, hour=19, minute=0, second=0, microsecond=0),
+            "fire": c.replace(year=2020, month=4, day=30, hour=12, minute=0, second=0, microsecond=0),
             "water": c.replace(year=2018, month=10, day=17, hour=19, minute=0, second=0, microsecond=0),
-            "earth": c.replace(year=2020, month=12, day=28, hour=19, minute=0, second=0, microsecond=0),
-            "wind": c.replace(year=2021, month=4, day=30, hour=19, minute=0, second=0, microsecond=0),
+            "earth": c.replace(year=2020, month=12, day=28, hour=12, minute=0, second=0, microsecond=0),
+            "wind": c.replace(year=2021, month=4, day=30, hour=12, minute=0, second=0, microsecond=0),
             "light": c.replace(year=2021, month=6, day=18, hour=19, minute=0, second=0, microsecond=0),
-            "dark": c.replace(year=2020, month=2, day=29, hour=19, minute=0, second=0, microsecond=0)
+            "dark": c.replace(year=2020, month=2, day=29, hour=12, minute=0, second=0, microsecond=0)
         }
         for e in grands:
             msg += "**{} days** since the last {} Grand\n".format(self.bot.util.delta2str(c - grands[e], 3).split('d')[0], self.bot.emote.get(e))
