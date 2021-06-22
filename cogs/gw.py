@@ -81,7 +81,7 @@ class GuildWar(commands.Cog):
             await self.bot.sendError('checkgwbuff', 'cancelled')
         except Exception as e:
             await self.bot.sendError('checkgwbuff', e)
-        await self.bot.send('debug', embed=self.bot.util.embed(color=self.color, title="User task ended", description="check_buff", timestamp=datetime.utcnow()))
+        await self.bot.send('debug', embed=self.bot.util.embed(color=self.color, title="User task ended", description="check_buff", timestamp=self.bot.util.timestamp()))
 
     def buildDayList(self): # used by the gw schedule command
         return [
@@ -422,7 +422,7 @@ class GuildWar(commands.Cog):
                             fields[x]['value'] += '\n'
                     if fields[x]['value'] == '': fields[x]['value'] = 'Unavailable'
                 d = self.bot.util.JST() - self.bot.data.save['gw']['ranking'][4]
-                await ctx.send(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Time left: **{}** \▫️ Updated: **{}** ago\nThis is a simple estimation, take it with a grain of salt.".format(self.bot.util.delta2str(current_time_left), self.bot.util.delta2str(d, 0)), fields=fields, footer="Update on minute 5, 25 and 45", timestamp=datetime.utcnow(), inline=True, color=self.color))
+                await ctx.send(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Time left: **{}** \▫️ Updated: **{}** ago\nThis is a simple estimation, take it with a grain of salt.".format(self.bot.util.delta2str(current_time_left), self.bot.util.delta2str(d, 0)), fields=fields, footer="Update on minute 5, 25 and 45", timestamp=self.bot.util.timestamp(), inline=True, color=self.color))
         except Exception as e:
             await self.bot.sendError("estimation", e)
 
@@ -821,10 +821,10 @@ class GuildWar(commands.Cog):
             l = {'k':1000, 'm':1000000, 'b':1000000000}
             return int(n * l[m])
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tokens'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tokens', 'gwtoken', 'guildwartoken', 'gwtokens', 'guildwartokens'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def token(self, ctx, tok : str):
-        """Calculate how many GW box you get from X tokens"""
+        """Calculate how many Guild War boxes you get from X tokens"""
         try:
             tok = self.strToInt(tok)
             if tok < 1 or tok > 9999999999: raise Exception()
@@ -852,15 +852,15 @@ class GuildWar(commands.Cog):
             n100 = math.ceil(t / 168.0)
             n150 = math.ceil(t / 257.0)
             wanpan = math.ceil(t / 48.0)
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} Token Calculator ▫️ {}".format(self.bot.emote.get('gw'), t), description="**{:,}** box(s) and **{:,}** leftover tokens\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(b, tok, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} Guild War Token Calculator ▫️ {} tokens".format(self.bot.emote.get('gw'), t), description="**{:,}** box(s) and **{:,}** leftover tokens\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(b, tok, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
         except:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid token number", color=self.color))
         await self.bot.util.clean(ctx, final_msg, 60)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwbox', 'guildwarbox'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def box(self, ctx, box : int):
-        """Calculate how many GW tokens you need"""
+        """Calculate how many Guild War tokens you need"""
         try:
             if box < 1 or box > 999: raise Exception()
             t = 0
@@ -884,7 +884,7 @@ class GuildWar(commands.Cog):
             n100 = math.ceil(t / 168.0)
             n150 = math.ceil(t / 257.0)
             wanpan = math.ceil(t / 48.0)
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} Token Calculator ▫️ {}".format(self.bot.emote.get('gw'), b), description="**{:,}** tokens needed\n\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(t, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} Guild War Token Calculator ▫️ {} boxes".format(self.bot.emote.get('gw'), b), description="**{:,}** tokens needed\n\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(t, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color))
         except:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid box number", color=self.color))
         await self.bot.util.clean(ctx, final_msg, 60)
@@ -892,7 +892,7 @@ class GuildWar(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def meat(self, ctx, meat : str):
-        """Calculate how many GW honors you get"""
+        """Calculate how many Guild War honors you get"""
         try:
             meat = self.strToInt(meat)
             if meat < 5 or meat > 100000: raise Exception()
@@ -900,7 +900,7 @@ class GuildWar(commands.Cog):
             nm95 = meat // 10
             nm100 = meat // 20
             nm150 = meat // 20
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} Meat Calculator ▫️ {}".format(self.bot.emote.get('gw'), meat), description="**{:,}** NM90 or **{:}** honors\n**{:,}** NM95 or **{:}** honors\n**{:}** NM100 or **{:}** honors\n**{:,}** NM150 or **{:}** honors\n".format(nm90, self.honorFormat(nm90*260000), nm95, self.honorFormat(nm95*910000), nm100, self.honorFormat(nm100*2650000), nm150, self.honorFormat(nm150*4100000)), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} Meat Calculator ▫️ {} meats".format(self.bot.emote.get('gw'), meat), description="**{:,}** NM90 or **{:}** honors\n**{:,}** NM95 or **{:}** honors\n**{:}** NM100 or **{:}** honors\n**{:,}** NM150 or **{:}** honors\n".format(nm90, self.honorFormat(nm90*260000), nm95, self.honorFormat(nm95*910000), nm100, self.honorFormat(nm100*2650000), nm150, self.honorFormat(nm150*4100000)), color=self.color))
         except:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid meat number", color=self.color))
         await self.bot.util.clean(ctx, final_msg, 60)
@@ -1361,7 +1361,7 @@ class GuildWar(commands.Cog):
             for i in range(0, len(sortedcrew)):
                 if i % size == 0: fields.append({'name':'{}'.format(self.bot.emote.get(str(len(fields)+1))), 'value':''})
                 fields[-1]['value'] += "Rank **{}** \▫️  **{}** \▫️ **{}** slot\n".format(sortedcrew[i]['average'], sortedcrew[i]['name'], 30-sortedcrew[i]['count'])
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} /gbfg/ recruiting crews".format(self.bot.emote.get('crew')), fields=fields, inline=True, color=self.color, timestamp=datetime.utcnow()))
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} /gbfg/ recruiting crews".format(self.bot.emote.get('crew')), fields=fields, inline=True, color=self.color, timestamp=self.bot.util.timestamp()))
         await self.bot.util.clean(ctx, final_msg, 90)
 
     def requestCrew(self, id : int, page : int): # get crew data
@@ -1416,7 +1416,7 @@ class GuildWar(commands.Cog):
                     elif lead >= 0: lead = abs(lead - result[0][d[day-2]])
         if lead is not None and lead >= 0:
             msg += "**Difference** ▫️ {:,}\n".format(lead)
-        await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.emote.get('gw'), gwnum, day - 1), description=msg, timestamp=datetime.utcnow(), color=self.color))
+        await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.emote.get('gw'), gwnum, day - 1), description=msg, timestamp=self.bot.util.timestamp(), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isYou()
@@ -1477,5 +1477,5 @@ class GuildWar(commands.Cog):
                 if lead >= 0:
                     msg += "**Difference** ▫️ {:,}\n".format(lead)
 
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.emote.get('gw'), self.bot.data.save['matchtracker']['gwid'], self.bot.data.save['matchtracker']['day']-1), description=msg, timestamp=datetime.utcnow(), thumbnail=self.bot.data.save['matchtracker'].get('chart', None), color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.emote.get('gw'), self.bot.data.save['matchtracker']['gwid'], self.bot.data.save['matchtracker']['day']-1), description=msg, timestamp=self.bot.util.timestamp(), thumbnail=self.bot.data.save['matchtracker'].get('chart', None), color=self.color))
                 await self.bot.util.clean(ctx, final_msg, 90)

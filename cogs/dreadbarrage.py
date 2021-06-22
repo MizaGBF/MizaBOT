@@ -1,5 +1,6 @@
 ﻿from discord.ext import commands
 from datetime import datetime, timedelta
+import math
 
 # ----------------------------------------------------------------------------------------------------------------
 # DreadBarrage Cog
@@ -176,3 +177,72 @@ class DreadBarrage(commands.Cog):
             await self.bot.util.react(ctx.message, '✅') # white check mark
         else:
             await ctx.send(embed=self.bot.util.embed(title="Error", description="No Dread Barrage available in my memory", color=self.color))
+
+    def strToInt(self, s): # convert string such as 1.2B to 1200000000
+        try:
+            return int(s)
+        except:
+            n = float(s[:-1]) # float to support for example 1.2B
+            m = s[-1].lower()
+            l = {'k':1000, 'm':1000000, 'b':1000000000}
+            return int(n * l[m])
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['dreadtokens', 'dbtoken', 'dreadbarragetoken', 'dbtokens', 'dreadbarragetokens'])
+    @commands.cooldown(2, 10, commands.BucketType.guild)
+    async def dreadtoken(self, ctx, tok : str):
+        """Calculate how many Dread Barrage boxes you get from X tokens"""
+        try:
+            tok = self.strToInt(tok)
+            if tok < 1 or tok > 9999999999: raise Exception()
+            b = 0
+            t = tok
+            if tok >= 1600:
+                tok -= 1600
+                b += 1
+            while b < 4 and tok >= 2400:
+                tok -= 2400
+                b += 1
+            while b < 20 and tok >= 2000:
+                tok -= 2000
+                b += 1
+            while b < 40 and tok >= 10000:
+                tok -= 10000
+                b += 1
+            while tok >= 15000:
+                tok -= 15000
+                b += 1
+            s1 = math.ceil(t / 52.0)
+            s2 = math.ceil(t / 70.0)
+            s3 = math.ceil(t / 97.0)
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} Dread Barrage Token Calculator (Beta) ▫️ {} tokens".format(self.bot.emote.get('crew'), t), description="**{:,}** box(s) and **{:,}** leftover tokens\n**{:,}** \⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐ (**{:,}** pots)".format(b, tok, s1, math.ceil(s1*30/75), s2, math.ceil(s2*30/75), s3, math.ceil(s3*40/75)), color=self.color))
+        except:
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid token number", color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 60)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['dbbox', 'dreadbarragebox'])
+    @commands.cooldown(2, 10, commands.BucketType.guild)
+    async def dreadbox(self, ctx, box : int):
+        """Calculate how many Dread Barrage tokens you need"""
+        try:
+            if box < 1 or box > 999: raise Exception()
+            t = 0
+            b = box
+            if box >= 1: t += 1600
+            if box >= 2: t += 2400
+            if box >= 3: t += 2400
+            if box >= 4: t += 2400
+            if box > 40:
+                t += (box - 40) * 15000
+                box = 40
+            if box > 20:
+                t += (box - 20) * 10000
+                box = 20
+            if box > 4:
+                t += (box - 4) * 2000
+            s1 = math.ceil(t / 52.0)
+            s2 = math.ceil(t / 70.0)
+            s3 = math.ceil(t / 97.0)
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} Dread Barrage Token Calculator (Beta) ▫️ {} box".format(self.bot.emote.get('crew'), b), description="**{:,}** tokens needed\n\n**{:,}** \⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐ (**{:,}** pots)".format(t, s1, math.ceil(s1*30/75), s2, math.ceil(s2*30/75), s3, math.ceil(s3*40/75)), color=self.color))
+        except:
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid box number", color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 60)

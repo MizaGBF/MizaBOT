@@ -155,12 +155,12 @@ class Spark(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['zerospark', '0roll', '0spark'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
-    async def zeroroll(self, ctx):
+    async def zeroroll(self, ctx, default: int = 0):
         """Post a spark estimation based on today date"""
         try:
-            t_min, t_max, expected, now = self._estimate(0, None)
+            t_min, t_max, expected, now = self._estimate(default, None)
             # roll count text
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title='{} Spark estimation from {}'.format(self.bot.emote.get("crystal"), now.strftime("%y/%m/%d")), description="Next spark between {} and {}\n*Expecting {} to {} rolls in {}*".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d"), expected[0], expected[1], now.strftime("%B")), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title='{} Spark estimation from {} rolls at {}'.format(self.bot.emote.get("crystal"), default, now.strftime("%y/%m/%d")), description="Next spark between {} and {}\n*Expecting {} to {} rolls in {}*".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d"), expected[0], expected[1], now.strftime("%B")), color=self.color))
         except Exception as e:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="I warned my owner", color=self.color, footer=str(e)))
             await self.bot.sendError('zeroRoll', e)

@@ -88,7 +88,7 @@ class Watch(commands.Cog):
                 v = await self.bot.do(self.bot.gbf.version)
                 s = self.bot.gbf.updateVersion(v)
                 if s == 3:
-                    react = await self.bot.sendMulti(['debug_update', 'private_update'], embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version updated to `{}` (`{}`)".format(v, self.bot.gbf.version2str(v)), color=self.color))
+                    react = await self.bot.sendMulti(['debug_update', 'private_update', 'gbfg_update'], embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version updated to `{}` (`{}`)".format(v, self.bot.gbf.version2str(v)), color=self.color))
                     try:
                         for r in react: await self.bot.util.react(r, 'time')
                     except:
@@ -114,9 +114,18 @@ class Watch(commands.Cog):
                         msg += "**Content update**\n"
                         for k in cu:
                             msg += "{} {}\n".format(cu[k], k)
+                    # result
                     if msg != "":
                         await self.bot.sendMulti(['debug_update', 'private_update'], embed=self.bot.util.embed(title="Latest Update", description=msg, thumbnail=thumb, color=self.color))
+                        if len(tk) > 0 and len(cu) > 0:
+                            await self.bot.sendMulti(['debug_update', 'private_update', 'gbfg_update'], embed=self.bot.util.embed(author={'name':"Latest Update (Beta)", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="This is a major update", footer="New gacha banners and weapons/characters/summons have possibly been added to the game", color=self.color))
+                        elif len(tk) > 0:
+                            await self.bot.sendMulti(['debug_update', 'private_update', 'gbfg_update'], embed=self.bot.util.embed(author={'name':"Latest Update (Beta)", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="This is a gacha update", footer="New gacha banners have possibly been added to the game", color=self.color))
+                        elif len(cu) > 0:
+                            await self.bot.sendMulti(['debug_update', 'private_update', 'gbfg_update'], embed=self.bot.util.embed(author={'name':"Latest Update (Beta)", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="This is a content update", footer="New weapons/characters/summons have possibly been added to the game", color=self.color))
                         await self.bot.send('debug_update', embed=self.bot.util.embed(title="Reminder", description="Keep it private", color=self.color))
+                    else:
+                        await self.bot.sendMulti(['debug_update', 'private_update'], embed=self.bot.util.embed(title="Latest Update", description="This is a minor update", footer="Possibly a new uncap, minor or non-event content, or bugfixes", color=self.color))
                 elif s == 2:
                     await self.bot.send('debug_update', embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version set to `{}` (`{}`)".format(v, self.bot.gbf.version2str(v)) , color=self.color))
             except asyncio.CancelledError:

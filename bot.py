@@ -40,12 +40,10 @@ class MizaBot(commands.Bot):
         self.changelog = [ # changelog lines
             "**This MizaBOT version is a Beta**, please use `$bug_report` if you see anything wrong",
             "Online command list added [here](https://mizagbf.github.io/MizaBOT/)",
+            "Added `$dbbox` and `$dbtoken`",
             "Removed `$lightchad` (until next time...)",
-            "Added `$zeroroll`",
-            "Added `$belial`",
-            "Reworked `$profile`",
-            "Added `$addRoll`",
-            "Added `$dice`, `$8ball` and `$coin`"
+            "Added `$zeroroll`, `$belial`, `$addRoll`, `$dice`, `$8ball` and `$coin`",
+            "Reworked `$profile`"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event

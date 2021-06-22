@@ -51,12 +51,12 @@ class Admin(commands.Cog):
             if not self.bot.running: return
             count = await self.bot.do(self.bot.data.clean_spark) # clean up spark data
             if count > 0:
-                await self.bot.send('debug', embed=self.bot.util.embed(title="cleansave()", description="Cleaned {} unused spark saves".format(count), timestamp=datetime.utcnow()))
+                await self.bot.send('debug', embed=self.bot.util.embed(title="cleansave()", description="Cleaned {} unused spark saves".format(count), timestamp=self.bot.util.timestamp()))
             count = await self.bot.do(self.bot.data.clean_profile) # clean up profile data
             if count > 0:
-                await self.bot.send('debug', embed=self.bot.util.embed(title="cleansave()", description="Cleaned {} unused profiles".format(count), timestamp=datetime.utcnow()))
+                await self.bot.send('debug', embed=self.bot.util.embed(title="cleansave()", description="Cleaned {} unused profiles".format(count), timestamp=self.bot.util.timestamp()))
             if await self.bot.do(self.bot.data.clean_schedule): # clean up schedule data
-                await self.bot.send('debug', embed=self.bot.util.embed(title="cleansave()", description="The schedule has been cleaned up", timestamp=datetime.utcnow()))
+                await self.bot.send('debug', embed=self.bot.util.embed(title="cleansave()", description="The schedule has been cleaned up", timestamp=self.bot.util.timestamp()))
         except asyncio.CancelledError:
             await self.bot.sendError('cleansave', 'cancelled')
             return
@@ -498,8 +498,8 @@ class Admin(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def invite(self, ctx):
         """Send the MizaBOT invite link via direct messages (Owner Only)"""
-        await self.bot.send('debug', embed=self.bot.util.embed(title="Invite Request", description="{} ▫️ {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar_url, timestamp=datetime.utcnow(), color=self.color))
-        await ctx.author.send(embed=self.bot.util.embed(title=ctx.guild.me.name, description="{}\nYou'll have to wait for my owner approval.\nMisuses will result in a ban.".format(self.bot.data.config['strings']["invite()"]), thumbnail=ctx.guild.me.avatar_url, timestamp=datetime.utcnow(), color=self.color))
+        await self.bot.send('debug', embed=self.bot.util.embed(title="Invite Request", description="{} ▫️ {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar_url, timestamp=self.bot.util.timestamp(), color=self.color))
+        await ctx.author.send(embed=self.bot.util.embed(title=ctx.guild.me.name, description="{}\nYou'll have to wait for my owner approval.\nMisuses will result in a ban.".format(self.bot.data.config['strings']["invite()"]), thumbnail=ctx.guild.me.avatar_url, timestamp=self.bot.util.timestamp(), color=self.color))
 
     @commands.command(no_pm=True)
     @isOwner()
