@@ -305,3 +305,10 @@ class Casino(commands.Cog):
         """Ask the magic ball a question"""
         final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} asked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="`{}`\n{}".format(question, random.choice(["It is Certain.","It is decidedly so.","Without a doubt.","Yes definitely.","You may rely on it.","As I see it, yes.","Most likely.","Outlook good.","Yes.","Signs point to yes.","Reply hazy, try again.","Ask again later.","Better not tell you now.","Cannot predict now.","Concentrate and ask again.","Don't count on it.","My reply is no.","My sources say no.","Outlook not so good.","Very doubtful."])), color=self.color))
         await self.bot.util.clean(ctx, final_msg, 45)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(2, 10, commands.BucketType.guild)
+    async def when(self, ctx, *, question : str):
+        """Ask the magic ball when will something happen"""
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} asked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="`When {}`\n{}".format(question, random.choice(["Never", "Soon:tm:", "Ask again tomorrow", "Can't compute", "42", "One day, my friend", "Next year", "It's a secret to everybody", "Soon enough", "When it's ready", "Five minutes", "This week, surely", "My sources say next month", "NOW!", "I'm not so sure", "In three days"])), color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 45)

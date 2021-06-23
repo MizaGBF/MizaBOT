@@ -88,11 +88,14 @@ class Watch(commands.Cog):
                 v = await self.bot.do(self.bot.gbf.version)
                 s = self.bot.gbf.updateVersion(v)
                 if s == 3:
-                    react = await self.bot.sendMulti(['debug_update', 'private_update', 'gbfg_update'], embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version updated to `{}` (`{}`)".format(v, self.bot.gbf.version2str(v)), color=self.color))
+                    # announce
+                    react = await self.bot.sendMulti(['debug_update', 'private_update'], embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version updated to `{}` (`{}`)".format(v, self.bot.gbf.version2str(v)), color=self.color))
+                    await self.bot.send('gbfg_update', embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game has been updated", color=self.color))
                     try:
                         for r in react: await self.bot.util.react(r, 'time')
                     except:
                         pass
+                    # check
                     msg = ""
                     thumb = ""
                     tk = await self.bot.do(self.ut)
