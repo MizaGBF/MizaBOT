@@ -298,7 +298,7 @@ class Casino(commands.Cog):
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Give me a list of something to choose from, separated by `;`", color=self.color))
         await self.bot.util.clean(ctx, final_msg, 45)
 
-    @commands.command(no_pm=True, name="8ball", cooldown_after_parsing=True)
+    @commands.command(no_pm=True, name="8ball", cooldown_after_parsing=True, aliases=['ask', 'magicball'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def _8ball(self, ctx, *, question : str):
         """Ask the magic ball a question"""

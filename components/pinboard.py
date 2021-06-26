@@ -11,20 +11,16 @@ class Pinboard():
     def __init__(self, bot):
         self.bot = bot
         self.cache = [] # store pinned messages until reboot
-        self.servers = []
 
     def init(self):
-        self.servers = [
-            {'tracked' : [self.bot.data.config['ids'].get('you_general', -1)], 'emoji': '📌', 'mod_bypass':True, 'threshold':3, 'output': 'you_pinned'},
-            {'tracked' : [self.bot.data.config['ids'].get('gbfg_general', -1)], 'emoji': '⭐', 'mod_bypass':False, 'threshold':5, 'output': 'gbfg_pinned'}
-        ]
+        pass
 
     async def check(self, payload):
         try:
             idx = None
-            for i in range(0, len(self.servers)):
-                if payload.channel_id in self.servers[i]['tracked']:
-                    idx = i
+            for s in self.bot.data.save['pinboard']:
+                if payload.channel_id in self.bot.data.save['pinboard'][s]['tracked']:
+                    idx = s
                     break
             if idx is None:
                 return False
@@ -37,7 +33,7 @@ class Pinboard():
         me = message.guild.me
         count = 0
         for reaction in reactions:
-            if reaction.emoji == self.servers[idx]['emoji']:
+            if str(reaction.emoji) == self.bot.data.save['pinboard'][idx]['emoji']:
                 users = await reaction.users().flatten()
                 count = len(users)
                 guild = message.guild
@@ -46,7 +42,7 @@ class Pinboard():
                 count = 0
                 if me in users: return False
                 for u in users:
-                    if self.servers[idx]['mod_bypass']: # mod check
+                    if self.bot.data.save['pinboard'][idx]['mod_bypass']: # mod check
                         m = guild.get_member(u.id)
                         if m.guild_permissions.manage_messages: 
                             isMod = True
@@ -55,13 +51,13 @@ class Pinboard():
                             count += 1
                     else:
                         count += 1
-                if not isMod and count < self.servers[idx]['threshold']:
+                if not isMod and count < self.bot.data.save['pinboard'][idx]['threshold']:
                     return False
 
                 if message.id in self.cache: return False # anti dupe safety
                 self.cache.append(message.id)
                 if len(self.cache) > 20: self.cache = self.cache[5:] # limited to 20 entries
-                await message.add_reaction(self.servers[idx]['emoji'])
+                await message.add_reaction(self.bot.data.save['pinboard'][idx]['emoji'])
 
                 try:
                     dict = {}
@@ -102,8 +98,20 @@ class Pinboard():
                     dict['description'] += ":earth_asia: [**Link**](https://discordapp.com/channels/{}/{}/{})\n".format(message.guild.id, message.channel.id, message.id)
                     embed = discord.Embed.from_dict(dict)
                     embed.timestamp=message.created_at
-                    await self.bot.send(self.servers[idx]['output'], embed=embed)
+                    ch = self.bot.get_channel(self.bot.data.save['pinboard'][idx]['output'])
+                    await ch.send(embed=embed)
                 except Exception as x:
                     await self.bot.sendError("pinboard check",x)
                 return True
             return False
+
+    def add(self, server_id, tracked, emoji, mod, threshold, output): # parameters validity should be checked before the call
+        with self.bot.data.lock:
+            self.bot.data.save['pinboard'][server_id] = {'tracked' : tracked, 'emoji': emoji, 'mod_bypass':mod, 'threshold':threshold, 'output': output}
+            self.bot.data.pending = True
+
+    def remove(self, server_id):
+        if server_id in self.bot.data.save['pinboard']:
+            with self.bot.data.lock:
+                self.bot.data.save['pinboard'].pop(server_id)
+                self.bot.data.pending = True

@@ -29,7 +29,13 @@ class Moderation(commands.Cog):
         final_msg = await ctx.reply(embed=self.bot.util.embed(title=ctx.guild.name, description="Joined at {0.joined_at}".format(member), thumbnail=member.avatar_url, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 25)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['nitro', 'here'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    async def here(self, ctx, member : discord.Member):
+        """Give informations on the current channel"""
+        final_msg = await ctx.reply(embed=self.bot.util.embed(title=ctx.guild.name, description="Channel: `{}`\nID: `{}`".format(ctx.channel.name, ctx.channel.id), footer="Guild ID {}".format(ctx.guild.id), color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 25)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['nitro'])
     @commands.cooldown(1, 30, commands.BucketType.guild)
     async def serverinfo(self, ctx):
         """Get informations on the current guild (Owner Only)"""
@@ -154,3 +160,58 @@ class Moderation(commands.Cog):
             await ctx.send(embed=self.bot.util.embed(title="Channels permitted to use all commands", description=msg, thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
         else:
             await ctx.send(embed=self.bot.util.embed(title="Commands are sauthorized everywhere", thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isMod()
+    async def enablePinboard(self, ctx, *, expression : str = ""):
+        """Enable the pinboard on your server (Mod Only)
+        Use the command alone for a detailed help"""
+        if expression == "":
+            msg = await ctx.send(embed=self.bot.util.embed(title="How to setup the pinboard", description="Usage:\n`{}enablePinboard tracked_channel_ids reaction_emote mod_bypass threshold output_channel_id`\n\n`tracked_channel_ids`: List of channel IDs to track, separated by semicolons (example: `339155308767215618;406013959049707521`)\n`reaction_emote`: The emote used in reaction to trigger the pin\n`mod_bypass`: It must be True or False. If True, a mod reacting will automatically trigger the pin\n`threshold`: Numbers of reactions needed to trigger the pin\n`output_channel_id`: The channel ID where the pins will be displayed (example: `593488798365646882`)".format(ctx.message.content[0]), color=self.color))
+        else:
+            args = expression.replace('  ', ' ').replace('  ', ' ').replace('  ', ' ').split(' ')
+            if len(args) > 5:
+                msg = await ctx.send(embed=self.bot.util.embed(title="Pinboard Error", description="**Too many parameters**\nWhat I see:\n`tracked_channel_ids={}`\n`reaction_emote={}`\n`mod_bypass={}`\n`threshold={}`\n`output_channel_id={}`".format(args[0], args[1], args[2], args[3], args[4]), footer="Did you put one extra space somewhere?", color=self.color))
+            elif len(args) < 5:
+                msg = await ctx.send(embed=self.bot.util.embed(title="Pinboard Error", description="**Missing parameters**", footer="Try the command without parameters to see the detailed instructions", color=self.color))
+            else:
+                try:
+                    tracked = args[0].split(";")
+                    for cid in tracked:
+                        try:
+                            if ctx.guild.get_channel(int(cid)) is None:
+                                raise Exception()
+                        except:
+                            raise Exception("`{}` isn't a valid channel id".format(cid))
+                    tracked = [int(cid) for cid in tracked]
+                    emoji = args[1]
+                    if args[2].lower() in  ['true', '1']:
+                        mod = True
+                    elif args[2].lower() in  ['false', '0']:
+                        mod = False
+                    else:
+                        raise Exception("`mod_bypass={}` isn't a boolean, it should be True or False".format(args[2]))
+                    try:
+                        threshold = int(args[3])
+                        if threshold < 1:
+                            raise Exception()
+                    except:
+                        raise Exception("`threshold={}` is invalid, it should be a positive non null number".format(args[3]))
+                    try:
+                        if ctx.guild.get_channel(int(args[4])) is None:
+                            raise Exception()
+                        output = int(args[4])
+                    except:
+                        raise Exception("`output_channel_id={}` isn't a valid channel id".format(args[4]))
+                    self.bot.pinboard.add(str(ctx.guild.id), tracked, emoji, mod, threshold, output)
+                    msg = await ctx.send(embed=self.bot.util.embed(title="Pinboard enabled on {}".format(ctx.guild.name), description="{} tracked channels\n{} {} emotes are needed to trigger a pin\n[Output channel](https://discord.com/channels/{}/{})".format(len(tracked), threshold, emoji, ctx.guild.id, output), footer="Use the command again to change the settings", color=self.color))
+                except Exception as e:
+                    msg = await ctx.send(embed=self.bot.util.embed(title="Pinboard Error", description="{}".format(e), footer="Try the command without parameters to see the detailed instructions", color=self.color))
+        await self.bot.util.clean(ctx, msg, 60)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isMod()
+    async def disablePinboard(self, ctx):
+        """Disable the pinboard on your server (Mod Only)"""
+        self.bot.pinboard.remove(str(ctx.guild.id))
+        await self.bot.util.react(ctx.message, '✅') # white check mark

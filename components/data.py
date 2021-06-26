@@ -103,7 +103,8 @@ class Data():
             'extra': {},
             'gbfids': {},
             'assignablerole': {},
-            'youtracker': None
+            'youtracker': None,
+            'pinboard': {}
         }
         for k in list(data.keys()): # remove useless
             if k not in expected:
