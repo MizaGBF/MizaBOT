@@ -24,13 +24,15 @@ class Moderation(commands.Cog):
         return commands.check(predicate)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 5, commands.BucketType.guild)
     async def joined(self, ctx, member : discord.Member):
         """Says when a member joined."""
         final_msg = await ctx.reply(embed=self.bot.util.embed(title=ctx.guild.name, description="Joined at {0.joined_at}".format(member), thumbnail=member.avatar_url, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
-    async def here(self, ctx, member : discord.Member):
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def here(self, ctx):
         """Give informations on the current channel"""
         final_msg = await ctx.reply(embed=self.bot.util.embed(title=ctx.guild.name, description="Channel: `{}`\nID: `{}`".format(ctx.channel.name, ctx.channel.id), footer="Guild ID {}".format(ctx.guild.id), color=self.color))
         await self.bot.util.clean(ctx, final_msg, 25)
@@ -167,7 +169,7 @@ class Moderation(commands.Cog):
         """Enable the pinboard on your server (Mod Only)
         Use the command alone for a detailed help"""
         if expression == "":
-            msg = await ctx.send(embed=self.bot.util.embed(title="How to setup the pinboard", description="Usage:\n`{}enablePinboard tracked_channel_ids reaction_emote mod_bypass threshold output_channel_id`\n\n`tracked_channel_ids`: List of channel IDs to track, separated by semicolons (example: `339155308767215618;406013959049707521`)\n`reaction_emote`: The emote used in reaction to trigger the pin\n`mod_bypass`: It must be True or False. If True, a mod reacting will automatically trigger the pin\n`threshold`: Numbers of reactions needed to trigger the pin\n`output_channel_id`: The channel ID where the pins will be displayed (example: `593488798365646882`)".format(ctx.message.content[0]), color=self.color))
+            msg = await ctx.send(embed=self.bot.util.embed(title="How to setup the pinboard", description="Usage:\n`{}enablePinboard tracked_channel_ids reaction_emote mod_bypass threshold output_channel_id`\n\n`tracked_channel_ids`: List of channel IDs to track, separated by semicolons (example: `339155308767215618;406013959049707521`)\n`reaction_emote`: The emote used in reaction to trigger the pin\n`mod_bypass`: It must be True or False. If True, a moderator reacting will automatically trigger the pin\n`threshold`: Number of reactions needed to trigger the pin\n`output_channel_id`: The channel ID where the pins will be displayed (example: `593488798365646882`)".format(ctx.message.content[0]), color=self.color))
         else:
             args = expression.replace('  ', ' ').replace('  ', ' ').replace('  ', ' ').split(' ')
             if len(args) > 5:
