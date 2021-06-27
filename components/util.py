@@ -155,7 +155,7 @@ class Util():
         if mode == 3: return "{}d{}h{}m{}s".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60, delta.seconds % 60)
         elif mode == 2: return "{}d{}h{}m".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60)
         elif mode == 1: return "{}h{}m".format(delta.seconds // 3600, (delta.seconds // 60) % 60)
-        elif: return "{}m".format(delta.seconds // 60)
+        else: return "{}m".format(delta.seconds // 60)
 
     """str2delta()
     Convert string to a a timedelta object (format: XdXhXmXs)
