@@ -36,10 +36,22 @@ Check the `exit_gracefully()` function for details.
 * During the boot, all the .py files in the cogs folder are tested to find valid cogs.  
 
 ### Features  
-* Get detailed informations on the game status from Discord ![GBF command](https://cdn.discordapp.com/attachments/614716155646705676/858731441316036638/unknown.png) ![Gacha command](https://cdn.discordapp.com/attachments/614716155646705676/858731761131323392/unknown.png)
-* Manage and estimate your next Granblue Spark ![SeeRoll command](https://cdn.discordapp.com/attachments/614716155646705676/858729482386145310/unknown.png)  
-* Find and search in-game profiles and crews ![Profile command](https://cdn.discordapp.com/attachments/614716155646705676/858730610260443196/unknown.png)  
-* Search the [wiki](https://gbf.wiki/) directly from Discord ![Wiki command](https://cdn.discordapp.com/attachments/614716155646705676/858730975025954875/unknown.png) 
-* Get Unite and Fight detailed informations ![Estim command](https://cdn.discordapp.com/attachments/614716155646705676/858732302635892766/unknown.png) ![Ranking command](https://cdn.discordapp.com/attachments/614716155646705676/858732645869551646/unknown.png) ![findplayer command](https://cdn.discordapp.com/attachments/614716155646705676/858733133879574559/unknown.png) ![findcrew command](https://cdn.discordapp.com/attachments/614716155646705676/858733490480873514/unknown.png)  
-* ~~Salty~~ Fun Game commands ![Spark command](https://cdn.discordapp.com/attachments/614716155646705676/858733892926963732/unknown.png) ![Roulette command](https://cdn.discordapp.com/attachments/614716155646705676/858734003560251422/unknown.png) ![Scratcher](https://cdn.discordapp.com/attachments/614716155646705676/858734170222362664/unknown.png)  
+* Get detailed informations on the game status from Discord
+![GBF command](https://cdn.discordapp.com/attachments/614716155646705676/858731441316036638/unknown.png)
+![Gacha command](https://cdn.discordapp.com/attachments/614716155646705676/858731761131323392/unknown.png)
+* Manage and estimate your next Granblue Spark
+![SeeRoll command](https://cdn.discordapp.com/attachments/614716155646705676/858729482386145310/unknown.png)
+* Find and search in-game profiles and crews
+![Profile command](https://cdn.discordapp.com/attachments/614716155646705676/858730610260443196/unknown.png)
+* Search the [wiki](https://gbf.wiki/) directly from Discord
+![Wiki command](https://cdn.discordapp.com/attachments/614716155646705676/858730975025954875/unknown.png)
+* Get Unite and Fight detailed informations
+![Estim command](https://cdn.discordapp.com/attachments/614716155646705676/858732302635892766/unknown.png)
+![Ranking command](https://cdn.discordapp.com/attachments/614716155646705676/858732645869551646/unknown.png)
+![Findplayer command](https://cdn.discordapp.com/attachments/614716155646705676/858733133879574559/unknown.png)
+![Findcrew command](https://cdn.discordapp.com/attachments/614716155646705676/858733490480873514/unknown.png)
+* ~~Salty~~ Fun Game commands
+![Spark command](https://cdn.discordapp.com/attachments/614716155646705676/858733892926963732/unknown.png)
+![Roulette command](https://cdn.discordapp.com/attachments/614716155646705676/858734003560251422/unknown.png)
+![Scratcher command](https://cdn.discordapp.com/attachments/614716155646705676/858734170222362664/unknown.png)
 * And much more... Consult the [command list](https://mizagbf.github.io/MizaBOT/) for details.  
