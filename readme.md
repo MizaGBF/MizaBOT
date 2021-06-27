@@ -13,45 +13,33 @@
 * [CairoSVG](https://pypi.org/project/CairoSVG/).  
 * `pip install -r requirements.txt` to install all the modules.  
 ### Version 8.0  
-A few things changed in the 8.0 version:  
-* The main `bot.py` file, along with some cogs, are now split in multiple [components](https://github.com/MizaGBF/MizaBOT/tree/master/components) to simplify future developments.  
-* Better multithreading support, with the use of Lock and some tricks to speedup the bot overall.  
-* Some improvements and bug fixes in the existing command list.  
-
 This version is currently in Beta.
 More changes and improvements will come once discord.py 2.0 get released.
-### Setup  
-The bot is designed to be used on [Heroku](https://www.heroku.com).  
-Here are a few instructions to set it up in its current state:  
-* On the [Heroku](https://www.heroku.com) side, you only need to create a new app. The [CLI](https://devcenter.heroku.com/articles/heroku-cli) might help if you intend to do a git push since your own computer.   
-* The bot uses [Google Drive](https://www.google.com/drive/) to read and save its data. You'll need to get API keys from [Google](https://developers.google.com/drive) and fill the `settings.yaml` you can find in the [example folder](https://github.com/MizaGBF/MizaBOT/tree/master/example).  
-* Finally, you also need your [Discord token](https://discordapp.com/developers/applications/).  
-* On the [bot application page](https://discord.com/developers/applications), you want to enable the *PRESENCE INTENT* and *SERVER MEMBERS INTENT* settings for a better experience. [See here](https://discordpy.readthedocs.io/en/latest/intents.html#privileged-intents).  
-* Other files in the [example folder](https://github.com/MizaGBF/MizaBOT/tree/master/example) are:  
-* `config.json` must be edited with a notepad (follow the instructions inside) and placed with the bot code (your discord token must be inserted inside).  
-* `save.json` can be used as it is and must be placed in the [Google Drive](https://www.google.com/drive/) folder used to save the bot data. The bot can't start without a valid save file, it will create one if needed.  
-* (Optional) Twitter credentials can be used to enhance some features. Requires a developper account.  
-Check the [wiki](https://github.com/MizaGBF/MizaBOT/wiki/Setup) for details.  
-This [issue](https://github.com/MizaGBF/MizaBOT/issues/1) might help if you encounter a problem.  
-Example files might be a bit outdated. I'll do my best to update them as much as possible.  
+### Informations  
+MizaBOT is a Discord Bot themed around the game [Granblue Fantasy](http://game.granbluefantasy.jp).  
+It features a lot of useful utility commands, including some advanced features.  
+Check the [Command List](https://mizagbf.github.io/MizaBOT/) for details.  
+  
+It's designed to be used on [Heroku](https://www.heroku.com) and isn't intended to be setup and used by anyone. Still, if you are interested, details are available on the [Wiki](https://github.com/MizaGBF/MizaBOT/wiki) and in this [issue](https://github.com/MizaGBF/MizaBOT/issues/1).  
+  
+**The bot isn't currently open to invites**, but it might change in the future.  
+If you are in a /gbfg/ crew, contact me and I can maybe provide you an invite.  
+  
 ### Code Overview  
-* All data (from the config and save files) are centralized in the Data component and accessible by the Bot, Cogs or other Components at any time.  
-* The `pending` flag of the Data component is checked every 10 minutes in the `status()` task and save to the Google Drive if True.  
+* The bot is divided in three parts:
+  * The client itself in [bot.py](https://github.com/MizaGBF/MizaBOT/blob/master/bot.py)  
+  * The [components](https://github.com/MizaGBF/MizaBOT/tree/master/components), which features various utility functions for the bot well being   
+  * The [cogs](https://github.com/MizaGBF/MizaBOT/tree/master/cogs), where you can find all the user commands
+* All data (from the config and save files) are centralized in the Data component and are accessible by the Bot, Cogs or other Components at any time.  
 * A "Graceful Exit" is needed for a proper use on [Heroku](https://www.heroku.com). A `SIGTERM` signal is sent when a restart happens on the [Heroku](https://www.heroku.com) side (usually every 24 hours, when you push a change or in some other cases). If needed, the bot also saves when this happens.  
 Check the `exit_gracefully()` function for details.  
 * During the boot, all the .py files in the cogs folder are tested to find valid cogs.  
-* The `debug` channel refers to a channel, in my test server, where the bot send debug and error messages while running. Useful when I can't check the logs on Heroku.  
-### User Overview  
-* The default command prefix is `$`. It can be changed using the `$setPrefix <your new prefix>` command.  
-* `$help` lists all the commands usable in your current channel with your current permissions.
-When asking for a Cog command list, it's sent to your private messages. Check your privacy settings if the bot can't send you a direct message.
-![Privacy example](https://cdn.discordapp.com/attachments/614716155646705676/643427911063568426/read02.png)
-* A bot sees an user with the manage messages permission as a server moderator, in the channel where the command is invoked. So, be careful with this.  
-* If you don't want to put the bot in quarantine in a single channel, you can disable the most "annoying" commands using `$toggleFullBot` in the concerned channel. `$allowBotEverywhere` lets you reset everything, while `$seeBotPermission` shows you all the allowed channels.  
-![Command example](https://cdn.discordapp.com/attachments/614716155646705676/643427915526045696/read03.png)
-* `$toggleBroadcast` and `$seeBroadcast` works the same. If the bot owner needs to send a message to all servers, those channels will receive the message.  
-* Servers need to be approved before the bot can be used in it. The owner must use the `$accept <server id>` or `$refuse <server id>` commands. `$ban_server <server id>` or `$ban_owner <owner id>` can be used to forbid someone to add the bot to a server. The owner's 'debug server' registered in `config.json` can bypass those restrictions.  
-* The [Granblue Fantasy](http://game.granbluefantasy.jp) Schedule must be manually set using `$setschedule`. The syntax is the following: `$setschedule date of event 1;name of event 1; etc.... ; date of event N; name of event N`. The previous command can be retrieved using `$schedule raw`.  
-Alternatively, if Twitter is enabled, it can be retrieved from [@granblue_en](https://twitter.com/Granblue_en) with the `$getschedule` command. An automatic attempt will also happen at the start of each month by the `clean` task.  
-![Schedule example](https://cdn.discordapp.com/attachments/614716155646705676/643427910874693642/read01.png)
-* For details on everything else, I recommend the `$help` command.  
+
+### Features  
+* Get detailed informations on the game status from Discord ![GBF command](https://cdn.discordapp.com/attachments/614716155646705676/858731441316036638/unknown.png) ![Gacha command](https://cdn.discordapp.com/attachments/614716155646705676/858731761131323392/unknown.png)
+* Manage and estimate your next Granblue Spark ![SeeRoll command](https://cdn.discordapp.com/attachments/614716155646705676/858729482386145310/unknown.png)  
+* Find and search in-game profiles and crews ![Profile command](https://cdn.discordapp.com/attachments/614716155646705676/858730610260443196/unknown.png)  
+* Search the [wiki](https://gbf.wiki/) directly from Discord ![Wiki command](https://cdn.discordapp.com/attachments/614716155646705676/858730975025954875/unknown.png) 
+* Get Unite and Fight detailed informations ![Estim command](https://cdn.discordapp.com/attachments/614716155646705676/858732302635892766/unknown.png) ![Ranking command](https://cdn.discordapp.com/attachments/614716155646705676/858732645869551646/unknown.png) ![findplayer command](https://cdn.discordapp.com/attachments/614716155646705676/858733133879574559/unknown.png) ![findcrew command](https://cdn.discordapp.com/attachments/614716155646705676/858733490480873514/unknown.png)  
+* ~~Salty~~ Fun Game commands ![Spark command](https://cdn.discordapp.com/attachments/614716155646705676/858733892926963732/unknown.png) ![Roulette command](https://cdn.discordapp.com/attachments/614716155646705676/858734003560251422/unknown.png) ![Scratcher](https://cdn.discordapp.com/attachments/614716155646705676/858734170222362664/unknown.png)  
+* And much more... Consult the [command list](https://mizagbf.github.io/MizaBOT/) for details.  
