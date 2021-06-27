@@ -9,6 +9,9 @@ from datetime import datetime, timedelta
 # GBF Component
 # ----------------------------------------------------------------------------------------------------------------
 # This component is the interface with Granblue Fantasy
+#
+# IMPORTANT
+# Documentation will be limited on purpose to avoid possible misuses from people reading this
 # ----------------------------------------------------------------------------------------------------------------
 
 class GBF():

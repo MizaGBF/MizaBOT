@@ -14,6 +14,18 @@ class Emote():
     def init(self):
         pass
 
+    """get()
+    Retrieve an Emojii using its id set in config.json
+    The Emoji is also cached for future uses
+    
+    Parameters
+    ----------
+    key: Emote key set in config.json
+    
+    Returns
+    --------
+    unknown: Discord Emoji if success, empty string if error, key if not found
+    """
     def get(self, key): # retrieve a custom emote
         if key in self.cache:
             return self.cache[key]

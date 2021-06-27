@@ -4,7 +4,6 @@ import discord
 # Pinboard Component
 # ----------------------------------------------------------------------------------------------------------------
 # Enable the pinboard system ("extra pinned messages") in specific server
-# Only available in 2 servers and not intended for public use
 # ----------------------------------------------------------------------------------------------------------------
 
 class Pinboard():
@@ -15,6 +14,17 @@ class Pinboard():
     def init(self):
         pass
 
+    """check()
+    Check the payload received from on_raw_reaction_add() and if it triggers a pin
+    
+    Parameters
+    ----------
+    payload: Raw Message Payload
+    
+    Returns
+    --------
+    bool: True if success, False if failure
+    """
     async def check(self, payload):
         try:
             idx = None
@@ -105,11 +115,30 @@ class Pinboard():
                 return True
             return False
 
+    """add()
+    Enable the system for a guild (or overwrite its previous settings)
+    
+    Parameters
+    ----------
+    server_id: Guild ID, in string format
+    tracked: List of channel IDs
+    emoji: Emoji used, in string format
+    mod: Boolean
+    threshold: number of reactions needed to trigger a pin
+    output: Pinboard channel ID
+    """
     def add(self, server_id, tracked, emoji, mod, threshold, output): # parameters validity should be checked before the call
         with self.bot.data.lock:
             self.bot.data.save['pinboard'][server_id] = {'tracked' : tracked, 'emoji': emoji, 'mod_bypass':mod, 'threshold':threshold, 'output': output}
             self.bot.data.pending = True
 
+    """remove()
+    Disable the system for a guild
+    
+    Parameters
+    ----------
+    server_id: Guild ID, in string format
+    """
     def remove(self, server_id):
         if server_id in self.bot.data.save['pinboard']:
             with self.bot.data.lock:

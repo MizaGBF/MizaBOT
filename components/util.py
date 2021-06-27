@@ -23,8 +23,19 @@ class Util():
 
     def init(self):
         self.emote = self.bot.emote
-        
-    def json_deserial_array(self, array): # deserialize a list from a json
+
+    """json_deserial_array()
+    Deserialize a list (used for our json files)
+    
+    Parameters
+    ----------
+    array: List
+    
+    Returns
+    --------
+    list: Deserialized list
+    """
+    def json_deserial_array(self, array):
         a = []
         for v in array:
             if isinstance(v, list):
@@ -40,6 +51,17 @@ class Util():
                 a.append(v)
         return a
 
+    """json_deserial_dict()
+    Deserialize a dict (used for our json files)
+    
+    Parameters
+    ----------
+    pairs: dict
+    
+    Returns
+    --------
+    dict: Deserialized Dict
+    """
     def json_deserial_dict(self, pairs): # deserialize a dict from a json
         d = {}
         for k, v in pairs:
@@ -56,28 +78,96 @@ class Util():
                 d[k] = v
         return d
 
+    """json_serial()
+    Serialize a datetime instance (used for our json files)
+    
+    Parameters
+    ----------
+    obj: datetime instance
+    
+    Raises
+    ------
+    TypeError: obj isn't a datetime
+    
+    Returns
+    --------
+    unknown: Serialized object
+    """
     def json_serial(self, obj): # serialize everything including datetime objects
         if isinstance(obj, datetime):
             return obj.replace(microsecond=0).isoformat()
         raise TypeError ("Type %s not serializable" % type(obj))
 
+    """timestamp()
+    Return the current time, UTC timezone
+
+    Returns
+    --------
+    datetime: Current time
+    """
     def timestamp(self):
         return datetime.utcnow()
 
-    def JST(self): # get the time in jst
+    """JST()
+    Return the current time, JST timezone
+
+    Returns
+    --------
+    datetime: Current time
+    """
+    def JST(self):
         return datetime.utcnow() + timedelta(seconds=32400) - timedelta(seconds=30)
-        
+
+
+    """uptime()
+    Return the bot uptime
+    
+    Parameters
+    ----------
+    string: If true, the uptime is returned as a string
+    
+    Returns
+    --------
+    timedelta: Bot uptime
+    """
     def uptime(self, string=True): # get the uptime
         delta = datetime.utcnow() - self.starttime
         if string: return "{}".format(self.delta2str(delta, 3))
         else: return delta
 
+    """delta2str()
+    Convert a timedelta object to a string (format: XdXhXmXs)
+    
+    Parameters
+    ----------
+    delta: Timedelta object
+    mode: Affect the formatting:
+        1 (default): Hours and Minutes
+        2: Days, Hours and Minutes
+        3: Days, Hours, Minutes and Seconds
+        Anything else: Minutes
+    
+    Returns
+    --------
+    str: Resulting string
+    """
     def delta2str(self, delta, mode=1):
         if mode == 3: return "{}d{}h{}m{}s".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60, delta.seconds % 60)
         elif mode == 2: return "{}d{}h{}m".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60)
         elif mode == 1: return "{}h{}m".format(delta.seconds // 3600, (delta.seconds // 60) % 60)
-        elif mode == 0: return "{}m".format(delta.seconds // 60)
+        elif: return "{}m".format(delta.seconds // 60)
 
+    """str2delta()
+    Convert string to a a timedelta object (format: XdXhXmXs)
+    
+    Parameters
+    ----------
+    d: The string to convert
+    
+    Returns
+    --------
+    timedelta: Resulting timedelta object
+    """
     def str2delta(self, d): # return None if error
         flags = {'d':False,'h':False,'m':False}
         tmp = 0 # buffer
@@ -104,6 +194,13 @@ class Util():
         if tmp != 0: return None
         return timedelta(days=sum//86400, seconds=sum%86400)
 
+    """status()
+    Return the bot status
+    
+    Returns
+    --------
+    dict: Dict of string
+    """
     def status(self):
         return {
             "Version": self.bot.version,
@@ -119,6 +216,13 @@ class Util():
             "Twitter": ("Disabled" if (self.bot.twitter.api is None) else "Online")
         }
 
+    """statusString()
+    Return the bot status as a single string (call status() )
+    
+    Returns
+    --------
+    str: Status string
+    """
     def statusString(self):
         status = self.status()
         msg = ""
@@ -126,15 +230,19 @@ class Util():
             msg += "**{}**▫️{}\n".format(k, status[k])
         return msg
 
-    def delFile(self, filename):
-        try: os.remove(filename)
-        except: pass
+    """react()
+    React to a message with an emoji
+    
+    Parameters
+    ----------
+    msg: discord.Message object
+    key: Either the emoji key set in config.json or the emoji in string format
 
-    def cpyFile(self, src, dst):
-        try: copyfile(src, dst)
-        except: pass
-
-    async def react(self, msg, key): # add a reaction using a custom emote defined in config.json
+    Returns
+    --------
+    bool: True if success, False if not
+    """
+    async def react(self, msg, key):
         try:
             await msg.add_reaction(self.emote.get(key))
             return True
@@ -143,6 +251,18 @@ class Util():
                 await self.bot.sendError('react', e)
             return False
 
+    """unreact()
+    Remove a bot reaction to a message
+    
+    Parameters
+    ----------
+    msg: discord.Message object
+    key: Either the emoji key set in config.json or the emoji in string format
+
+    Returns
+    --------
+    bool: True if success, False if not
+    """
     async def unreact(self, msg, key): # remove a reaction using a custom emote defined in config.json
         try:
             await msg.remove_reaction(self.emote.get(key), msg.guild.me)
@@ -152,6 +272,17 @@ class Util():
                 await self.bot.sendError('unreact', e)
             return False
 
+    """clean()
+    Delete a bot command message after X amount of time.
+    A white check mark is added in reaction to the original command after deletion
+    
+    Parameters
+    ----------
+    ctx: Command context
+    msg: Message to delete
+    timeout: Time in second before deletion
+    all: if True, the message will be deleted, if False, the message is deleted it it was posted in an unauthorized channel
+    """
     async def clean(self, ctx, msg, timeout, all=False): # delete a message after X amount of time if posted in an unauthorized channel (all = False) or everywhere (all = True)
         try:
             if all or not self.bot.isAuthorized(ctx): # TODO
@@ -161,6 +292,17 @@ class Util():
         except:
             pass
 
+    """embed()
+    Create a discord.Embed object
+    
+    Parameters
+    ----------
+    **options: discord.Embed options
+
+    Returns
+    --------
+    discord.Embed: The created embed
+    """
     def embed(self, **options): # make a full embed
         embed = discord.Embed(title=options.get('title', ""), description=options.pop('description', ""), url=options.pop('url', ""), color=options.pop('color', random.randint(0, 16777216)))
         fields = options.pop('fields', [])
@@ -182,6 +324,17 @@ class Util():
             embed.set_author(name=options['author'].pop('name', ""), url=options['author'].pop('url', ""), icon_url=options['author'].pop('icon_url', ""))
         return embed
 
+    """pexc()
+    Convert an exception to a string with the full traceback
+    
+    Parameters
+    ----------
+    exception: The error
+    
+    Returns
+    --------
+    unknown: The string, else the exception parameter if an error occured
+    """
     def pexc(self, exception): # format an exception
         try:
             return "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))

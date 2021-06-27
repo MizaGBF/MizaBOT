@@ -7,6 +7,9 @@ import itertools
 # Custom Help Command for the bot
 # Cog Command Lists are sent by direct message to the user, others are sent in reply
 # This Component doesn't behave as the others (No reset on reload and no instance in the MizaBot class)
+#
+# IMPORTANT
+# No documentation for the time being as it might change in the next discord.py version
 # ----------------------------------------------------------------------------------------------------------------
 
 class Help(commands.DefaultHelpCommand):

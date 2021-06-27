@@ -29,7 +29,14 @@ class Data():
     def init(self):
         pass
 
-    def loadConfig(self): # pretty simple, load the config file. should only be used once at the start
+    """loadConfig()
+    Read config.json. Only called once during boot
+    
+    Returns
+    --------
+    bool: True on success, False on failure
+    """
+    def loadConfig(self):
         try:
             with open('config.json') as f:
                 data = json.load(f, object_pairs_hook=self.bot.util.json_deserial_dict) # deserializer here
@@ -39,7 +46,14 @@ class Data():
             print('loadConfig(): {}\nCheck your \'config.json\' for the above error.'.format(self.bot.util.pexc(e)))
             return False
 
-    def loadData(self): # same thing but for save.json
+    """loadData()
+    Read save.json.
+    
+    Returns
+    --------
+    bool: True on success, False on failure
+    """
+    def loadData(self):
         try:
             with open('save.json') as f:
                 data = json.load(f, object_pairs_hook=self.bot.util.json_deserial_dict) # deserializer here
@@ -68,6 +82,13 @@ class Data():
             print('load(): {}'.format(self.bot.util.pexc(e)))
             return False
 
+    """saveData()
+    Write save.json.
+    
+    Returns
+    --------
+    bool: True on success, False on failure
+    """
     def saveData(self): # saving (lock isn't used, use it outside!)
         try:
             with open('save.json', 'w') as outfile:
@@ -80,6 +101,17 @@ class Data():
             print('save(): {}'.format(self.bot.util.pexc(e)))
             return False
 
+    """checkData()
+    Fill the save data with missing keys, if any
+    
+    Parameters
+    --------
+    dict: Save data
+    
+    Returns
+    --------
+    dict: Updated data (not a copy)
+    """
     def checkData(self, data): # used to initialize missing data or remove useless data from the save file
         expected = {
             'version':self.saveversion,
@@ -114,6 +146,14 @@ class Data():
                 data[k] = expected[k]
         return data
 
+    """autosave()
+    Write save.json. Called periodically by statustask()
+    The file is also sent to the google drive or to discord if it failed
+    
+    Parameters
+    --------
+    discordDump: If True, save.json will be sent to discord even on success
+    """
     async def autosave(self, discordDump = False): # called when pending is true by statustask()
         if self.autosaving: return
         self.autosaving = True
@@ -138,6 +178,9 @@ class Data():
                 pass
         self.autosaving = False
 
+    """clean_spark()
+    Clean user spark data from the save data
+    """
     def clean_spark(self): # clean up spark data
         count = 0
         c = datetime.utcnow()
@@ -156,6 +199,9 @@ class Data():
                     count += 1
         return count
 
+    """clean_profile()
+    Clean user gbf profiles from the save data
+    """
     def clean_profile(self): # clean up profiles
         count = 0
         keys = list(self.bot.data.save['gbfids'].keys())
@@ -172,6 +218,9 @@ class Data():
                     self.bot.data.pending = True
         return count
 
+    """clean_schedule()
+    Clean the gbf schedule from the save data
+    """
     def clean_schedule(self): # clean up schedule
         c = self.bot.util.JST()
         fd = c.replace(day=1, hour=12, minute=15, second=0, microsecond=0) # day of the next schedule drop, 15min after

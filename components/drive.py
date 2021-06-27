@@ -17,6 +17,13 @@ from ctypes import c_int
 # this will be reverted back if a fix is found
 # ----------------------------------------------------------------------------------------------------------------
 
+"""access()
+Return a valid GoogleDrive instance
+
+Returns
+--------
+GoogleDrive: Drive instance
+"""
 def access():
     gauth = GoogleAuth()
     gauth.LoadCredentialsFile("credentials.json") # load credentials
@@ -29,6 +36,14 @@ def access():
     gauth.SaveCredentialsFile("credentials.json") # save
     return GoogleDrive(gauth)
 
+"""load()
+Download save.json from a specified folder
+
+Parameters
+----------
+folder: Google Drive Folder ID
+ret: Store the return value
+"""
 def load(folder, ret): # load save.json from the folder id in bot.tokens
     try:
         drive = access()
@@ -44,6 +59,15 @@ def load(folder, ret): # load save.json from the folder id in bot.tokens
         print(e)
         ret.value = 0
 
+"""save()
+Upload save.json to a specified folder
+
+Parameters
+----------
+data: Save data
+folder: Google Drive Folder ID
+ret: Store the return value
+"""
 def save(data, folder, ret): # write save.json to the folder id in bot.tokens
     try:
         drive = access()
@@ -70,6 +94,16 @@ def save(data, folder, ret): # write save.json to the folder id in bot.tokens
         print(e)
         ret.value = 0
 
+"""save()
+Upload a json file to a specified folder
+
+Parameters
+----------
+data: File data
+name: File name
+folder: Google Drive Folder ID
+ret: Store the return value
+"""
 def saveFile(data, name, folder, ret): # write a json file to a folder
     try:
         drive = access()
@@ -80,6 +114,17 @@ def saveFile(data, name, folder, ret): # write a json file to a folder
     except:
         ret.value = 0
 
+"""saveDiskFile()
+Upload a file to a specified folder
+
+Parameters
+----------
+target: File to save
+mile: File mime type
+name: File name
+folder: Google Drive Folder ID
+ret: Store the return value
+"""
 def saveDiskFile(target, mime, name, folder, ret): # write a file from the local storage to a drive folder
     try:
         drive = access()
@@ -90,6 +135,17 @@ def saveDiskFile(target, mime, name, folder, ret): # write a file from the local
     except:
         ret.value = 0
 
+"""overwriteFile()
+Upload a file to a specified folder, overwrite an existing file if it exists
+
+Parameters
+----------
+target: File to save
+mile: File mime type
+name: File name
+folder: Google Drive Folder ID
+ret: Store the return value
+"""
 def overwriteFile(target, mime, name, folder, ret): # write a file from the local storage to a drive folder (replacing an existing one, if it exists)
     try:
         drive = access()
@@ -107,6 +163,16 @@ def overwriteFile(target, mime, name, folder, ret): # write a file from the loca
         print(e)
         ret.value = 0
 
+"""mvFile()
+Rename a file in a folder
+
+Parameters
+----------
+name: File name
+folder: Google Drive Folder ID
+name: New File name
+ret: Store the return value
+"""
 def mvFile(name, folder, new, ret): # rename a file from a folder
     try:
         drive = access()
@@ -122,6 +188,16 @@ def mvFile(name, folder, new, ret): # rename a file from a folder
         print(e)
         ret.value = 0
 
+"""cpyFile()
+Duplicate a file in a folder
+
+Parameters
+----------
+name: File name
+folder: Google Drive Folder ID
+name: New File name
+ret: Store the return value
+"""
 def cpyFile(name, folder, new, ret): # rename a file from a folder
     try:
         drive = access()
@@ -135,6 +211,15 @@ def cpyFile(name, folder, new, ret): # rename a file from a folder
         print(e)
         ret.value = 0
 
+"""dlFile()
+Download a file from a folder
+
+Parameters
+----------
+name: File name
+folder: Google Drive Folder ID
+ret: Store the return value
+"""
 def dlFile(name, folder, ret): # load a file from a folder to the local storage
     try:
         drive = access()
@@ -149,6 +234,15 @@ def dlFile(name, folder, ret): # load a file from a folder to the local storage
         print(e)
         ret.value = 0
 
+"""delFiles()
+Delete files from a folder
+
+Parameters
+----------
+names: List of File names
+folder: Google Drive Folder ID
+ret: Store the return value
+"""
 def delFiles(names, folder, ret): # delete matching files from a folder
     try:
         drive = access()
@@ -170,6 +264,18 @@ class Drive():
     def init(self):
         pass
 
+    """do()
+    Run a function in a separate process
+    
+    Parameters
+    ----------
+    func: Function to be called
+    *args: Parameters
+    
+    Returns
+    --------
+    bool: Return value of the function (None if invalid)
+    """
     def do(self, func, *args):
         ret = multiprocessing.Value(c_int, 0)
         p = multiprocessing.Process(target=func, args=args + (ret,))

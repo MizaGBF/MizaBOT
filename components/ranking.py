@@ -35,6 +35,18 @@ class Ranking():
     def init(self):
         pass
 
+    """requestRanking()
+    Request a page from the GW ranking
+    
+    Parameters
+    ----------
+    page: Requested page
+    mode: 0=crew ranking, 1=prelim crew ranking, 2=player ranking
+    
+    Returns
+    --------
+    dict: JSON data
+    """
     def requestRanking(self, page, mode = 0): # get gw ranking data
         if self.bot.data.save['gw']['state'] == False or self.bot.util.JST() <= self.bot.data.save['gw']['dates']["Preliminaries"]:
             return None
@@ -46,6 +58,9 @@ class Ranking():
             res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
         return res
 
+    """updateRankingThread()
+    Thread to update the cutoff data
+    """
     def updateRankingThread(self):
         r = None
         errc = 0
@@ -71,8 +86,11 @@ class Ranking():
                     errc += 1
                     time.sleep(0.1)
         except:
-            return
+            pass
 
+    """checkGWRanking()
+    Bot task to update the ranking data. Only needed once every 20 minutes
+    """
     async def checkGWRanking(self):
         cog = self.bot.get_cog('GuildWar')
         if cog is None:
@@ -182,6 +200,9 @@ class Ranking():
                 await self.bot.sendError('checkgwranking', e)
                 return
 
+    """scrapProcess()
+    Thread to retrieve mass data from the ranking
+    """
     def scrapProcess(self): # thread for ranking
         while len(self.scrap_qi) > 0: # until the input queue is empty
             if not self.bot.running or self.stoprankupdate: return 
@@ -198,6 +219,17 @@ class Ranking():
                 with self.scraplockOut:
                     self.scrap_qo.append(item)
 
+    """getCurrentGWDayID()
+    Associate the current GW day to an integer and return it
+    
+    Returns
+    --------
+    int:
+        0=prelims, 1=interlude, 2=day 1, 3=day 2, 4=day 3, 5=day 4
+        10 to 15: same as above but during the break period
+        25: Final rally or end
+        None: Undefined
+    """
     def getCurrentGWDayID(self):
         if self.bot.data.save['gw']['state'] == False: return None
         current_time = self.bot.util.JST()
@@ -223,6 +255,9 @@ class Ranking():
         else:
             return None
 
+    """gwdbbuilder()
+    Thread to build the GW database from scrapProcess output
+    """
     def gwdbbuilder(self):
         try:
             day = self.getCurrentGWDayID() # calculate which day it is (0 being prelim, 1 being interlude/day 1, etc...)
@@ -290,6 +325,17 @@ class Ranking():
             self.stoprankupdate = True # send the stop signal if a critical error happened
             return 'gwdbbuilder() exception:\n' + str(err)
 
+    """gwscrap()
+    Setup and manage the multithreading to scrap the ranking
+    
+    Parameters
+    ----------
+    update_time: time of this ranking interval
+    
+    Returns
+    --------
+    str: empty string if success, error message if not
+    """
     async def gwscrap(self, update_time):
         try:
             self.bot.drive.delFiles(["temp.sql"], self.bot.data.config['tokens']['files']) # delete previous temp file (if any)
@@ -370,6 +416,17 @@ class Ranking():
     def yB(self, row, index):
         return row['q']['y'][1]
 
+    """searchScoreForTracker()
+    Search the targeted crews for the YouTracker in the database being built
+    
+    Parameters
+    ----------
+    crews: List of crew IDs
+    
+    Returns
+    --------
+    list: Crew informations
+    """
     def searchScoreForTracker(self, crews):
         infos = []
         conn = sqlite3.connect('temp.sql') # open temp.sql
@@ -384,6 +441,13 @@ class Ranking():
         conn.close()
         return infos
 
+    """updateYouTracker()
+    Update the YouTracker data (GW Match tracker for my crew)
+    
+    Parameters
+    ----------
+    t: time of this ranking interval
+    """
     async def updateYouTracker(self, t):
         day = self.getCurrentGWDayID()
         if day is None or day <= 1 or day >= 10: # check if match day

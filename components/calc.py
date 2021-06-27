@@ -18,6 +18,9 @@ class Calc():
     def init(self):
         pass
 
+    """reset()
+    Reset the calculator state
+    """
     def reset(self):
         self.index = 0
         self.vars = {
@@ -26,6 +29,22 @@ class Calc():
         }
         self.funcs = ['cos', 'sin', 'tan', 'acos', 'asin', 'atan', 'cosh', 'sinh', 'tanh', 'acosh', 'asinh', 'atanh', 'exp', 'ceil', 'abs', 'factorial', 'floor', 'round', 'trunc', 'log', 'log2', 'log10', 'sqrt', 'rad', 'deg']
 
+    """evaluate()
+    Evaluate a mathematical expression and return the result
+    
+    Parameters
+    ----------
+    expression: Math expression
+    vars: Variable
+    
+    Raises
+    ------
+    Exception: For any errors
+    
+    Returns
+    --------
+    float or int: Result
+    """
     def evaluate(self, expression = "", vars={}):
         self.reset()
         self.expression = expression.replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
@@ -42,12 +61,33 @@ class Calc():
             return int(value)
         return value
 
+    """isNotDone()
+    Return True if the evaluation isn't finished
+    
+    Returns
+    --------
+    bool: True if the evaluation isn't finished, False if it is
+    """
     def isNotDone(self):
         return self.index < len(self.expression)
 
+    """peek()
+    Get the next element
+    
+    Returns
+    --------
+    str: Next element to be parsed
+    """
     def peek(self):
         return self.expression[self.index:self.index + 1]
 
+    """parse()
+    Parse the next elements
+    
+    Returns
+    --------
+    float or int: Result
+    """
     def parse(self):
         values = [self.multiply()]
         while True:
@@ -60,6 +100,13 @@ class Calc():
                 break
         return sum(values)
 
+    """multiply()
+    Multiply the next elements
+    
+    Returns
+    --------
+    float or int: Result
+    """
     def multiply(self):
         values = [self.parenthesis()]
         while True:
@@ -88,6 +135,17 @@ class Calc():
         for factor in values: value *= factor
         return value
 
+    """parenthesis()
+    Parse the elements in the parenthesis
+    
+    Raises
+    ------
+    Exception: Missing parenthesis
+    
+    Returns
+    --------
+    float or int: Result
+    """
     def parenthesis(self):
         if self.peek() == '(':
             self.index += 1
@@ -98,19 +156,44 @@ class Calc():
         else:
             return self.negative()
 
+    """negative()
+    Get the negative of the value
+    
+    Returns
+    --------
+    float or int: Result
+    """
     def negative(self):
         if self.peek() == '-':
             self.index += 1
             return -1 * self.parenthesis()
         else:
             return self.value()
+
+    """value()
+    Get the value of the next element
     
+    Returns
+    --------
+    float or int: Result
+    """
     def value(self):
         if self.peek() in '0123456789.':
             return self.number()
         else:
             return self.variable_or_function()
 
+    """variable_or_function()
+    Get the result of a variable or a function
+    
+    Raises
+    ------
+    Exception: Error during the parsing
+    
+    Returns
+    --------
+    float or int: Result
+    """
     def variable_or_function(self):
         var = ''
         while self.isNotDone():
@@ -160,6 +243,17 @@ class Calc():
                 else: raise Exception("Unrecognized function '{}'".format(var))
         return float(value)
 
+    """number()
+    Return a numerical value
+    
+    Raises
+    ------
+    Exception: Error during the parsing
+    
+    Returns
+    --------
+    float or int: Result
+    """
     def number(self):
         strValue = ''
         decimal_found = False
