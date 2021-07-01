@@ -352,7 +352,7 @@ class GuildWar(commands.Cog):
 
                 em = self.formatElement(self.bot.data.save['gw']['element'])
                 d = self.bot.util.JST() - self.bot.data.save['gw']['ranking'][4]
-                await ctx.send(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Updated: **{}** ago".format(self.bot.util.delta2str(d, 0)), fields=fields, footer="Update on minute 5, 25 and 45", inline=True, color=self.color))
+                await ctx.send(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Updated: **{}** ago".format(self.bot.util.delta2str(d, 0)), fields=fields, footer="Update on minute 5, 25 and 45", timestamp=self.bot.util.timestamp(), inline=True, color=self.color))
         except Exception as e:
             await self.bot.sendError("ranking", e)
 
