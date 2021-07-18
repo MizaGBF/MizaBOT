@@ -33,7 +33,7 @@
         "atkace" : <id of my guild attack ace role. you'll have to edit that out or use your own.>,
         "deface" : <id of my guild defense ace role. you'll have to edit that out or use your own.>,
         "fo" : <id of my guild FO role. you'll have to edit that out or use your own.>,
-        "gl" : <id of my guild GL role. you'll have to edit that out or use your own.>,,
+        "gl" : <id of my guild GL role. you'll have to edit that out or use your own.>,
         "wawi" : <id of wawi.>,
         "gbfg" : <id of the gbfg server>,
         "gbfg_general" : <id of the gbfg server general channel>,
@@ -72,7 +72,7 @@
         "stayblue()": "",
         "leak()": "",
         "lucilius()": "",
-        "bullet()": "",
+        "bullet()": ""
     },
     "emotes" : {
         "fire" : <custom emote id used by the bot. all ids are numbers, so no quotes>,
