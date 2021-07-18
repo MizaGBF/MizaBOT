@@ -369,7 +369,7 @@ filterSelection("all")
 
 def load():
     r = re.compile("^class ([a-zA-Z0-9_]*)\\(commands\\.Cog\\):", re.MULTILINE)
-    command_list = {'Help':[{'name':'Help', 'aliases':[], 'args':['command_name_or_cog : str = ""'], 'comment':'The Bot help command'}]}
+    command_list = {}
     for f in os.listdir('../cogs/'): # list all files
         p = os.path.join('../cogs/', f)
         if f not in ['__init__.py'] and f.endswith('.py') and os.path.isfile(p): # search for valid python file

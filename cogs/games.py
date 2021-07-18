@@ -198,7 +198,7 @@ class Games(commands.Cog):
             else:
                 text += "{} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(result['list'][i][0])))
             counter[result['list'][i][0]] += 1
-        title = "{} memerolled".format(ctx.author.display_name) if (len(result['list']) < 300) else "{} sparked".format(ctx.author.display_name)
+        title = "{} memerolled {} times".format(ctx.author.display_name, len(result['list'])) if (len(result['list']) < 300) else "{} sparked".format(ctx.author.display_name)
         if final_msg is None:
             final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer))
         else:

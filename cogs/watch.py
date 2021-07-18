@@ -128,7 +128,7 @@ class Watch(commands.Cog):
                             await self.bot.sendMulti(['debug_update', 'private_update', 'gbfg_update'], embed=self.bot.util.embed(author={'name':"Latest Update", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="This is a content update", footer="New weapons/characters/summons have been added to the game", color=self.color))
                         await self.bot.send('debug_update', embed=self.bot.util.embed(title="Reminder", description="Keep it private", color=self.color))
                     else:
-                        await self.bot.sendMulti(['debug_update', 'private_update'], embed=self.bot.util.embed(title="Latest Update", description="This is a minor update", footer="Possibly a new uncap, minor or non-event content, or bugfixes", color=self.color))
+                        await self.bot.sendMulti(['debug_update', 'private_update', 'gbfg_update'], embed=self.bot.util.embed(title="Latest Update", description="This is a minor update", footer="Possibly a new uncap, minor or non-event content, or bugfixes", color=self.color))
                 elif s == 2:
                     await self.bot.send('debug_update', embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Game version set to `{}` (`{}`)".format(v, self.bot.gbf.version2str(v)) , color=self.color))
             except asyncio.CancelledError:
@@ -360,7 +360,7 @@ class Watch(commands.Cog):
                 if not silent:
                     r = self.bot.doAsTask(self.atr(o, str(id), True))
                     if r == 0:
-                        self.bot.doAsTask(o.send(embed=self.bot.util.embed(title=ws[x], description='{} ▫️ {}'.format(tt, id), thumbnail=wl[0].format(id), color=self.color)))
+                        self.bot.doAsTask(o.send(embed=self.bot.util.embed(title=tt, description='ID ▫️ {}'.format(id), thumbnail=wl[0].format(id), color=self.color)))
                     elif r >= 10:
                         tt = ws[x%2].format(self.bot.emote.get(wel.get(str(r - 10), '')), self.bot.emote.get(wt.get(str(i+1), "Error")))
                         if tt not in found['r']:

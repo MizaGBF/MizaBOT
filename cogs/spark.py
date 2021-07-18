@@ -10,7 +10,7 @@ from operator import itemgetter
 # Register and estimate people GBF Spark status
 # ----------------------------------------------------------------------------------------------------------------
 
-class Spark(commands.Cog):
+class Sparking(commands.Cog):
     """Track your Granblue Spark."""
     def __init__(self, bot):
         self.bot = bot
@@ -22,7 +22,7 @@ class Spark(commands.Cog):
         """Post a link to my autistic roll tracking Sheet"""
         await ctx.reply(embed=self.bot.util.embed(title="{} GBF Roll Tracker".format(self.bot.emote.get('crystal')), description=self.bot.data.config['strings']["rolltracker()"], color=self.color))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setcrystal', 'setspark', 'setdraw'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setcrystal', 'setspark', 'setdraw', 'setrolls'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def setRoll(self, ctx, crystal : int, single : int = 0, ten : int = 0):
         """Set your roll count
@@ -52,7 +52,7 @@ class Spark(commands.Cog):
         except:
             pass
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['addcrystal', 'addspark', 'adddraw', 'modRoll', 'modcrystal', 'modspark', 'moddraw', 'changeRoll', 'changecrystal', 'changespark', 'changedraw'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['addcrystal', 'addspark', 'adddraw', 'modRoll', 'modcrystal', 'modspark', 'moddraw', 'changeRoll', 'changecrystal', 'changespark', 'changedraw', 'changerolls', 'addrolls'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def addRoll(self, ctx, crystal : int, single : int = 0, ten : int = 0):
         """Modify your roll count
@@ -117,7 +117,7 @@ class Spark(commands.Cog):
                 t_max += timedelta(days=1)
         return t_min, t_max, expected, now
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['seecrystal', 'seespark', 'seedraw'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['seecrystal', 'seespark', 'seedraw', 'seerolls'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def seeRoll(self, ctx, member : discord.Member = None):
         """Post your (or the target) roll count"""
@@ -153,7 +153,7 @@ class Spark(commands.Cog):
             await self.bot.sendError('seeRoll', e)
         await self.bot.util.clean(ctx, final_msg, 30)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['zerospark', '0roll', '0spark'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['zerospark', '0roll', '0spark', '0rolls', 'zeroRolls'])
     @commands.cooldown(30, 30, commands.BucketType.guild)
     async def zeroroll(self, ctx, default: int = 0):
         """Post a spark estimation based on today date"""

@@ -5,7 +5,6 @@ from components.gbf import GBF
 from components.twitter import Twitter
 from components.pinboard import Pinboard
 from components.emote import Emote
-from components.help import Help
 from components.calc import Calc
 from components.channel import Channel
 from components.file import File
@@ -24,6 +23,7 @@ import functools
     TODO:
         ctrl+F all NOTE
         rollback beta status in config.json
+        check @commands and cooldown stuff
     
     discord.py 2.0 breaking changes:
     https://github.com/Rapptz/discord.py/projects/3
@@ -32,15 +32,17 @@ import functools
         * remove permissions_in
         * check timestamp timezone
         * fix config.json status
+        * clean_prefix for help
 """
 
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "8.0-beta-5" # bot version
+        self.version = "8.0-beta-6" # bot version
         self.changelog = [ # changelog lines
             "**This MizaBOT version is a Beta**, please use `$bug_report` if you see anything wrong",
             "Online command list added [here](https://mizagbf.github.io/MizaBOT/)",
+            "Reworked the `$help` command",
             "All servers can now access the pinboard system using `$enablePinboard` and `$disablePinboard`",
             "Added `$here`, `$when`, `$dbbox` and `$dbtoken`",
             "Removed `$lightchad` (until next time...)",
@@ -101,7 +103,7 @@ class MizaBot(commands.Bot):
         intents.members = True
         
         # init base class
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\n[Source code](https://github.com/MizaGBF/MizaBOT)\n[Command List](https://mizagbf.github.io/MizaBOT/)\nDefault command prefix is `$`, use `$setPrefix` to change it on your server.".format(self.version), help_command=Help(), owner=self.data.config['ids']['owner'], max_messages=None, intents=intents)
+        super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\n[Source code](https://github.com/MizaGBF/MizaBOT)▫️[Online Command List](https://mizagbf.github.io/MizaBOT/)\nDefault command prefix is `$`, use `$setPrefix` to change it on your server.".format(self.version), help_command=None, owner=self.data.config['ids']['owner'], max_messages=None, intents=intents)
 
     """go()
     Main Bot Loop

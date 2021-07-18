@@ -1143,7 +1143,7 @@ class GuildWar(commands.Cog):
 
         except Exception as e:
             await self.bot.util.unreact(ctx.message, 'time')
-            await self.bot.sendError("postCrewData", e)
+            raise Exception('Error in postCrewData()') from e
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(3, 30, commands.BucketType.guild)
