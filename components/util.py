@@ -361,3 +361,52 @@ class Util():
                 count += 1
         if count > 1: return name[0] + "..."
         else: return name
+
+    """str2gbfid()
+    Convert a string to a GBF profile ID.
+    
+    Parameters
+    ----------
+    ctx: The command context or the channel to put the message in
+    target: String, which can be:
+        - Empty (the author user GBF ID will be used if set, doesn't work if you set ctx to a channel ID)
+        - Positive integer, representing a GBF ID
+        - A Discord Mention (<@discord_id> or <@!discord_id>)
+    
+    Returns
+    --------
+    int: The GBF ID or None if an error happened
+    """
+    async def str2gbfid(self, ctx, target):
+        if target == "":
+            if str(ctx.author.id) not in self.bot.data.save['gbfids']:
+                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(ctx.author.display_name), footer="setProfile <id>", color=self.color))
+                return None
+            id = self.bot.data.save['gbfids'][str(ctx.author.id)]
+        elif target.startswith('<@') and target.endswith('>'):
+            try:
+                if target[2] == "!": target = int(target[3:-1])
+                else: target = int(target[2:-1])
+                member = ctx.guild.get_member(target)
+                if str(member.id) not in self.bot.data.save['gbfids']:
+                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(member.display_name), footer="setProfile <id>", color=self.color))
+                    return None
+                id = self.bot.data.save['gbfids'][str(member.id)]
+            except:
+                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Invalid parameter {} -> {}".format(target, type(target)), color=self.color))
+                return None
+        else:
+            try: id = int(target)
+            except:
+                member = ctx.guild.get_member_named(target)
+                if member is None:
+                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Member not found", color=self.color))
+                    return None
+                elif str(member.id) not in self.bot.data.save['gbfids']:
+                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(member.display_name), footer="setProfile <id>", color=self.color))
+                    return None
+                id = self.bot.data.save['gbfids'][str(member.id)]
+        if id < 0 or id >= 100000000:
+            await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Invalid ID range", color=self.color))
+            return None
+        return id

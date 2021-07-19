@@ -1391,44 +1391,15 @@ class GranblueFantasy(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['id'])
     @commands.cooldown(5, 30, commands.BucketType.guild)
-    async def profile(self, ctx, *target : str):
+    async def profile(self, ctx, *, target : str = ""):
         """Retrieve a GBF profile"""
-        target = " ".join(target)
         try:
-            if target == "":
-                if str(ctx.author.id) not in self.bot.data.save['gbfids']:
-                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(ctx.author.display_name), footer="setProfile <id>", color=self.color))
-                    return
-                id = self.bot.data.save['gbfids'][str(ctx.author.id)]
-            elif target.startswith('<@') and target.endswith('>'):
-                try:
-                    if target[2] == "!": target = int(target[3:-1])
-                    else: target = int(target[2:-1])
-                    member = ctx.guild.get_member(target)
-                    if str(member.id) not in self.bot.data.save['gbfids']:
-                        await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(member.display_name), footer="setProfile <id>", color=self.color))
-                        return
-                    id = self.bot.data.save['gbfids'][str(member.id)]
-                except:
-                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Invalid parameter {} -> {}".format(target, type(target)), color=self.color))
-                    return
-            else:
-                try: id = int(target)
-                except:
-                    member = ctx.guild.get_member_named(target)
-                    if member is None:
-                        await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Member not found", color=self.color))
-                        return
-                    elif str(member.id) not in self.bot.data.save['gbfids']:
-                        await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(member.display_name), footer="setProfile <id>", color=self.color))
-                        return
-                    id = self.bot.data.save['gbfids'][str(member.id)]
-            if id < 0 or id >= 100000000:
-                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Invalid ID", color=self.color))
+            id = await self.bot.util.str2gbfid(ctx, target)
+            if id is None:
                 return
             if id in self.badprofilecache:
                 await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Profile not found", color=self.color))
-                return
+                return None
             await self.bot.util.react(ctx.message, 'time')
             data = await self.bot.do(self.getProfileData, id)
             if data == "Maintenance":
@@ -1488,15 +1459,14 @@ class GranblueFantasy(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['badboi', 'branded', 'restricted'])
     @commands.cooldown(5, 30, commands.BucketType.guild)
-    async def brand(self, ctx, id : int):
+    async def brand(self, ctx, *, target : str = ""):
         """Check if a GBF profile is restricted"""
         try:
-            if id < 0 or id >= 100000000:
-                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Invalid ID", color=self.color))
-                return
+            id = await self.bot.util.str2gbfid(ctx, target)
+            if id is None: return
             if id in self.badprofilecache:
                 await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Profile not found", color=self.color))
-                return
+                return None
             data = await self.bot.do(self.bot.gbf.request, "http://game.granbluefantasy.jp/forum/search_users_id?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"user_id":id})
             if data == "Maintenance":
                 await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Game is in maintenance", color=self.color))
