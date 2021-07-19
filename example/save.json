@@ -1,60 +1,47 @@
-{  
-   "newserver":{  
-      "servers":[  
-      ],
-      "owners":[  
-      ],
-      "pending":{  
-      }
-   },
-   "prefixes":{  
-   },
-   "baguette_save":{  
-      }
-   },
-   "bot_maintenance":"2019-05-17T00:00:00",
-   "maintenance":{  
-      "state":false,
-      "time":null,
-      "duration":0
-   },
-   "stream":{  
-      "time":null,
-      "content":[  
-      ]
-   },
-   "schedule":[  
-      "5/27 - 6/4",
-      "New Story event",
-      "6/4 - ???",
-      "Proving Grounds (Earth favored)"
-   ],
-   "st":{  
-   },
-   "spark":[  
-      {  
-      },
-      [  
-      ]
-   ],
-   "gw":{  
-      "state":false,
-      "dates":{  
-      },
-      "buffs":[  
-      ],
-      "skip":false
-   },
-   "reminders":{  
-   },
-   "permitted" : {
-      "187214444432982016" : [
-        398110971366866944
-      ],
-      "339155308767215618" : [
-        339235017760833536
-      ]
-   },
-   "news" : {
-   }
+{
+	"version": 1,
+	"newserver": {
+		"servers": [],
+		"owners": [],
+		"pending": {}
+	},
+	"prefixes": {},
+	"baguette_save": {},
+	"bot_maintenance": "2019-05-17T00:00:00",
+	"maintenance": {
+		"state": false,
+		"time": null,
+		"duration": 0
+	},
+	"stream": {
+		"time": null,
+		"content": []
+	},
+	"schedule": [
+		"5/27 - 6/4",
+		"New Story event",
+		"6/4 - ???",
+		"Proving Grounds (Earth favored)"
+	],
+	"st": {},
+	"spark": [
+		{},
+		[]
+	],
+	"gw": {
+		"state": false,
+		"dates": {},
+		"buffs": [],
+		"skip": false
+	},
+	"reminders": {},
+	"permitted" : {
+		"187214444432982016" : [
+			398110971366866944
+		],
+		"339155308767215618" : [
+			339235017760833536
+		]
+	},
+	"news" : {}
 }
