@@ -1054,7 +1054,7 @@ class GuildWar(commands.Cog):
 
     def processCrewData(self, crew, mode=0):
         # embed initialization
-        title = "\u202d{} **{}**".format(self.bot.emote.get(crew['ship_element']), crew['name'])
+        title = "\u202d{} **{}**".format(self.bot.emote.get(crew['ship_element']), self.bot.util.shortenName(crew['name']))
         if 'count' in crew: title += "▫️{}/30".format(crew['count'])
         if 'average' in crew: title += "▫️Rank {}".format(crew['average'])
         if 'online' in crew: title += "▫️{} online".format(crew['online'])
@@ -1116,7 +1116,7 @@ class GuildWar(commands.Cog):
                 elif p['member_position'] == "3": r = "atkace"
                 elif p['member_position'] == "4": r = "deface"
                 else: r = "ensign"
-                entry = '{} [{}](http://game.granbluefantasy.jp/#profile/{})'.format(self.bot.emote.get(r), self.escape(p['name']), p['id'])
+                entry = '{} [{}](http://game.granbluefantasy.jp/#profile/{})'.format(self.bot.emote.get(r), self.escape(self.bot.util.shortenName(p['name'])), p['id'])
                 if gwstate:  entry += " \▫️ {}".format(self.honorFormat(p['honor']))
                 else: entry += " \▫️ r**{}**".format(p['level'])
                 entry += "\n"

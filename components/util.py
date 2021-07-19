@@ -340,3 +340,24 @@ class Util():
             return "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
         except:
             return exception
+
+    """formatName()
+    Shorten player or crew names if they use long characters.
+    For now, it only checks for the arabic character range.
+    
+    Parameters
+    ----------
+    name: The player name to shorten
+    
+    Returns
+    --------
+    name: The resulting name
+    """
+    def shortenName(self, name):
+        count = 0
+        for c in name:
+            i = ord(c)
+            if i >= 0xFB50 and i <= 0xFDFF:
+                count += 1
+        if count > 1: return name[0] + "..."
+        else: return name

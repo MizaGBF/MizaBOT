@@ -1183,7 +1183,7 @@ class GranblueFantasy(commands.Cog):
 
     def processProfile(self, id, data):
         soup = BeautifulSoup(data, 'html.parser')
-        try: name = soup.find_all("span", class_="txt-other-name")[0].string
+        try: name = self.bot.util.shortenName(soup.find_all("span", class_="txt-other-name")[0].string)
         except: name = None
         if name is not None:
             header = None
@@ -1215,7 +1215,7 @@ class GranblueFantasy(commands.Cog):
 
             try:
                 try:
-                    crew = soup.find_all("div", class_="prt-guild-name")[0].string
+                    crew = self.bot.util.shortenName(soup.find_all("div", class_="prt-guild-name")[0].string)
                     crewid = soup.find_all("div", class_="btn-guild-detail")[0]['data-location-href']
                     crew = "[{}](http://game.granbluefantasy.jp/#{})".format(crew, crewid)
                 except: crew = soup.find_all("div", class_="txt-notjoin")[0].string
@@ -1443,6 +1443,9 @@ class GranblueFantasy(commands.Cog):
                 await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Profile not found", color=self.color))
                 await self.bot.util.unreact(ctx.message, 'time')
                 return
+            soup = BeautifulSoup(data, 'html.parser')
+            name = soup.find_all("span", class_="txt-other-name")[0].string
+            x = ""
             title, description, thumbnail = await self.bot.do(self.processProfile, id, data)
             try:
                 with open(thumbnail, 'rb') as infile:
