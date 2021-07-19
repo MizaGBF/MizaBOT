@@ -24,6 +24,7 @@ import functools
         ctrl+F all NOTE
         rollback beta status in config.json
         check @commands and cooldown stuff
+        puthon 3.10: use the new match feature
     
     discord.py 2.0 breaking changes:
     https://github.com/Rapptz/discord.py/projects/3
