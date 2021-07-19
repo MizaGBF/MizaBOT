@@ -216,7 +216,6 @@ class Games(commands.Cog):
             else:
                 await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="{}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0]))), color=self.color, footer=footer))
         elif rmode == 1: # memeroll mode
-            final_msg = None
             counter = [0, 0, 0]
             text = ""
             for i in range(0, len(result['list'])):
