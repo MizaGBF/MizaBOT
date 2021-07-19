@@ -30,6 +30,10 @@ class Games(commands.Cog):
         self.scratcher_thumb = {
             'Siero Ticket':'item/article/s/30041.jpg', 'Sunlight Stone':'item/evolution/s/20014.jpg', 'Gold Brick':'item/evolution/s/20004.jpg', 'Damascus Ingot':'item/evolution/s/20005.jpg','Agni':'summon/s/2040094000.jpg', 'Varuna':'summon/s/2040100000.jpg', 'Titan':'summon/s/2040084000.jpg', 'Zephyrus':'summon/s/2040098000.jpg', 'Zeus':'summon/s/2040080000.jpg', 'Hades':'summon/s/2040090000.jpg', 'Shiva':'summon/s/2040185000.jpg', 'Europa':'summon/s/2040225000.jpg', 'Godsworn Alexiel':'summon/s/2040205000.jpg', 'Grimnir':'summon/s/2040261000.jpg', 'Lucifer':'summon/s/2040056000.jpg', 'Bahamut':'summon/s/2040030000.jpg', 'Michael':'summon/s/2040306000.jpg', 'Gabriel':'summon/s/2040311000.jpg', 'Uriel':'summon/s/2040203000.jpg', 'Raphael':'summon/s/2040202000.jpg', 'Metatron':'summon/s/2040330000.jpg', 'Sariel':'summon/s/2040327000.jpg', 'Belial':'summon/s/2040347000.jpg', 'Murgleis':'weapon/s/1040004600.jpg', 'Benedia':'weapon/s/1040502500.jpg',  'Gambanteinn':'weapon/s/1040404300.jpg',  'Love Eternal':'weapon/s/1040105400.jpg',  'AK-4A':'weapon/s/1040004600.jpg',  'Reunion':'weapon/s/1040108200.jpg',  'Ichigo-Hitofuri':'weapon/s/1040910000.jpg',  'Taisai Spirit Bow':'weapon/s/1040708700.jpg',  'Unheil':'weapon/s/1040809100.jpg',  'Sky Ace':'weapon/s/1040911500.jpg',  'Ivory Ark':'weapon/s/1040112500.jpg',  'Blutgang':'weapon/s/1040008700.jpg',  'Eden':'weapon/s/1040207000.jpg',  'Parazonium':'weapon/s/1040108700.jpg',  'Ixaba':'weapon/s/1040906400.jpg',  'Blue Sphere':'weapon/s/1040410000.jpg',  'Certificus':'weapon/s/1040309000.jpg',  'Fallen Sword':'weapon/s/1040014300.jpg',  'Mirror-Blade Shard':'weapon/s/1040110600.jpg',  'Galilei\'s Insight':'weapon/s/1040211600.jpg',  'Purifying Thunderbolt':'weapon/s/1040709000.jpg',  'Vortex of the Void':'weapon/s/1040212700.jpg',  'Sacred Standard':'weapon/s/1040213400.jpg',  'Bab-el-Mandeb':'weapon/s/1040004600.jpg',  'Cute Ribbon':'weapon/s/1040605900.jpg',  'Kerak':'weapon/s/1040812000.jpg',  'Sunya':'weapon/s/1040811800.jpg',  'Fist of Destruction':'weapon/s/1040612700.jpg',  'Yahata\'s Naginata':'weapon/s/1040312900.jpg',  'Cerastes':'weapon/s/1040215300.jpg',  'World Ender':'weapon/s/1040020900.jpg',  'Ouroboros Prime':'weapon/s/1040418600.jpg', 'Crystals x3000':'item/normal/s/gem.jpg', 'Damascus Crystal':'item/article/s/203.jpg', 'Intricacy Ring':'item/npcaugment/s/3.jpg', 'Gold Spellbook':'item/evolution/s/20403.jpg', 'Moonlight Stone':'item/evolution/s/20013.jpg', 'Gold Moon x2':'item/article/s/30033.jpg', 'Ultima Unit x3':'item/article/s/138.jpg', 'Silver Centrum x5':'item/article/s/107.jpg', 'Primeval Horn x3':'item/article/s/79.jpg', 'Horn of Bahamut x4':'item/article/s/59.jpg', 'Legendary Merit x5':'item/article/s/2003.jpg', 'Steel Brick':'item/evolution/s/20003.jpg', 'Brimston Earrings':'item/npcaugment/s/11.jpg', 'Permafrost Earrings':'item/npcaugment/s/12.jpg', 'Brickearth Earrings':'item/npcaugment/s/13.jpg', 'Jetstream Earrings':'item/npcaugment/s/14.jpg', 'Sunbeam Earrings':'item/npcaugment/s/15.jpg', 'Nightshade Earrings':'item/npcaugment/s/16.jpg', 'Lineage Ring x2':'item/npcaugment/s/2.jpg', 'Coronation Ring x3':'item/npcaugment/s/1.jpg', 'Silver Moon x5':'item/article/s/30032.jpg', 'Bronze Moon x10':'item/article/s/30031.jpg', 'Elixir x100':'item/normal/s/2.jpg', 'Soul Berry x300':'item/normal/s/5.jpg'
         }
+        self.scam = [(1000, 'Sunlight Stone', 'evolution/s/20014.jpg'), (1000, 'Damascus Ingot', 'evolution/s/20005.jpg'), (3000, 'Damascus Crystal x2', 'article/s/203.jpg'), (3000, 'Brimstone Earrings x2', 'npcaugment/s/11.jpg'), (3000, 'Permafrost Earrings x2', 'npcaugment/s/12.jpg'), (3000, 'Brickearth Earrings x2', 'npcaugment/s/13.jpg'), (3000, 'Jetstream Earrings x2', 'npcaugment/s/14.jpg'), (3000, 'Sunbeam Earrings x2', 'npcaugment/s/15.jpg'), (3000, 'Nightshade Earrings x2', 'npcaugment/s/16.jpg'), (7000, 'Intracacy Ring', 'npcaugment/s/3.jpg'), (7000, 'Ultima Unit x10', 'article/s/138.jpg'), (7000, 'Silver Centrum x5', 'article/s/107.jpg'), (7000, 'Astaroth Anima x10', 'article/s/20781.jpg'), (7000, 'Sephira Stone x10', 'article/s/25000.jpg'), (7000, 'Weapon Plus Mark x30', 'bonusstock/s/1.jpg'), (7000, 'Summon Plus Mark x30', 'bonusstock/s/2.jpg'), (7000, 'Gold Moon x2', 'article/s/30032.jpg'), (7000, 'Silver Moon x5', 'article/s/30033.jpg'), (7000, 'Half Elixir x100', 'normal/s/2.jpg'), (7000, 'Soul Berry x300', 'normal/s/5.jpg')]
+        self.scam_rate = 0
+        for r in self.scam:
+            self.scam_rate += r[0]
         # scratcher rate calcul
         self.scratcher_total = 0
         self.scratcher_total_rare1 = 0
@@ -505,6 +509,25 @@ class Games(commands.Cog):
             await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
 
         await self.bot.util.clean(ctx, final_msg, 45)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['scamgacha', 'stargacha', 'starlegendgacha', 'starlegend'])
+    @commands.cooldown(1, 20, commands.BucketType.user)
+    async def scam(self, ctx, mode : str = ""):
+        """Star gacha item simulation"""
+        roll = random.randint(1, self.scam_rate)
+        loot = None
+        n = 0
+        for r in self.scam:
+            n += r[0]
+            if roll < n:
+                loot = r
+                break
+        if loot is None: loot = self.scam[-1]
+        msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is getting scammed...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=":question: :question: :question:", color=self.color))
+        await asyncio.sleep(2)
+        await msg.edit(embed=self.bot.util.embed(author={'name':"{} got scammed".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="{}".format(loot[1]), thumbnail='http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/item/{}'.format(loot[2]), color=self.color))
+        await self.bot.util.clean(ctx, msg, 45)
+        
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['scratcher'])
     @commands.cooldown(1, 300, commands.BucketType.user)

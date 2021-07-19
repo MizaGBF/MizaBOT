@@ -42,11 +42,11 @@ class MizaBot(commands.Bot):
         self.changelog = [ # changelog lines
             "**This MizaBOT version is a Beta**, please use `$bug_report` if you see anything wrong",
             "Online command list added [here](https://mizagbf.github.io/MizaBOT/)",
+            "Added `$scam`",
             "Reworked the `$help` command",
             "All servers can now access the pinboard system using `$enablePinboard` and `$disablePinboard`",
-            "Added `$here`, `$when`, `$dbbox` and `$dbtoken`",
+            "Added `$here`, `$when`, `$dbbox`, `$dbtoken`, `$zeroroll`, `$belial`, `$addRoll`, `$dice`, `$8ball` and `$coin`",
             "Removed `$lightchad` (until next time...)",
-            "Added `$zeroroll`, `$belial`, `$addRoll`, `$dice`, `$8ball` and `$coin`",
             "Reworked `$profile`"
         ]
         self.running = True # is False when the bot is shutting down
