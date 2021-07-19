@@ -62,6 +62,10 @@ class Data():
                     raise Exception("This save file isn't compatible")
                 elif ver < self.saveversion:
                     if ver == 0:
+                        if 'newserver' in data:
+                            newserver = data.pop('newserver')
+                            if 'guilds' not in data:
+                                data['guilds'] = {"owners": newserver.get('owners', []), "pending": newserver.get('pending', {}), "banned": newserver.get('servers', [])}
                         for id in data['reminders']:
                             for r in data['reminders'][id]:
                                 if len(r) == 2:
