@@ -13,7 +13,7 @@ from ctypes import c_int
 # It also lets you send and retrieve files from Google Drive for whatever application you might need
 #
 # IMPORTANT
-# all interactions with Google Drive is made in another process to mitigate a possible memory leak
+# all interactions with Google Drive is made in another process, using the multiprocessing module, to mitigate a possible memory leak
 # this will be reverted back if a fix is found
 # ----------------------------------------------------------------------------------------------------------------
 

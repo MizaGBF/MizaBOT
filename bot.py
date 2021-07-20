@@ -158,10 +158,6 @@ class MizaBot(commands.Bot):
     client: Client instance (unused, it should be equal to self)
     message: The message to process
     
-    Raises
-    ------
-    None
-    
     Returns
     --------
     str: Server prefix

@@ -13,11 +13,25 @@ class Moderation(commands.Cog):
         self.bot = bot
         self.color = 0x2eced1
 
+    """isMod()
+    Command decorator, to check if the command is used by a server moderator
+    
+    Returns
+    --------
+    command check
+    """
     def isMod(): # for decorators
         async def predicate(ctx):
             return ctx.bot.isMod(ctx)
         return commands.check(predicate)
 
+    """isOwner()
+    Command decorator, to check if the command is used by the bot owner or a member of the (You) server
+    
+    Returns
+    --------
+    command check
+    """
     def isYouModOrOwner(): # for decorators
         async def predicate(ctx):
             return (ctx.bot.isServer(ctx, 'debug_server') or (ctx.bot.isServer(ctx, 'you_server') and ctx.bot.isMod(ctx)))

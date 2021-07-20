@@ -12,11 +12,35 @@ class Roles(commands.Cog):
         self.bot = bot
         self.color = 0x17e37a
 
+    """isMod()
+    Command decorator, to check if the command is used by a server moderator
+    
+    Returns
+    --------
+    command check
+    """
     def isMod(): # for decorators
         async def predicate(ctx):
             return ctx.bot.isMod(ctx)
         return commands.check(predicate)
 
+    """_roleStats()
+    Return the stat of a server role
+    
+    Parameters
+    ----------
+    ctx: Command context
+    name: List of strings (to match for roles)
+        - Note: check for the word "exact" at the end. If it's here, an exact search will be performed.
+    
+    Returns
+    --------
+    tuple: Containing:
+        - i : number of users with a role matching the name string
+        - exact: If True, name is an exact match
+        - g: context guild
+        - name: the name parameter in one string (without exact)
+    """
     def _roleStats(self, ctx, name):
         g = ctx.author.guild
         i = 0

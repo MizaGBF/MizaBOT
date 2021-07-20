@@ -47,19 +47,53 @@ class Bot(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.util.embed(title="{} ▫️ v{}".format(ctx.guild.me.display_name, self.bot.version), description="**Changelog**\n" + msg, thumbnail=ctx.guild.me.avatar_url, color=self.color))
             await self.bot.util.clean(ctx, final_msg, 40)
 
-    # retrieve a command category
+    """get_category()
+    Retrieve a command category. Used for the help.
+    
+    Parameters
+    ----------
+    command: The command object
+    no_category: Default string if no category found
+    
+    Returns
+    ------
+    str: Category name and description or the content of no_category if no category
+    """
     def get_category(self, command, *, no_category=""):
         cog = command.cog
         return ('**' + cog.qualified_name + '** :white_small_square: ' + cog.description) if cog is not None else no_category
 
-    # check command predicate
+    """predicate()
+    Check if the command can run in the current context. Used for the help.
+    
+    Parameters
+    ----------
+    ctx: The command context
+    cmd: The command object
+    
+    Returns
+    ------
+    bool: True if it can runs, False if it can't
+    """
     async def predicate(self, ctx, cmd):
         try:
             return await cmd.can_run(ctx)
         except Exception:
             return False
 
-    # smaller implementation of filter_commands() from discord.py help
+    """filter_commands()
+    Smaller implementation of filter_commands() from discord.py help. Used for the help.
+    Only allowed commands in the current context can pass the filter.
+    
+    Parameters
+    ----------
+    ctx: The command context
+    cmds: List of commands
+    
+    Returns
+    ------
+    list: List of sorted and filtered commands
+    """
     async def filter_commands(self, ctx, cmds):
         iterator = filter(lambda c: not c.hidden, cmds)
 
@@ -72,7 +106,19 @@ class Bot(commands.Cog):
         ret.sort(key=self.get_category)
         return ret
 
-    # implementation of get_command_signature() from discord.py help
+
+    """get_command_signature()
+    Implementation of get_command_signature() from discord.py help. Used for the help.
+    
+    Parameters
+    ----------
+    ctx: The command context
+    command: The command object
+    
+    Returns
+    ------
+    str: The command signature
+    """
     def get_command_signature(self, ctx, command):
         parent = command.parent
         entries = []
@@ -95,7 +141,18 @@ class Bot(commands.Cog):
 
         return f'{self.bot.prefix(None, ctx.message)}{alias} {command.signature}' #todo: replace prefix by ctx.clean_prefix
 
-    # search the bot categories and help
+    """search_help()
+    Search the bot categories and help for a match. Used for the help.
+    
+    Parameters
+    ----------
+    ctx: The command context
+    terms: The search string
+    
+    Returns
+    ------
+    list: List of matches, a match being a list of length 2 containing an ID (0 for category, 1 for command) and the matched object (either a Cog or Command)
+    """
     async def search_help(self, ctx, terms):
         flags = []
         t = terms.lower()
@@ -121,7 +178,19 @@ class Bot(commands.Cog):
                         flags.append([1, cmd])
         return flags
 
-    # send the cog detailed help to the user via DM
+
+    """get_cog_help()
+    Send the cog detailed help to the user via DM. Used for the help.
+    
+    Parameters
+    ----------
+    ctx: The command context
+    cog: The cog object to output via DM
+    
+    Returns
+    ------
+    discord.Message: Error message or None if no errors
+    """
     async def get_cog_help(self, ctx, cog):
         try:
             await self.bot.util.react(ctx.message, '📬')
@@ -152,7 +221,18 @@ class Bot(commands.Cog):
         await self.bot.util.unreact(ctx.message, '📬')
         return None
 
-    # print the default help when no search terms is specifieed
+
+    """default_help()
+    Print the default help when no search terms is specifieed. Used for the help.
+    
+    Parameters
+    ----------
+    ctx: The command context
+    
+    Returns
+    ------
+    discord.Message
+    """
     async def default_help(self, ctx):
         me = ctx.author.guild.me # bot own user infos
         # get command categories
@@ -165,7 +245,20 @@ class Bot(commands.Cog):
                 cats += "{}\n".format(category)
         return await ctx.reply(embed=self.bot.util.embed(title=me.name + " Help", description=self.bot.description + "\n\nUse `{}help <command_name>` or `{}help <category_name>` to get more informations\n**Categories:**\n".format(ctx.message.content[0], ctx.message.content[0]) + cats, thumbnail=me.avatar_url, color=self.color))
 
-    # detailed category help
+    """category_help()
+    Print the detailed category help. Used for the help.
+    Wrapper for get_cog_help(), might change it later.
+    
+    Parameters
+    ----------
+    terms: The search string
+    ctx: The command context
+    cog: The cog object
+    
+    Returns
+    ------
+    discord.Message
+    """
     async def category_help(self, terms, ctx, cog):
         me = ctx.author.guild.me # bot own user infos
         msg = await self.get_cog_help(ctx, cog)
@@ -173,12 +266,36 @@ class Bot(commands.Cog):
             msg = await ctx.reply(embed=self.bot.util.embed(title=me.name + " Help", description="Full help for `{}` has been sent via direct messages".format(terms), color=self.color))
         return msg
 
-    # detailed command help
+    """command_help()
+    Print the detailed command help. Used for the help.
+    
+    Parameters
+    ----------
+    terms: The search string
+    ctx: The command context
+    cmg: The command object
+    
+    Returns
+    ------
+    discord.Message
+    """
     async def command_help(self, terms, ctx, cmd):
         me = ctx.author.guild.me # bot own user infos
         return await ctx.reply(embed=self.bot.util.embed(title="{} **{}** Command".format(self.bot.emote.get('mark'), cmd.name), description=cmd.help, fields=[{'name':'Usage', 'value':self.get_command_signature(ctx, cmd)}], color=self.color))
 
-    # multiple help matches
+    """multiple_help()
+    Print multiple help search matches. Used for the help.
+    
+    Parameters
+    ----------
+    terms: The search string
+    ctx: The command context
+    flags: The matching list
+    
+    Returns
+    ------
+    discord.Message
+    """
     async def multiple_help(self, terms, ctx, flags):
         me = ctx.author.guild.me # bot own user infos
         desc = "**Please specify what you are looking for**\n"

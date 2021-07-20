@@ -36,16 +36,39 @@ class GranblueFantasy(commands.Cog):
         self.imgcache = {}
         self.imglock = threading.Lock()
 
-    def isOwner(): # for decorators
+
+    """isOwner()
+    Command decorator, to check if the command is used by the bot owner
+    
+    Returns
+    --------
+    command check
+    """
+    def isOwner():
         async def predicate(ctx):
             return ctx.bot.isOwner(ctx)
         return commands.check(predicate)
 
-    def isYou(): # for decorators
+    """isYou()
+    Command decorator, to check if the command is used by member of the (You) server
+    
+    Returns
+    --------
+    command check
+    """
+    def isYou():
         async def predicate(ctx):
             return ctx.bot.isServer(ctx, 'you_server')
         return commands.check(predicate)
 
+    """getMaintenanceStatus()
+    Check if GBF is in maintenance and return a string.
+    Save data is updated if it doesn't match the current state.
+    
+    Returns
+    --------
+    str: Status string
+    """
     def getMaintenanceStatus(self): # check the gbf maintenance status, empty string returned = no maintenance
         current_time = self.bot.util.JST()
         msg = ""
@@ -71,8 +94,18 @@ class GranblueFantasy(commands.Cog):
                         msg = "{} Maintenance ends in **{}**".format(self.bot.emote.get('cog'), self.bot.util.delta2str(d, 2))
         return msg
 
-    # function to fix the case (for $wiki)
-    def fixCase(self, term): # term is a string
+    """fixCase()
+    Fix the case of individual element of our wiki search terms
+    
+    Parameters
+    ----------
+    term: Word to fix
+    
+    Returns
+    --------
+    str: Fixed word
+    """
+    def fixCase(self, term):
         fixed = ""
         up = False
         if term.lower() == "and": # if it's just 'and', we don't don't fix anything and return a lowercase 'and'
@@ -108,6 +141,17 @@ class GranblueFantasy(commands.Cog):
                 fixed += term[i] # we save
         return fixed # return the result
 
+    """stripWikiStr()
+    Formating function for wiki skill descriptions
+    
+    Parameters
+    ----------
+    elem: String, html element
+    
+    Returns
+    --------
+    str: Stripped string
+    """
     def stripWikiStr(self, elem):
         txt = elem.text.replace('foeBoost', 'foe. Boost') # special cases
         checks = [['span', 'tooltiptext'], ['sup', 'reference'], ['span', 'skill-upgrade-text']]
@@ -117,6 +161,19 @@ class GranblueFantasy(commands.Cog):
                 txt = txt.replace(e.text, "")
         return txt.replace('Slight', '_sligHt_').replace('C.A.', 'CA').replace('.', '. ').replace('!', '! ').replace('?', '? ').replace(':', ': ').replace('. )', '.)').replace("Damage cap", "Cap").replace("Damage", "DMG").replace("damage", "DMG").replace(" and ", " and").replace(" and", " and ").replace("  ", " ").replace("fire", str(self.bot.emote.get('fire'))).replace("water", str(self.bot.emote.get('water'))).replace("earth", str(self.bot.emote.get('earth'))).replace("wind", str(self.bot.emote.get('wind'))).replace("dark", str(self.bot.emote.get('dark'))).replace("light", str(self.bot.emote.get('light'))).replace("Fire", str(self.bot.emote.get('fire'))).replace("Water", str(self.bot.emote.get('water'))).replace("Earth", str(self.bot.emote.get('earth'))).replace("Wind", str(self.bot.emote.get('wind'))).replace("Dark", str(self.bot.emote.get('dark'))).replace("Light", str(self.bot.emote.get('light'))).replace('_sligHt_', 'Slight')
 
+    """processWikiMatch()
+    Process a successful wiki search match
+    
+    Parameters
+    ----------
+    soup: beautifulsoup object
+    
+    Returns
+    --------
+    tuple: Containing:
+        - data: Dict containing the match data
+        - tables: List of wikitables on the page
+    """
     def processWikiMatch(self, soup):
         data = {}
         # what we are interested in
@@ -184,7 +241,19 @@ class GranblueFantasy(commands.Cog):
             pass
         return data, tables
 
-    def processWikiItem(self, soup, data, tables):
+    """processWikiItem()
+    Process the processWikiMatch() wikitables and add the result into data
+    
+    Parameters
+    ----------
+    data: processWikiMatch() data
+    tables: processWikiMatch() tables
+    
+    Returns
+    --------
+    dict: Updated data (not a copy)
+    """
+    def processWikiItem(self, data, tables):
         # iterate all wikitable again
         for t in tables:
             body = t.findChildren("tbody" , recursive=False)[0].findChildren("tr" , recursive=False) # check for tr tag
@@ -274,7 +343,16 @@ class GranblueFantasy(commands.Cog):
                     except: pass
         return data
 
-    async def requestWiki(self, ctx, url, search_mode = False): # url MUST be for gbf.wiki
+    """requestWiki()
+    Request a wiki page and post the result after calling processWikiMatch() and processWikiItem()
+    
+    Parameters
+    ----------
+    ctx: Command context
+    url: Wiki url to request (url MUST be for gbf.wiki)
+    search_mode: Boolean, if True it expects a search result page
+    """
+    async def requestWiki(self, ctx, url, search_mode = False):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 if r.status != 200:
@@ -333,7 +411,7 @@ class GranblueFantasy(commands.Cog):
                             except: # if none, just send the link
                                 final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=data.get('description', None), image=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
                         else: # summon and weapon
-                            data = await self.bot.do(self.processWikiItem, soup, data, tables)
+                            data = await self.bot.do(self.processWikiItem, data, tables)
                             # final message
                             title = ""
                             title += "{}".format(self.bot.emote.get(data.get('element', '')))
@@ -950,6 +1028,17 @@ class GranblueFantasy(commands.Cog):
             await ctx.send(embed=self.bot.util.embed(title="Error", description="Invalid parameter {}".format(ua), color=self.color))
         await self.bot.util.react(ctx.message, '✅') # white check mark
 
+    """getCurrentGacha()
+    Get the current GBF gacha banner data.
+    
+    Returns
+    --------
+    list: Containing:
+        - timedelta: Remaining time
+        - timedelta: Remaining time (for multi element spark periods)
+        - str: String containing the ssr rate and gacha rate up list
+        - str: Gacha banner image
+    """
     def getCurrentGacha(self):
         c = self.bot.util.JST().replace(microsecond=0) - timedelta(seconds=80)
         if ('gachatime' not in self.bot.data.save['gbfdata'] or self.bot.data.save['gbfdata']['gachatime'] is None or c >= self.bot.data.save['gbfdata']['gachatime']) and not self.getGacha():
@@ -958,6 +1047,13 @@ class GranblueFantasy(commands.Cog):
             return []
         return [self.bot.data.save['gbfdata']['gachatime'] - c, self.bot.data.save['gbfdata']['gachatimesub'] - c, self.bot.data.save['gbfdata']['gachacontent'], self.bot.data.save['gbfdata']['gachabanner']]
 
+    """getGacha()
+    Request and update the GBF gacha in the save data
+    
+    Returns
+    --------
+    bool: True if success, False if error
+    """
     def getGacha(self): # get current gacha
         if not self.bot.gbf.isAvailable():
             return False
@@ -1080,6 +1176,17 @@ class GranblueFantasy(commands.Cog):
             await self.bot.sendError("getcurrentgacha", e)
             await ctx.send(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Unavailable", color=self.color))
 
+    """getProfileData()
+    Request a GBF profile
+    
+    Parameters
+    ----------
+    id: Profile id
+    
+    Returns
+    --------
+    dict: Profile data, None if error
+    """
     def getProfileData(self, id : int): # get player data
         if not self.bot.gbf.isAvailable():
             return "Maintenance"
@@ -1087,6 +1194,17 @@ class GranblueFantasy(commands.Cog):
         if res is not None: return unquote(res['data'])
         else: return res
 
+    """searchProfile()
+    Search a set profile in the save data
+    
+    Parameters
+    ----------
+    gbf_id: GBF profile id
+    
+    Returns
+    --------
+    int: matching discord ID, None if error
+    """
     def searchProfile(self, gbf_id):
         user_ids = list(self.bot.data.save['gbfids'].keys())
         for uid in user_ids:
@@ -1154,6 +1272,16 @@ class GranblueFantasy(commands.Cog):
         except Exception as e:
             await self.bot.sendError("setprofile", e)
 
+    """pasteImage()
+    Paste an image onto another
+    
+    Parameters
+    ----------
+    img: Base image
+    file: Image to paste
+    offset: Tuple, coordinates
+    resize: Tuple (optional), size of the file to paste
+    """
     def pasteImage(self, img, file, offset, resize=None): # paste and image onto another
         buffers = [Image.open(file)]
         buffers.append(buffers[-1].convert('RGBA'))
@@ -1162,7 +1290,17 @@ class GranblueFantasy(commands.Cog):
         for buf in buffers: buf.close()
         del buffers
 
-    def dlAndPasteImage(self, img, url, offset, resize=None): # dl an image and call pasteImage()
+    """dlAndPasteImage()
+    Download and image from an url and call pasteImage()
+    
+    Parameters
+    ----------
+    img: Base image
+    url: Image to download and paste
+    offset: Tuple, coordinates
+    resize: Tuple (optional), size of the file to paste
+    """
+    def dlAndPasteImage(self, img, url, offset, resize=None):
         self.imglock.acquire()
         if url not in self.imgcache:
             self.imglock.release()
@@ -1181,6 +1319,21 @@ class GranblueFantasy(commands.Cog):
         with BytesIO(data) as file_jpgdata:
             self.pasteImage(img, file_jpgdata, offset, resize)
 
+    """processProfile()
+    Process profile data into discord embed elements
+    
+    Parameters
+    ----------
+    id: Profile id
+    data: Profile data
+    
+    Returns
+    --------
+    tuple: Containing:
+        title: Discord embed title
+        description: Discord embed description
+        thumbnail: Discord thumbnail
+    """
     def processProfile(self, id, data):
         soup = BeautifulSoup(data, 'html.parser')
         try: name = self.bot.util.shortenName(soup.find_all("span", class_="txt-other-name")[0].string)
@@ -1394,7 +1547,7 @@ class GranblueFantasy(commands.Cog):
     async def profile(self, ctx, *, target : str = ""):
         """Retrieve a GBF profile"""
         try:
-            id = await self.bot.util.str2gbfid(ctx, target)
+            id = await self.bot.util.str2gbfid(ctx, target, self.color)
             if id is None:
                 return
             if id in self.badprofilecache:
@@ -1462,7 +1615,7 @@ class GranblueFantasy(commands.Cog):
     async def brand(self, ctx, *, target : str = ""):
         """Check if a GBF profile is restricted"""
         try:
-            id = await self.bot.util.str2gbfid(ctx, target)
+            id = await self.bot.util.str2gbfid(ctx, target, self.color)
             if id is None: return
             if id in self.badprofilecache:
                 await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Profile not found", color=self.color))

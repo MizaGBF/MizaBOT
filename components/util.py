@@ -369,7 +369,7 @@ class Util():
     ----------
     ctx: The command context or the channel to put the message in
     target: String, which can be:
-        - Empty (the author user GBF ID will be used if set, doesn't work if you set ctx to a channel ID)
+        - Empty (the author GBF ID will be used if set, doesn't work if you set ctx to a channel)
         - Positive integer, representing a GBF ID
         - A Discord Mention (<@discord_id> or <@!discord_id>)
     
@@ -377,10 +377,10 @@ class Util():
     --------
     int: The GBF ID or None if an error happened
     """
-    async def str2gbfid(self, ctx, target):
+    async def str2gbfid(self, ctx, target, color):
         if target == "":
             if str(ctx.author.id) not in self.bot.data.save['gbfids']:
-                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(ctx.author.display_name), footer="setProfile <id>", color=self.color))
+                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(ctx.author.display_name), footer="setProfile <id>", color=color))
                 return None
             id = self.bot.data.save['gbfids'][str(ctx.author.id)]
         elif target.startswith('<@') and target.endswith('>'):
@@ -389,24 +389,58 @@ class Util():
                 else: target = int(target[2:-1])
                 member = ctx.guild.get_member(target)
                 if str(member.id) not in self.bot.data.save['gbfids']:
-                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(member.display_name), footer="setProfile <id>", color=self.color))
+                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(member.display_name), footer="setProfile <id>", color=color))
                     return None
                 id = self.bot.data.save['gbfids'][str(member.id)]
             except:
-                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Invalid parameter {} -> {}".format(target, type(target)), color=self.color))
+                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Invalid parameter {} -> {}".format(target, type(target)), color=color))
                 return None
         else:
             try: id = int(target)
             except:
                 member = ctx.guild.get_member_named(target)
                 if member is None:
-                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Member not found", color=self.color))
+                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Member not found", color=color))
                     return None
                 elif str(member.id) not in self.bot.data.save['gbfids']:
-                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(member.display_name), footer="setProfile <id>", color=self.color))
+                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(member.display_name), footer="setProfile <id>", color=color))
                     return None
                 id = self.bot.data.save['gbfids'][str(member.id)]
         if id < 0 or id >= 100000000:
-            await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Invalid ID range", color=self.color))
+            await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Invalid ID range", color=color))
             return None
         return id
+
+    """formatElement()
+    Format the unite&fight/dread barrage element into a string containing the superior and inferior elements
+    
+    Parameters
+    ----------
+    elem: unite&fight/dread barrage element string
+    
+    Returns
+    --------
+    str: Formatted string
+    """
+    def formatElement(self, elem):
+        return "{}⚔️{}".format(self.bot.emote.get(elem), self.bot.emote.get({'fire':'wind', 'water':'fire', 'earth':'water', 'wind':'earth', 'light':'dark', 'dark':'light'}.get(elem)))
+
+    """strToInt()
+    Convert string to int, with support for B, M and K
+    
+    Parameters
+    ----------
+    s: String to convert
+    
+    Returns
+    --------
+    int: Converted value
+    """
+    def strToInt(self, s):
+        try:
+            return int(s)
+        except:
+            n = float(s[:-1]) # float to support for example 1.2B
+            m = s[-1].lower()
+            l = {'k':1000, 'm':1000000, 'b':1000000000}
+            return int(n * l[m])

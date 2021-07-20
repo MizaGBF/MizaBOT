@@ -115,12 +115,9 @@ def get_version():
 
 def generate_html(command_list):
     ver = get_version()
-    metadata = '<head><title>MizaBOT Online Command List v{}</title><meta name="title" content=" MizaBOT Online Command List v{}"><meta name="description" content="Online Help and Command List for the Granblue Fantasy Discord bot MizaBOT."><meta property="og:type" content="website"><meta property="og:url" content="https://mizagbf.github.io/MizaBOT/"><meta property="og:title" content=" MizaBOT Online Command List v{}"><meta property="og:description" content="Online Help and Command List for the Granblue Fantasy Discord bot MizaBOT."><meta property="og:image" content="https://mizagbf.github.io/MizaBOT/img/card.png"><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://mizagbf.github.io/MizaBOT/"><meta property="twitter:title" content=" MizaBOT Online Command List v{}"><meta property="twitter:description" content="Online Help and Command List for the Granblue Fantasy Discord bot MizaBOT."><meta property="twitter:image" content="https://mizagbf.github.io/MizaBOT/img/card.png"><link rel="icon" type="image/png" href="img/icon.png" /></head>'.format(ver, ver, ver, ver)
+    metadata = '<!--This page is automatically generated, please excuse the poor formatting--><head><title>MizaBOT Online Command List v{}</title><meta name="title" content=" MizaBOT Online Command List v{}"><meta name="description" content="Online Help and Command List for the Granblue Fantasy Discord bot MizaBOT."><meta property="og:type" content="website"><meta property="og:url" content="https://mizagbf.github.io/MizaBOT/"><meta property="og:title" content=" MizaBOT Online Command List v{}"><meta property="og:description" content="Online Help and Command List for the Granblue Fantasy Discord bot MizaBOT."><meta property="og:image" content="https://mizagbf.github.io/MizaBOT/img/card.png"><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://mizagbf.github.io/MizaBOT/"><meta property="twitter:title" content=" MizaBOT Online Command List v{}"><meta property="twitter:description" content="Online Help and Command List for the Granblue Fantasy Discord bot MizaBOT."><meta property="twitter:image" content="https://mizagbf.github.io/MizaBOT/img/card.png"><link rel="icon" type="image/png" href="img/icon.png" /></head>'.format(ver, ver, ver, ver)
     header = '<h1 style="width:630px;margin-left: auto; margin-right: auto;"><img src="img/icon.png" style="vertical-align:middle;border-radius: 50%;box-shadow: 0 0 0 2pt #981cd6">&nbsp;MizaBOT Online Command List<br>&nbsp;<small>v{}</small></h1><br>'.format(ver)
-    tabs = '''<div class="tab">
-        <button class="tablinks" onclick="openTab(event, 'Commands')">Commands</button>
-        <button class="tablinks" onclick="openTab(event, 'About')">About</button>
-    </div>'''
+    tabs = '''<div class="tab"><button class="tablinks" onclick="openTab(event, 'Commands')">Commands</button><button class="tablinks" onclick="openTab(event, 'About')">About</button></div>'''
     filters = '<div id="buttons"><button class="btn active" onclick="filterSelection(\'all\')" style="background: #050505;">All</button>'
     containers = '<ul id="commandList">'
     for cog in command_list:
@@ -133,26 +130,27 @@ def generate_html(command_list):
     containers += '</ul>'
     commandList = '<div id="Commands" class="tabcontent">' + filters + containers + '</div>'
     about = '''
-    <div id="About" class="tabcontent">
-    <h2>Presentation</h2>
-    <p>
-    MizaBOT is a <a href="http://game.granbluefantasy.jp">Granblue Fantasty</a> themed <a href="https://discord.com/">Discord</a> Bot.<br>
-    It's open source and available on <a href="https://github.com/MizaGBF/MizaBOT">GitHub</a>.<br>
-    It provides various commands, ranging from utilty to recreative ones.<br>
-    The official version isn't currently open to public invites.<br>
-    If you are in a /gbfg/ crew, contact the author directly for an invite.<br>
-    </p>
-    <h2>Privacy</h2>
-    <p>
-    The bot doesn't log/register any data related to you or your server beside:<br>
-    1) Your GBF ID if set using the <b>setProfile</b> command (It's deleted if you leave all servers where the bot is present or using the <b>unsetProfile</b> command).<br>
-    2) Your spark data if set using the <b>setRoll</b> command (It's deleted after 30 days without an update).<br>
-    3) Your Discord ID when reporting a bug using the <b>bugreport</b> command (for contacting you, if needed).<br>
-    4) Your Discord ID, the channel name, the server name and the command used when a critical error is triggered.<br>
-    </p>
-    </div>
-    '''
-    css = """<style>
+<div id="About" class="tabcontent">
+<h2>Presentation</h2>
+<p>
+MizaBOT is a <a href="http://game.granbluefantasy.jp">Granblue Fantasty</a> themed <a href="https://discord.com/">Discord</a> Bot.<br>
+It's open source and available on <a href="https://github.com/MizaGBF/MizaBOT">GitHub</a>.<br>
+It provides various commands, ranging from utilty to recreative ones.<br>
+The official version isn't currently open to public invites.<br>
+If you are in a /gbfg/ crew, contact the author directly for an invite.<br>
+</p>
+<h2>Privacy</h2>
+<p>
+The bot doesn't log/register any data related to you or your server beside:<br>
+1) Your GBF ID if set using the <b>setProfile</b> command (It's deleted if you leave all servers where the bot is present or using the <b>unsetProfile</b> command).<br>
+2) Your spark data if set using the <b>setRoll</b> command (It's deleted after 30 days without an update).<br>
+3) Your Discord ID when reporting a bug using the <b>bugreport</b> command (for contacting you, if needed).<br>
+4) Your Discord ID, the channel name, the server name and the command used when a critical error is triggered.<br>
+</p>
+</div>
+'''
+    css = """
+<style>
 html, body {
   background: #14041c;
   font-family: sans-serif;

@@ -28,7 +28,10 @@ class GuildWar(commands.Cog):
         self.bot.runTask('check_buff', self.checkGWBuff)
         self.bot.runTask('check_ranking', self.bot.ranking.checkgwranking)
 
-    async def checkGWBuff(self): # automatically calls the GW buff used by the (you) crew
+    """checkGWBuff()
+    Bot Task managing the buff alert of the (You) server
+    """
+    async def checkGWBuff(self):
         self.getGWState()
         if self.bot.data.save['gw']['state'] == False or len(self.bot.data.save['gw']['buffs']) == 0: return
         try:
@@ -83,9 +86,16 @@ class GuildWar(commands.Cog):
             await self.bot.sendError('checkgwbuff', e)
         await self.bot.send('debug', embed=self.bot.util.embed(color=self.color, title="User task ended", description="check_buff", timestamp=self.bot.util.timestamp()))
 
+    """buildDayList()
+    Generate the day list used by the gw command
+    
+    Returns
+    --------
+    list: List of lists containing: The day string, the day key and the next day key
+    """
     def buildDayList(self): # used by the gw schedule command
         return [
-            ["{} Automatic BAN Execution".format(self.bot.emote.get('kmr')), "BW", ""],
+            ["{} Automatic BAN Execution".format(self.bot.emote.get('kmr')), "BW", ""], # for memes
             ["{} Preliminaries".format(self.bot.emote.get('gold')), "Preliminaries", "Interlude"],
             ["{} Interlude".format(self.bot.emote.get('wood')), "Interlude", "Day 1"],
             ["{} Day 1".format(self.bot.emote.get('1')), "Day 1", "Day 2"],
@@ -95,6 +105,14 @@ class GuildWar(commands.Cog):
             ["{} Final Rally".format(self.bot.emote.get('red')), "Day 5", "End"]
         ]
 
+    """isGWRunning()
+    Check the GW state and returns if the GW is on going.
+    Clear the data if it ended.
+    
+    Returns
+    --------
+    bool: True if it's running, False if it's not
+    """
     def isGWRunning(self): # return True if a guild war is on going
         if self.bot.data.save['gw']['state'] == True:
             current_time = self.bot.util.JST()
@@ -112,31 +130,71 @@ class GuildWar(commands.Cog):
         else:
             return False
 
-    def escape(self, s, lite=False): # escape markdown string
+    """escape()
+    Proper markdown escape player names
+    
+    Parameters
+    ----------
+    s: String to escape
+    lite: If True, less escapes are applied
+    
+    Returns
+    --------
+    str: Escaped string
+    """
+    def escape(self, s, lite=False):
         # add the RLO character before
         if lite: return '\u202d' + s.replace('\\', '\\\\').replace('`', '\\`')
         else: return '\u202d' + s.replace('\\', '\\\\').replace('`', '\'').replace('*', '\\*').replace('_', '\\_').replace('{', '\\{').replace('}', '\\}').replace('[', '').replace(']', '').replace('(', '\\(').replace(')', '\\)').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('.', '\\.').replace('!', '\\!').replace('|', '\\|')
 
-    def isDisabled(): # for decorators
-        async def predicate(ctx):
-            return False
-        return commands.check(predicate)
-
-    def isOwner(): # for decorators
+    """isOwner()
+    Command decorator, to check if the command is used by the bot owner
+    
+    Returns
+    --------
+    command check
+    """
+    def isOwner():
         async def predicate(ctx):
             return ctx.bot.isOwner(ctx)
         return commands.check(predicate)
 
-    def isYou(): # for decorators
+    """isYou()
+    Command decorator, to check if the command is used by a member of the (You) discord
+    
+    Returns
+    --------
+    command check
+    """
+    def isYou():
         async def predicate(ctx):
             return ctx.bot.isServer(ctx, 'you_server')
         return commands.check(predicate)
 
-    def isYouModOrOwner(): # for decorators
+    """isYouModOrOwner()
+    Command decorator, to check if the command is used by the bot owner or a member of the (You) discord
+    
+    Returns
+    --------
+    command check
+    """
+    def isYouModOrOwner():
         async def predicate(ctx):
             return (ctx.bot.isServer(ctx, 'debug_server') or (ctx.bot.isServer(ctx, 'you_server') and ctx.bot.isMod(ctx)))
         return commands.check(predicate)
 
+    """honorFormat()
+    Convert and format an integer value into a string.
+    Big values are shortened with B, M or K.
+    
+    Parameters
+    ----------
+    h: Value to convert
+    
+    Returns
+    --------
+    str: Resulting string
+    """
     def honorFormat(self, h): # convert honor number to a shorter string version
         if h is None: return "n/a"
         else:
@@ -149,12 +207,32 @@ class GuildWar(commands.Cog):
             elif h >= 1000: return "{:.1f}K".format(h/1000)
         return h
 
+    """dayCheck()
+    Check if the we are in the specified GW day
+    
+    Parameters
+    ----------
+    current: Current time, JST
+    day: Day to compare to
+    final_day: If True, check for the final GW day (it's shorter)
+    
+    Returns
+    --------
+    bool: True if successful, False if not
+    """
     def dayCheck(self, current, day, final_day=False):
         d = day - current
         if current < day and (final_day or d >= timedelta(seconds=25200)):
             return True
         return False
 
+    """getGWState()
+    Return the state of the Unite & Fight event
+    
+    Returns
+    --------
+    str: Unite & Fight state
+    """
     def getGWState(self): # return the current state of the guild war in string format (which day is on going, etc...)
         if self.bot.data.save['gw']['state'] == True:
             current_time = self.bot.util.JST()
@@ -194,9 +272,13 @@ class GuildWar(commands.Cog):
         else:
             return ""
 
-    def formatElement(self, elem):
-        return "{}⚔️{}".format(self.bot.emote.get(elem), self.bot.emote.get({'fire':'wind', 'water':'fire', 'earth':'water', 'wind':'earth', 'light':'dark', 'dark':'light'}.get(elem)))
-        
+    """getGWTimeLeft()
+    Return the time left until the next unite & fight day
+    
+    Returns
+    --------
+    timedelta: Time left or None if error
+    """
     def getGWTimeLeft(self, current_time = None):
         if self.bot.data.save['gw']['state'] == False:
             return None
@@ -217,6 +299,17 @@ class GuildWar(commands.Cog):
             return self.bot.data.save['gw']['dates']["Preliminaries"] + timedelta(seconds=104400) - current_time
         return None
 
+    """getNextBuff()
+    Return the time left until the next buffs for the (You) server
+    
+    Parameters
+    ----------
+    ctx: Command context (to check the server)
+    
+    Returns
+    --------
+    str: Time left, empty if error
+    """
     def getNextBuff(self, ctx): # for the (you) crew, get the next set of buffs to be called
         if self.bot.data.save['gw']['state'] == True and ctx.guild.id == self.bot.data.config['ids'].get('you_server', 0):
             current_time = self.bot.util.JST()
@@ -250,7 +343,7 @@ class GuildWar(commands.Cog):
             try:
                 if gmt < -12 or gmt > 14: gmt = 9
                 current_time = self.bot.util.JST()
-                em = self.formatElement(self.bot.data.save['gw']['element'])
+                em = self.bot.util.formatElement(self.bot.data.save['gw']['element'])
                 title = "{} **Guild War {}** {} **{:%a. %m/%d %H:%M} TZ**\n".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em, current_time + timedelta(seconds=3600*(gmt-9)))
                 if gmt == 9: title = title.replace('TZ', 'JST')
                 elif gmt == 0: title = title.replace('TZ', 'GMT')
@@ -299,7 +392,7 @@ class GuildWar(commands.Cog):
         try:
             d = self.getGWState()
             if d != "":
-                em = self.formatElement(self.bot.data.save['gw']['element'])
+                em = self.bot.util.formatElement(self.bot.data.save['gw']['element'])
                 await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War {}** {} status".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description=d, color=self.color))
         except Exception as e:
             await ctx.reply(embed=self.bot.util.embed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
@@ -350,7 +443,7 @@ class GuildWar(commands.Cog):
                         fields[x]['value'] += "\n"
                     if fields[x]['value'] == '': fields[0]['value'] = 'Unavailable'
 
-                em = self.formatElement(self.bot.data.save['gw']['element'])
+                em = self.bot.util.formatElement(self.bot.data.save['gw']['element'])
                 d = self.bot.util.JST() - self.bot.data.save['gw']['ranking'][4]
                 await ctx.send(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Updated: **{}** ago".format(self.bot.util.delta2str(d, 0)), fields=fields, footer="Update on minute 5, 25 and 45", timestamp=self.bot.util.timestamp(), inline=True, color=self.color))
         except Exception as e:
@@ -364,7 +457,7 @@ class GuildWar(commands.Cog):
             if self.bot.data.save['gw']['state'] == False or self.bot.util.JST() < self.bot.data.save['gw']['dates']["Preliminaries"] or self.bot.data.save['gw']['ranking'] is None:
                 await ctx.send(embed=self.bot.util.embed(title="Estimation unavailable", color=self.color))
             else:
-                em = self.formatElement(self.bot.data.save['gw']['element'])
+                em = self.bot.util.formatElement(self.bot.data.save['gw']['element'])
                 current_time_left = self.getGWTimeLeft()
                 if current_time_left is None:
                     await ctx.send(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Estimations are currently unavailable", inline=True, color=self.color))
@@ -559,6 +652,13 @@ class GuildWar(commands.Cog):
         else:
             await ctx.send(embed=self.bot.util.embed(title="Error", description="No buff skip is currently set", color=self.color))
 
+    """loadGWDB()
+    Load the Unite & fight ranking databases
+    
+    Parameters
+    ----------
+    ids: list of databases to load (0 = old one, 1 = current one)
+    """
     def loadGWDB(self, ids = [0, 1]):
         fs = ["GW_old.sql", "GW.sql"]
         for i in ids:
@@ -572,11 +672,21 @@ class GuildWar(commands.Cog):
                 print("Failed to load database", fs[i])
                 self.bot.errn += 1
 
+    """reloadGWDB()
+    Reload the Unite & fight ranking databases
+    """
     def reloadGWDB(self):
         with self.dblock:
             self.dbstate = [True, True]
             self.loadGWDB()
 
+    """GWDBver()
+    Return the Unite & fight ranking database infos
+    
+    Returns
+    --------
+    list: First element is for the old database, second is for the current one
+    """
     def GWDBver(self):
         fs = ["GW_old.sql", "GW.sql"]
         res = [None, None]
@@ -608,6 +718,18 @@ class GuildWar(commands.Cog):
             db.close()
         return res
 
+    """searchGWDB()
+    Search the Unite & fight ranking databases
+    
+    Parameters
+    ----------
+    terms: Search string
+    mode: Search mode (0 = normal search, 1 = exact search, 2 = id search, 3 = ranking search, add 10 to search for crews instead of players)
+    
+    Returns
+    --------
+    list: List of matches
+    """
     def searchGWDB(self, terms, mode):
         data = self.GWDBver()
         dbs = [self.bot.sql.get("GW_old.sql"), self.bot.sql.get("GW.sql")]
@@ -644,9 +766,33 @@ class GuildWar(commands.Cog):
                 dbs[n].close()
         return data
 
+    """searchGWDBCrew()
+    Wrapper for searchGWDB(), search for crews
+    
+    Parameters
+    ----------
+    terms: Search string
+    mode: Search mode (0 = normal search, 1 = exact search, 2 = id search, 3 = ranking search, add 10 to search for crews instead of players)
+    
+    Returns
+    --------
+    list: List of matches
+    """
     def searchGWDBCrew(self, terms, mode):
         return self.searchGWDB(terms, mode+10)
 
+    """searchGWDBPlayer()
+    Wrapper for searchGWDB(), search for players
+    
+    Parameters
+    ----------
+    terms: Search string
+    mode: Search mode (0 = normal search, 1 = exact search, 2 = id search, 3 = ranking search, add 10 to search for crews instead of players)
+    
+    Returns
+    --------
+    list: List of matches
+    """
     def searchGWDBPlayer(self, terms, mode):
         return self.searchGWDB(terms, mode)
 
@@ -668,6 +814,16 @@ class GuildWar(commands.Cog):
             msg += "\n"
         await self.bot.send('debug', embed=self.bot.util.embed(title="Guild War Databases", description=msg, timestamp=self.bot.util.timestamp(), color=self.color))
 
+    """findranking()
+    Extract parameters from terms and call searchGWDB() with the proper settings.
+    ctx is used to output the result.
+    
+    Parameters
+    ----------
+    ctx: Command context
+    type: Boolean, True for crews, False for players
+    terms: Search string
+    """
     async def findranking(self, ctx, type, terms): # it's a mess, I won't comment it
         if type: txt = "crew"
         else: txt = "player"
@@ -812,21 +968,12 @@ class GuildWar(commands.Cog):
         add %past to get past GW results"""
         await self.findranking(ctx, False, terms)
 
-    def strToInt(self, s): # convert string such as 1.2B to 1200000000
-        try:
-            return int(s)
-        except:
-            n = float(s[:-1]) # float to support for example 1.2B
-            m = s[-1].lower()
-            l = {'k':1000, 'm':1000000, 'b':1000000000}
-            return int(n * l[m])
-
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tokens', 'gwtoken', 'guildwartoken', 'gwtokens', 'guildwartokens'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def token(self, ctx, tok : str):
         """Calculate how many Guild War boxes you get from X tokens"""
         try:
-            tok = self.strToInt(tok)
+            tok = self.bot.util.strToInt(tok)
             if tok < 1 or tok > 9999999999: raise Exception()
             b = 0
             t = tok
@@ -894,7 +1041,7 @@ class GuildWar(commands.Cog):
     async def meat(self, ctx, meat : str):
         """Calculate how many Guild War honors you get"""
         try:
-            meat = self.strToInt(meat)
+            meat = self.bot.util.strToInt(meat)
             if meat < 5 or meat > 100000: raise Exception()
             nm90 = meat // 5
             nm95 = meat // 10
@@ -910,7 +1057,7 @@ class GuildWar(commands.Cog):
     async def honor(self, ctx, target : str):
         """Calculate how many NM95 and 150 you need for your targeted honor"""
         try:
-            target = self.strToInt(target)
+            target = self.bot.util.strToInt(target)
             if target < 10000: raise Exception()
             honor = [0, 0, 0]
             ex = 0
@@ -942,6 +1089,17 @@ class GuildWar(commands.Cog):
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid honor number", color=self.color))
         await self.bot.util.clean(ctx, final_msg, 60)
 
+    """getCrewSummary()
+    Get a GBF crew summary (what you see on the main page of a crew)
+    
+    Parameters
+    ----------
+    id: Crew id
+    
+    Returns
+    --------
+    dict: Crew data, None if error
+    """
     def getCrewSummary(self, id):
         res = self.bot.gbf.request("http://game.granbluefantasy.jp/guild_main/content/detail/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True)
         if res is None: return None
@@ -957,6 +1115,17 @@ class GuildWar(commands.Cog):
             except:
                 return None
 
+    """getCrewData()
+    Get a GBF crew data, including its player list if public
+    
+    Parameters
+    ----------
+    target: String, can be a crew id or a crew name registered in config.json
+    
+    Returns
+    --------
+    dict: Crew data, None if error
+    """
     def getCrewData(self, target, mode=0): # retrieve a crew data (mode=0 - all, 1 - main page data only, 2 - main page and summary | add 10 to skip the cache check)
         if not self.bot.gbf.isAvailable(): # check for maintenance
             return {'error':'Game is in maintenance'}
@@ -1052,6 +1221,22 @@ class GuildWar(commands.Cog):
 
         return crew
 
+    """processCrewData()
+    Process the crew data into strings for a discord.Embed
+    
+    Parameters
+    ----------
+    crew: Crew data
+    mode: Integer (0 = auto, 1 = player ranks, 2 = player GW contributions)
+    
+    Returns
+    --------
+    tuple: Containing:
+        - title: Embed title (Crew name, number of player, average rank, number online)
+        - description: Embed description (Crew message, Crew leaders, GW contributions)
+        - fields: Embed fields (Player list)
+        - footer: Embed footer (message indicating the crew is in cache, only for public crew)
+    """
     def processCrewData(self, crew, mode=0):
         # embed initialization
         title = "\u202d{} **{}**".format(self.bot.emote.get(crew['ship_element']), self.bot.util.shortenName(crew['name']))
@@ -1123,7 +1308,20 @@ class GuildWar(commands.Cog):
                 fields[-1]['value'] += entry
         return title, description, fields, footer
 
-    async def postCrewData(self, ctx, id, mode = 0): # mode 0 = auto, 1 = gw mode disabled, 2 = gw mode enabled
+    """postCrewData()
+    Call getCrewData() and processCrewData() and post the result
+    
+    Raises
+    ------
+    Exception: The raised Exception if an error occurs
+    
+    Parameters
+    ----------
+    ctx: Command context
+    id: Crew id
+    mode: processCrewData() mode
+    """
+    async def postCrewData(self, ctx, id, mode = 0):
         try:
             # retrieve formatted crew data
             await self.bot.util.react(ctx.message, 'time')
@@ -1157,6 +1355,17 @@ class GuildWar(commands.Cog):
         """Get a crew profile (GW scores are force-enabled)"""
         await self.postCrewData(ctx, id, 2)
 
+    """_sortMembers()
+    Sort members by GW contributions
+    
+    Parameters
+    ------
+    members: List of members
+    
+    Returns
+    ----------
+    list: Sorted list
+    """
     def _sortMembers(self, members):
         for i in range(0, len(members)-1):
             for j in range(i, len(members)):
@@ -1196,6 +1405,18 @@ class GuildWar(commands.Cog):
         final_msg = await ctx.send(embed=self.bot.util.embed(author={'name':"Top 30 of {}".format(ctx.guild.name), 'icon_url':ctx.guild.icon_url}, description="{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.emote.get('question'), gwid, self.honorFormat(total), self.honorFormat(total // min(30, len(members)))), fields=fields, inline=True, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 60)
 
+    """getCrewLeaders()
+    Get the /gbfg/ crew leaders from the save data.
+    If it's missing or outdated, data is refreshed.
+    
+    Parameters
+    ------
+    crews: List of /gbfg/ crew IDs
+    
+    Returns
+    ----------
+    list: List of crew leader IDs
+    """
     def getCrewLeaders(self, crews):
         if 'leadertime' not in self.bot.data.save['gbfdata'] or 'leader' not in self.bot.data.save['gbfdata'] or self.bot.util.JST() - self.bot.data.save['gbfdata']['leadertime'] > timedelta(days=6) or len(crews) != len(self.bot.data.save['gbfdata']['leader']):
             leaders = {}
@@ -1260,6 +1481,15 @@ class GuildWar(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.util.embed(title="{} /gbfg/ GW{} Dancho Ranking".format(self.bot.emote.get('gw'), gwid), fields=fields, inline=True, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 60)
 
+    """_gbfgranking()
+    Get the /gbfg/ crew contribution and rank them
+    
+    Returns
+    ----------
+    tuple: Containing:
+        - fields: Discord Embed fields containing the data
+        - gwid: Integer GW ID
+    """
     def _gbfgranking(self):
         crews = []
         for e in self.bot.data.config['granblue']['gbfgcrew']:
@@ -1323,6 +1553,13 @@ class GuildWar(commands.Cog):
             final_msg = await ctx.send(embed=self.bot.util.embed(title="{} /gbfg/ GW{} Ranking".format(self.bot.emote.get('gw'), gwid), fields=fields, inline=True, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 60)
 
+    """_recruit()
+    Get the list of /gbfg/ crews not full, sorted by rank
+    
+    Returns
+    ----------
+    list: List of open crews
+    """
     def _recruit(self):
         crews = []
         for e in self.bot.data.config['granblue']['gbfgcrew']:
@@ -1364,6 +1601,18 @@ class GuildWar(commands.Cog):
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} /gbfg/ recruiting crews".format(self.bot.emote.get('crew')), fields=fields, inline=True, color=self.color, timestamp=self.bot.util.timestamp()))
         await self.bot.util.clean(ctx, final_msg, 90)
 
+    """requestCrew()
+    Get a crew page data
+    
+    Parameters
+    ------
+    id: Crew ID
+    page: Crew page (0 = crew main page, 1~3 = crew member pages)
+    
+    Returns
+    ----------
+    dict: Resulting data, None if error
+    """
     def requestCrew(self, id : int, page : int): # get crew data
         if page == 0: return self.bot.gbf.request("http://game.granbluefantasy.jp/guild_other/guild_info/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True)
         else: return self.bot.gbf.request("http://game.granbluefantasy.jp/guild_other/member_list/{}/{}?PARAMS".format(page, id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True)

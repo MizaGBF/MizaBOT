@@ -14,11 +14,33 @@ class FourChan(commands.Cog):
         self.bot = bot
         self.color = 0x17e32b
 
+    """cleanhtml()
+    Clean the html and escape the string properly
+    
+    Parameters
+    ------
+    raw: String to clean
+    
+    Returns
+    ----------
+    str: Cleaned string
+    """
     def cleanhtml(self, raw):
       cleaner = re.compile('<.*?>')
       return html.unescape(re.sub(cleaner, '', raw.replace('<br>', ' '))).replace('>', '')
 
-    # get a 4chan thread
+    """get4chan()
+    Call the 4chan api to retrieve a list of thread based on a search term
+    
+    Parameters
+    ------
+    board: board to search for (example: a for /a/)
+    search: search terms
+    
+    Returns
+    ----------
+    list: Matching threads
+    """
     def get4chan(self, board : str, search : str): # be sure to not abuse it, you are not supposed to call the api more than once per second
         try:
             search = search.lower()

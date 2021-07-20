@@ -18,13 +18,49 @@ class Casino(commands.Cog):
         self.pokergames = {}
         self.blackjackgames = {}
 
+    """value2head()
+    Convert a card value to a string.
+    Heads are converted to the equivalent (J, Q, K, A)
+    
+    Parameters
+    ----------
+    value: Integer or string card value
+    
+    Returns
+    --------
+    str: Card string
+    """
     def value2head(self, value):
         return str(value).replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
 
+    """valueNsuit2head()
+    Convert a card value and suit to a string.
+    Heads are converted to the equivalent (J, Q, K, A).
+    Suits are converted to ♦, ♠️, ♥️ and ♣️
+    
+    Parameters
+    ----------
+    value: String card value
+    
+    Returns
+    --------
+    str: Card string
+    """
     def valueNsuit2head(self, value):
-        return str(value).replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
+        return value.replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
 
-    def checkPokerHand(self, hand): # check hand strengh and return a string indicating its value
+    """checkPokerHand()
+    Check a poker hand strength
+    
+    Parameters
+    ----------
+    hand: List of card to check
+    
+    Returns
+    --------
+    str: Strength string
+    """
+    def checkPokerHand(self, hand):
         flush = False
         # flush detection
         suits = [h[-1] for h in hand]
@@ -51,10 +87,32 @@ class Casino(commands.Cog):
         elif 2 in value_counts.values(): return "**Pair of {}**".format(self.value2head(list(value_counts.keys())[list(value_counts.values()).index(2)]))
         else: return "**Highest card is {}**".format(self.value2head(self.highestCard(hand).replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️")))
 
-    def highestCardStripped(self, selection): # return the highest card
+    """highestCardStripped()
+    Return the highest card in the selection, without the suit
+    
+    Parameters
+    ----------
+    selection: List of card to check
+    
+    Returns
+    --------
+    str: Highest card
+    """
+    def highestCardStripped(self, selection):
         ic = [int(i) for i in selection] # convert to int
         return str(sorted(ic)[-1]) # sort and then convert back to str
 
+    """highestCard()
+    Return the highest card in the selection
+    
+    Parameters
+    ----------
+    selection: List of card to check
+    
+    Returns
+    --------
+    str: Highest card
+    """
     def highestCard(self, selection):
         for i in range(0, len(selection)): selection[i] = '0'+selection[i] if len(selection[i]) == 2 else selection[i]
         last = sorted(selection)[-1]
@@ -86,6 +144,17 @@ class Casino(commands.Cog):
             await final_msg.edit(embed=self.bot.util.embed(author={'name':"{}'s hand".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 45)
 
+    """pokerNameStrip()
+    Shorten the discord user name
+    
+    Parameters
+    ----------
+    name: User name
+    
+    Returns
+    --------
+    str: Shortened name
+    """
     def pokerNameStrip(self, name):
         if len(name) > 10:
             if len(name.split(" ")[0]) < 10: return name.split(" ")[0]

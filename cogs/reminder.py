@@ -18,6 +18,14 @@ class Reminder(commands.Cog):
     def startTasks(self):
         self.bot.runTask('reminder', self.remindertask)
 
+    """checkReminders()
+    Check the reminders ready to send.
+    Update the save datas if the reminders are set in the old format.
+    
+    Returns
+    --------
+    dict: Reminders to send
+    """
     def checkReminders(self):
         try:
             send = {}
@@ -42,6 +50,9 @@ class Reminder(commands.Cog):
         except:
             return {}
 
+    """remindertask()
+    Bot Task managing the reminders set by the users
+    """
     async def remindertask(self):
         while True:
             if not self.bot.running: return

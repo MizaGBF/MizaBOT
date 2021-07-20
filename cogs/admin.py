@@ -23,6 +23,9 @@ class Admin(commands.Cog):
         self.bot.runTask('status', self.status)
         self.bot.runTask('clean', self.clean)
 
+    """status()
+    Bot Task managing the autosave and update of the bot status
+    """
     async def status(self): # background task changing the bot status and calling autosave()
         while True:
             try:
@@ -45,6 +48,9 @@ class Admin(commands.Cog):
             except Exception as e:
                 await self.bot.sendError('statustask', e)
 
+    """status()
+    Bot Task managing the autocleanup of the save data
+    """
     async def clean(self): # background task cleaning the save file from useless data
         try:
             await asyncio.sleep(1000) # after 1000 seconds
@@ -63,11 +69,22 @@ class Admin(commands.Cog):
         except Exception as e:
             await self.bot.sendError('cleansave', e)
 
-    def isOwner(): # for decorators
+
+    """isOwner()
+    Command decorator, to check if the command is used by the bot owner
+    
+    Returns
+    --------
+    command check
+    """
+    def isOwner():
         async def predicate(ctx):
             return ctx.bot.isOwner(ctx)
         return commands.check(predicate)
 
+    """guildList()
+    Output the server list of the bot in the debug channel
+    """
     async def guildList(self): # list all guilds the bot is in and send it in the debug channel
         msg = ""
         for s in self.bot.guilds:

@@ -90,9 +90,23 @@ class Sparking(commands.Cog):
         except:
             pass
 
+    """_estimate()
+    Calculate a spark estimation (using my personal stats)
+    
+    Parameters
+    ----------
+    r: Current number of rolls
+    timestamp: start time, can be None
+    
+    Returns
+    --------
+    tuple: Containing:
+        - t_min: Earliest time for a spark
+        - t_max: Max time for a spark
+        - expected: Expected number of rolls during the start month
+        - now: start time (set to current time if timestamp is None)
+    """
     def _estimate(self, r, timestamp):
-        # calculate estimation
-        # note: those numbers are from my own experimentation
         # from january to december
         month_min = [80, 80, 160, 90, 70, 80, 80, 200, 80, 80, 80, 160]
         month_max = [70, 70, 120, 70, 50, 60, 60, 140, 60, 60, 60, 120]
@@ -166,6 +180,22 @@ class Sparking(commands.Cog):
             await self.bot.sendError('zeroRoll', e)
         await self.bot.util.clean(ctx, final_msg, 30)
 
+
+    """_ranking()
+    Retrieve the spark data of this server users and rank them
+    
+    Parameters
+    ----------
+    ctx: Command context
+    guild: Target guild
+    
+    Returns
+    --------
+    tuple: Containing:
+        - msg: String containing the ranking
+        - ar: Integer, Author ranking
+        - top: Integer, Top limit
+    """
     def _ranking(self, ctx, guild):
         ranking = {}
         for m in guild.members:
@@ -200,7 +230,6 @@ class Sparking(commands.Cog):
             if i >= 100:
                 break
         return msg, ar, top
-
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["sparkranking", "hoarders"])
     @commands.cooldown(1, 3, commands.BucketType.guild)

@@ -17,27 +17,37 @@ class DreadBarrage(commands.Cog):
     def startTasks(self):
         pass
 
-    def isDisabled(): # for decorators
-        async def predicate(ctx):
-            return False
-        return commands.check(predicate)
-
-    def isOwner(): # for decorators
+    """isOwner()
+    Command decorator, to check if the command is used by the bot owner
+    
+    Returns
+    --------
+    command check
+    """
+    def isOwner():
         async def predicate(ctx):
             return ctx.bot.isOwner(ctx)
         return commands.check(predicate)
 
-    def isYouModOrOwner(): # for decorators
+    """isYouModOrOwner()
+    Command decorator, to check if the command is used by the bot owner or a member of the (You) discord
+    
+    Returns
+    --------
+    command check
+    """
+    def isYouModOrOwner():
         async def predicate(ctx):
             return (ctx.bot.isServer(ctx, 'debug_server') or (ctx.bot.isServer(ctx, 'you_server') and ctx.bot.isMod(ctx)))
         return commands.check(predicate)
 
-    def dayCheck(self, current, day, final_day=False):
-        d = day - current
-        if current < day and (final_day or d >= timedelta(seconds=25200)):
-            return True
-        return False
-
+    """getBarrageState()
+    Return the state of the Dread Barrage event
+    
+    Returns
+    --------
+    str: Dread Barrage state
+    """
     def getBarrageState(self): # return the current state of the valiant in string format (which day is on going, etc...)
         if self.bot.data.save['valiant']['state'] == True:
             current_time = self.bot.util.JST()
@@ -65,9 +75,6 @@ class DreadBarrage(commands.Cog):
         else:
             return ""
 
-    def formatElement(self, elem):
-        return "{}⚔️{}".format(self.bot.emote.get(elem), self.bot.emote.get({'fire':'wind', 'water':'fire', 'earth':'water', 'wind':'earth', 'light':'dark', 'dark':'light'}.get(elem)))
-
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['march', 'valiant', 'dread', 'db', 'dreadbarrage'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def Barrage(self, ctx, gmt : int = 9):
@@ -76,7 +83,7 @@ class DreadBarrage(commands.Cog):
             try:
                 if gmt < -12 or gmt > 14: gmt = 9
                 current_time = self.bot.util.JST()
-                em = self.formatElement(self.bot.data.save['valiant']['element'])
+                em = self.bot.util.formatElement(self.bot.data.save['valiant']['element'])
                 title = "{} **Dread Barrage {}** {} **{:%a. %m/%d %H:%M} TZ**\n".format(self.bot.emote.get('crew'), self.bot.data.save['valiant']['id'], em, current_time + timedelta(seconds=3600*(gmt-9)))
                 if gmt == 9: title = title.replace('TZ', 'JST')
                 elif gmt == 0: title = title.replace('TZ', 'GMT')
@@ -113,7 +120,7 @@ class DreadBarrage(commands.Cog):
         try:
             d = self.getBarrageState()
             if d != "":
-                em = self.formatElement(self.bot.data.save['valiant']['element'])
+                em = self.bot.util.formatElement(self.bot.data.save['valiant']['element'])
                 await ctx.reply(embed=self.bot.util.embed(title="{} **Dread Barrage {}** {} status".format(self.bot.emote.get('crew'), self.bot.data.save['valiant']['id'], em), description=d, color=self.color))
         except Exception as e:
             await ctx.reply(embed=self.bot.util.embed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
@@ -178,21 +185,12 @@ class DreadBarrage(commands.Cog):
         else:
             await ctx.send(embed=self.bot.util.embed(title="Error", description="No Dread Barrage available in my memory", color=self.color))
 
-    def strToInt(self, s): # convert string such as 1.2B to 1200000000
-        try:
-            return int(s)
-        except:
-            n = float(s[:-1]) # float to support for example 1.2B
-            m = s[-1].lower()
-            l = {'k':1000, 'm':1000000, 'b':1000000000}
-            return int(n * l[m])
-
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['dreadtokens', 'dbtoken', 'dreadbarragetoken', 'dbtokens', 'dreadbarragetokens'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def dreadtoken(self, ctx, tok : str):
         """Calculate how many Dread Barrage boxes you get from X tokens"""
         try:
-            tok = self.strToInt(tok)
+            tok = self.bot.util.strToInt(tok)
             if tok < 1 or tok > 9999999999: raise Exception()
             b = 0
             t = tok

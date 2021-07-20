@@ -25,7 +25,10 @@ class Watch(commands.Cog):
     def startTasks(self):
         self.bot.runTask('watch', self.watch)
 
-    async def watch(self): # watch GBF state
+    """watch()
+    UNDOCUMENTED
+    """
+    async def watch(self):
         self.bot.channel.setMultiple([['private_update', 'you_private'], ['public_update', 'you_general'], ['gbfg_update', 'gbfg_general']])
         while True:
             if not self.bot.running: return
@@ -137,6 +140,13 @@ class Watch(commands.Cog):
             except Exception as e:
                 await self.bot.sendError('gbfwatch Update', e)
 
+    """_checkMaintenance()
+    Check if the game is in maintenance
+    
+    Returns
+    --------
+    int: State (0 = available, 1 = scheduled maintenance, 2 = emergency maintenance)
+    """
     def _checkMaintenance(self):
         maintenance_time = self.bot.util.JST()
         if not self.bot.gbf.isAvailable():
@@ -163,6 +173,9 @@ class Watch(commands.Cog):
                     self.bot.data.pending = True
         return 0
 
+    """_refresh()
+    UNDOCUMENTED
+    """
     def _refresh(self):
         res = []
         if 'test' in self.bot.data.save['gbfdata']:
@@ -183,6 +196,13 @@ class Watch(commands.Cog):
                         self.bot.data.pending = True
         return res
 
+    """checkNews()
+    Check for GBF news and update the save data.
+    
+    Returns
+    --------
+    list: List of new news
+    """
     def checkNews(self):
         res = []
         ret = []
@@ -233,6 +253,15 @@ class Watch(commands.Cog):
                 pass
         return ret
 
+    """checkNews()
+    Check for GBF 4koma and update the save data.
+    
+    Returns
+    --------
+    tuple: Containing:
+        - title: Title of the newest 4koma, None if error
+        - last: ID of the newest 4koma, None if error
+    """
     def check4koma(self):
         data = self.bot.gbf.request('http://game.granbluefantasy.jp/comic/list/1?PARAMS', account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True)
         if data is None: return None, None
@@ -251,6 +280,9 @@ class Watch(commands.Cog):
                 self.bot.data.pending = True
         return None, None
 
+    """ut()
+    UNDOCUMENTED
+    """
     def ut(self, ctx = None):
         if 'ticket_id' not in self.bot.data.save['gbfdata']:
             with self.bot.data.lock:
@@ -276,12 +308,26 @@ class Watch(commands.Cog):
                 errc += 1
         return news
 
-    def isOwner(): # for decorators
+    """isOwner()
+    Command decorator, to check if the command is used by the bot owner
+    
+    Returns
+    --------
+    command check
+    """
+    def isOwner():
         async def predicate(ctx):
             return ctx.bot.isOwner(ctx)
         return commands.check(predicate)
 
-    def isOwnerOrDebug(): # for decorators
+    """isOwnerOrDebug()
+    Command decorator, to check if the command is used by the bot owner or in the debug bot server
+    
+    Returns
+    --------
+    command check
+    """
+    def isOwnerOrDebug():
         async def predicate(ctx):
             return (ctx.bot.isOwner(ctx) or ctx.bot.isChannel(ctx, 'debug_bot'))
         return commands.check(predicate)
@@ -289,6 +335,9 @@ class Watch(commands.Cog):
     async def do(self, executor, func, *args):
         return await self.bot.loop.run_in_executor(executor, func, *args)
 
+    """ut()
+    UNDOCUMENTED
+    """
     def ce(self, ct, o, i, silent):
         try:
             found = {'type':0, 'ct':ct, 'count':0}
@@ -314,6 +363,9 @@ class Watch(commands.Cog):
         except:
             return None
 
+    """cw()
+    UNDOCUMENTED
+    """
     def cw(self, k, i, o, silent):
         try:
             x = int(k)
@@ -378,6 +430,9 @@ class Watch(commands.Cog):
         except:
             return None
 
+    """cc()
+    UNDOCUMENTED
+    """
     async def cc(self, o):
         found = {}
 
@@ -407,6 +462,9 @@ class Watch(commands.Cog):
                         found[tt] = r['r'][tt]
         return found
 
+    """atr()
+    UNDOCUMENTED
+    """
     async def atr(self, target, id, turbo=False):
         try:
             atr = self.bot.data.config['gbfwatch']['atr']
@@ -474,6 +532,9 @@ class Watch(commands.Cog):
         except:
             return 0
 
+    """dadp()
+    UNDOCUMENTED
+    """
     async def dadp(self, c, data, tt, x=None):
         fields = []
         if x is None: x = tt
@@ -511,6 +572,9 @@ class Watch(commands.Cog):
         except:
             await c.send(embed=self.bot.util.embed(title=tt, description=data[0], fields=fields, color=self.color, thumbnail=data[3]))
 
+    """pa()
+    UNDOCUMENTED
+    """
     def pa(self, a, indent):
         s = ""
         if indent > 0:
@@ -526,7 +590,10 @@ class Watch(commands.Cog):
         if indent == 0: res += '\r\n'
         return res
 
-    def genTS(self):
+    """gts()
+    UNDOCUMENTED
+    """
+    def gts(self):
         ts = int(datetime.utcnow().timestamp())
         with self.tlock:
             while ts in self.tcache:
@@ -534,6 +601,9 @@ class Watch(commands.Cog):
             self.tcache.append(ts)
         return ts
 
+    """dad()
+    UNDOCUMENTED
+    """
     def dad(self, id, silent, mode = 0):
         if id[0] == '3': type = 0
         elif id[0] == '2': type = 1
@@ -686,7 +756,7 @@ class Watch(commands.Cog):
                     except: pass
                 txsb.clear()
                 txcs.clear()
-                if ts is None: ts = self.genTS()
+                if ts is None: ts = self.gts()
                 fst = "{}_{}.png".format(ff, ts)
                 i.save(fst, "PNG")
                 i.close()
@@ -702,7 +772,7 @@ class Watch(commands.Cog):
             if silent:
                 return ["Not uploaded", flags, iul, thf, paste]
             else:
-                if ts is None: ts = self.genTS()
+                if ts is None: ts = self.gts()
                 title = "{}_dump_{}.txt".format(id, ts)
                 with open(title, "wb") as f:
                     f.write(paste.encode('utf-8'))
