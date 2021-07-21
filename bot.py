@@ -462,11 +462,20 @@ class MizaBot(commands.Bot):
             except Exception as e:
                 await self.sendError("on_guild_join", e)
             await guild.leave()
+        elif 'invite' not in self.data.save or self.data.save['invite']['state'] == False or (len(self.guilds) - len(self.data.save['guilds']['pending'])) >= self.data.save['invite']['limit']:
+            try: await guild.owner.send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon_url))
+            except: pass
+            await guild.leave()
+        elif len(guild.members) >= 20:
+            try: await guild.owner.send(embed=self.util.embed(title="Error", description="The bot is currently limited to {} servers.".format(self.data.save['invite']['limit']), thumbnail=guild.icon_url))
+            except: pass
+            await guild.leave()
         else: # notify me and add to the pending servers
             self.data.save['guilds']['pending'][id] = guild.name
             self.data.pending = True
-            await guild.owner.send(embed=self.util.embed(title="Pending guild request", description="Wait until my owner approve the new server", thumbnail=guild.icon_url))
-            await self.send('debug', embed=self.util.embed(title="Pending guild request", description="{} ▫️ {}\nUse `$accept {}` or `$refuse {}`".format(guild.name, id, id, id), thumbnail=guild.icon_url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
+            try: await guild.owner.send(embed=self.util.embed(title="Pending guild request", description="Please wait for your server to be accepted.", thumbnail=guild.icon_url))
+            except: pass
+            await self.send('debug', msg="{} Please review this new server".format(self.bot.get_user(self.bot.data.config['ids']['owner']).mention), embed=self.bot.util.embed(title="Pending guild request for " + guild.name, description="**ID** ▫️ `{}`\n**Owner** ▫️ {} ▫️ `{}`\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}\n\nUse `$accept {}` or `$refuse {}`".format(guild.id, guild.owner, guild.owner.id, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon_url, timestamp=guild.created_at, color=self.color))
 
     """global_check()
     Check if the command is authorized to run

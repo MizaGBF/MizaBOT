@@ -13,6 +13,20 @@ class Bot(commands.Cog):
         self.bot = bot
         self.color = 0xd12e57
 
+    @commands.command(no_pm=True)
+    @commands.cooldown(1, 500, commands.BucketType.user)
+    async def invite(self, ctx):
+        """Get the MizaBOT invite link"""
+        if 'invite' not in self.bot.data.save:
+            msg = await ctx.reply(embed=self.bot.util.embed(title="Invite Error", description="Invitation settings aren't set, hence the bot can't be invited.\nIf you are the server owner, check the `setInvite` command", timestamp=self.bot.util.timestamp(), color=self.color))
+            await self.bot.util.clean(ctx, msg, 45)
+        elif self.bot.data.save['invite']['state'] == False or (len(self.bot.guilds) - len(self.bot.data.save['guilds']['pending'])) >= self.bot.data.save['invite']['limit']:
+            msg = await ctx.reply(embed=self.bot.util.embed(title="Invite Error", description="Invitations are currently closed.", timestamp=self.bot.util.timestamp(), color=self.color))
+            await self.bot.util.clean(ctx, msg, 45)
+        else:
+            await self.bot.send('debug', embed=self.bot.util.embed(title="Invite Request", description="{} ▫️ `{}`".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar_url, timestamp=self.bot.util.timestamp(), color=self.color))
+            await ctx.author.send(embed=self.bot.util.embed(title=ctx.guild.me.name, description="{}\nCurrently only servers of 20 members or more can be added.\nYou'll have to wait for my owner approval (Your server owner will be notified if accepted).\nMisuses of this link will result in a server-wide ban.".format(self.bot.data.config['strings']["invite()"]), thumbnail=ctx.guild.me.avatar_url, timestamp=self.bot.util.timestamp(), color=self.color))
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['bug', 'report', 'bug_report'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def bugReport(self, ctx, *, terms : str):

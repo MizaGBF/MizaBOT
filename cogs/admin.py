@@ -198,6 +198,17 @@ class Admin(commands.Cog):
         except Exception as e:
             await self.bot.sendError('ban_owner', e)
 
+    @commands.command(no_pm=True, aliases=['si'])
+    @isOwner()
+    async def setinvite(self, ctx, state:int, limit:int=50):
+        """Set the bot invitation settings (Owner Only)
+        state: 0 to close, anything else to open
+        limit: maximum number of servers"""
+        with self.bot.data.lock:
+            self.bot.data.save['invite'] = {'state':(state != 0), 'limit':limit}
+            self.bot.data.pending = True
+        await ctx.reply(embed=self.bot.util.embed(title="Invitation setting", description="Open: `{}`\nLimited to max `{}` servers".format(self.bot.data.save['invite']['state'], self.bot.data.save['invite']['limit']), timestamp=self.bot.util.timestamp(), color=self.color))
+
     @commands.command(no_pm=True, aliases=['a'])
     @isOwner()
     async def accept(self, ctx, id: int):
@@ -209,8 +220,9 @@ class Admin(commands.Cog):
                     self.bot.data.save['guilds']['pending'].pop(sid)
                     self.bot.data.pending = True
                 guild = self.bot.get_guild(id)
-                if guild:
-                    await guild.owner.send(embed=self.bot.util.embed(title="I'm now available for use in {}".format(guild.name), description="Use `$help` for my list of commands, `$help Management` for mod only commands.\nUse `$setPrefix` to change the command prefix (default: `$`)\nIf you encounter an issue, use `$bugreport` and describe the problem.\nIf I'm down or slow, I might be rebooting, in maintenance or Discord itself might be acting up.", thumbnail=guild.icon_url))
+                if guild is not None:
+                    try: await guild.owner.send(embed=self.bot.util.embed(title="I'm now available for use in {}".format(guild.name), description="I recommend setting up a channel to confine me in.\n\nUse `$help` for my list of commands, `$help Management` for mod only commands.\nUse `$setPrefix` to change the command prefix (default: `$`)\nIf you encounter an issue, use `$bugreport` and describe the problem.\nIf I'm down or slow, I might be rebooting, in maintenance or Discord itself might be acting up.", thumbnail=guild.icon_url))
+                    except: pass
                     await self.bot.util.react(ctx.message, '✅') # white check mark
                     await self.guildList()
         except Exception as e:
@@ -509,14 +521,6 @@ class Admin(commands.Cog):
                 except Exception as e:
                     self.bot.sendError('broadcast', e)
         await self.bot.util.react(ctx.message, '✅') # white check mark
-
-    @commands.command(no_pm=True)
-    @isOwner()
-    @commands.cooldown(1, 10, commands.BucketType.guild)
-    async def invite(self, ctx):
-        """Send the MizaBOT invite link via direct messages (Owner Only)"""
-        await self.bot.send('debug', embed=self.bot.util.embed(title="Invite Request", description="{} ▫️ {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar_url, timestamp=self.bot.util.timestamp(), color=self.color))
-        await ctx.author.send(embed=self.bot.util.embed(title=ctx.guild.me.name, description="{}\nYou'll have to wait for my owner approval.\nMisuses will result in a ban.".format(self.bot.data.config['strings']["invite()"]), thumbnail=ctx.guild.me.avatar_url, timestamp=self.bot.util.timestamp(), color=self.color))
 
     @commands.command(no_pm=True)
     @isOwner()
