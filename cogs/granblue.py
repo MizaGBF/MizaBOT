@@ -1636,9 +1636,9 @@ class GranblueFantasy(commands.Cog):
                     status = "Account isn't restricted"
             except:
                 status = "Account isn't restricted"
-            await ctx.reply(embed=self.bot.util.embed(title="{} {}".format(self.bot.emote.get('gw'), data['user']['nickname']), description=status, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/leader/talk/{}.png".format(data['user']['image']), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}".format(self.bot.emote.get('gw'), self.bot.util.shortenName(data['user']['nickname'])), description=status, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/leader/talk/{}.png".format(data['user']['image']), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+            await self.bot.util.clean(ctx, final_msg, 45)
         except Exception as e:
-            await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Unavailable", color=self.color))
             await self.bot.sendError("brand", e)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)

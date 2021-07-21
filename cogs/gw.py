@@ -26,7 +26,7 @@ class GuildWar(commands.Cog):
 
     def startTasks(self):
         self.bot.runTask('check_buff', self.checkGWBuff)
-        self.bot.runTask('check_ranking', self.bot.ranking.checkgwranking)
+        self.bot.runTask('check_ranking', self.bot.ranking.checkGWRanking)
 
     """checkGWBuff()
     Bot Task managing the buff alert of the (You) server
@@ -529,7 +529,7 @@ class GuildWar(commands.Cog):
             with self.bot.data.lock:
                 self.bot.data.save['gw']['state'] = False
                 self.bot.data.save['gw']['id'] = id
-                self.bot.data.save['gw']['ranking'] = ""
+                self.bot.data.save['gw']['ranking'] = []
                 self.bot.data.save['gw']['element'] = advElement.lower()
                 # build the calendar
                 self.bot.data.save['gw']['dates'] = {}
