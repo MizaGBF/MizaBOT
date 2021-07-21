@@ -213,7 +213,7 @@ class Ranking():
                     continue
             data = None
             while data is None:
-                data = self.getRanking(page, self.scrap_mode) # request the page
+                data = self.requestRanking(page, self.scrap_mode) # request the page
                 if (self.bot.data.save['maintenance']['state'] and self.bot.data.save['maintenance']["duration"] == 0) or self.stoprankupdate: return
             for item in data['list']: # put the entries in the list
                 with self.scraplockOut:
@@ -372,7 +372,7 @@ class Ranking():
 
                 self.scrap_mode = (n == 0)
 
-                data = self.getRanking(1, self.scrap_mode) # get the first page
+                data = self.requestRanking(1, self.scrap_mode) # get the first page
                 if data is None or data['count'] == False:
                     return "gwscrap() can't access the ranking"
                 self.scrap_count = int(data['count']) # number of crews/players
