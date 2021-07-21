@@ -308,7 +308,7 @@ class Ranking():
                         conn.close()
                     except:
                         pass
-                    return "Forced stop"
+                    return "Forced stop\nMode: {}\nCount: {}/{}".format(self.scrap_mode, i, self.scrap_count)
                 try: 
                     with self.scraplockOut:
                         item = self.scrap_qo.pop() # retrieve an item
@@ -386,7 +386,7 @@ class Ranking():
                     continue # disabled during interlude for crews
 
                 self.scrap_mode = (n == 0)
-                data = self.requestRanking(1, self.scrap_mode) # get the first page
+                data = self.requestRanking(1, (0 if self.scrap_mode else 2)) # get the first page
                 if data is None or data['count'] == False:
                     return "gwscrap() can't access the ranking"
                 self.scrap_count = int(data['count']) # number of crews/players
@@ -419,7 +419,7 @@ class Ranking():
             return ""
         except Exception as e:
             self.stoprankupdate = True
-            return "Exception: " + str(e)
+            return "Exception: " + self.bot.util.pexc(e)
 
     def x(self, row, index):
         return row['x']
