@@ -88,6 +88,21 @@ class Ranking():
         except:
             pass
 
+    """request_async()
+    Similar to the bot do() function except you can specify the executor
+    
+    Parameters
+    ----------
+    executor: Executor to use
+    func: Callback
+    
+    Returns
+    --------
+    callback return value
+    """
+    async def request_async(self, executor, func):
+        return await self.bot.loop.run_in_executor(executor, func)
+
     """checkGWRanking()
     Bot task to update the ranking data. Only needed once every 20 minutes
     """
