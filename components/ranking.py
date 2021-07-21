@@ -151,7 +151,7 @@ class Ranking():
                             break
                         if skip:
                             await asyncio.sleep(600)
-                        elif m in [3, 23, 43]: # minute to update
+                        elif m in [3, 4, 23, 24, 43, 44]: # minute to update
                             if d.startswith("Day "):
                                 crews = crewsB
                                 mode = 0
@@ -228,7 +228,7 @@ class Ranking():
                     continue
             data = None
             while data is None:
-                data = self.requestRanking(page, self.scrap_mode) # request the page
+                data = self.requestRanking(page, (0 if self.scrap_mode else 2)) # request the page
                 if (self.bot.data.save['maintenance']['state'] and self.bot.data.save['maintenance']["duration"] == 0) or self.stoprankupdate: return
             for item in data['list']: # put the entries in the list
                 with self.scraplockOut:
@@ -338,7 +338,7 @@ class Ranking():
             return ""
         except Exception as err:
             self.stoprankupdate = True # send the stop signal if a critical error happened
-            return 'gwdbbuilder() exception:\n' + str(err)
+            return 'gwdbbuilder() exception:\n' + self.bot.util.pexc(err)
 
     """gwscrap()
     Setup and manage the multithreading to scrap the ranking
@@ -386,7 +386,6 @@ class Ranking():
                     continue # disabled during interlude for crews
 
                 self.scrap_mode = (n == 0)
-
                 data = self.requestRanking(1, self.scrap_mode) # get the first page
                 if data is None or data['count'] == False:
                     return "gwscrap() can't access the ranking"
