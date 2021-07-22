@@ -140,7 +140,9 @@ class Data():
             'gbfids': {},
             'assignablerole': {},
             'youtracker': None,
-            'pinboard': {}
+            'pinboard': {},
+            'invite': {'state':0, 'limit':50},
+            'extra' : {}
         }
         for k in list(data.keys()): # remove useless
             if k not in expected:
