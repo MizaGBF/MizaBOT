@@ -467,7 +467,7 @@ class MizaBot(commands.Bot):
             except: pass
             await guild.leave()
         elif len(guild.members) < 20:
-            try: await guild.owner.send(embed=self.util.embed(title="Error", description="The bot is currently limited to {} servers.".format(self.data.save['invite']['limit']), thumbnail=guild.icon_url))
+            try: await guild.owner.send(embed=self.util.embed(title="Error", description="The bot is currently limited to 20 members.", thumbnail=guild.icon_url))
             except: pass
             await guild.leave()
         else: # notify me and add to the pending servers
