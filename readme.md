@@ -17,13 +17,16 @@ This version is currently in Beta.
 More changes and improvements will come once discord.py 2.0 get released.
 ### Informations  
 MizaBOT is a Discord Bot themed around the game [Granblue Fantasy](http://game.granbluefantasy.jp).  
-It features a lot of useful utility commands, including some advanced features.  
+It features a lot of useful utility commands, including some advanced features, for a total of **over 130 commands**.  
 Check the [Command List](https://mizagbf.github.io/MizaBOT/) for details.  
   
 It's designed to be used on [Heroku](https://www.heroku.com) and isn't intended to be setup and used by anyone. Still, if you are interested, details are available on the [Wiki](https://github.com/MizaGBF/MizaBOT/wiki) and in this [issue](https://github.com/MizaGBF/MizaBOT/issues/1).  
   
-**The bot isn't currently open to invites**, but it might change in the future.  
-If you are in a /gbfg/ crew, contact me and I can maybe provide you an invite.  
+The bot is semi open to invitations:  
+[![Invitation](https://github.com/MizaGBF/MizaBOT/raw/master/docs/img/invite.png)](https://discordapp.com/oauth2/authorize?client_id=614723060100104193&scope=bot&permissions=1074252864)  
+Currently only servers of 20 members or more can be added.  
+You'll have to wait for my owner approval (Your server owner will be notified if accepted).  
+Misuses of this link will result in a server-wide ban.  
   
 ### Code Overview  
 * The bot is divided in three parts:
