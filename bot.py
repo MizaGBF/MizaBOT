@@ -466,7 +466,7 @@ class MizaBot(commands.Bot):
             try: await guild.owner.send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon_url))
             except: pass
             await guild.leave()
-        elif len(guild.members) >= 20:
+        elif len(guild.members) < 20:
             try: await guild.owner.send(embed=self.util.embed(title="Error", description="The bot is currently limited to {} servers.".format(self.data.save['invite']['limit']), thumbnail=guild.icon_url))
             except: pass
             await guild.leave()
