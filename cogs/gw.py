@@ -337,8 +337,10 @@ class GuildWar(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 10, commands.BucketType.guild)
-    async def GW(self, ctx, gmt : int = 9):
+    async def GW(self, ctx, gmt : str = '9'):
         """Post the GW schedule"""
+        try: gmt = int(gmt)
+        except: gmt = 9
         if self.bot.data.save['gw']['state'] == True:
             try:
                 if gmt < -12 or gmt > 14: gmt = 9
