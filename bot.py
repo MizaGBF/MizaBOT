@@ -125,7 +125,7 @@ class MizaBot(commands.Bot):
                     time.sleep(100)
                 else:
                     self.errn += 1
-                    print("Main Loop Exception:\n" + self.bot.util.pexc(e))
+                    print("Main Loop Exception:\n" + self.util.pexc(e))
         if self.data.saveData():
             print('Autosave Success')
         else:
@@ -295,7 +295,7 @@ class MizaBot(commands.Bot):
             return await self.channel.get(channel_name).send(msg, embed=embed, file=file)
         except Exception as e:
             self.errn += 1
-            print("Channel {} error: {}".format(channel_name, self.bot.util.pexc(e)))
+            print("Channel {} error: {}".format(channel_name, self.util.pexc(e)))
             return None
 
     """sendMulti()
@@ -432,7 +432,7 @@ class MizaBot(commands.Bot):
         for t in self.tasks:
             msg += "\▫️ {}\n".format(t)
         if msg != "":
-            await bot.send('debug', embed=bot.util.embed(title="{} user tasks started".format(len(self.tasks)), description=msg, timestamp=self.util.timestamp()))
+            await self.send('debug', embed=self.util.embed(title="{} user tasks started".format(len(self.tasks)), description=msg, timestamp=self.util.timestamp()))
 
     """on_message()
     Event. Called when a message is received
