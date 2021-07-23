@@ -419,7 +419,7 @@ class Ranking():
                     try:
                         await self.updateYouTracker(update_time)
                     except Exception as ue:
-                        await self.bot.sendError('updatematchtracker', ue)
+                        await self.bot.sendError('updateyoutracker', ue)
 
             return ""
         except Exception as e:
