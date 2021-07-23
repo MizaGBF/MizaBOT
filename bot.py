@@ -39,11 +39,11 @@ import functools
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "8.0-beta-6" # bot version
+        self.version = "8.0-beta-7" # bot version
         self.changelog = [ # changelog lines
             "**This MizaBOT version is a Beta**, please use `$bug_report` if you see anything wrong",
             "Online command list added [here](https://mizagbf.github.io/MizaBOT/)",
-            "Added `$scam`",
+            "Added `$gwspeed`, `$invite` and `$scam`",
             "Reworked the `$help` command",
             "All servers can now access the pinboard system using `$enablePinboard` and `$disablePinboard`",
             "Added `$here`, `$when`, `$dbbox`, `$dbtoken`, `$zeroroll`, `$belial`, `$addRoll`, `$dice`, `$8ball` and `$coin`",
@@ -105,6 +105,7 @@ class MizaBot(commands.Bot):
         
         # init base class
         super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\n[Source code](https://github.com/MizaGBF/MizaBOT)▫️[Online Command List](https://mizagbf.github.io/MizaBOT/)\nDefault command prefix is `$`, use `$setPrefix` to change it on your server.".format(self.version), help_command=None, owner=self.data.config['ids']['owner'], max_messages=None, intents=intents)
+        self.add_check(self.global_check)
 
     """go()
     Main Bot Loop
@@ -466,8 +467,8 @@ class MizaBot(commands.Bot):
             try: await guild.owner.send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon_url))
             except: pass
             await guild.leave()
-        elif len(guild.members) < 20:
-            try: await guild.owner.send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 20 members.", thumbnail=guild.icon_url))
+        elif len(guild.members) < 30:
+            try: await guild.owner.send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=guild.icon_url))
             except: pass
             await guild.leave()
         else: # notify me and add to the pending servers
@@ -475,7 +476,7 @@ class MizaBot(commands.Bot):
             self.data.pending = True
             try: await guild.owner.send(embed=self.util.embed(title="Pending guild request", description="Please wait for your server to be accepted.", thumbnail=guild.icon_url))
             except: pass
-            await self.send('debug', msg="{} Please review this new server".format(self.get_user(self.data.config['ids']['owner']).mention), embed=self.util.embed(title="Pending guild request for " + guild.name, description="**ID** ▫️ `{}`\n**Owner** ▫️ {} ▫️ `{}`\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}\n\nUse `$accept {}` or `$refuse {}`".format(guild.id, guild.owner, guild.owner.id, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon_url, timestamp=guild.created_at, color=self.color))
+            await self.send('debug', msg="{} Please review this new server".format(self.get_user(self.data.config['ids']['owner']).mention), embed=self.util.embed(title="Pending guild request for " + guild.name, description="**ID** ▫️ `{}`\n**Owner** ▫️ {} ▫️ `{}`\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}\n\nUse `$accept` or `$refuse`".format(guild.id, guild.owner, guild.owner.id, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon_url, timestamp=guild.created_at))
 
     """global_check()
     Check if the command is authorized to run

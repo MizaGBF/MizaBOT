@@ -53,10 +53,15 @@ class Moderation(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['nitro'])
     @commands.cooldown(1, 30, commands.BucketType.guild)
-    async def serverinfo(self, ctx):
+    async def serverinfo(self, ctx, id : int = 0):
         """Get informations on the current guild"""
-        guild = ctx.guild
-        await ctx.send(embed=self.bot.util.embed(title=guild.name + " status", description="**ID** ▫️ `{}`\n**Owner** ▫️ {}\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon_url, timestamp=guild.created_at, color=self.color))
+        try:
+            if id == 0: guild = ctx.guild
+            else: guild = self.bot.get_guild(id)
+            msg = await ctx.send(embed=self.bot.util.embed(title=guild.name + " status", description="**ID** ▫️ `{}`\n**Owner** ▫️ {}\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon_url, timestamp=guild.created_at, color=self.color))
+        except:
+            msg = await ctx.send(embed=self.bot.util.embed(title="Error", description="Can't find guild {}".format(id), color=self.color))
+        await self.bot.util.clean(ctx, msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isMod()

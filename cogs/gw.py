@@ -434,14 +434,7 @@ class GuildWar(commands.Cog):
                         else:
                             fields[x]['value'] += "**#{:,}K** \▫️ {:,}".format(int(c)//1000, self.bot.data.save['gw']['ranking'][x][c])
                         if c in self.bot.data.save['gw']['ranking'][2+x]:
-                            if self.bot.data.save['gw']['ranking'][2+x][c] > 1000000000:
-                                fields[x]['value'] += " \▫️  {:,.1f}B/min".format(self.bot.data.save['gw']['ranking'][2+x][c]/1000000000)
-                            elif self.bot.data.save['gw']['ranking'][2+x][c] > 1000000:
-                                fields[x]['value'] += " \▫️  {:,.1f}M/min".format(self.bot.data.save['gw']['ranking'][2+x][c]/1000000)
-                            elif self.bot.data.save['gw']['ranking'][2+x][c] > 1000:
-                                fields[x]['value'] += " \▫️  {:,.1f}K/min".format(self.bot.data.save['gw']['ranking'][2+x][c]/1000)
-                            elif self.bot.data.save['gw']['ranking'][2+x][c] > 0:
-                                fields[x]['value'] += " \▫️  {:,.1f}/min".format(self.bot.data.save['gw']['ranking'][2+x][c])
+                            fields[x]['value'] += " \▫️ {}/min".format(self.bot.util.valToStr(self.bot.data.save['gw']['ranking'][2+x][c]))
                         fields[x]['value'] += "\n"
                     if fields[x]['value'] == '': fields[0]['value'] = 'Unavailable'
 
@@ -1090,6 +1083,43 @@ class GuildWar(commands.Cog):
         except:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid honor number", color=self.color))
         await self.bot.util.clean(ctx, final_msg, 60)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['nmspeed', 'nmcompare'])
+    @commands.cooldown(2, 10, commands.BucketType.guild)
+    async def gwspeed(self, ctx, *, params : str = ""):
+        """Compare multiple GW fights based on your speed"""
+        try:
+            if params == "": raise Exception()
+            params = params.lower()
+            fightdata = {'ex':[30, 0, 51000, 56], 'ex+':[30, 0, 80800, 66], 'nm90':[30, 2, 260000, 83], 'nm95':[40, 10, 910000, 111], 'nm100':[50, 20, 2650000, 168], 'nm150':[50, 20, 4100000, 257]}
+            fights = params.split(' ')
+            msg = ""
+            for f in fights:
+                if f != '':
+                    elems = f.split('=')
+                    if len(elems) != 2: raise Exception("Invalid string `{}`".format(f))
+                    elif elems[0] not in fightdata: raise Exception("Invalid fight name `{}`".format(elems[0]))
+                    time = elems[1].split(":")
+                    if len(time) == 1:
+                        try: time = int(time[0])
+                        except: raise Exception("Invalid time `{}`".format(elems[1]))
+                    elif len(time) == 2:
+                        try:
+                            time = int(time[0]) * 60 + int(time[1])
+                        except: raise Exception("Invalid time `{}`".format(elems[1]))
+                    if time <= 0: raise Exception()
+                    mod = (3600 / time)
+                    compare = [mod*i for i in fightdata[elems[0]]]
+                    msg += "**{}** ▫️ **{}** \▫️ **{}** AP \▫️ **{}** Token".format(elems[0].upper(), self.bot.util.valToStr(compare[2]), self.bot.util.valToStr(compare[0]), self.bot.util.valToStr(compare[3]))
+                    if compare[1] != 0: msg += " \▫️ **{}** Meat".format(self.bot.util.valToStr(compare[1]))
+                    msg += "\n"
+            if msg == '': raise Exception()
+            msg = await ctx.reply(embed=self.bot.util.embed(title="{} Speed Comparator".format(self.bot.emote.get('gw')), description="**Per hour**\n" + msg, color=self.color))
+        except Exception as e:
+            if str(e) != "": msg = "\nException: {}".format(e)
+            else: msg = ""
+            msg = await ctx.reply(embed=self.bot.util.embed(title="{} Speed Comparator Error".format(self.bot.emote.get('gw')), description="**Usage:**\nPut a list of the fight you want to compare with your speed.\nExample:\n`{}gwcompare ex+=5 90=20 95=2:00`\nOnly put space between each fight, not in the formulas.\n{}".format(self.bot.prefix(None, ctx.message), msg), color=self.color))
+        await self.bot.util.clean(ctx, msg, 60)
 
     """getCrewSummary()
     Get a GBF crew summary (what you see on the main page of a crew)

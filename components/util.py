@@ -444,3 +444,25 @@ class Util():
             m = s[-1].lower()
             l = {'k':1000, 'm':1000000, 'b':1000000000}
             return int(n * l[m])
+
+    """valToStr()
+    Convert an int or float to str and shorten it with B, M, K
+    
+    Parameters
+    ----------
+    v: Value to convert
+    
+    Returns
+    --------
+    int: Converted string
+    """
+    def valToStr(self, s):
+        if isinstance(s, int): s = float(s)
+        if s > 1000000000:
+           return "{:,.1f}B".format(s/1000000000).replace('.0', '')
+        elif s > 1000000:
+           return "{:,.1f}M".format(s/1000000).replace('.0', '')
+        elif s > 1000:
+           return "{:,.1f}K".format(s/1000).replace('.0', '')
+        elif s > 0:
+           return "{:,.1f}".format(s).replace('.0', '')

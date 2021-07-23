@@ -88,7 +88,7 @@ class Admin(commands.Cog):
     async def guildList(self): # list all guilds the bot is in and send it in the debug channel
         msg = ""
         for s in self.bot.guilds:
-            msg += "**{}** `{} `owned by **{}** `{}`\n".format(s.name, s.id, s.owner.name, s.owner.id)
+            msg += "**{}** `{}`owned by **{}** `{}`\n".format(s.name, s.id, s.owner.name, s.owner.id)
             if len(msg) > 1800:
                 await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
                 msg = ""
@@ -215,16 +215,15 @@ class Admin(commands.Cog):
         """Command to accept a pending server (Owner Only)"""
         sid = str(id)
         try:
-            if sid in self.bot.data.save['guilds']['pending']:
-                with self.bot.data.lock:
-                    self.bot.data.save['guilds']['pending'].pop(sid)
-                    self.bot.data.pending = True
-                guild = self.bot.get_guild(id)
-                if guild is not None:
-                    try: await guild.owner.send(embed=self.bot.util.embed(title="I'm now available for use in {}".format(guild.name), description="I recommend setting up a channel to confine me in.\n\nUse `$help` for my list of commands, `$help Management` for mod only commands.\nUse `$setPrefix` to change the command prefix (default: `$`)\nIf you encounter an issue, use `$bugreport` and describe the problem.\nIf I'm down or slow, I might be rebooting, in maintenance or Discord itself might be acting up.", thumbnail=guild.icon_url))
-                    except: pass
-                    await self.bot.util.react(ctx.message, '✅') # white check mark
-                    await self.guildList()
+            with self.bot.data.lock:
+                self.bot.data.save['guilds']['pending'].pop(sid)
+                self.bot.data.pending = True
+            guild = self.bot.get_guild(id)
+            if guild is not None:
+                try: await guild.owner.send(embed=self.bot.util.embed(title="I'm now available for use in {}".format(guild.name), description="I recommend setting up a channel to confine me in.\n\nUse `$help` for my list of commands, `$help Management` for mod only commands.\nUse `$setPrefix` to change the command prefix (default: `$`)\nIf you encounter an issue, use `$bugreport` and describe the problem.\nIf I'm down or slow, I might be rebooting, in maintenance or Discord itself might be acting up.", thumbnail=guild.icon_url))
+                except: pass
+                await self.bot.util.react(ctx.message, '✅') # white check mark
+                await self.guildList()
         except Exception as e:
             await self.bot.sendError('accept', e)
 
@@ -234,15 +233,14 @@ class Admin(commands.Cog):
         """Command to refuse a pending server (Owner Only)"""
         id = str(id)
         try:
-            if id in self.bot.data.save['guilds']['pending']:
-                with self.bot.data.lock:
-                    self.bot.data.save['guilds']['pending'].pop(id)
-                    self.bot.data.pending = True
-                guild = self.bot.get_guild(id)
-                if guild:
-                    await guild.leave()
-                await self.bot.util.react(ctx.message, '✅') # white check mark
-                await self.guildList()
+            with self.bot.data.lock:
+                self.bot.data.save['guilds']['pending'].pop(id)
+                self.bot.data.pending = True
+            guild = self.bot.get_guild(id)
+            if guild:
+                await guild.leave()
+            await self.bot.util.react(ctx.message, '✅') # white check mark
+            await self.guildList()
         except Exception as e:
             await self.bot.sendError('refuse', e)
 

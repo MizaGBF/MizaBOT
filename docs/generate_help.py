@@ -139,9 +139,10 @@ It provides various commands, ranging from utilty to recreative ones.<br>
 <br>
 The official version is semi open to invitations:<br>
 <a href="https://discordapp.com/oauth2/authorize?client_id=614723060100104193&scope=bot&permissions=1074252864"><img src="img/invite.png"></a><br>
-Currently only servers of 20 members or more can be added.<br>
+Currently only servers of 30 members or more can be added to limit the number of new servers.<br>
 You'll have to wait for my owner approval (Your server owner will be notified if accepted).<br>
 Misuses of this link will result in a server-wide ban.<br>
+I have limited resources so I reserve to myself the right to refuse your server, sorry in advance.<br>
 </p>
 <h2>Privacy</h2>
 <p>
