@@ -141,7 +141,8 @@ class Data():
             'assignablerole': {},
             'youtracker': None,
             'pinboard': {},
-            'invite': {'state':0, 'limit':50}
+            'invite': {'state':0, 'limit':50},
+            'matchtracker': None
         }
         for k in list(data.keys()): # remove useless
             if k not in expected:
