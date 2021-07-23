@@ -1338,209 +1338,206 @@ class GranblueFantasy(commands.Cog):
         soup = BeautifulSoup(data, 'html.parser')
         try: name = self.bot.util.shortenName(soup.find_all("span", class_="txt-other-name")[0].string)
         except: name = None
-        if name is not None:
-            header = None
-            rarity = "R"
-            possible_headers = [("prt-title-bg-gld", "SSR"), ("prt-title-bg-slv", "SR"), ("prt-title-bg-nml", "R"), ("prt-title-bg-cpr", "R")]
-            for h in possible_headers:
-                try:
-                    header = soup.find_all("div", class_=h[0])[0]
-                    rarity = h[1]
-                except:
-                    pass
-            if header is not None:
-                brank = self.rankre.search(str(header)).group(0)
-                rank = "**{}**".format(brank)
-            else:
-                brank = " "
-                rank = ""
-            trophy = soup.find_all("div", class_="prt-title-name")[0].string
-            comment = su.unescape(soup.find_all("div", class_="prt-other-comment")[0].string).replace('\t', '').replace('\n', '')
-            if comment == "": pass
-            elif rank == "": comment = "💬 `{}`".format(comment.replace('`', '\''))
-            else: comment = " ▫️ 💬 `{}`".format(comment.replace('`', '\''))
-            mc_url = soup.find_all("img", class_="img-pc")[0]['src'].replace("/po/", "/talk/").replace("/img_low/", "/img/")
-            # Unused
-            stats = soup.find_all("div", class_="num")
-            hp = stats[0].string
-            atk = stats[1].string
-            job_icon = soup.find_all("img", class_="img-job-icon")[0].attrs['src'].replace("img_low", "img")
-
+        header = None
+        rarity = "R"
+        possible_headers = [("prt-title-bg-gld", "SSR"), ("prt-title-bg-slv", "SR"), ("prt-title-bg-nml", "R"), ("prt-title-bg-cpr", "R")]
+        for h in possible_headers:
             try:
-                try:
-                    crew = self.bot.util.shortenName(soup.find_all("div", class_="prt-guild-name")[0].string)
-                    crewid = soup.find_all("div", class_="btn-guild-detail")[0]['data-location-href']
-                    crew = "[{}](http://game.granbluefantasy.jp/#{})".format(crew, crewid)
-                except: crew = soup.find_all("div", class_="txt-notjoin")[0].string
+                header = soup.find_all("div", class_=h[0])[0]
+                rarity = h[1]
             except:
-                crew = None
-
-            # get the last gw score
-            scores = ""
-            try:
-                pdata = self.bot.get_cog('GuildWar').searchGWDBPlayer(id, 2)
-            except:
-                pdata = None
-            if pdata is not None:
-                for n in range(0, 2):
-                    if pdata[n] is not None and 'result' in pdata[n] and len(pdata[n]['result']) == 1:
-                        try:
-                            if pdata[n]['result'][0][0] is None:
-                                scores += "{} GW**{}** ▫️ **{:,}** honors\n".format(self.bot.emote.get('gw'), pdata[n].get('gw', ''), pdata[n]['result'][0][3])
-                            else:
-                                scores += "{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors\n".format(self.bot.emote.get('gw'), pdata[n].get('gw', ''), pdata[n]['result'][0][0], pdata[n]['result'][0][3])
-                        except:
-                            pass
-
-            try:
-                summons_res = self.sumre.findall(data)
-                sortsum = {}
-                sumimg = {}
-                for s in summons_res:
-                    if self.possiblesum[s[2]] not in sortsum: sortsum[self.possiblesum[s[2]]] = s[3]
-                    else: sortsum[self.possiblesum[s[2]]] += ' ▫️ ' + s[3]
-                    sumimg[s[2]] = s
-                try:
-                    misc = sortsum.pop('misc')
-                    sortsum['misc'] = misc
-                except:
-                    pass
-                summons = ""
-                for k in sortsum:
-                    summons += "\n{} {}".format(self.bot.emote.get(k), sortsum[k])
-                if summons != "": summons = "\n{} **Summons**{}".format(self.bot.emote.get('summon'), summons)
-            except:
-                sumimg = {}
-                summons = ""
-
-            try:
-                beg = data.find('<div class="prt-inner-title">Star Character</div>')
-                end = data.find('<div class="prt-2tabs">', beg+1)
-                star_section = data[beg:end]
-                try:
-                    ring = self.starringre.findall(star_section)[0]
-                    msg = "**\💍** "
-                except:
-                    msg = ""
-                msg += "{}".format(self.starre.findall(star_section)[0]) # name
-                try: msg += " **{}**".format(self.starplusre.findall(star_section)[0]) # plus
-                except: pass
-                try: msg += " ▫️ **{}** EMP".format(self.empre.findall(star_section)[0]) # emp
-                except: pass
-                starcom = self.starcomre.findall(star_section)
-                if starcom is not None and starcom[0] != "(Blank)": msg += "\n\u202d💬 `{}`".format(su.unescape(starcom[0].replace('`', '\'')))
-                star = "\n{} **Star Character**\n{}".format(self.bot.emote.get('skill2'), msg)
-            except:
-                star = ""
-
-            try: # image processing
-                # calculating sizes
-                portrait_size = (78, 142)
-                equip_size = (280, 160)
-                ratio = portrait_size[0] * 2 / equip_size[0]
-                equip_size = (int(equip_size[0]*ratio), int(equip_size[1]*ratio))
-                lvl_box_height = 30
-                sup_summon_size = (200, 420)
-                ratio = (portrait_size[1] + lvl_box_height + equip_size[1]) / (sup_summon_size[1] * 2)
-                sup_summon_size = (int(sup_summon_size[0]*ratio), int(sup_summon_size[1]*ratio))
-                sup_X_offset = portrait_size[0]*6
-                if len(sumimg) > 0: imgsize = (portrait_size[0]*6+sup_summon_size[0]*7, portrait_size[1] + lvl_box_height + equip_size[1])
-                else: imgsize = (portrait_size[0]*6, portrait_size[1] + lvl_box_height + equip_size[1])
-                # creating image
-                img = Image.new('RGB', imgsize, "black")
-                d = ImageDraw.Draw(img, 'RGBA')
-                font = ImageFont.truetype("assets/font.ttf", 18)
-
-                # MC
-                self.dlAndPasteImage(img, mc_url.replace("/talk/", "/quest/").replace(".png", ".jpg"), (0, 0), None)
-                self.pasteImage(img, "assets/chara_stat.png", (0, portrait_size[1]), (portrait_size[0], lvl_box_height))
-                d.text((3, portrait_size[1]+6), brank.replace(' ', ''), fill=(255, 255, 255), font=font)
-
-                # mh and main summon
-                self.dlAndPasteImage(img, "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/1999999999.jpg", (0, portrait_size[1]+lvl_box_height), equip_size)
-                self.dlAndPasteImage(img, "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/2999999999.jpg", (equip_size[0], portrait_size[1]+lvl_box_height), equip_size)
-                equip = soup.find_all('div', class_='prt-equip-image')
-                for eq in equip:
-                    mh = eq.findChildren('img', class_='img-weapon', recursive=True)
-                    if len(mh) > 0: # mainhand
-                        self.dlAndPasteImage(img, mh[0].attrs['src'].replace('img_low', 'img').replace('/ls/', '/m/'), (0, portrait_size[1]+lvl_box_height), equip_size)
-                        plus = eq.findChildren("div", class_="prt-weapon-quality", recursive=True)
-                        if len(plus) > 0:
-                            d.text((equip_size[0]-50, portrait_size[1]+lvl_box_height+equip_size[1]-30), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
-                        continue
-                    ms = eq.findChildren('img', class_='img-summon', recursive=True)
-                    if len(ms) > 0: # main summon
-                        self.dlAndPasteImage(img, ms[0].attrs['src'].replace('img_low', 'img').replace('/ls/', '/m/'), (equip_size[0], portrait_size[1]+lvl_box_height), equip_size)
-                        plus = eq.findChildren("div", class_="prt-summon-quality", recursive=True)
-                        #if len(plus) > 0:
-                        if len(plus) > 0:
-                            d.text((equip_size[0]+equip_size[0]-50, portrait_size[1]+lvl_box_height+equip_size[1]-30), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
-                        continue
-                
-                # party members
-                party_section = soup.find_all("div", class_="prt-party-npc")[0]
-                party = party_section.findChildren("div", class_="prt-npc-box", recursive=True)
-                party_lvl = party_section.findChildren("div", class_="prt-npc-level", recursive=True)
-                for i in range(0, 5):
-                    pos = (portrait_size[0]*(i+1), 0)
-                    if i >= len(party):
-                        imgtag = "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/npc/quest/3999999999.jpg"
-                        lvl = ""
-                        ring = False
-                        plus = ""
-                    else:
-                        npc = party[i]
-                        imtag = npc.findChildren("img", class_="img-npc", recursive=True)[0]
-                        lvl = party_lvl[i].text.strip()
-                        ring = len(npc.findChildren("div", class_="ico-augment2-m", recursive=True)) > 0
-                        plus = npc.findChildren("div", class_="prt-quality", recursive=True)
-                        if len(plus) > 0: plus = plus[0].text
-                        else: plus = ""
-                    self.dlAndPasteImage(img, imtag['src'].replace('img_low', 'img'), pos)
-                    if ring:
-                        self.pasteImage(img, 'assets/ring.png', pos, (30, 30))
-                    if plus != "":
-                        d.text((pos[0]+portrait_size[0]-50, pos[1]+portrait_size[1]-30), plus, fill=(255, 255, 95), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
-                    self.pasteImage(img, "assets/chara_stat.png", (portrait_size[0]*(i+1), portrait_size[1]), (portrait_size[0], lvl_box_height))
-                    if lvl != "":
-                        d.text((portrait_size[0]*(i+1)+3, portrait_size[1]+6), lvl, fill=(255, 255, 255), font=font)
-
-                # support summons
-                if len(sumimg) > 0:
-                    for k in self.possiblesum:
-                        x = (int(k[0]) + 6) % 7
-                        y = int(k[1])
-                        s = sumimg.get(k, ['2999999999', '', '', '', None])
-                        url = "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/summon/ls/{}.jpg".format(s[0])
-                        self.dlAndPasteImage(img, url, (sup_X_offset+x*sup_summon_size[0], sup_summon_size[1]*y), sup_summon_size)
-                        if s[4] is not None:
-                            if s[4] == "": sumstar = "assets/star_0.png"
-                            else: sumstar = "assets/star_{}.png".format(s[4][-1])
-                            self.pasteImage(img, sumstar, (sup_X_offset+(x+1)*sup_summon_size[0]-33, sup_summon_size[1]*(y+1)-33))
-
-                # id and stats
-                self.pasteImage(img, "assets/chara_stat.png", (equip_size[0]*2, portrait_size[1]+lvl_box_height), (portrait_size[0]*2, equip_size[1]))
-                self.pasteImage(img, "assets/atk.png", (equip_size[0]*2+5, portrait_size[1]+lvl_box_height+10), (30, 13))
-                self.pasteImage(img, "assets/hp.png", (equip_size[0]*2+5, portrait_size[1]+lvl_box_height*2), (24, 14))
-                d.text((equip_size[0]*2+30+10, portrait_size[1]+lvl_box_height+10), atk, fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
-                d.text((equip_size[0]*2+30+10, portrait_size[1]+lvl_box_height*2), hp, fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
-                d.text((equip_size[0]*2+10, portrait_size[1]+lvl_box_height*3), "{}".format(id), fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
-                self.dlAndPasteImage(img, job_icon, (0, portrait_size[1]-30), (36, 30))
-                
-                # saving
-                thumbnail = "{}_{}.png".format(id, datetime.utcnow().timestamp())
-                img.save(thumbnail, "PNG")
-                img.close()
-            except Exception as e:
-                print(e)
-                thumbnail = ""
-                try: img.close()
-                except: pass
-            if trophy == "No Trophy Displayed": title = "\u202d{} **{}**".format(self.bot.emote.get(rarity), name)
-            else: title = "\u202d{} **{}**▫️{}".format(self.bot.emote.get(rarity), name, trophy)
-            return title, "{}{}\n{} Crew ▫️ {}\n{}{}\n\n[:earth_asia: Preview]({})".format(rank, comment, self.bot.emote.get('gw'), crew, scores, star, thumbnail), thumbnail
+                pass
+        if header is not None:
+            brank = self.rankre.search(str(header)).group(0)
+            rank = "**{}**".format(brank)
         else:
-            return None, "Profile is private", ""
+            brank = " "
+            rank = ""
+        trophy = soup.find_all("div", class_="prt-title-name")[0].string
+        comment = su.unescape(soup.find_all("div", class_="prt-other-comment")[0].string).replace('\t', '').replace('\n', '')
+        if comment == "": pass
+        elif rank == "": comment = "💬 `{}`".format(comment.replace('`', '\''))
+        else: comment = " ▫️ 💬 `{}`".format(comment.replace('`', '\''))
+        mc_url = soup.find_all("img", class_="img-pc")[0]['src'].replace("/po/", "/talk/").replace("/img_low/", "/img/")
+        # Unused
+        stats = soup.find_all("div", class_="num")
+        hp = stats[0].string
+        atk = stats[1].string
+        job_icon = soup.find_all("img", class_="img-job-icon")[0].attrs['src'].replace("img_low", "img")
+
+        try:
+            try:
+                crew = self.bot.util.shortenName(soup.find_all("div", class_="prt-guild-name")[0].string)
+                crewid = soup.find_all("div", class_="btn-guild-detail")[0]['data-location-href']
+                crew = "[{}](http://game.granbluefantasy.jp/#{})".format(crew, crewid)
+            except: crew = soup.find_all("div", class_="txt-notjoin")[0].string
+        except:
+            crew = None
+
+        # get the last gw score
+        scores = ""
+        try:
+            pdata = self.bot.get_cog('GuildWar').searchGWDBPlayer(id, 2)
+        except:
+            pdata = None
+        if pdata is not None:
+            for n in range(0, 2):
+                if pdata[n] is not None and 'result' in pdata[n] and len(pdata[n]['result']) == 1:
+                    try:
+                        if pdata[n]['result'][0][0] is None:
+                            scores += "{} GW**{}** ▫️ **{:,}** honors\n".format(self.bot.emote.get('gw'), pdata[n].get('gw', ''), pdata[n]['result'][0][3])
+                        else:
+                            scores += "{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors\n".format(self.bot.emote.get('gw'), pdata[n].get('gw', ''), pdata[n]['result'][0][0], pdata[n]['result'][0][3])
+                    except:
+                        pass
+
+        try:
+            summons_res = self.sumre.findall(data)
+            sortsum = {}
+            sumimg = {}
+            for s in summons_res:
+                if self.possiblesum[s[2]] not in sortsum: sortsum[self.possiblesum[s[2]]] = s[3]
+                else: sortsum[self.possiblesum[s[2]]] += ' ▫️ ' + s[3]
+                sumimg[s[2]] = s
+            try:
+                misc = sortsum.pop('misc')
+                sortsum['misc'] = misc
+            except:
+                pass
+            summons = ""
+            for k in sortsum:
+                summons += "\n{} {}".format(self.bot.emote.get(k), sortsum[k])
+            if summons != "": summons = "\n{} **Summons**{}".format(self.bot.emote.get('summon'), summons)
+        except:
+            sumimg = {}
+            summons = ""
+
+        try:
+            beg = data.find('<div class="prt-inner-title">Star Character</div>')
+            end = data.find('<div class="prt-2tabs">', beg+1)
+            star_section = data[beg:end]
+            try:
+                ring = self.starringre.findall(star_section)[0]
+                msg = "**\💍** "
+            except:
+                msg = ""
+            msg += "{}".format(self.starre.findall(star_section)[0]) # name
+            try: msg += " **{}**".format(self.starplusre.findall(star_section)[0]) # plus
+            except: pass
+            try: msg += " ▫️ **{}** EMP".format(self.empre.findall(star_section)[0]) # emp
+            except: pass
+            starcom = self.starcomre.findall(star_section)
+            if starcom is not None and starcom[0] != "(Blank)": msg += "\n\u202d💬 `{}`".format(su.unescape(starcom[0].replace('`', '\'')))
+            star = "\n{} **Star Character**\n{}".format(self.bot.emote.get('skill2'), msg)
+        except:
+            star = ""
+
+        try: # image processing
+            # calculating sizes
+            portrait_size = (78, 142)
+            equip_size = (280, 160)
+            ratio = portrait_size[0] * 2 / equip_size[0]
+            equip_size = (int(equip_size[0]*ratio), int(equip_size[1]*ratio))
+            lvl_box_height = 30
+            sup_summon_size = (200, 420)
+            ratio = (portrait_size[1] + lvl_box_height + equip_size[1]) / (sup_summon_size[1] * 2)
+            sup_summon_size = (int(sup_summon_size[0]*ratio), int(sup_summon_size[1]*ratio))
+            sup_X_offset = portrait_size[0]*6
+            if len(sumimg) > 0: imgsize = (portrait_size[0]*6+sup_summon_size[0]*7, portrait_size[1] + lvl_box_height + equip_size[1])
+            else: imgsize = (portrait_size[0]*6, portrait_size[1] + lvl_box_height + equip_size[1])
+            # creating image
+            img = Image.new('RGB', imgsize, "black")
+            d = ImageDraw.Draw(img, 'RGBA')
+            font = ImageFont.truetype("assets/font.ttf", 18)
+
+            # MC
+            self.dlAndPasteImage(img, mc_url.replace("/talk/", "/quest/").replace(".png", ".jpg"), (0, 0), None)
+            self.pasteImage(img, "assets/chara_stat.png", (0, portrait_size[1]), (portrait_size[0], lvl_box_height))
+            d.text((3, portrait_size[1]+6), brank.replace(' ', ''), fill=(255, 255, 255), font=font)
+
+            # mh and main summon
+            self.dlAndPasteImage(img, "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/1999999999.jpg", (0, portrait_size[1]+lvl_box_height), equip_size)
+            self.dlAndPasteImage(img, "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/2999999999.jpg", (equip_size[0], portrait_size[1]+lvl_box_height), equip_size)
+            equip = soup.find_all('div', class_='prt-equip-image')
+            for eq in equip:
+                mh = eq.findChildren('img', class_='img-weapon', recursive=True)
+                if len(mh) > 0: # mainhand
+                    self.dlAndPasteImage(img, mh[0].attrs['src'].replace('img_low', 'img').replace('/ls/', '/m/'), (0, portrait_size[1]+lvl_box_height), equip_size)
+                    plus = eq.findChildren("div", class_="prt-weapon-quality", recursive=True)
+                    if len(plus) > 0:
+                        d.text((equip_size[0]-50, portrait_size[1]+lvl_box_height+equip_size[1]-30), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
+                    continue
+                ms = eq.findChildren('img', class_='img-summon', recursive=True)
+                if len(ms) > 0: # main summon
+                    self.dlAndPasteImage(img, ms[0].attrs['src'].replace('img_low', 'img').replace('/ls/', '/m/'), (equip_size[0], portrait_size[1]+lvl_box_height), equip_size)
+                    plus = eq.findChildren("div", class_="prt-summon-quality", recursive=True)
+                    #if len(plus) > 0:
+                    if len(plus) > 0:
+                        d.text((equip_size[0]+equip_size[0]-50, portrait_size[1]+lvl_box_height+equip_size[1]-30), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
+                    continue
+            
+            # party members
+            party_section = soup.find_all("div", class_="prt-party-npc")[0]
+            party = party_section.findChildren("div", class_="prt-npc-box", recursive=True)
+            party_lvl = party_section.findChildren("div", class_="prt-npc-level", recursive=True)
+            for i in range(0, 5):
+                pos = (portrait_size[0]*(i+1), 0)
+                if i >= len(party):
+                    imgtag = "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/npc/quest/3999999999.jpg"
+                    lvl = ""
+                    ring = False
+                    plus = ""
+                else:
+                    npc = party[i]
+                    imtag = npc.findChildren("img", class_="img-npc", recursive=True)[0]
+                    lvl = party_lvl[i].text.strip()
+                    ring = len(npc.findChildren("div", class_="ico-augment2-m", recursive=True)) > 0
+                    plus = npc.findChildren("div", class_="prt-quality", recursive=True)
+                    if len(plus) > 0: plus = plus[0].text
+                    else: plus = ""
+                self.dlAndPasteImage(img, imtag['src'].replace('img_low', 'img'), pos)
+                if ring:
+                    self.pasteImage(img, 'assets/ring.png', pos, (30, 30))
+                if plus != "":
+                    d.text((pos[0]+portrait_size[0]-50, pos[1]+portrait_size[1]-30), plus, fill=(255, 255, 95), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
+                self.pasteImage(img, "assets/chara_stat.png", (portrait_size[0]*(i+1), portrait_size[1]), (portrait_size[0], lvl_box_height))
+                if lvl != "":
+                    d.text((portrait_size[0]*(i+1)+3, portrait_size[1]+6), lvl, fill=(255, 255, 255), font=font)
+
+            # support summons
+            if len(sumimg) > 0:
+                for k in self.possiblesum:
+                    x = (int(k[0]) + 6) % 7
+                    y = int(k[1])
+                    s = sumimg.get(k, ['2999999999', '', '', '', None])
+                    url = "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/summon/ls/{}.jpg".format(s[0])
+                    self.dlAndPasteImage(img, url, (sup_X_offset+x*sup_summon_size[0], sup_summon_size[1]*y), sup_summon_size)
+                    if s[4] is not None:
+                        if s[4] == "": sumstar = "assets/star_0.png"
+                        else: sumstar = "assets/star_{}.png".format(s[4][-1])
+                        self.pasteImage(img, sumstar, (sup_X_offset+(x+1)*sup_summon_size[0]-33, sup_summon_size[1]*(y+1)-33))
+
+            # id and stats
+            self.pasteImage(img, "assets/chara_stat.png", (equip_size[0]*2, portrait_size[1]+lvl_box_height), (portrait_size[0]*2, equip_size[1]))
+            self.pasteImage(img, "assets/atk.png", (equip_size[0]*2+5, portrait_size[1]+lvl_box_height+10), (30, 13))
+            self.pasteImage(img, "assets/hp.png", (equip_size[0]*2+5, portrait_size[1]+lvl_box_height*2), (24, 14))
+            d.text((equip_size[0]*2+30+10, portrait_size[1]+lvl_box_height+10), atk, fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
+            d.text((equip_size[0]*2+30+10, portrait_size[1]+lvl_box_height*2), hp, fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
+            d.text((equip_size[0]*2+10, portrait_size[1]+lvl_box_height*3), "{}".format(id), fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
+            self.dlAndPasteImage(img, job_icon, (0, portrait_size[1]-30), (36, 30))
+            
+            # saving
+            thumbnail = "{}_{}.png".format(id, datetime.utcnow().timestamp())
+            img.save(thumbnail, "PNG")
+            img.close()
+        except Exception as e:
+            print(e)
+            thumbnail = ""
+            try: img.close()
+            except: pass
+        if trophy == "No Trophy Displayed": title = "\u202d{} **{}**".format(self.bot.emote.get(rarity), name)
+        else: title = "\u202d{} **{}**▫️{}".format(self.bot.emote.get(rarity), name, trophy)
+        return title, "{}{}\n{} Crew ▫️ {}\n{}{}\n\n[:earth_asia: Preview]({})".format(rank, comment, self.bot.emote.get('gw'), crew, scores, star, thumbnail), thumbnail
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['id'])
     @commands.cooldown(5, 30, commands.BucketType.guild)
@@ -1568,24 +1565,29 @@ class GranblueFantasy(commands.Cog):
                 await self.bot.util.unreact(ctx.message, 'time')
                 return
             soup = BeautifulSoup(data, 'html.parser')
-            name = soup.find_all("span", class_="txt-other-name")[0].string
-            x = ""
-            title, description, thumbnail = await self.bot.do(self.processProfile, id, data)
-            try:
-                with open(thumbnail, 'rb') as infile:
-                    df = discord.File(infile)
-                    message = await self.bot.send('image', file=df)
-                    df.close()
-                self.bot.file.rm(thumbnail)
-                description = description.replace(thumbnail, message.attachments[0].url)
-                thumbnail = message.attachments[0].url
-            except:
-                description = description.replace("\n[:earth_asia: Preview]({})".format(thumbnail), "")
-                thumbnail = ""
+            try: name = soup.find_all("span", class_="txt-other-name")[0].string
+            except: name = None
+            if name is None:
+                msg = await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Profile is private", url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+            else:
+                x = ""
+                title, description, thumbnail = await self.bot.do(self.processProfile, id, data)
+                try:
+                    with open(thumbnail, 'rb') as infile:
+                        df = discord.File(infile)
+                        message = await self.bot.send('image', file=df)
+                        df.close()
+                    self.bot.file.rm(thumbnail)
+                    description = description.replace(thumbnail, message.attachments[0].url)
+                    thumbnail = message.attachments[0].url
+                except:
+                    description = description.replace("\n[:earth_asia: Preview]({})".format(thumbnail), "")
+                    thumbnail = ""
+                msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=description, image=thumbnail, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
             await self.bot.util.unreact(ctx.message, 'time')
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=description, image=thumbnail, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
-            await self.bot.util.clean(ctx, final_msg, 45)
+            await self.bot.util.clean(ctx, msg, 45)
         except Exception as e:
+            await self.bot.util.unreact(ctx.message, 'time')
             await self.bot.sendError("profile", e)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)

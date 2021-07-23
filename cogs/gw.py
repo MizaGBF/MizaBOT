@@ -1087,7 +1087,8 @@ class GuildWar(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['nmspeed', 'nmcompare'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def gwspeed(self, ctx, *, params : str = ""):
-        """Compare multiple GW fights based on your speed"""
+        """Compare multiple GW fights based on your speed
+        Supported fights are EX, EX+, NM90, NM95, NM100, NM150"""
         try:
             if params == "": raise Exception()
             params = params.lower()
@@ -1409,7 +1410,8 @@ class GuildWar(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['supercrew', 'poaching'])
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def gwranking(self, ctx):
-        """Sort and post the top 30 server members per contribution"""
+        """Sort and post the top 30 server members per contribution
+        Members must have set their GBF profile with the setProfile command"""
         members = []
         gwid = None
         await self.bot.util.react(ctx.message, 'time')
