@@ -433,7 +433,7 @@ class GuildWar(commands.Cog):
                             fields[x]['value'] += "**#{:,}.{:,}K** \▫️ {:,}".format(int(c)//1000, (int(c)%1000)//100, self.bot.data.save['gw']['ranking'][x][c])
                         else:
                             fields[x]['value'] += "**#{:,}K** \▫️ {:,}".format(int(c)//1000, self.bot.data.save['gw']['ranking'][x][c])
-                        if c in self.bot.data.save['gw']['ranking'][2+x]:
+                        if c in self.bot.data.save['gw']['ranking'][2+x] and self.bot.util.valToStr(self.bot.data.save['gw']['ranking'][2+x][c] != 0:
                             fields[x]['value'] += " \▫️ {}/min".format(self.bot.util.valToStr(self.bot.data.save['gw']['ranking'][2+x][c]))
                         fields[x]['value'] += "\n"
                     if fields[x]['value'] == '': fields[0]['value'] = 'Unavailable'
