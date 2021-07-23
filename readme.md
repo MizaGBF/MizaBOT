@@ -25,7 +25,7 @@ It's designed to be used on [Heroku](https://www.heroku.com) and isn't intended 
 The bot is semi open to invitations:  
 [![Invitation](https://github.com/MizaGBF/MizaBOT/raw/master/docs/img/invite.png)]( https://discord.com/oauth2/authorize?client_id=614723060100104193&scope=bot&permissions=8589934591)  
 Currently only servers of 30 members or more can be added to limit the number of new servers.  
-You'll have to wait for my owner approval (Your server owner will be notified if accepted).  
+You'll have to wait for approval (Your server owner will be notified if accepted).  
 Misuses of this link will result in a server-wide ban.  
 I have limited resources so I reserve to myself the right to refuse your server, sorry in advance.  
   
