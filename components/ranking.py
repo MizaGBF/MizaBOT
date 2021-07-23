@@ -285,7 +285,7 @@ class Ranking():
             c = conn.cursor()
             c.execute("BEGIN")
 
-            c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'") # create info table (contains gw id and db version)
+            c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'") # create info table if it doesn't exist (contains gw id and db version)
             if c.fetchone()[0] < 1:
                  c.execute('CREATE TABLE info (gw int, ver int)')
                  c.execute('INSERT INTO info VALUES ({}, 2)'.format(self.bot.data.save['gw']['id'])) # ver 2
@@ -387,8 +387,8 @@ class Ranking():
             self.scrap_update_time = update_time
             for n in [0, 1]: # n == 0 (crews) or 1 (players)
                 current_time = self.bot.util.JST()
-                """if n == 0 and current_time >= self.bot.data.save['gw']['dates']["Interlude"] and current_time < self.bot.data.save['gw']['dates']["Day 1"]:
-                    continue # disabled during interlude for crews"""
+                if n == 0 and current_time >= self.bot.data.save['gw']['dates']["Interlude"] and current_time < self.bot.data.save['gw']['dates']["Day 1"]:
+                    continue # disabled during interlude for crews
 
                 self.scrap_mode = (n == 0)
                 data = self.requestRanking(1, (0 if self.scrap_mode else 2)) # get the first page

@@ -206,6 +206,7 @@ def cpyFile(name, folder, new, ret): # rename a file from a folder
             if s['title'] == name:
                 drive.auth.service.files().copy(fileId=s['id'], body={"parents": [{"kind": "drive#fileLink", "id": folder}], 'title': new}).execute()
                 ret.value = 1
+                return
         ret.value = 0
     except Exception as e:
         print(e)
