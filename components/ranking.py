@@ -419,7 +419,7 @@ class Ranking():
                     try:
                         await self.updateYouTracker(update_time)
                     except Exception as ue:
-                        await self.bot.sendError('updateyoutracker', ue)
+                        await self.bot.sendError('updatematchtracker', ue)
 
             return ""
         except Exception as e:
@@ -474,19 +474,19 @@ class Ranking():
         you_id = self.bot.data.config['granblue']['gbfgcrew'].get('you', None) # our id
         
         if you_id is None: return
-        if self.bot.data.save['youtracker'] is None: return # not initialized
-        if self.bot.data.save['youtracker']['day'] != day: # new day, reset
+        if self.bot.data.save['matchtracker'] is None: return # not initialized
+        if self.bot.data.save['matchtracker']['day'] != day: # new day, reset
             with self.bot.data.lock:
-                self.bot.data.save['youtracker'] = {
+                self.bot.data.save['matchtracker'] = {
                     'day':day,
                     'init':False,
-                    'id':self.bot.data.save['youtracker']['id'],
+                    'id':self.bot.data.save['matchtracker']['id'],
                     'plot':[]
                 }
                 self.bot.data.pending = True
             
-        infos = await self.bot.do(self.searchScoreForTracker, [you_id, self.bot.data.save['youtracker']['id']])
-        newtracker = self.bot.data.save['youtracker'].copy()
+        infos = await self.bot.do(self.searchScoreForTracker, [you_id, self.bot.data.save['matchtracker']['id']])
+        newtracker = self.bot.data.save['matchtracker'].copy()
         if newtracker['init']:
             d = t - newtracker['last']
             speed = [(infos[0][1] - newtracker['scores'][0]) / (d.seconds//60), (infos[1][1] - newtracker['scores'][1]) / (d.seconds//60)]
@@ -518,5 +518,5 @@ class Ranking():
             except:
                 pass
         with self.bot.data.lock:
-            self.bot.data.save['youtracker'] = newtracker
+            self.bot.data.save['matchtracker'] = newtracker
             self.bot.data.pending = True
