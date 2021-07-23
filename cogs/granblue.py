@@ -1226,7 +1226,7 @@ class GranblueFantasy(commands.Cog):
                     self.bot.data.pending = True
             except:
                 pass
-            await self.bot.send('debug', 'User `{}` has been removed'.format(user_id))
+            await self.bot.send('debug', embed=self.bot.util.embed(title="Clear Profile", description='User `{}` has been removed'.format(user_id), color=self.color))
             await self.bot.util.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['unsetid'])

@@ -337,6 +337,11 @@ class Ranking():
             
             return ""
         except Exception as err:
+            try:
+                c.close()
+                conn.close()
+            except:
+                pass
             self.stoprankupdate = True # send the stop signal if a critical error happened
             return 'gwdbbuilder() exception:\n' + self.bot.util.pexc(err)
 
@@ -382,8 +387,8 @@ class Ranking():
             self.scrap_update_time = update_time
             for n in [0, 1]: # n == 0 (crews) or 1 (players)
                 current_time = self.bot.util.JST()
-                if n == 0 and current_time >= self.bot.data.save['gw']['dates']["Interlude"] and current_time < self.bot.data.save['gw']['dates']["Day 1"]:
-                    continue # disabled during interlude for crews
+                """if n == 0 and current_time >= self.bot.data.save['gw']['dates']["Interlude"] and current_time < self.bot.data.save['gw']['dates']["Day 1"]:
+                    continue # disabled during interlude for crews"""
 
                 self.scrap_mode = (n == 0)
                 data = self.requestRanking(1, (0 if self.scrap_mode else 2)) # get the first page

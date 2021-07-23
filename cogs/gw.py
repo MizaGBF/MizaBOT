@@ -471,18 +471,8 @@ class GuildWar(commands.Cog):
                                 if y == 0: predi[y] = self.bot.data.save['gw']['ranking'][x][c] + (1 + 1.5 * (time_left.seconds // 7200) / 10) + self.bot.data.save['gw']['ranking'][2+x][c] * time_left.seconds / 60 # minimum
                                 elif y == 1:  predi[y] = self.bot.data.save['gw']['ranking'][x][c] + (1.1 + 1.3 * (time_left.seconds // 3600) / 10) * self.bot.data.save['gw']['ranking'][2+x][c] * time_left.seconds / 60 # maximum
                                 # formatting
-                                if predi[y] > 1000000000: 
-                                    predi[y] = predi[y] / 1000000000
-                                    if predi[y] < 10: predi[y] = "{:,.3f}B".format(predi[y])
-                                    else: predi[y] = "{:,.2f}B".format(predi[y])
-                                elif predi[y] > 1000000:
-                                    predi[y] = predi[y] / 1000000
-                                    if predi[y] < 10: predi[y] = "{:,.2f}M".format(predi[y])
-                                    else: predi[y] = "{:,.1f}M".format(predi[y])
-                                elif predi[y] > 1000:
-                                    predi[y] = predi[y] / 1000
-                                    if predi[y] < 10: predi[y] = "{:,.2f}K".format(predi[y])
-                                    else: predi[y] = "{:,.1f}K".format(predi[y])
+                                if predi[y] >= 1000:
+                                    predi[y] = self.bot.util.valToStrBig(predi[y])
 
                             # display
                             if predi[0] == predi[1]: # if min and max equal

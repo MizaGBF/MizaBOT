@@ -447,6 +447,7 @@ class Util():
 
     """valToStr()
     Convert an int or float to str and shorten it with B, M, K
+    One decimal precision
     
     Parameters
     ----------
@@ -458,11 +459,39 @@ class Util():
     """
     def valToStr(self, s):
         if isinstance(s, int): s = float(s)
-        if abs(s) > 1000000000:
-           return "{:,.1f}B".format(s/1000000000).replace('.0', '')
-        elif abs(s) > 1000000:
-           return "{:,.1f}M".format(s/1000000).replace('.0', '')
-        elif abs(s) > 1000:
-           return "{:,.1f}K".format(s/1000).replace('.0', '')
+        bs = abs(s)
+        if bs >= 1000000000:
+            return "{:,.1f}B".format(s/1000000000).replace('.0', '')
+        elif bs >= 1000000:
+            return "{:,.1f}M".format(s/1000000).replace('.0', '')
+        elif bs >= 1000:
+            return "{:,.1f}K".format(s/1000).replace('.0', '')
         else:
-           return "{:,.1f}".format(s).replace('.0', '')
+            return "{:,.1f}".format(s).replace('.0', '')
+
+    """valToStrBig()
+    Convert an int or float to str and shorten it with B, M, K
+    Two to three decimal precision
+    
+    Parameters
+    ----------
+    v: Value to convert
+    
+    Returns
+    --------
+    int: Converted string
+    """
+    def valToStrBig(self, s):
+        if isinstance(s, int): s = float(s)
+        bs = abs(s)
+        if bs >= 1000000000:
+            if bs < 10000000000: return "{:,.3f}B".format(s/1000000000).replace('.0', '')
+            else: return "{:,.2f}B".format(s/1000000000).replace('.0', '')
+        elif bs >= 1000000:
+            if bs < 10000000: return "{:,.3f}M".format(s/1000000).replace('.0', '')
+            else: return "{:,.2f}M".format(s/1000000).replace('.0', '')
+        elif bs >= 1000:
+            if bs < 10000: return "{:,.3f}K".format(s/1000).replace('.0', '')
+            else: return "{:,.2f}K".format(s/1000).replace('.0', '')
+        else:
+            return "{:,.1f}".format(s).replace('.0', '')
