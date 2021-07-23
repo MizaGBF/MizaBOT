@@ -458,11 +458,11 @@ class Util():
     """
     def valToStr(self, s):
         if isinstance(s, int): s = float(s)
-        if s > 1000000000:
+        if abs(s) > 1000000000:
            return "{:,.1f}B".format(s/1000000000).replace('.0', '')
-        elif s > 1000000:
+        elif abs(s) > 1000000:
            return "{:,.1f}M".format(s/1000000).replace('.0', '')
-        elif s > 1000:
+        elif abs(s) > 1000:
            return "{:,.1f}K".format(s/1000).replace('.0', '')
-        elif s > 0:
+        else:
            return "{:,.1f}".format(s).replace('.0', '')

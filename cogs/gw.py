@@ -1091,7 +1091,7 @@ class GuildWar(commands.Cog):
         try:
             if params == "": raise Exception()
             params = params.lower()
-            fightdata = {'ex':[30, 0, 51000, 56], 'ex+':[30, 0, 80800, 66], 'nm90':[30, 2, 260000, 83], 'nm95':[40, 10, 910000, 111], 'nm100':[50, 20, 2650000, 168], 'nm150':[50, 20, 4100000, 257]}
+            fightdata = {'ex':[30, 3, 51000, 56], 'ex+':[30, 4, 80800, 66], 'nm90':[30, -5, 260000, 83], 'nm95':[40, -10, 910000, 111], 'nm100':[50, -20, 2650000, 168], 'nm150':[50, -20, 4100000, 257]}
             fights = params.split(' ')
             msg = ""
             for f in fights:
@@ -1109,9 +1109,8 @@ class GuildWar(commands.Cog):
                         except: raise Exception("Invalid time `{}`".format(elems[1]))
                     if time <= 0: raise Exception()
                     mod = (3600 / time)
-                    compare = [mod*i for i in fightdata[elems[0]]]
-                    msg += "**{}** ▫️ **{}** \▫️ **{}** AP \▫️ **{}** Token".format(elems[0].upper(), self.bot.util.valToStr(compare[2]), self.bot.util.valToStr(compare[0]), self.bot.util.valToStr(compare[3]))
-                    if compare[1] != 0: msg += " \▫️ **{}** Meat".format(self.bot.util.valToStr(compare[1]))
+                    compare = [self.bot.util.valToStr(mod*i) for i in fightdata[elems[0]]]
+                    msg += "**{}** ▫️ **{}** \▫️ **{}** AP \▫️ **{}** Token \▫️ **{}** Meat".format(elems[0].upper(), compare[2], compare[0], compare[3], compare[1])
                     msg += "\n"
             if msg == '': raise Exception()
             msg = await ctx.reply(embed=self.bot.util.embed(title="{} Speed Comparator".format(self.bot.emote.get('gw')), description="**Per hour**\n" + msg, color=self.color))
