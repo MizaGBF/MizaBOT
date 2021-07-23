@@ -446,7 +446,7 @@ class Ranking():
     --------
     list: Crew informations
     """
-    def searchScoreForTracker(self, crews):
+    def searchScoreForTracker(self, day, crews):
         infos = []
         conn = sqlite3.connect('temp.sql') # open temp.sql
         c = conn.cursor()
@@ -485,7 +485,7 @@ class Ranking():
                 }
                 self.bot.data.pending = True
             
-        infos = await self.bot.do(self.searchScoreForTracker, [you_id, self.bot.data.save['matchtracker']['id']])
+        infos = await self.bot.do(self.searchScoreForTracker, day, [you_id, self.bot.data.save['matchtracker']['id']])
         newtracker = self.bot.data.save['matchtracker'].copy()
         if newtracker['init']:
             d = t - newtracker['last']
