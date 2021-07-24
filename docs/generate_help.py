@@ -143,6 +143,13 @@ Currently only servers of 30 members or more can be added to limit the number of
 You'll have to wait for approval (Your server owner will be notified if accepted).<br>
 Misuses of this link will result in a server-wide ban.<br>
 I have limited resources so I reserve to myself the right to refuse your server, sorry in advance.<br>
+<b>Addendum: I got a ton of requests so I'm here to clarify some points:<br>
+The goal for now is to test the cost of more servers using the bot, not to allow it everywhere.<br>
+I also prioritize /gbfg/ crews as I'm close to a few of them.<br>
+Keep in mind I have a limit of 100 servers until I have to get the bot accepted by Discord for more, unless I rework the whole thing to bypass those limitations.<br>
+So, all of you out here and your random server called loli-mommy-milf whatever will get refused.<br>
+Going as far as to find me to beg/ask/(insert whatever verb you want) for the bot will get you added to the ban list.<br>
+I'm alone and in for the fun on this project, I do what I can, please understand.</b><br>
 </p>
 <h2>Privacy</h2>
 <p>
