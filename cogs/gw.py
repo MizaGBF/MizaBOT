@@ -1323,7 +1323,7 @@ class GuildWar(commands.Cog):
         try:
             # retrieve formatted crew data
             await self.bot.util.react(ctx.message, 'time')
-            crew = await self.bot.do(self.getCrewData, id, mode)
+            crew = await self.bot.do(self.getCrewData, id, 0)
 
             if 'error' in crew: # print the error if any
                 if len(crew['error']) > 0:

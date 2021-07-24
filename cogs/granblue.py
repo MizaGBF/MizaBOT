@@ -592,19 +592,19 @@ class GranblueFantasy(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['arcarum', 'arca', 'oracle', 'evoker', 'astra', 'sandbox', 'veritas', 'newworld', 'luster'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def arcanum(self, ctx):
-        """Post a link to my autistic Arcanum Sheet"""
+        """Post a link to my Arcanum Sheet"""
         await ctx.reply(embed=self.bot.util.embed(title="Arcanum Tracking Sheet", description=self.bot.data.config['strings']["arcanum()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/item/article/s/250{:02d}.jpg".format(random.randint(1, 74)), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['eternals', 'transcendence', 'transc'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def eternal(self, ctx):
-        """Post a link to my autistic Eternal Sheet"""
+        """Post a link to my Eternal Sheet"""
         await ctx.reply(embed=self.bot.util.embed(title="Eternal Transcendance Tracking Sheet", description=self.bot.data.config['strings']["eternal()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/npc/s/30400{}.jpg".format(random.choice(['30000_04', '31000_04', '32000_03', '33000_03', '34000_03', '35000_03', '36000_03', '37000_03', '38000_03', '39000_03'])), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwskin', 'blueskin'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def stayBlue(self, ctx):
-        """Post a link to my autistic blue eternal outfit grinding Sheet"""
+        """Post a link to my blue eternal outfit grinding Sheet"""
         await ctx.reply(embed=self.bot.util.embed(title="5* Eternal Skin Farming Sheet", description=self.bot.data.config['strings']["stayblue()"], color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['soldier'])
