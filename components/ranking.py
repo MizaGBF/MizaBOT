@@ -1,3 +1,4 @@
+import discord
 import threading
 import concurrent.futures
 import asyncio
