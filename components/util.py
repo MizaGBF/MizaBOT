@@ -448,6 +448,7 @@ class Util():
     """valToStr()
     Convert an int or float to str and shorten it with B, M, K
     One decimal precision
+    If None is sent in parameter, it returns "n/a"
     
     Parameters
     ----------
@@ -458,6 +459,7 @@ class Util():
     int: Converted string
     """
     def valToStr(self, s):
+        if s is None: return "n/a"
         if isinstance(s, int): s = float(s)
         bs = abs(s)
         if bs >= 1000000000:
@@ -472,6 +474,7 @@ class Util():
     """valToStrBig()
     Convert an int or float to str and shorten it with B, M, K
     Two to three decimal precision
+    If None is sent in parameter, it returns "n/a"
     
     Parameters
     ----------
@@ -482,6 +485,7 @@ class Util():
     int: Converted string
     """
     def valToStrBig(self, s):
+        if s is None: return "n/a"
         if isinstance(s, int): s = float(s)
         bs = abs(s)
         if bs >= 1000000000:

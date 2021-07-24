@@ -183,30 +183,6 @@ class GuildWar(commands.Cog):
             return (ctx.bot.isServer(ctx, 'debug_server') or (ctx.bot.isServer(ctx, 'you_server') and ctx.bot.isMod(ctx)))
         return commands.check(predicate)
 
-    """honorFormat()
-    Convert and format an integer value into a string.
-    Big values are shortened with B, M or K.
-    
-    Parameters
-    ----------
-    h: Value to convert
-    
-    Returns
-    --------
-    str: Resulting string
-    """
-    def honorFormat(self, h): # convert honor number to a shorter string version
-        if h is None: return "n/a"
-        else:
-            try:
-                h = int(h)
-            except:
-                return h
-            if h >= 1000000000: return "{:.1f}B".format(h/1000000000)
-            elif h >= 1000000: return "{:.1f}M".format(h/1000000)
-            elif h >= 1000: return "{:.1f}K".format(h/1000)
-        return h
-
     """dayCheck()
     Check if the we are in the specified GW day
     
@@ -1032,7 +1008,7 @@ class GuildWar(commands.Cog):
             nm95 = meat // 10
             nm100 = meat // 20
             nm150 = meat // 20
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} Meat Calculator ▫️ {} meats".format(self.bot.emote.get('gw'), meat), description="**{:,}** NM90 or **{:}** honors\n**{:,}** NM95 or **{:}** honors\n**{:}** NM100 or **{:}** honors\n**{:,}** NM150 or **{:}** honors\n".format(nm90, self.honorFormat(nm90*260000), nm95, self.honorFormat(nm95*910000), nm100, self.honorFormat(nm100*2650000), nm150, self.honorFormat(nm150*4100000)), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} Meat Calculator ▫️ {} meats".format(self.bot.emote.get('gw'), meat), description="**{:,}** NM90 or **{:}** honors\n**{:,}** NM95 or **{:}** honors\n**{:}** NM100 or **{:}** honors\n**{:,}** NM150 or **{:}** honors\n".format(nm90, self.bot.util.valToStr(nm90*260000), nm95, self.bot.util.valToStr(nm95*910000), nm100, self.bot.util.valToStr(nm100*2650000), nm150, self.bot.util.valToStr(nm150*4100000)), color=self.color))
         except:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid meat number", color=self.color))
         await self.bot.util.clean(ctx, final_msg, 60)
@@ -1069,7 +1045,7 @@ class GuildWar(commands.Cog):
                         daily += honor_per_nm[i]
                         honor[i+1] += honor_per_nm[i]
 
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} Honor Planning ▫️ {} honors".format(self.bot.emote.get('gw'), self.honorFormat(target)), description="Preliminaries & Interlude ▫️ **{:,}** meats (around **{:,}** EX+ and **{:}** honors)\nDay 1 and 2 total ▫️ **{:,}** NM95 (**{:}** honors)\nDay 3 and 4 total ▫️ **{:,}** NM150 (**{:}** honors)".format(math.ceil(total_meat*2), ex*2, self.honorFormat(honor[0]*2), nm[0]*2, self.honorFormat(honor[1]*2), nm[1]*2, self.honorFormat(honor[2]*2)), footer="Assuming {} meats / EX+ on average".format(meat_per_ex_average), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} Honor Planning ▫️ {} honors".format(self.bot.emote.get('gw'), self.bot.util.valToStr(target)), description="Preliminaries & Interlude ▫️ **{:,}** meats (around **{:,}** EX+ and **{:}** honors)\nDay 1 and 2 total ▫️ **{:,}** NM95 (**{:}** honors)\nDay 3 and 4 total ▫️ **{:,}** NM150 (**{:}** honors)".format(math.ceil(total_meat*2), ex*2, self.bot.util.valToStr(honor[0]*2), nm[0]*2, self.bot.util.valToStr(honor[1]*2), nm[1]*2, self.bot.util.valToStr(honor[2]*2)), footer="Assuming {} meats / EX+ on average".format(meat_per_ex_average), color=self.color))
         except:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid honor number", color=self.color))
         await self.bot.util.clean(ctx, final_msg, 60)
@@ -1309,7 +1285,7 @@ class GuildWar(commands.Cog):
                                 players[j] = players[i]
                                 players[i] = tmp
                 if gwid and len(players) - unranked > 0:
-                    description += "\n{} GW**{}** ▫️ Player Sum **{}** ▫️ Average **{}**".format(self.bot.emote.get('question'), gwid, self.honorFormat(total), self.honorFormat(total // (len(players) - unranked)))
+                    description += "\n{} GW**{}** ▫️ Player Sum **{}** ▫️ Average **{}**".format(self.bot.emote.get('question'), gwid, self.bot.util.valToStr(total), self.bot.util.valToStr(total // (len(players) - unranked)))
                     if unranked > 0:
                         description += " ▫️ {} Unranked".format(unranked)
                         if unranked > 1: description += "s"
@@ -1324,7 +1300,7 @@ class GuildWar(commands.Cog):
                 elif p['member_position'] == "4": r = "deface"
                 else: r = "ensign"
                 entry = '{} [{}](http://game.granbluefantasy.jp/#profile/{})'.format(self.bot.emote.get(r), self.escape(self.bot.util.shortenName(p['name'])), p['id'])
-                if gwstate:  entry += " \▫️ {}".format(self.honorFormat(p['honor']))
+                if gwstate:  entry += " \▫️ {}".format(self.bot.util.valToStr(p['honor']))
                 else: entry += " \▫️ r**{}**".format(p['level'])
                 entry += "\n"
                 fields[-1]['value'] += entry
@@ -1422,10 +1398,10 @@ class GuildWar(commands.Cog):
         for i in range(0, min(30, len(members))):
             if i % 10 == 0:
                 fields.append({'name':'{}'.format(self.bot.emote.get(str(len(fields)+1))), 'value':''})
-            fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) \▫️ **{}**\n".format(members[i][1], members[i][0], self.honorFormat(members[i][2]))
+            fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) \▫️ **{}**\n".format(members[i][1], members[i][0], self.bot.util.valToStr(members[i][2]))
             total += members[i][2]
         if gwid is None: gwid = ""
-        final_msg = await ctx.send(embed=self.bot.util.embed(author={'name':"Top 30 of {}".format(ctx.guild.name), 'icon_url':ctx.guild.icon_url}, description="{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.emote.get('question'), gwid, self.honorFormat(total), self.honorFormat(total // min(30, len(members)))), fields=fields, inline=True, color=self.color))
+        final_msg = await ctx.send(embed=self.bot.util.embed(author={'name':"Top 30 of {}".format(ctx.guild.name), 'icon_url':ctx.guild.icon_url}, description="{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.emote.get('question'), gwid, self.bot.util.valToStr(total), self.bot.util.valToStr(total // min(30, len(members)))), fields=fields, inline=True, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 60)
 
     """getCrewLeaders()
@@ -1500,7 +1476,7 @@ class GuildWar(commands.Cog):
                 if ranking[i][2] is None:
                     fields[-1]['value'] += "{} \▫️ {} \▫️ {} \▫️ **n/a**\n".format(i+1, ranking[i][1], ranking[i][0])
                 else:
-                    fields[-1]['value'] += "{} \▫️ {} \▫️ {} \▫️ **{}**\n".format(i+1, ranking[i][1], ranking[i][0], self.honorFormat(ranking[i][2]))
+                    fields[-1]['value'] += "{} \▫️ {} \▫️ {} \▫️ **{}**\n".format(i+1, ranking[i][1], ranking[i][0], self.bot.util.valToStr(ranking[i][2]))
             final_msg = await ctx.send(embed=self.bot.util.embed(title="{} /gbfg/ GW{} Dancho Ranking".format(self.bot.emote.get('gw'), gwid), fields=fields, inline=True, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 60)
 
@@ -1558,9 +1534,9 @@ class GuildWar(commands.Cog):
             for i in range(0, len(sorted)):
                 if i % 15 == 0: fields.append({'name':'{}'.format(self.bot.emote.get(str(len(fields)+1))), 'value':''})
                 if sorted[i][3].startswith('Total'):
-                    fields[-1]['value'] += "{} \▫️ {} \▫️ **{}**\n".format(i+1, sorted[i][1], self.honorFormat(sorted[i][2]))
+                    fields[-1]['value'] += "{} \▫️ {} \▫️ **{}**\n".format(i+1, sorted[i][1], self.bot.util.valToStr(sorted[i][2]))
                 else:
-                    fields[-1]['value'] += "#**{}** \▫️ {} \▫️ **{}**\n".format(self.honorFormat(sorted[i][3]), sorted[i][1], self.honorFormat(sorted[i][2]))
+                    fields[-1]['value'] += "#**{}** \▫️ {} \▫️ **{}**\n".format(self.bot.util.valToStr(sorted[i][3]), sorted[i][1], self.bot.util.valToStr(sorted[i][2]))
             return fields, gwid
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -1730,20 +1706,20 @@ class GuildWar(commands.Cog):
                 msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ **{:,}**".format(self.bot.data.save['matchtracker']['names'][0], you_id, self.bot.data.save['matchtracker']['scores'][0])
                 if self.bot.data.save['matchtracker']['speed'] is not None:
                     if self.bot.data.save['matchtracker']['speed'][0] == self.bot.data.save['matchtracker']['top_speed'][0]:
-                        msg += "\n**Speed** ▫️ **Now {}/m** ▫️ **Top {}/m**".format(self.honorFormat(self.bot.data.save['matchtracker']['speed'][0]), self.honorFormat(self.bot.data.save['matchtracker']['top_speed'][0]))
+                        msg += "\n**Speed** ▫️ **Now {}/m** ▫️ **Top {}/m**".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][0]), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][0]))
                     else:
-                        msg += "\n**Speed** ▫ Now {}/m ▫️ Top {}/m".format(self.honorFormat(self.bot.data.save['matchtracker']['speed'][0]), self.honorFormat(self.bot.data.save['matchtracker']['top_speed'][0]))
+                        msg += "\n**Speed** ▫ Now {}/m ▫️ Top {}/m".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][0]), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][0]))
                     if end_time > self.bot.data.save['matchtracker']['last']:
-                        msg += "\n**Estimation** ▫ Now {} ▫️ Top {}".format(self.honorFormat(self.bot.data.save['matchtracker']['scores'][0] + self.bot.data.save['matchtracker']['speed'][0] * remaining.seconds//60), self.honorFormat(self.bot.data.save['matchtracker']['scores'][0] + self.bot.data.save['matchtracker']['top_speed'][0] * remaining.seconds//60))
+                        msg += "\n**Estimation** ▫ Now {} ▫️ Top {}".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][0] + self.bot.data.save['matchtracker']['speed'][0] * remaining.seconds//60), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][0] + self.bot.data.save['matchtracker']['top_speed'][0] * remaining.seconds//60))
                 msg += "\n\n"
                 msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ **{:,}**".format(self.bot.data.save['matchtracker']['names'][1], self.bot.data.save['matchtracker']['id'], self.bot.data.save['matchtracker']['scores'][1])
                 if self.bot.data.save['matchtracker']['speed'] is not None:
                     if self.bot.data.save['matchtracker']['speed'][1] == self.bot.data.save['matchtracker']['top_speed'][1]:
-                        msg += "\n**Speed** ▫️ **Now {}/m** ▫️ **Top {}/m**".format(self.honorFormat(self.bot.data.save['matchtracker']['speed'][1]), self.honorFormat(self.bot.data.save['matchtracker']['top_speed'][1]))
+                        msg += "\n**Speed** ▫️ **Now {}/m** ▫️ **Top {}/m**".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][1]), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][1]))
                     else:
-                        msg += "\n**Speed** ▫️ Now {}/m ▫️ Top {}/m".format(self.honorFormat(self.bot.data.save['matchtracker']['speed'][1]), self.honorFormat(self.bot.data.save['matchtracker']['top_speed'][1]))
+                        msg += "\n**Speed** ▫️ Now {}/m ▫️ Top {}/m".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][1]), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][1]))
                     if end_time > self.bot.data.save['matchtracker']['last']:
-                        msg += "\n**Estimation** ▫ Now {} ▫️ Top {}".format(self.honorFormat(self.bot.data.save['matchtracker']['scores'][1] + self.bot.data.save['matchtracker']['speed'][1] * remaining.seconds//60), self.honorFormat(self.bot.data.save['matchtracker']['scores'][1] + self.bot.data.save['matchtracker']['top_speed'][1] * remaining.seconds//60))
+                        msg += "\n**Estimation** ▫ Now {} ▫️ Top {}".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][1] + self.bot.data.save['matchtracker']['speed'][1] * remaining.seconds//60), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][1] + self.bot.data.save['matchtracker']['top_speed'][1] * remaining.seconds//60))
                 msg += "\n\n"
                 lead = abs(self.bot.data.save['matchtracker']['scores'][0] - self.bot.data.save['matchtracker']['scores'][1])
                 if lead >= 0:
