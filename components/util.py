@@ -485,13 +485,13 @@ class Util():
         if isinstance(s, int): s = float(s)
         bs = abs(s)
         if bs >= 1000000000:
-            if bs < 10000000000: return "{:,.3f}B".format(s/1000000000).replace('.0', '')
-            else: return "{:,.2f}B".format(s/1000000000).replace('.0', '')
+            if bs < 10000000000: return "{:,.3f}B".format(s/1000000000).replace('.000', '')
+            else: return "{:,.2f}B".format(s/1000000000).replace('.00', '')
         elif bs >= 1000000:
-            if bs < 10000000: return "{:,.3f}M".format(s/1000000).replace('.0', '')
-            else: return "{:,.2f}M".format(s/1000000).replace('.0', '')
+            if bs < 10000000: return "{:,.3f}M".format(s/1000000).replace('.000', '')
+            else: return "{:,.2f}M".format(s/1000000).replace('.00', '')
         elif bs >= 1000:
-            if bs < 10000: return "{:,.3f}K".format(s/1000).replace('.0', '')
-            else: return "{:,.2f}K".format(s/1000).replace('.0', '')
+            if bs < 10000: return "{:,.3f}K".format(s/1000).replace('.000', '')
+            else: return "{:,.2f}K".format(s/1000).replace('.00', '')
         else:
             return "{:,.1f}".format(s).replace('.0', '')
