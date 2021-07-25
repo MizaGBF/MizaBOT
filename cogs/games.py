@@ -807,24 +807,46 @@ class Games(commands.Cog):
         final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.avatar_url, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 40)
 
+    """randint()
+    Generate a simple pseudo random number based on the seed value
+    
+    Parameters
+    ----------
+    seed: Integer used as the seed
+    
+    Returns
+    ----------
+    int: Pseudo random value which you can use as the next seed
+    """
+    def randint(self, seed):
+        return ((seed * 1103515245) % 4294967296) + 12345
+
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 7, commands.BucketType.user)
     async def character(self, ctx):
         """Generate a random GBF character"""
-        seed = (ctx.author.id + int(datetime.utcnow().timestamp()) // 86400)
-        rarity = ['SSR', 'SR', 'R']
-        race = ['Human', 'Erun', 'Draph', 'Harvin', 'Primal', 'Other']
-        element = ['fire', 'water', 'earth', 'wind', 'light', 'dark']
-        gender = ['Unknown', '\♂️', '\♀️']
-        limited_seed = seed % 300
-        if limited_seed < 60:
-            limited = ['Summer', 'Yukata', 'Grand', 'Holiday', 'Halloween', 'Valentine']
-            limited_txt = "\n**Series** ▫️ " + limited[limited_seed // 10]
-        else:
-            limited_txt = ""
+        seed = (ctx.author.id + int(datetime.utcnow().timestamp()) // 86400) # based on user id + day
+        values = {
+            'Rarity' : [['SSR', 'SR', 'R'], 3, True, None], # random strings, modulo to use, bool to use emote.get, seed needed to enable
+            'Race' : [['Human', 'Erun', 'Draph', 'Harvin', 'Primal', 'Other'], 6, False, None],
+            'Element' : [['fire', 'water', 'earth', 'wind', 'light', 'dark'], 6, True, None],
+            'Gender' : [['Unknown', '\♂️', '\♀️'], 3, False, None],
+            'Series' : [['Summer', 'Yukata', 'Grand', 'Holiday', 'Halloween', 'Valentine'], 30, True, 6]
+        }
+        msg = ""
+        rarity_mod = 0
+        for k in values:
+            v = seed % values[k][1]
+            if k == "Rarity": rarity_mod = 7 - 2 * v
+            if values[k][3] is not None and v >= values[k][3]:
+                continue
+            if values[k][2]: msg += "**{}** ▫️ {}\n".format(k, self.bot.emote.get(values[k][0][v]))
+            else: msg += "**{}** ▫️ {}\n".format(k, values[k][0][v])
+            seed = self.randint(seed)
+        msg += "**Rating** ▫️ {:.1f}".format(rarity_mod + (seed % 31) / 10)
 
-        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="**Rarity** ▫️ {}\n**Race** ▫️ {}\n**Gender** ▫️ {}\n**Element** ▫️ {}\n**Rating** ▫️ {:.1f}{}".format(self.bot.emote.get(rarity[seed % 3]), race[(seed * 5 - 1) % 6], gender[(seed * 7 + 4) % 3], self.bot.emote.get(element[(seed * 13 - 3) % 6]), ((seed % 41) * 0.1) + 6.0 - (seed % 3) * 1.5, limited_txt), inline=True, color=self.color))
-        await self.bot.util.clean(ctx, final_msg, 30)
+        msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color))
+        await self.bot.util.clean(ctx, msg, 30)
 
     @commands.command(no_pm=True, hidden=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 30, commands.BucketType.guild)
