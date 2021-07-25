@@ -631,6 +631,7 @@ class GuildWar(commands.Cog):
     """findranking()
     Extract parameters from terms and call searchGWDB() with the proper settings.
     ctx is used to output the result.
+    Used by both findplayer() and findcrew()
     
     Parameters
     ----------
@@ -638,13 +639,16 @@ class GuildWar(commands.Cog):
     type: Boolean, True for crews, False for players
     terms: Search string
     """
-    async def findranking(self, ctx, type, terms): # it's a mess, I won't comment it
+    async def findranking(self, ctx, type, terms):
+        # set the search strings based on the search type
         if type: txt = "crew"
         else: txt = "player"
-        if terms == "":
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="**Usage**\n`find{} [crewname]` to search a {} by name\n`find{} %eq [{}name]` or `find{} %== [{}name]` for an exact match\n`find{} %id [{}id]` for an id search\n`find{} %rank [ranking]` for a ranking search\n`find{} %all ...` to receive all the results by direct message".format(txt, txt, txt, txt, txt, txt, txt, txt, txt, txt), color=self.color))
+        
+        if terms == "": # no search terms so we print how to use it
+            msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="**Usage**\n`find{} [crewname]` to search a {} by name\n`find{} %eq [{}name]` or `find{} %== [{}name]` for an exact match\n`find{} %id [{}id]` for an id search\n`find{} %rank [ranking]` for a ranking search\n`find{} %all ...` to receive all the results by direct message".format(txt, txt, txt, txt, txt, txt, txt, txt, txt, txt), color=self.color))
         else:
             try:
+                # check if the %all option is included and extract it
                 index = terms.find("%all ")
                 if index != -1 and index + 5 < len(terms):
                     terms = terms.replace("%all ", "")
@@ -652,6 +656,7 @@ class GuildWar(commands.Cog):
                 else:
                     all = False
 
+                # check if the %past option is included and extract it
                 index = terms.find("%past ")
                 if index != -1 and index + 6 < len(terms):
                     terms = terms.replace("%past ", "")
@@ -659,6 +664,7 @@ class GuildWar(commands.Cog):
                 else:
                     past = False
 
+                # check if the %== or %eq options are included and extract it
                 if terms.startswith("%== ") or terms.startswith("%eq "):
                     terms = terms[4:]
                     mode = 1
@@ -667,47 +673,49 @@ class GuildWar(commands.Cog):
                         terms = int(terms[4:])
                         mode = 2
                     except:
-                        final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="`{}` isn't a valid syntax".format(terms), color=self.color))
+                        msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="`{}` isn't a valid syntax".format(terms), color=self.color))
                         raise Exception("Returning")
                 elif terms.startswith("%rank "):
                     try:
                         terms = int(terms[6:])
                         mode = 3
                     except:
-                        final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="`{}` isn't a valid syntax".format(terms), color=self.color))
+                        msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="`{}` isn't a valid syntax".format(terms), color=self.color))
                         raise Exception("Returning")
                 else:
                     mode = 0
-                if type: data = await self.bot.do(self.bot.ranking.searchGWDB, terms, mode+10)
-                else: data = await self.bot.do(self.bot.ranking.searchGWDB, terms, mode)
-                if data is None:
-                    final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Database unavailable", color=self.color))
-                    raise Exception("Returning")
 
+                # do our search
+                data = await self.bot.do(self.bot.ranking.searchGWDB, terms, (mode+10 if type else mode))
+
+                # select the right database (oldest one if %past is set or newest is unavailable, if not the newest)
                 if data[1] is None or past: result = data[0]
                 else: result = data[1]
+                
+                # check validity
                 if result is None:
-                    final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Database unavailable", color=self.color))
+                    msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Database unavailable", color=self.color))
                     raise Exception("Returning")
 
-                if len(result) == 0:
-                    final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="`{}` not found".format(terms), footer="help find{} for details".format(txt), color=self.color))
+                if len(result) == 0: # check number of matches
+                    msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="`{}` not found".format(terms), footer="help find{} for details".format(txt), color=self.color))
                     raise Exception("Returning")
-                elif all:
+                elif all: # set number of results to send if %all if set
                     if type: xl = 36
                     else: xl = 80
                     x = len(result)
                     if x > xl: x = xl
-                    final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Sending your {}/{} result(s)".format(x, len(result)), footer="help find{} for details".format(txt), color=self.color))
-                elif type and len(result) > 6: x = 6 # crew
-                elif not type and len(result) > 15: x = 15 # player
-                elif len(result) > 1: x = len(result)
-                else: x = 1
+                    msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Sending your {}/{} result(s)".format(x, len(result)), footer="help find{} for details".format(txt), color=self.color))
+                elif type and len(result) > 6: x = 6 # set number of crew results to send if greater than 6
+                elif not type and len(result) > 15: x = 15 # set number of player results to send if greater than 15
+                else: x = len(result) # else set the number of results to send equal to the available amount
+                
+                # embed fields for the message
                 fields = []
                 for i in range(0, x):
                     if type: # crew -----------------------------------------------------------------
                         fields.append({'name':"{}".format(result[i].name), 'value':''})
-                        if result[i].ranking is not None and result[i].day == 4: fields[-1]['value'] += "▫️**#{}**\n".format(result[i].ranking)
+                        if result[i].ranking is not None: fields[-1]['value'] += "▫️**#{}**\n".format(result[i].ranking)
                         else: fields[-1]['value'] += "\n"
                         if result[i].preliminaries is not None: fields[-1]['value'] += "**P.** ▫️{:,}\n".format(result[i].preliminaries)
                         if result[i].day1 is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('1'), result[i].day1)
@@ -717,11 +725,12 @@ class GuildWar(commands.Cog):
                         if fields[-1]['value'] == "": fields[-1]['value'] = "No data"
                         fields[-1]['value'] = "[{}](http://game.granbluefantasy.jp/#guild/detail/{}){}".format(result[i].id, result[i].id, fields[-1]['value'])
                         gwnum = result[i].gw
+                        # sending via dm if %all is set
                         if all and ((i % 6) == 5 or i == x - 1):
                             try:
                                 await ctx.author.send(embed=self.bot.util.embed(title="{} **Guild War {}**".format(self.bot.emote.get('gw'), gwnum), fields=fields, inline=True, footer="help findcrew for details", color=self.color))
                             except:
-                                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="I can't send you the full list by private messages", color=self.color))
+                                msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="I can't send you the full list by private messages", color=self.color))
                                 raise Exception("Returning")
                             fields = []
                     else: # player -----------------------------------------------------------------
@@ -734,11 +743,12 @@ class GuildWar(commands.Cog):
                         if result[i].current is not None: fields[-1]['value'] += "{:,}\n".format(result[i].current)
                         else: fields[-1]['value'] += "n/a\n"
                         gwnum = result[i].gw
+                        # sending via dm if %all is set
                         if all and ((i % 15) == 14 or i == x - 1):
                             try:
                                 await ctx.author.send(embed=self.bot.util.embed(title="{} **Guild War {}**".format(self.bot.emote.get('gw'), gwnum), fields=fields, inline=True, footer="help findplayer for details", color=self.color))
                             except:
-                                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="I can't send you the full list by private messages", color=self.color))
+                                msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="I can't send you the full list by private messages", color=self.color))
                                 raise Exception("Returning")
                             fields = []
 
@@ -748,11 +758,12 @@ class GuildWar(commands.Cog):
                 elif type and len(result) > 6: desc = "6/{} random result(s) shown".format(len(result)) # crew
                 elif not type and len(result) > 30: desc = "30/{} random result(s) shown".format(len(result)) # player
                 else: desc = ""
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War {}**".format(self.bot.emote.get('gw'), gwnum), description=desc, fields=fields, inline=True, footer="help find{} for details".format(txt), color=self.color))
+                msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War {}**".format(self.bot.emote.get('gw'), gwnum), description=desc, fields=fields, inline=True, footer="help find{} for details".format(txt), color=self.color))
             except Exception as e:
                 if str(e) != "Returning":
                     await self.bot.sendError('findranking', e)
-        await self.bot.util.clean(ctx, final_msg, 45)
+        try: await self.bot.util.clean(ctx, msg, 45)
+        except: pass
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwcrew'])
     @commands.cooldown(2, 15, commands.BucketType.user)
@@ -1038,7 +1049,6 @@ class GuildWar(commands.Cog):
                 crew = {**crew, **data}
             if mode > 0: return crew
             if not crew['private']: self.crewcache[id] = crew # only cache public crews
-
 
         # get the last gw score
         crew['scores'] = []

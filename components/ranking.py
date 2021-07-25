@@ -443,9 +443,9 @@ class Ranking():
                     
                 if self.scrap_mode: # update tracker
                     try:
-                        await self.updateYouTracker(update_time)
+                        await self.updateTracker(update_time)
                     except Exception as ue:
-                        await self.bot.sendError('updateyoutracker', ue)
+                        await self.bot.sendError('updatetracker', ue)
 
             return ""
         except Exception as e:
@@ -486,14 +486,14 @@ class Ranking():
         conn.close()
         return infos
 
-    """updateYouTracker()
+    """updateTracker()
     Update the YouTracker data (GW Match tracker for my crew)
     
     Parameters
     ----------
     t: time of this ranking interval
     """
-    async def updateYouTracker(self, t):
+    async def updateTracker(self, t):
         day = self.getCurrentGWDayID()
         if day is None or day <= 1 or day >= 10: # check if match day
             return
@@ -629,46 +629,46 @@ class Ranking():
         - list: Matches in the latest GW
     """
     def searchGWDB(self, terms, mode):
-        v = self.GWDBver()
+        v = self.GWDBver() # load and get the version of the database files
         data = [None, None]
-        dbs = [self.bot.sql.get("GW_old.sql"), self.bot.sql.get("GW.sql")]
+        dbs = [self.bot.sql.get("GW_old.sql"), self.bot.sql.get("GW.sql")] # get access
         cs = []
-        for n in [0, 1]:
-            cs.append(dbs[n].open())
+        for n in [0, 1]: cs.append(dbs[n].open()) # get a cursor for both
 
-        st = 1 if mode >= 10 else 0 # score type
-        for n in [0, 1]:
-            if cs[n] is not None and v[n] is not None:
+        st = 1 if mode >= 10 else 0 # search type (crew or player)
+        for n in [0, 1]: # for both database
+            if cs[n] is not None and v[n] is not None: # if the data is loaded and alright
                 try:
                     data[n] = []
                     c = cs[n]
-                    if mode == 10:
+                    # search according to the mode
+                    if mode == 10: # crew name search
                         c.execute("SELECT * FROM crews WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                    elif mode == 11:
+                    elif mode == 11: # crew name exact search
                         c.execute("SELECT * FROM crews WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                    elif mode == 12:
+                    elif mode == 12: # crew id search
                         c.execute("SELECT * FROM crews WHERE id = {}".format(terms))
-                    elif mode == 13:
+                    elif mode == 13: # crew ranking search
                         c.execute("SELECT * FROM crews WHERE ranking = {}".format(terms))
-                    elif mode == 0:
+                    elif mode == 0: # player name search
                         c.execute("SELECT * FROM players WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                    elif mode == 1:
+                    elif mode == 1: # player exact name search
                         c.execute("SELECT * FROM players WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                    elif mode == 2:
+                    elif mode == 2: # player id search
                         c.execute("SELECT * FROM players WHERE id = {}".format(terms))
-                    elif mode == 3:
+                    elif mode == 3: # player ranking search
                         c.execute("SELECT * FROM players WHERE ranking = {}".format(terms))
-                    results = c.fetchall()
+                    results = c.fetchall() # fetch the result
                     
                     for r in results:
-                        s = Score(type=st, gw=v[n]['gw'], ver=v[n]['ver'])
+                        s = Score(type=st, gw=v[n]['gw'], ver=v[n]['ver']) # make a Score object
                         if st == 0: # player
                             s.ranking = r[0]
                             s.id = r[1]
                             s.name = r[2]
                             s.current = r[3]
                         else: # crew
-                            if s.ver == 2:
+                            if s.ver == 2: # newest database format
                                 s.ranking = r[0]
                                 s.id = r[1]
                                 s.name = r[2]
@@ -681,7 +681,7 @@ class Ranking():
                                 if s.total2 is not None and s.total1 is not None: s.day2 = s.total2 - s.total1
                                 if s.total3 is not None and s.total2 is not None: s.day3 = s.total3 - s.total2
                                 if s.total4 is not None and s.total3 is not None: s.day4 = s.total4 - s.total3
-                            else:
+                            else: # old database format
                                 s.ranking = r[0]
                                 s.id = r[1]
                                 s.name = r[2]
@@ -694,6 +694,7 @@ class Ranking():
                                 s.total3 = r[9]
                                 s.day4 = r[10]
                                 s.total4 = r[11]
+                            # set the current score, etc
                             if s.total4 is not None:
                                 s.current = s.total4
                                 s.current_day = s.day4
@@ -714,12 +715,12 @@ class Ranking():
                                 s.current = s.preliminaries
                                 s.current_day = s.preliminaries
                                 s.day = 0
-                        if s.gw is None: s.gw = ''
-                        data[n].append(s)
-                    random.shuffle(data[n])
+                        if s.gw is None: s.gw = '' # it's supposed to be the gw id
+                        data[n].append(s) # append to our list
+                    random.shuffle(data[n]) # shuffle the list once it's done
                 except Exception as e:
-                    print('searchGWDB', n, 'mode', mode, ':', self.bot.util.pexc(e))
+                    print('searchGWDB', n, 'mode', mode, ':', self.bot.util.pexc(e)) # TODO: change that?
                     self.bot.errn += 1
                     data[n] = None
-                dbs[n].close()
+                dbs[n].close() # close access
         return data

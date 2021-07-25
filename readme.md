@@ -22,20 +22,6 @@ Check the [Command List](https://mizagbf.github.io/MizaBOT/) for details.
   
 It's designed to be used on [Heroku](https://www.heroku.com) and isn't intended to be setup and used by anyone. Still, if you are interested, details are available on the [Wiki](https://github.com/MizaGBF/MizaBOT/wiki) and in this [issue](https://github.com/MizaGBF/MizaBOT/issues/1).  
   
-The bot is semi open to invitations:  
-[![Invitation](https://github.com/MizaGBF/MizaBOT/raw/master/docs/img/invite.png)]( https://discord.com/oauth2/authorize?client_id=614723060100104193&scope=bot&permissions=8589934591)  
-Currently only servers of 30 members or more can be added to limit the number of new servers.  
-You'll have to wait for approval (Your server owner will be notified if accepted).  
-Misuses of this link will result in a server-wide ban.  
-I have limited resources so I reserve to myself the right to refuse your server, sorry in advance.  
-**Addendum: I got a ton of requests so I'm here to clarify some points:  
-The goal for now is to test the cost of more servers using the bot, not to allow it everywhere.  
-I also prioritize /gbfg/ crews as I'm close to a few of them.  
-Keep in mind I have a limit of 100 servers until I have to get the bot accepted by Discord for more, unless I rework the whole thing to bypass those limitations.  
-So, all of you out here and your random server called loli-mommy-milf whatever will get refused.  
-Going as far as to find me to beg/ask/(insert whatever verb you want) for the bot will get you added to the ban list.  
-I'm alone and in for the fun on this project, I do what I can, please understand.**  
-  
 ### Code Overview  
 * The bot is divided in three parts:
   * The client itself in [bot.py](https://github.com/MizaGBF/MizaBOT/blob/master/bot.py)  
