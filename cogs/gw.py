@@ -6,6 +6,7 @@ import math
 from bs4 import BeautifulSoup
 from xml.sax import saxutils as su
 from urllib.parse import unquote
+import statistics
 
 # ----------------------------------------------------------------------------------------------------------------
 # Guild War Cog
@@ -1107,6 +1108,7 @@ class GuildWar(commands.Cog):
             if gwstate:
                 total = 0
                 unranked = 0
+                med_set = []
                 for i in range(0, len(players)):
                     # retrieve player honors
                     honor = self.bot.ranking.searchGWDB(players[i]['id'], 2)
@@ -1117,6 +1119,7 @@ class GuildWar(commands.Cog):
                         if gwid is None: gwid = honor[1][0].gw
                         players[i]['honor'] = honor[1][0].current
                         total += honor[1][0].current
+                        med_set.append(honor[1][0].current)
                     if i > 0 and players[i]['honor'] is not None:
                         # sorting
                         for j in range(0, i):
@@ -1125,10 +1128,11 @@ class GuildWar(commands.Cog):
                                 players[j] = players[i]
                                 players[i] = tmp
                 if gwid and len(players) - unranked > 0:
-                    description += "\n{} GW**{}** ▫️ Player Sum **{}** ▫️ Average **{}**".format(self.bot.emote.get('question'), gwid, self.bot.util.valToStr(total), self.bot.util.valToStr(total // (len(players) - unranked)))
+                    description += "\n{} GW**{}** \▫️ Player Sum **{}** \▫️ Avg. **{}**".format(self.bot.emote.get('question'), gwid, self.bot.util.valToStr(total), self.bot.util.valToStr(total // (len(players) - unranked)))
+                    if len(med_set) > 0:
+                        description += " \▫️ Med. **{}**".format(self.bot.util.valToStr(statistics.median(med_set)))
                     if unranked > 0:
-                        description += " ▫️ {} Unranked".format(unranked)
-                        if unranked > 1: description += "s"
+                        description += " \▫️ **{}** n/a".format(unranked)
             # create the fields
             i = 0
             for p in players:
