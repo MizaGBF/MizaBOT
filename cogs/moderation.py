@@ -60,7 +60,7 @@ class Moderation(commands.Cog):
             else: guild = self.bot.get_guild(id)
             msg = await ctx.send(embed=self.bot.util.embed(title=guild.name + " status", description="**ID** ▫️ `{}`\n**Owner** ▫️ {}\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon_url, timestamp=guild.created_at, color=self.color))
         except:
-            msg = await ctx.send(embed=self.bot.util.embed(title="Error", description="Can't find guild {}".format(id), color=self.color))
+            msg = await ctx.send(embed=self.bot.util.embed(title="Error", description="Can't find guild `{}`".format(id), color=self.color))
         await self.bot.util.clean(ctx, msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -106,6 +106,19 @@ class Moderation(commands.Cog):
             self.bot.data.save['st'][str(ctx.message.author.guild.id)] = [st1, st2]
             self.bot.data.pending = True
         await self.bot.util.react(ctx.message, '✅') # white check mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['isBanned'])
+    @isMod()
+    async def banCheck(self, ctx, member : discord.Member):
+        """Check if an user has a ban registered in the bot (Mod Only)"""
+        msg = ""
+        if self.bot.ban.check(member.id, self.bot.ban.OWNER): msg += "Banned from having the bot in its own servers\n"
+        if self.bot.ban.check(member.id, self.bot.ban.SPARK): msg += "Banned from appearing in `rollRanking`\n"
+        if self.bot.ban.check(member.id, self.bot.ban.PROFILE): msg += "Banned from using `setProfile`\n"
+        if self.bot.ban.check(member.id, self.bot.ban.OWNER): msg += "Banned from using the bot\n"
+        if msg == "": msg = "No Bans set for this user"
+        msg = await ctx.send(embed=self.bot.util.embed(author={'name':ctx.author.display_name, 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color))
+        await self.bot.util.clean(ctx, msg, 50)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['banspark'])
     @isMod()

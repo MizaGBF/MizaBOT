@@ -414,6 +414,19 @@ class Admin(commands.Cog):
         await self.bot.change_presence(status=discord.Status.online, activity=discord.activity.Game(name=terms))
         await self.bot.util.react(ctx.message, '✅') # white check mark
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['isBannedID'])
+    @isOwner()
+    async def banCheckID(self, ctx, id : int):
+        """ID Based Check if an user has a ban registered in the bot (Owner Only)"""
+        msg = ""
+        if self.bot.ban.check(id, self.bot.ban.OWNER): msg += "Banned from having the bot in its own servers\n"
+        if self.bot.ban.check(id, self.bot.ban.SPARK): msg += "Banned from appearing in `rollRanking`\n"
+        if self.bot.ban.check(id, self.bot.ban.PROFILE): msg += "Banned from using `setProfile`\n"
+        if self.bot.ban.check(id, self.bot.ban.OWNER): msg += "Banned from using the bot\n"
+        if msg == "": msg = "No Bans set for this user"
+        msg = await ctx.send(embed=self.bot.util.embed(title="User {}".format(id), description=msg, color=self.color))
+        await self.bot.util.clean(ctx, msg, 50)
+
     @commands.command(no_pm=True)
     @isOwner()
     async def ban(self, ctx, id: int):

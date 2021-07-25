@@ -28,8 +28,9 @@ class Ban():
     """
     def set(self, id, flag):
         with self.bot.data.lock:
-            self.bot.data.save['ban'][str(id)] = self.bot.data.save['ban'].get(str(id), 0) | flag
-            self.bot.data.pending = True
+            if not self.check(id, flag):
+                self.bot.data.save['ban'][str(id)] = self.bot.data.save['ban'].get(str(id), 0) ^ flag
+                self.bot.data.pending = True
 
     """unset()
     Unban an user
@@ -58,7 +59,7 @@ class Ban():
     bool: True if banned, False if not
     """
     def check(self, id, mask):
-        return ((self.bot.data.save['ban'].get(str(id), 0) ^ mask) == 0)
+        return ((self.bot.data.save['ban'].get(str(id), 0) & mask) == mask)
 
     """get()
     Return the user bitmask
