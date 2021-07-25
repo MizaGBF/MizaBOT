@@ -44,6 +44,7 @@ class MizaBot(commands.Bot):
         self.changelog = [ # changelog lines
             "**This MizaBOT version is a Beta**, please use `$bug_report` if you see anything wrong",
             "Online command list added [here](https://mizagbf.github.io/MizaBOT/)",
+            "Crew health indicator in `$crew`",
             "Added `$gwspeed`, `$invite` and `$scam`",
             "Reworked the `$help` command",
             "All servers can now access the pinboard system using `$enablePinboard` and `$disablePinboard`",

@@ -1098,7 +1098,7 @@ class GuildWar(commands.Cog):
         if crew['private']:
             description += '\n{} [{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ *Crew is private*'.format(self.bot.emote.get('captain'), crew['leader'], crew['leader_id'])
         else:
-            footer = "Public crews are updated once per day"
+            footer = "Public crew member lists are updated at least once per day"
             # get GW data
             if mode == 2: gwstate = True
             elif mode == 1: gwstate = False
@@ -1135,7 +1135,7 @@ class GuildWar(commands.Cog):
                     elif median > average * 1: health = ':heart:'
                     elif median > average * 0.9: health = ':mending_heart:'
                     elif median > average * 0.65: health = ':warning:'
-                    elif median > average * 0.4: health = ':biohazard:'
+                    elif median > average * 0.4: health = ':put_litter_in_its_place:'
                     else: health = ':skull_crossbones:'
                     description += "\n{} GW**{}** \▫️ Player Sum **{}** \▫️ Avg. **{}**".format(health, gwid, self.bot.util.valToStr(total), self.bot.util.valToStr(average))
                     if median > 0:
