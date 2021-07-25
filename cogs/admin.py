@@ -231,14 +231,12 @@ class Admin(commands.Cog):
     @isOwner()
     async def refuse(self, ctx, id: int):
         """Command to refuse a pending server (Owner Only)"""
-        id = str(id)
         try:
-            with self.bot.data.lock:
-                self.bot.data.save['guilds']['pending'].pop(id)
-                self.bot.data.pending = True
             guild = self.bot.get_guild(id)
-            if guild:
-                await guild.leave()
+            await guild.leave()
+            with self.bot.data.lock:
+                self.bot.data.save['guilds']['pending'].pop(str(id))
+                self.bot.data.pending = True
             await self.bot.util.react(ctx.message, '✅') # white check mark
             await self.guildList()
         except Exception as e:

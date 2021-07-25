@@ -811,10 +811,11 @@ class Games(commands.Cog):
     @commands.cooldown(2, 7, commands.BucketType.user)
     async def character(self, ctx):
         """Generate a random GBF character"""
-        seed = (ctx.author.id + int(datetime.utcnow().timestamp()) // 86400) % 4428
+        seed = (ctx.author.id + int(datetime.utcnow().timestamp()) // 86400)
         rarity = ['SSR', 'SR', 'R']
         race = ['Human', 'Erun', 'Draph', 'Harvin', 'Primal', 'Other']
         element = ['fire', 'water', 'earth', 'wind', 'light', 'dark']
+        gender = ['Unknown', '\♂️', '\♀️']
         limited_seed = seed % 300
         if limited_seed < 60:
             limited = ['Summer', 'Yukata', 'Grand', 'Holiday', 'Halloween', 'Valentine']
@@ -822,10 +823,10 @@ class Games(commands.Cog):
         else:
             limited_txt = ""
 
-        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="**Rarity** ▫️ {}\n**Race** ▫️ {}\n**Element** ▫️ {}\n**Rating** ▫️ {:.1f}{}".format(self.bot.emote.get(rarity[seed % 3]), race[(seed - 1) % 6], self.bot.emote.get(element[(seed - 3) % 6]), ((seed % 41) * 0.1) + 6.0 - (seed % 3) * 1.5, limited_txt), inline=True, color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="**Rarity** ▫️ {}\n**Race** ▫️ {}\n**Gender** ▫️ {}\n**Element** ▫️ {}\n**Rating** ▫️ {:.1f}{}".format(self.bot.emote.get(rarity[seed % 3]), race[(seed * 5 - 1) % 6], gender[(seed * 7 + 4) % 3], self.bot.emote.get(element[(seed * 13 - 3) % 6]), ((seed % 41) * 0.1) + 6.0 - (seed % 3) * 1.5, limited_txt), inline=True, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 30)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.command(no_pm=True, hidden=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 30, commands.BucketType.guild)
     async def xil(self, ctx):
         """Generate a random element for Xil"""

@@ -1119,12 +1119,13 @@ class GuildWar(commands.Cog):
     Parameters
     ----------
     target: String, can be a crew id or a crew name registered in config.json
+    mode: Integer: 0=all, 1=main page data only, 2=main page and summary | add 10 to skip the cache check
     
     Returns
     --------
     dict: Crew data, None if error
     """
-    def getCrewData(self, target, mode=0): # retrieve a crew data (mode=0 - all, 1 - main page data only, 2 - main page and summary | add 10 to skip the cache check)
+    def getCrewData(self, target, mode=0):
         if not self.bot.gbf.isAvailable(): # check for maintenance
             return {'error':'Game is in maintenance'}
         if isinstance(target, list) or isinstance(target, tuple): id = " ".join(target)
