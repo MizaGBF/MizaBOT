@@ -6,7 +6,6 @@ import math
 from bs4 import BeautifulSoup
 from xml.sax import saxutils as su
 from urllib.parse import unquote
-import threading
 
 # ----------------------------------------------------------------------------------------------------------------
 # Guild War Cog
@@ -19,8 +18,6 @@ class GuildWar(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.color = 0xff0000
-        self.dbstate = [True, True]
-        self.dblock = threading.Lock()
         self.badcrewcache = []
         self.crewcache = {}
 
@@ -613,157 +610,13 @@ class GuildWar(commands.Cog):
         else:
             await ctx.send(embed=self.bot.util.embed(title="Error", description="No buff skip is currently set", color=self.color))
 
-    """loadGWDB()
-    Load the Unite & fight ranking databases
-    
-    Parameters
-    ----------
-    ids: list of databases to load (0 = old one, 1 = current one)
-    """
-    def loadGWDB(self, ids = [0, 1]):
-        fs = ["GW_old.sql", "GW.sql"]
-        for i in ids:
-            try:
-                self.dbstate[i] = False
-                self.bot.sql.remove(fs[i])
-                if self.bot.drive.dlFile(fs[i], self.bot.data.config['tokens']['files']):
-                    self.bot.sql.add(fs[i])
-                    self.dbstate[i] = True
-            except:
-                print("Failed to load database", fs[i])
-                self.bot.errn += 1
-
-    """reloadGWDB()
-    Reload the Unite & fight ranking databases
-    """
-    def reloadGWDB(self):
-        with self.dblock:
-            self.dbstate = [True, True]
-            self.loadGWDB()
-
-    """GWDBver()
-    Return the Unite & fight ranking database infos
-    
-    Returns
-    --------
-    list: First element is for the old database, second is for the current one
-    """
-    def GWDBver(self):
-        fs = ["GW_old.sql", "GW.sql"]
-        res = [None, None]
-        for i in [0, 1]:
-            with self.dblock:
-                db = self.bot.sql.get(fs[i])
-                if db is None:
-                    if not self.dbstate[i]: continue
-                    self.loadGWDB([i])
-                    db = self.bot.sql.get(fs[i])
-                    if db is None:
-                        continue
-            c = db.open()
-            if c is None: continue
-            try:
-                c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'")
-                if c.fetchone()[0] < 1:
-                    c.execute("SELECT * FROM GW")
-                    for row in c.fetchall():
-                        res[i] = {'gw':int(row[0]), 'ver':1}
-                        break
-                else:
-                    c.execute("SELECT * FROM info")
-                    for row in c.fetchall():
-                        res[i] = {'gw':int(row[0]), 'ver':int(row[1])}
-                        break
-            except:
-                res[i] = {'ver':0}
-            db.close()
-        return res
-
-    """searchGWDB()
-    Search the Unite & fight ranking databases
-    
-    Parameters
-    ----------
-    terms: Search string
-    mode: Search mode (0 = normal search, 1 = exact search, 2 = id search, 3 = ranking search, add 10 to search for crews instead of players)
-    
-    Returns
-    --------
-    list: List of matches
-    """
-    def searchGWDB(self, terms, mode):
-        data = self.GWDBver()
-        dbs = [self.bot.sql.get("GW_old.sql"), self.bot.sql.get("GW.sql")]
-        cs = []
-        for n in [0, 1]:
-            cs.append(dbs[n].open())
-
-        for n in [0, 1]:
-            if cs[n] is not None and data[n] is not None:
-                try:
-                    c = cs[n]
-                    if mode == 10:
-                        c.execute("SELECT * FROM crews WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                    elif mode == 11:
-                        c.execute("SELECT * FROM crews WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                    elif mode == 12:
-                        c.execute("SELECT * FROM crews WHERE id = {}".format(terms))
-                    elif mode == 13:
-                        c.execute("SELECT * FROM crews WHERE ranking = {}".format(terms))
-                    elif mode == 0:
-                        c.execute("SELECT * FROM players WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                    elif mode == 1:
-                        c.execute("SELECT * FROM players WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                    elif mode == 2:
-                        c.execute("SELECT * FROM players WHERE id = {}".format(terms))
-                    elif mode == 3:
-                        c.execute("SELECT * FROM players WHERE ranking = {}".format(terms))
-                    data[n]['result'] = c.fetchall()
-                    random.shuffle(data[n]['result'])
-                except Exception as e:
-                    print('searchGWDB', n, 'mode', mode, ':', self.bot.util.pexc(e))
-                    self.bot.errn += 1
-                    data[n] = None
-                dbs[n].close()
-        return data
-
-    """searchGWDBCrew()
-    Wrapper for searchGWDB(), search for crews
-    
-    Parameters
-    ----------
-    terms: Search string
-    mode: Search mode (0 = normal search, 1 = exact search, 2 = id search, 3 = ranking search, add 10 to search for crews instead of players)
-    
-    Returns
-    --------
-    list: List of matches
-    """
-    def searchGWDBCrew(self, terms, mode):
-        return self.searchGWDB(terms, mode+10)
-
-    """searchGWDBPlayer()
-    Wrapper for searchGWDB(), search for players
-    
-    Parameters
-    ----------
-    terms: Search string
-    mode: Search mode (0 = normal search, 1 = exact search, 2 = id search, 3 = ranking search, add 10 to search for crews instead of players)
-    
-    Returns
-    --------
-    list: List of matches
-    """
-    def searchGWDBPlayer(self, terms, mode):
-        return self.searchGWDB(terms, mode)
-
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
     async def reloadDB(self, ctx):
         """Download GW.sql (Owner Only)"""
         await self.bot.util.react(ctx.message, 'time')
-        await self.bot.do(self.reloadGWDB)
-        vers = await self.bot.do(self.GWDBver)
+        await self.bot.do(self.bot.ranking.reloadGWDB)
+        vers = await self.bot.do(self.bot.ranking.GWDBver)
         await self.bot.util.unreact(ctx.message, 'time')
         msg = ""
         for i in [0, 1]:
@@ -825,22 +678,15 @@ class GuildWar(commands.Cog):
                         raise Exception("Returning")
                 else:
                     mode = 0
-                if type: data = await self.bot.do(self.searchGWDBCrew, terms, mode)
-                else: data = await self.bot.do(self.searchGWDBPlayer, terms, mode)
+                if type: data = await self.bot.do(self.bot.ranking.searchGWDB, terms, mode+10)
+                else: data = await self.bot.do(self.bot.ranking.searchGWDB, terms, mode)
                 if data is None:
                     final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Database unavailable", color=self.color))
                     raise Exception("Returning")
 
-                try:
-                    if data[1] is None or past:
-                        gwnum = data[0].get('gw', '')
-                        ver = data[0].get('ver', '')
-                        result = data[0].get('result', [])
-                    else:
-                        gwnum = data[1].get('gw', '')
-                        ver = data[1].get('ver', '')
-                        result = data[1].get('result', [])
-                except:
+                if data[1] is None or past: result = data[0]
+                else: result = data[1]
+                if result is None:
                     final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Database unavailable", color=self.color))
                     raise Exception("Returning")
 
@@ -860,22 +706,17 @@ class GuildWar(commands.Cog):
                 fields = []
                 for i in range(0, x):
                     if type: # crew -----------------------------------------------------------------
-                        fields.append({'name':"{}".format(result[i][2]), 'value':''})
-                        if result[i][0] is not None: fields[-1]['value'] += "▫️**#{}**\n".format(result[i][0])
+                        fields.append({'name':"{}".format(result[i].name), 'value':''})
+                        if result[i].ranking is not None and result[i].day == 4: fields[-1]['value'] += "▫️**#{}**\n".format(result[i].ranking)
                         else: fields[-1]['value'] += "\n"
-                        if result[i][3] is not None: fields[-1]['value'] += "**P.** ▫️{:,}\n".format(result[i][3])
-                        if ver == 2:
-                            if result[i][4] is not None and result[i][3] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('1'), result[i][4]-result[i][3])
-                            if result[i][5] is not None and result[i][4] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('1'), result[i][5]-result[i][4])
-                            if result[i][6] is not None and result[i][5] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('1'), result[i][6]-result[i][5])
-                            if result[i][7] is not None and result[i][6] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('1'), result[i][7]-result[i][6])
-                        else:
-                            if result[i][4] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('1'), result[i][4])
-                            if result[i][6] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('2'), result[i][6])
-                            if result[i][8] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('3'), result[i][8])
-                            if result[i][10] is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('4'), result[i][10])
+                        if result[i].preliminaries is not None: fields[-1]['value'] += "**P.** ▫️{:,}\n".format(result[i].preliminaries)
+                        if result[i].day1 is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('1'), result[i].day1)
+                        if result[i].day2 is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('2'), result[i].day2)
+                        if result[i].day3 is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('3'), result[i].day3)
+                        if result[i].day4 is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('4'), result[i].day4)
                         if fields[-1]['value'] == "": fields[-1]['value'] = "No data"
-                        fields[-1]['value'] = "[{}](http://game.granbluefantasy.jp/#guild/detail/{}){}".format(result[i][1], result[i][1], fields[-1]['value'])
+                        fields[-1]['value'] = "[{}](http://game.granbluefantasy.jp/#guild/detail/{}){}".format(result[i].id, result[i].id, fields[-1]['value'])
+                        gwnum = result[i].gw
                         if all and ((i % 6) == 5 or i == x - 1):
                             try:
                                 await ctx.author.send(embed=self.bot.util.embed(title="{} **Guild War {}**".format(self.bot.emote.get('gw'), gwnum), fields=fields, inline=True, footer="help findcrew for details", color=self.color))
@@ -886,12 +727,13 @@ class GuildWar(commands.Cog):
                     else: # player -----------------------------------------------------------------
                         if i % 5 == 0:
                             fields.append({'name':'Page {}'.format(self.bot.emote.get(str(((i // 5) % 3) + 1))), 'value':''})
-                        if result[i][0] is None:
-                            fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{})\n".format(self.escape(result[i][2]), result[i][1])
+                        if result[i].ranking is None:
+                            fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{})\n".format(self.escape(result[i].name), result[i].id)
                         else:
-                            fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ **#{}**\n".format(self.escape(result[i][2]), result[i][1], result[i][0])
-                        if result[i][3] is not None: fields[-1]['value'] += "{:,}\n".format(result[i][3])
+                            fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ **#{}**\n".format(self.escape(result[i].name), result[i].id, result[i].ranking)
+                        if result[i].current is not None: fields[-1]['value'] += "{:,}\n".format(result[i].current)
                         else: fields[-1]['value'] += "n/a\n"
+                        gwnum = result[i].gw
                         if all and ((i % 15) == 14 or i == x - 1):
                             try:
                                 await ctx.author.send(embed=self.bot.util.embed(title="{} **Guild War {}**".format(self.bot.emote.get('gw'), gwnum), fields=fields, inline=True, footer="help findplayer for details", color=self.color))
@@ -908,7 +750,8 @@ class GuildWar(commands.Cog):
                 else: desc = ""
                 final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War {}**".format(self.bot.emote.get('gw'), gwnum), description=desc, fields=fields, inline=True, footer="help find{} for details".format(txt), color=self.color))
             except Exception as e:
-                print(self.bot.util.pexc(e))
+                if str(e) != "Returning":
+                    await self.bot.sendError('findranking', e)
         await self.bot.util.clean(ctx, final_msg, 45)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwcrew'])
@@ -1199,24 +1042,15 @@ class GuildWar(commands.Cog):
 
         # get the last gw score
         crew['scores'] = []
-        data = self.searchGWDBCrew(id, 2)
-        if data is not None:
-            for n in range(0, 2):
-                if data[n] is not None and 'result' in data[n] and len(data[n]['result']) == 1:
-                    if data[n].get('ver', 0) == 2:
-                        possible = {7:"Total Day 4", 6:"Total Day 3", 5:"Total Day 2", 4:"Total Day 1", 3:"Total Prelim."}
-                        last_id = 7
-                    else:
-                        possible = {11:"Total Day 4", 9:"Total Day 3", 7:"Total Day 2", 5:"Total Day 1", 3:"Total Prelim."}
-                        last_id = 11
-                    for ps in possible:
-                        if data[n]['result'][0][ps] is not None:
-                            if ps == last_id and data[n]['result'][0][0] is not None:
-                                crew['scores'].append("{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors ".format(self.bot.emote.get('gw'), data[n].get('gw', ''), data[n]['result'][0][0], data[n]['result'][0][ps]))
-                                break
-                            else:
-                                crew['scores'].append("{} GW**{}** ▫️ {} ▫️ **{:,}** honors ".format(self.bot.emote.get('gw'), data[n].get('gw', ''), possible[ps], data[n]['result'][0][ps]))
-                                break
+        data = self.bot.ranking.searchGWDB(id, 12)
+        for n in range(0, 2):
+            try:
+                if data[n][0].ranking is None or data[n][0].day != 4:
+                    crew['scores'].append("{} GW**{}** ▫️ {} ▫️ **{:,}** honors ".format(self.bot.emote.get('gw'), data[n][0].gw, ('Total Day {}'.format(data[n][0].day) if data[n][0].day > 0 else 'Total Prelim.'), data[n][0].current))
+                else:
+                    crew['scores'].append("{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors ".format(self.bot.emote.get('gw'), data[n][0].gw, data[n][0].ranking, data[n][0].current))
+            except:
+                pass
 
         return crew
 
@@ -1265,19 +1099,14 @@ class GuildWar(commands.Cog):
                 unranked = 0
                 for i in range(0, len(players)):
                     # retrieve player honors
-                    honor = self.searchGWDBPlayer(players[i]['id'], 2)
-                    if honor[1] is None or len(honor[1]) == 0 or len(honor[1]['result']) == 0:
+                    honor = self.bot.ranking.searchGWDB(players[i]['id'], 2)
+                    if honor is None or honor[1] is None or len(honor[1]) == 0 or honor[1][0].ranking is None:
                         players[i]['honor'] = None
                         unranked += 1
                     else:
-                        res = honor[1].get('result', [None, None, None, None])
-                        if gwid is None: gwid = honor[1].get('gw', None)
-                        if res is not None and len(res[0]) != 0 and res[0][3] is not None:
-                            players[i]['honor'] = res[0][3]
-                            total += res[0][3]
-                        else:
-                            players[i]['honor'] = None
-                            unranked += 1
+                        if gwid is None: gwid = honor[1][0].gw
+                        players[i]['honor'] = honor[1][0].current
+                        total += honor[1][0].current
                     if i > 0 and players[i]['honor'] is not None:
                         # sorting
                         for j in range(0, i):
@@ -1385,10 +1214,10 @@ class GuildWar(commands.Cog):
         for sid in self.bot.data.save['gbfids']:
             m = ctx.guild.get_member(int(sid))
             if m is not None:
-                pdata = await self.bot.do(self.searchGWDBPlayer, self.bot.data.save['gbfids'][sid], 2)
-                if pdata is not None and pdata[1] is not None and 'result' in pdata[1] and len(pdata[1]['result']) == 1:
-                    if gwid is None: gwid = pdata[1].get('gw', None)
-                    members.append([pdata[1]['result'][0][1], pdata[1]['result'][0][2], pdata[1]['result'][0][3]]) # id, name, honor
+                pdata = await self.bot.do(self.bot.ranking.searchGWDB, self.bot.data.save['gbfids'][sid], 2)
+                if pdata is not None and pdata[1] is not None and len(pdata[1]) == 1:
+                    if gwid is None: gwid = pdata[1][0].gw
+                    members.append([pdata[1][0].id, pdata[1][0].name, pdata[1][0].current]) # id, name, honor
         await self.bot.util.unreact(ctx.message, 'time')
         if len(members) == 0:
             await ctx.send(embed=self.bot.util.embed(title="{} Top 30 of {}".format(self.bot.emote.get('gw'), ctx.guild.name), description="Unavailable", inline=True, thumbnail=ctx.guild.icon_url, color=self.color))
@@ -1452,14 +1281,15 @@ class GuildWar(commands.Cog):
         ranking = []
         leaders = await self.bot.do(self.getCrewLeaders, crews)
         for cid in leaders:
-            data = await self.bot.do(self.searchGWDBPlayer, leaders[cid][2], 2)
+            data = await self.bot.do(self.bot.ranking.searchGWDB, leaders[cid][2], 2)
             if data is None or data[1] is None:
                 continue
-            gwid = data[1].get('gw', None)
-            if len(data[1]['result']) == 0:
+            gwid = ''
+            if len(data[1]) == 0:
                 ranking.append([leaders[cid][0], leaders[cid][1], None])
             else:
-                ranking.append([leaders[cid][0], leaders[cid][1], data[1]['result'][0][3]])
+                gwid = data[1][0].gw
+                ranking.append([leaders[cid][0], leaders[cid][1], data[1][0].current])
         await self.bot.util.unreact(ctx.message, 'time')
         if len(ranking) == 0:
             final_msg = await ctx.send(embed=self.bot.util.embed(title="{} /gbfg/ Dancho Ranking".format(self.bot.emote.get('gw')), description="Unavailable", color=self.color))
@@ -1496,31 +1326,18 @@ class GuildWar(commands.Cog):
             if self.bot.data.config['granblue']['gbfgcrew'][e] in crews: continue
             crews.append(self.bot.data.config['granblue']['gbfgcrew'][e])
         tosort = {}
-        data = self.GWDBver()
+        data = self.bot.ranking.GWDBver()
         if data is None or data[1] is None:
             return None, None
         else:
-            if data[1].get('ver', 0) != 2:
-                possible = {11:"Total Day 4", 9:"Total Day 3", 7:"Total Day 2", 5:"Total Day 1", 3:"Total Prelim."}
-                last_id = 11
-                gwid = data[1].get('gw', None)
-            else:
-                possible = {7:"Total Day 4", 6:"Total Day 3", 5:"Total Day 2", 4:"Total Day 1", 3:"Total Prelim."}
-                last_id = 7
-                gwid = data[1].get('gw', None)
+            gwid = ''
             for c in crews:
-                data = self.searchGWDBCrew(int(c), 2)
-                if data is None or data[1] is None or 'result' not in data[1] or len(data[1]['result']) == 0:
+                data = self.bot.ranking.searchGWDB(int(c), 12)
+                if data is None or data[1] is None or len(data[1]) == 0:
                     continue
-                result = data[1]['result'][0]
-                for ps in possible:
-                    if result[ps] is not None:
-                        if ps == last_id and result[0] is not None:
-                            tosort[c] = [c, result[2], int(result[ps]), str(result[0])] # id, name, honor, rank
-                            break
-                        else:
-                            tosort[c] = [c, result[2], int(result[ps]), possible[ps]] # id, name, honor, day
-                            break
+                gwid = data[1][0].gw
+                if data[1][0].day != 4: tosort[c] = [c, data[1][0].name, data[1][0].current, None]
+                else: tosort[c] = [c, data[1][0].name, data[1][0].current, data[1][0].ranking] # id, name, honor, rank
             sorted = []
             for c in tosort:
                 inserted = False
@@ -1534,7 +1351,7 @@ class GuildWar(commands.Cog):
             if gwid is None: gwid = ""
             for i in range(0, len(sorted)):
                 if i % 15 == 0: fields.append({'name':'{}'.format(self.bot.emote.get(str(len(fields)+1))), 'value':''})
-                if sorted[i][3].startswith('Total'):
+                if sorted[i][3] is None:
                     fields[-1]['value'] += "{} \▫️ {} \▫️ **{}**\n".format(i+1, sorted[i][1], self.bot.util.valToStr(sorted[i][2]))
                 else:
                     fields[-1]['value'] += "#**{}** \▫️ {} \▫️ **{}**\n".format(self.bot.util.valToStr(sorted[i][3]), sorted[i][1], self.bot.util.valToStr(sorted[i][2]))
@@ -1639,30 +1456,24 @@ class GuildWar(commands.Cog):
                     await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Invalid name `{}`".format(sid), color=self.color))
                     return
 
-            data = await self.bot.do(self.searchGWDBCrew, str(id), 2)
+            data = await self.bot.do(self.bot.ranking.searchGWDB, str(id), 12)
             if data is None:
                 await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Unavailable", color=self.color))
                 return
             else:
-                if data[1] is None or data[1].get('gw', '') != self.bot.data.save['gw']['id']:
+                if data[1] is None:
                     await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="No data available for the current GW", color=self.color))
                     return
-                result = data[1].get('result', [])
-                ver = data[1].get('ver', 0)
-                gwnum = data[1].get('gw', '')
+                result = data[1]
+                gwnum = ''
                 if len(result) == 0:
                     msg += "Crew [{}](http://game.granbluefantasy.jp/#guild/detail/{}) not found\n".format(sid, id)
                     lead = -1
-                elif ver == 2:
-                    d = [4, 5, 6, 7]
-                    msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ {:,}\n".format(result[0][2], id, result[0][d[day-2]]-result[0][d[day-2]-1])
-                    if lead is None: lead = result[0][d[day-2]]-result[0][d[day-2]-1]
-                    elif lead >= 0: lead = abs(lead - (result[0][d[day-2]]-result[0][d[day-2]-1]))
                 else:
-                    d = [4, 6, 8, 10]
-                    msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ {:,}\n".format(result[0][2], id, result[0][d[day-2]])
-                    if lead is None: lead = result[0][d[day-2]]
-                    elif lead >= 0: lead = abs(lead - result[0][d[day-2]])
+                    gwnum = result[0].gw
+                    msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ {:,}\n".format(result[0].name, id, result[0].current_day)
+                    if lead is None: lead = result[0].current_day
+                    elif lead >= 0: lead = abs(lead - (result[0].current_day))
         if lead is not None and lead >= 0:
             msg += "**Difference** ▫️ {:,}\n".format(lead)
         await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.emote.get('gw'), gwnum, day - 1), description=msg, timestamp=self.bot.util.timestamp(), color=self.color))

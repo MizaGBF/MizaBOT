@@ -1379,20 +1379,14 @@ class GranblueFantasy(commands.Cog):
 
         # get the last gw score
         scores = ""
-        try:
-            pdata = self.bot.get_cog('GuildWar').searchGWDBPlayer(id, 2)
-        except:
-            pdata = None
-        if pdata is not None:
-            for n in range(0, 2):
-                if pdata[n] is not None and 'result' in pdata[n] and len(pdata[n]['result']) == 1:
-                    try:
-                        if pdata[n]['result'][0][0] is None:
-                            scores += "{} GW**{}** ▫️ **{:,}** honors\n".format(self.bot.emote.get('gw'), pdata[n].get('gw', ''), pdata[n]['result'][0][3])
-                        else:
-                            scores += "{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors\n".format(self.bot.emote.get('gw'), pdata[n].get('gw', ''), pdata[n]['result'][0][0], pdata[n]['result'][0][3])
-                    except:
-                        pass
+        pdata = self.bot.ranking.searchGWDB(id, 2)
+        for n in range(0, 2):
+            try:
+                pscore = pdata[n][0]
+                if pscore.ranking is None: scores += "{} GW**{}** ▫️ **{:,}** honors\n".format(self.bot.emote.get('gw'), pscore.gw, pscore.current)
+                else: scores += "{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors\n".format(self.bot.emote.get('gw'), pscore.gw, pscore.ranking, pscore.current)
+            except:
+                pass
 
         try:
             summons_res = self.sumre.findall(data)

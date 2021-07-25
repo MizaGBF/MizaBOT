@@ -7,12 +7,35 @@ import time
 import leather
 import cairosvg
 import sqlite3
+import random
 
 # ----------------------------------------------------------------------------------------------------------------
 # Ranking Component
 # ----------------------------------------------------------------------------------------------------------------
-# Manage the Unite and Fight rankings (access, update, etc...)
+# Manage the Unite and Fight rankings (access, DB update, etc...)
+# Provide Score instances when searching the ranking
 # ----------------------------------------------------------------------------------------------------------------
+
+class Score():
+    def __init__(self, type=None, ver=None, gw=None):
+        self.type = type
+        self.ver = ver
+        self.gw = gw
+        self.ranking = None
+        self.id = None
+        self.name = None
+        self.current = None
+        self.current_day = None
+        self.day = None
+        self.preliminaries = None
+        self.day1 = None
+        self.total1 = None
+        self.day2 = None
+        self.total2 = None
+        self.day3 = None
+        self.total3 = None
+        self.day4 = None
+        self.total4 = None
 
 class Ranking():
     def __init__(self, bot):
@@ -32,6 +55,8 @@ class Ranking():
         self.rankingtempdata = []
         self.rankinglock = threading.Lock()
         self.stoprankupdate = False
+        self.dbstate = [True, True]
+        self.dblock = threading.Lock()
 
     def init(self):
         pass
@@ -192,7 +217,7 @@ class Ranking():
                             # update DB
                             scrapout = await self.gwscrap(update_time)
                             if scrapout == "":
-                                data = await self.bot.do(cog.GWDBver)
+                                data = await self.bot.do(self.GWDBver)
                                 if data is not None and data[1] is not None:
                                     if self.bot.data.save['gw']['id'] != data[1]['gw']: # different gw, we move
                                         if data[0] is not None: # backup old gw if it exists
@@ -201,7 +226,7 @@ class Ranking():
                                 if not self.bot.drive.overwriteFile("temp.sql", "application/sql", "GW.sql", self.bot.data.config['tokens']['files']): # upload
                                     await self.bot.sendError('gwscrap', 'Upload failed')
                                 self.bot.file.rm('temp.sql')
-                                await self.bot.do(cog.reloadGWDB) # reload db
+                                await self.bot.do(self.reloadGWDB) # reload db
                             elif scrapout != "Invalid day":
                                 await self.bot.sendError('gwscrap', 'Scraping failed\n' + scrapout)
                             await asyncio.sleep(300)
@@ -521,3 +546,180 @@ class Ranking():
         with self.bot.data.lock:
             self.bot.data.save['matchtracker'] = newtracker
             self.bot.data.pending = True
+
+    """loadGWDB()
+    Load the Unite & fight ranking databases
+    
+    Parameters
+    ----------
+    ids: list of databases to load (0 = old one, 1 = current one)
+    """
+    def loadGWDB(self, ids = [0, 1]):
+        fs = ["GW_old.sql", "GW.sql"]
+        for i in ids:
+            try:
+                self.dbstate[i] = False
+                self.bot.sql.remove(fs[i])
+                if self.bot.drive.dlFile(fs[i], self.bot.data.config['tokens']['files']):
+                    self.bot.sql.add(fs[i])
+                    self.dbstate[i] = True
+            except:
+                print("Failed to load database", fs[i])
+                self.bot.errn += 1
+
+    """reloadGWDB()
+    Reload the Unite & fight ranking databases
+    """
+    def reloadGWDB(self):
+        with self.dblock:
+            self.dbstate = [True, True]
+            self.loadGWDB()
+
+    """GWDBver()
+    Return the Unite & fight ranking database infos
+    
+    Returns
+    --------
+    list: First element is for the old database, second is for the current one
+    """
+    def GWDBver(self):
+        fs = ["GW_old.sql", "GW.sql"]
+        res = [None, None]
+        for i in [0, 1]:
+            with self.dblock:
+                db = self.bot.sql.get(fs[i])
+                if db is None:
+                    if not self.dbstate[i]: continue
+                    self.loadGWDB([i])
+                    db = self.bot.sql.get(fs[i])
+                    if db is None:
+                        continue
+            c = db.open()
+            if c is None: continue
+            try:
+                c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'")
+                if c.fetchone()[0] < 1:
+                    c.execute("SELECT * FROM GW")
+                    for row in c.fetchall():
+                        res[i] = {'gw':int(row[0]), 'ver':1}
+                        break
+                else:
+                    c.execute("SELECT * FROM info")
+                    for row in c.fetchall():
+                        res[i] = {'gw':int(row[0]), 'ver':int(row[1])}
+                        break
+            except:
+                res[i] = {'ver':0}
+            db.close()
+        return res
+
+    """searchGWDB()
+    Search the Unite & fight ranking databases
+    Returned matches are Score instances
+    
+    Parameters
+    ----------
+    terms: Search string
+    mode: Search mode (0 = normal search, 1 = exact search, 2 = id search, 3 = ranking search, add 10 to search for crews instead of players)
+    
+    Returns
+    --------
+    dict: Containing:
+        - list: Matches in the past GW
+        - list: Matches in the latest GW
+    """
+    def searchGWDB(self, terms, mode):
+        v = self.GWDBver()
+        data = [None, None]
+        dbs = [self.bot.sql.get("GW_old.sql"), self.bot.sql.get("GW.sql")]
+        cs = []
+        for n in [0, 1]:
+            cs.append(dbs[n].open())
+
+        st = 1 if mode >= 10 else 0 # score type
+        for n in [0, 1]:
+            if cs[n] is not None and v[n] is not None:
+                try:
+                    data[n] = []
+                    c = cs[n]
+                    if mode == 10:
+                        c.execute("SELECT * FROM crews WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
+                    elif mode == 11:
+                        c.execute("SELECT * FROM crews WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
+                    elif mode == 12:
+                        c.execute("SELECT * FROM crews WHERE id = {}".format(terms))
+                    elif mode == 13:
+                        c.execute("SELECT * FROM crews WHERE ranking = {}".format(terms))
+                    elif mode == 0:
+                        c.execute("SELECT * FROM players WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
+                    elif mode == 1:
+                        c.execute("SELECT * FROM players WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
+                    elif mode == 2:
+                        c.execute("SELECT * FROM players WHERE id = {}".format(terms))
+                    elif mode == 3:
+                        c.execute("SELECT * FROM players WHERE ranking = {}".format(terms))
+                    results = c.fetchall()
+                    
+                    for r in results:
+                        s = Score(type=st, gw=v[n]['gw'], ver=v[n]['ver'])
+                        if st == 0: # player
+                            s.ranking = r[0]
+                            s.id = r[1]
+                            s.name = r[2]
+                            s.current = r[3]
+                        else: # crew
+                            if s.ver == 2:
+                                s.ranking = r[0]
+                                s.id = r[1]
+                                s.name = r[2]
+                                s.preliminaries = r[3]
+                                s.total1 = r[4]
+                                s.total2 = r[5]
+                                s.total3 = r[6]
+                                s.total4 = r[7]
+                                if s.total1 is not None and s.preliminaries is not None: s.day1 = s.total1 - s.preliminaries
+                                if s.total2 is not None and s.total1 is not None: s.day2 = s.total2 - s.total1
+                                if s.total3 is not None and s.total2 is not None: s.day3 = s.total3 - s.total2
+                                if s.total4 is not None and s.total3 is not None: s.day4 = s.total4 - s.total3
+                            else:
+                                s.ranking = r[0]
+                                s.id = r[1]
+                                s.name = r[2]
+                                s.preliminaries = r[3]
+                                s.day1 = r[4]
+                                s.total1 = r[5]
+                                s.day2 = r[6]
+                                s.total2 = r[7]
+                                s.day3 = r[8]
+                                s.total3 = r[9]
+                                s.day4 = r[10]
+                                s.total4 = r[11]
+                            if s.total4 is not None:
+                                s.current = s.total4
+                                s.current_day = s.day4
+                                s.day = 4
+                            elif s.total3 is not None:
+                                s.current = s.total3
+                                s.current_day = s.day3
+                                s.day = 3
+                            elif s.total2 is not None:
+                                s.current = s.total2
+                                s.current_day = s.day2
+                                s.day = 2
+                            elif s.total1 is not None:
+                                s.current = s.total1
+                                s.current_day = s.day1
+                                s.day = 1
+                            elif s.preliminaries is not None:
+                                s.current = s.preliminaries
+                                s.current_day = s.preliminaries
+                                s.day = 0
+                        if s.gw is None: s.gw = ''
+                        data[n].append(s)
+                    random.shuffle(data[n])
+                except Exception as e:
+                    print('searchGWDB', n, 'mode', mode, ':', self.bot.util.pexc(e))
+                    self.bot.errn += 1
+                    data[n] = None
+                dbs[n].close()
+        return data
