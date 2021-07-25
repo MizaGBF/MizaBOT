@@ -35,10 +35,10 @@ class Sparking(commands.Cog):
                 raise Exception('Big numbers')
             with self.bot.data.lock:
                 if crystal + single + ten == 0: 
-                    if id in self.bot.data.save['spark'][0]:
-                        self.bot.data.save['spark'][0].pop(id)
+                    if id in self.bot.data.save['spark']:
+                        self.bot.data.save['spark'].pop(id)
                 else:
-                    self.bot.data.save['spark'][0][id] = [crystal, single, ten, datetime.utcnow()]
+                    self.bot.data.save['spark'][id] = [crystal, single, ten, datetime.utcnow()]
                 self.bot.data.pending = True
             try:
                 await self.bot.callCommand(ctx, 'seeRoll')
@@ -59,8 +59,8 @@ class Sparking(commands.Cog):
         Example: addRoll 500 1 to add 500 crystals and one single draw ticket"""
         id = str(ctx.message.author.id)
         try:
-            if id in self.bot.data.save['spark'][0]:
-                data = self.bot.data.save['spark'][0][id].copy()
+            if id in self.bot.data.save['spark']:
+                data = self.bot.data.save['spark'][id].copy()
                 data[0] += crystal
                 data[1] += single
                 data[2] += ten
@@ -70,7 +70,7 @@ class Sparking(commands.Cog):
                     raise Exception('Big numbers')
                 with self.bot.data.lock:
                     data[3] = datetime.utcnow()
-                    self.bot.data.save['spark'][0][id] = data
+                    self.bot.data.save['spark'][id] = data
                     self.bot.data.pending = True
                 try:
                     await self.bot.callCommand(ctx, 'seeRoll')
@@ -139,8 +139,8 @@ class Sparking(commands.Cog):
         id = str(member.id)
         try:
             # get the roll count
-            if id in self.bot.data.save['spark'][0]:
-                s = self.bot.data.save['spark'][0][id]
+            if id in self.bot.data.save['spark']:
+                s = self.bot.data.save['spark'][id]
                 if s[0] < 0 or s[1] < 0 or s[2] < 0:
                     raise Exception('Negative numbers')
                 r = (s[0] / 300) + s[1] + s[2] * 10
@@ -200,10 +200,10 @@ class Sparking(commands.Cog):
         ranking = {}
         for m in guild.members:
             id = str(m.id)
-            if id in self.bot.data.save['spark'][0]:
-                if id in self.bot.data.save['spark'][1]:
+            if id in self.bot.data.save['spark']:
+                if self.bot.ban.check(id, self.bot.ban.SPARK):
                     continue
-                s = self.bot.data.save['spark'][0][id]
+                s = self.bot.data.save['spark'][id]
                 if s[0] < 0 or s[1] < 0 or s[2] < 0:
                     continue
                 r = (s[0] / 300) + s[1] + s[2] * 10

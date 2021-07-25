@@ -10,6 +10,7 @@ from components.channel import Channel
 from components.file import File
 from components.sql import SQL
 from components.ranking import Ranking
+from components.ban import Ban
 import cogs
 
 import discord
@@ -71,6 +72,7 @@ class MizaBot(commands.Bot):
         self.file = File(self)
         self.sql = SQL(self)
         self.ranking = Ranking(self)
+        self.ban = Ban(self)
         
         # loading data
         self.data.loadConfig()
@@ -95,6 +97,7 @@ class MizaBot(commands.Bot):
         self.file.init()
         self.sql.init()
         self.ranking.init()
+        self.ban.init()
 
         # graceful exit
         signal.signal(signal.SIGTERM, self.exit_gracefully) # SIGTERM is called by heroku when shutting down
@@ -457,7 +460,7 @@ class MizaBot(commands.Bot):
         id = str(guild.id)
         if id == str(self.data.config['ids']['debug_server']):
             return
-        elif id in self.data.save['guilds']['banned'] or str(guild.owner.id) in self.data.save['guilds']['owners']: # leave if the server is blacklisted
+        elif id in self.data.save['guilds']['banned'] or self.ban.check(guild.owner.id, self.ban.OWNER): # leave if the server is blacklisted
             try:
                 await self.send('debug', embed=self.util.embed(title="Banned guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
             except Exception as e:
@@ -494,7 +497,9 @@ class MizaBot(commands.Bot):
             return False # so we ignore
         try:
             id = str(ctx.guild.id)
-            if id in self.data.save['guilds']['banned'] or str(ctx.guild.owner.id) in self.data.save['guilds']['owners']: # ban check
+            if self.ban.check(ctx.author.id, self.ban.USE_BOT):
+                return False
+            elif id in self.data.save['guilds']['banned'] or self.ban.check(ctx.guild.owner.id, self.ban.OWNER): # ban check
                 await ctx.guild.leave() # leave the server if banned
                 return False
             elif id in self.data.save['guilds']['pending']: # pending check

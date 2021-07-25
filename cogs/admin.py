@@ -102,8 +102,6 @@ class Admin(commands.Cog):
             msg = ""
         if len(self.bot.data.save['guilds']['banned']) > 0:
             msg += "Banned Guilds are `" + "` `".join(str(x) for x in self.bot.data.save['guilds']['banned']) + "`\n"
-        if len(self.bot.data.save['guilds']['owners']) > 0:
-            msg += "Banned Owners are `" + "` `".join(str(x) for x in self.bot.data.save['guilds']['owners']) + "`\n"
         if msg != "":
             await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
 
@@ -157,7 +155,7 @@ class Admin(commands.Cog):
         except Exception as e:
             await self.bot.sendError('leave', e)
 
-    @commands.command(no_pm=True, aliases=['banS', 'ban', 'bs'])
+    @commands.command(no_pm=True, aliases=['banS', 'bs'])
     @isOwner()
     async def ban_server(self, ctx, id: int):
         """Command to leave and ban a server (Owner Only)"""
@@ -183,10 +181,7 @@ class Admin(commands.Cog):
         """Command to ban a server owner and leave all its servers (Owner Only)"""
         id = str(id)
         try:
-            if id not in self.bot.data.save['guilds']['owners']:
-                with self.bot.data.lock:
-                    self.bot.data.save['guilds']['owners'].append(id)
-                    self.bot.data.pending = True
+            self.bot.ban.set(id, self.bot.ban.OWNER)
             for g in self.bot.guilds:
                 try:
                     if str(g.owner.id) == id:
@@ -421,29 +416,46 @@ class Admin(commands.Cog):
 
     @commands.command(no_pm=True)
     @isOwner()
+    async def ban(self, ctx, id: int):
+        """Ban an user from using the bot (Owner Only)"""
+        self.bot.ban.set(id, self.bot.ban.USE_BOT)
+        await self.bot.util.react(ctx.message, '✅') # white check mark
+
+    @commands.command(no_pm=True)
+    @isOwner()
+    async def unban(self, ctx, id : int):
+        """Unban an user from using the bot (Owner Only)"""
+        self.bot.ban.unset(id, self.bot.ban.USE_BOT)
+        await self.bot.util.react(ctx.message, '✅') # white check mark
+
+    @commands.command(no_pm=True)
+    @isOwner()
+    async def banProfile(self, ctx, id: int):
+        """ID based Ban for $setProfile (Owner Only)"""
+        self.bot.ban.set(id, self.bot.ban.PROFILE)
+        await self.bot.util.react(ctx.message, '✅') # white check mark
+
+    @commands.command(no_pm=True)
+    @isOwner()
+    async def unbanProfile(self, ctx, id : int):
+        """ID based Unban for $setProfile (Owner Only)"""
+        self.bot.ban.unset(id, self.bot.ban.PROFILE)
+        await self.bot.util.react(ctx.message, '✅') # white check mark
+
+    @commands.command(no_pm=True)
+    @isOwner()
     async def banRollID(self, ctx, id: int):
         """ID based Ban for $rollranking (Owner Only)"""
-        id = str(id)
-        if id not in self.bot.data.save['spark'][1]:
-            with self.bot.data.lock:
-                self.bot.data.save['spark'][1].append(id)
-                self.bot.data.pending = True
-            await self.bot.util.react(ctx.message, '✅') # white check mark
+        self.bot.ban.set(id, self.bot.ban.SPARK)
+        await self.bot.util.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, aliases=['unbanspark'])
     @isOwner()
     async def unbanRoll(self, ctx, id : int):
         """Unban an user from all the roll ranking (Owner Only)
         Ask me for an unban (to avoid abuses)"""
-        id = str(id)
-        if id in self.bot.data.save['spark'][1]:
-            i = 0
-            with self.bot.data.lock:
-                while i < len(self.bot.data.save['spark'][1]):
-                    if id == self.bot.data.save['spark'][1][i]: self.bot.data.save['spark'][1].pop(i)
-                    else: i += 1
-                self.bot.data.pending = True
-            await self.bot.util.react(ctx.message, '✅') # white check mark
+        self.bot.ban.unset(id, self.bot.ban.SPARK)
+        await self.bot.util.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -451,10 +463,10 @@ class Admin(commands.Cog):
         """Remove users with 0 rolls (Owner Only)"""
         count = 0
         with self.bot.data.lock:
-            for k in list(self.bot.data.save['spark'][0].keys()):
-                sum = self.bot.data.save['spark'][0][k][0] + self.bot.data.save['spark'][0][k][1] + self.bot.data.save['spark'][0][k][2]
+            for k in list(self.bot.data.save['spark'].keys()):
+                sum = self.bot.data.save['spark'][k][0] + self.bot.data.save['spark'][k][1] + self.bot.data.save['spark'][k][2]
                 if sum == 0:
-                    self.bot.data.save['spark'][0].pop(k)
+                    self.bot.data.save['spark'].pop(k)
                     count += 1
             if count > 0:
                 self.bot.data.pending = True

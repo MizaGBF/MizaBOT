@@ -114,15 +114,12 @@ class Moderation(commands.Cog):
         To avoid idiots with fake numbers
         The ban is across all servers and can only be lifted by the owner
         Measures might be taken against mods abusing it"""
-        id = str(member.id)
-        if id not in self.bot.data.save['spark'][1]:
-            with self.bot.data.lock:
-                self.bot.data.save['spark'][1].append(id)
-                self.bot.data.pending = True
-            await ctx.send(embed=self.bot.util.embed(title="{} ▫️ {}".format(member.display_name, id), description="Banned from all roll rankings by {}".format(ctx.author.display_name), thumbnail=member.avatar_url, color=self.color, footer=ctx.guild.name))
-            await self.bot.send('debug', embed=self.bot.util.embed(title="{} ▫️ {}".format(member.display_name, id), description="Banned from all roll rankings by {}".format(ctx.author.display_name), thumbnail=member.avatar_url, color=self.color, footer=ctx.guild.name))
+        if str(member.id) in self.bot.data.save['spark']:
+            self.bot.ban.set(member.id, self.bot.ban.SPARK)
+            await self.bot.util.react(ctx.message, '✅') # white check mark
+            await self.bot.send('debug', embed=self.bot.util.embed(title="{} ▫️ {}".format(member.display_name, id), description="Banned from all roll rankings by {}\nValues: `{}`".format(ctx.author.display_name, self.bot.data.save['spark'][str(member.id)]), thumbnail=member.avatar_url, color=self.color, footer=ctx.guild.name))
         else:
-            await ctx.send(embed=self.bot.util.embed(title=member.display_name, description="Already banned", thumbnail=member.avatar_url, color=self.color))
+            await self.util.react(ctx.message, '❎')
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isMod()

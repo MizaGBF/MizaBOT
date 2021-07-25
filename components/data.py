@@ -19,7 +19,7 @@ class Data():
         self.bot.drive = None
         self.config = {}
         self.save = {}
-        self.saveversion = 1
+        self.saveversion = 2
         self.pending = False
         self.autosaving = False
         self.lock = threading.Lock()
@@ -74,6 +74,14 @@ class Data():
                         except: pass
                         try: data['gbfdata'].pop('count')
                         except: pass
+                    if ver == 1:
+                        data['ban'] = {}
+                        for i in data['guilds']['owners']:
+                            data['ban'][str(i)] = 0b1
+                        data['guilds'].pop('owners')
+                        for i in data['spark'][1]:
+                            data['ban'][str(i)] = 0b10 | data['ban'].get(str(i), 0)
+                        data['spark'] = data['spark'][0]
                     data['version'] = self.saveversion
                 elif ver > self.saveversion:
                     raise Exception("Save file version higher than the expected version")
@@ -119,7 +127,7 @@ class Data():
     def checkData(self, data): # used to initialize missing data or remove useless data from the save file
         expected = {
             'version':self.saveversion,
-            'guilds': {'banned':[], 'owners':[], 'pending':{}},
+            'guilds': {'banned':[], 'pending':{}},
             'prefixes': {},
             'gbfaccounts': [],
             'gbfcurrent': 0,
@@ -130,7 +138,7 @@ class Data():
             'stream': {'time':None, 'content':[]},
             'schedule': [],
             'st': {},
-            'spark': [{}, []],
+            'spark': {},
             'gw': {'state':False},
             'valiant': {'state':False},
             'reminders': {},
@@ -141,7 +149,8 @@ class Data():
             'assignablerole': {},
             'matchtracker': None,
             'pinboard': {},
-            'invite': {'state':0, 'limit':50}
+            'invite': {'state':0, 'limit':50},
+            'ban': {}
         }
         for k in list(data.keys()): # remove useless
             if k not in expected:
@@ -189,17 +198,17 @@ class Data():
     def clean_spark(self): # clean up spark data
         count = 0
         c = datetime.utcnow()
-        keys = list(self.bot.data.save['spark'][0].keys())
+        keys = list(self.bot.data.save['spark'].keys())
         for id in keys:
-            if len(self.bot.data.save['spark'][0][id]) == 3: # backward compatibility
+            if len(self.bot.data.save['spark'][id]) == 3: # backward compatibility
                 with self.bot.data.lock:
-                    self.bot.data.save['spark'][0][id].append(c)
+                    self.bot.data.save['spark'][id].append(c)
                     self.bot.data.pending = True
             else:
-                d = c - self.bot.data.save['spark'][0][id][3]
+                d = c - self.bot.data.save['spark'][id][3]
                 if d.days >= 30:
                     with self.bot.data.lock:
-                        del self.bot.data.save['spark'][0][id]
+                        del self.bot.data.save['spark'][id]
                         self.bot.data.pending = True
                     count += 1
         return count

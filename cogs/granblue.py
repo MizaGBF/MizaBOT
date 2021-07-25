@@ -1249,6 +1249,9 @@ class GranblueFantasy(commands.Cog):
     async def setProfile(self, ctx, id : int):
         """Link your GBF id to your Discord ID"""
         try:
+            if self.bot.ban.check(ctx.author.id, self.bot.ban.PROFILE):
+                await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="You are banned to use this feature", color=self.color))
+                return
             if id < 0 or id >= 100000000:
                 await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="Invalid ID", color=self.color))
                 return
