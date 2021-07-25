@@ -1108,18 +1108,19 @@ class GuildWar(commands.Cog):
             if gwstate:
                 total = 0
                 unranked = 0
-                med_set = []
+                median = []
                 for i in range(0, len(players)):
                     # retrieve player honors
                     honor = self.bot.ranking.searchGWDB(players[i]['id'], 2)
                     if honor is None or honor[1] is None or len(honor[1]) == 0 or honor[1][0].ranking is None:
                         players[i]['honor'] = None
                         unranked += 1
+                        median.append(0)
                     else:
                         if gwid is None: gwid = honor[1][0].gw
                         players[i]['honor'] = honor[1][0].current
                         total += honor[1][0].current
-                        med_set.append(honor[1][0].current)
+                        median.append(honor[1][0].current)
                     if i > 0 and players[i]['honor'] is not None:
                         # sorting
                         for j in range(0, i):
@@ -1128,9 +1129,17 @@ class GuildWar(commands.Cog):
                                 players[j] = players[i]
                                 players[i] = tmp
                 if gwid and len(players) - unranked > 0:
-                    description += "\n{} GW**{}** \▫️ Player Sum **{}** \▫️ Avg. **{}**".format(self.bot.emote.get('question'), gwid, self.bot.util.valToStr(total), self.bot.util.valToStr(total // (len(players) - unranked)))
-                    if len(med_set) > 0:
-                        description += " \▫️ Med. **{}**".format(self.bot.util.valToStr(statistics.median(med_set)))
+                    average = total // (len(players) - unranked)
+                    median = statistics.median(median)
+                    if median > average * 1.2: health = ':sparkling_heart:'
+                    elif median > average * 1: health = ':heart:'
+                    elif median > average * 0.9: health = ':mending_heart:'
+                    elif median > average * 0.65: health = ':warning:'
+                    elif median > average * 0.4: health = ':biohazard:'
+                    else: health = ':skull_crossbones:'
+                    description += "\n{} GW**{}** \▫️ Player Sum **{}** \▫️ Avg. **{}**".format(health, gwid, self.bot.util.valToStr(total), self.bot.util.valToStr(average))
+                    if median > 0:
+                        description += " \▫️ Med. **{}**".format(self.bot.util.valToStr(median))
                     if unranked > 0:
                         description += " \▫️ **{}** n/a".format(unranked)
             # create the fields
