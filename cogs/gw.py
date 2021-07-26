@@ -62,6 +62,7 @@ class GuildWar(commands.Cog):
                                     msg += '*Buffs in 5 minutes*'
                                 else:
                                     msg += 'Buffs now!'
+                            msg += "\nhttp://game.granbluefantasy.jp/#event/teamraid{}/guild_ability".format(str(self.bot.data.save['gw']['id']).zfill(3))
                             if self.bot.data.save['gw']['skip']:
                                 msg = ""
                             if not self.bot.data.save['gw']['buffs'][0][3]:
@@ -1131,11 +1132,11 @@ class GuildWar(commands.Cog):
                 if gwid and len(players) - unranked > 0:
                     average = total // (len(players) - unranked)
                     median = statistics.median(median)
-                    if median > average * 1.2: health = ':sparkling_heart:'
-                    elif median > average * 1: health = ':heart:'
-                    elif median > average * 0.9: health = ':mending_heart:'
-                    elif median > average * 0.65: health = ':warning:'
-                    elif median > average * 0.4: health = ':put_litter_in_its_place:'
+                    if median > average * 1.1: health = ':sparkling_heart:'
+                    elif median > average * 0.95: health = ':heart:'
+                    elif median > average * 0.75: health = ':mending_heart:'
+                    elif median > average * 0.5: health = ':warning:'
+                    elif median > average * 0.25: health = ':put_litter_in_its_place:'
                     else: health = ':skull_crossbones:'
                     description += "\n{} GW**{}** \▫️ Player Sum **{}** \▫️ Avg. **{}**".format(health, gwid, self.bot.util.valToStr(total), self.bot.util.valToStr(average))
                     if median > 0:
