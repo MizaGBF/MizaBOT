@@ -69,7 +69,6 @@ class Admin(commands.Cog):
         except Exception as e:
             await self.bot.sendError('cleansave', e)
 
-
     """isOwner()
     Command decorator, to check if the command is used by the bot owner
     
@@ -569,3 +568,15 @@ class Admin(commands.Cog):
     async def punish(self, ctx):
         """Punish the bot (Owner Only)"""
         await ctx.send("Please, Master, make it hurt.")
+
+    @commands.command(no_pm=True)
+    @isOwner()
+    async def gbfgleechlist(self, ctx):
+        """Post the leechlists of all /gbfg/ crews (Owner Only)"""
+        crews = []
+        for e in self.bot.data.config['granblue']['gbfgcrew']:
+            if self.bot.data.config['granblue']['gbfgcrew'][e] in crews: continue
+            crews.append(self.bot.data.config['granblue']['gbfgcrew'][e])
+        for c in crews:
+            try: await self.bot.get_cog('GuildWar').postCrewData(ctx, str(c), 2)
+            except: pass

@@ -44,6 +44,8 @@ class Ban():
             if str(id) in self.bot.data.save['ban']:
                 if flag is None: self.bot.data.save['ban'].pop(str(id))
                 elif self.check(id, flag): self.bot.data.save['ban'][str(id)] -= flag
+                if self.bot.data.save['ban'][str(id)] == 0:
+                    self.bot.data.save['ban'].pop(str(id))
                 self.bot.data.pending = True
 
     """check()

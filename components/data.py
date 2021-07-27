@@ -194,6 +194,10 @@ class Data():
 
     """clean_spark()
     Clean user spark data from the save data
+    
+    Parameters
+    --------
+    int: Number of cleaned sparks
     """
     def clean_spark(self): # clean up spark data
         count = 0
@@ -215,6 +219,10 @@ class Data():
 
     """clean_profile()
     Clean user gbf profiles from the save data
+    
+    Parameters
+    --------
+    int: Number of cleaned profiles
     """
     def clean_profile(self): # clean up profiles
         count = 0
@@ -234,6 +242,10 @@ class Data():
 
     """clean_schedule()
     Clean the gbf schedule from the save data
+    
+    Parameters
+    --------
+    bool: True if the schedule changed, False if not
     """
     def clean_schedule(self): # clean up schedule
         c = self.bot.util.JST()
