@@ -227,7 +227,8 @@ class Admin(commands.Cog):
         """Command to refuse a pending server (Owner Only)"""
         try:
             guild = self.bot.get_guild(id)
-            await guild.leave()
+            if guild is not None:
+                await guild.leave()
             with self.bot.data.lock:
                 self.bot.data.save['guilds']['pending'].pop(str(id))
                 self.bot.data.pending = True

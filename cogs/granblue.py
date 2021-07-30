@@ -891,7 +891,7 @@ class GranblueFantasy(commands.Cog):
         c = self.bot.util.JST()
         grands = {
             "fire": c.replace(year=2020, month=4, day=30, hour=12, minute=0, second=0, microsecond=0),
-            "water": c.replace(year=2018, month=10, day=17, hour=19, minute=0, second=0, microsecond=0),
+            "water": c.replace(year=2021, month=7, day=31, hour=12, minute=0, second=0, microsecond=0),
             "earth": c.replace(year=2020, month=12, day=28, hour=12, minute=0, second=0, microsecond=0),
             "wind": c.replace(year=2021, month=4, day=30, hour=12, minute=0, second=0, microsecond=0),
             "light": c.replace(year=2021, month=6, day=18, hour=19, minute=0, second=0, microsecond=0),

@@ -414,7 +414,7 @@ class Watch(commands.Cog):
                     if r == 0:
                         self.bot.doAsTask(o.send(embed=self.bot.util.embed(title=tt, description='ID ▫️ {}'.format(id), thumbnail=wl[0].format(id), color=self.color)))
                     elif r >= 10:
-                        tt = ws[x%2].format(self.bot.emote.get(wel.get(str(r - 10), '')), self.bot.emote.get(wt.get(str(i+1), "Error")))
+                        tt = ws[2].format(self.bot.emote.get(wel.get(str(r - 10), '')), self.bot.emote.get(wt.get(str(i+1), "Error")))
                         if tt not in found['r']:
                             found['r'][tt] = 1
                         else:
