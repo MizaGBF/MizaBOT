@@ -472,9 +472,9 @@ class Watch(commands.Cog):
             id = int(id)
             if type not in [1, 2]: raise Exception()
             if turbo and type == 1:
-                data = await self.bot.do(self.bot.gbf.request, atr[0], account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"weapon_id":str(id)})
+                data = await self.bot.do(self.bot.gbf.request, atr[0], account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={atr[2]:None,atr[3]:str(id)})
             else:
-                data = (await self.bot.do(self.bot.gbf.request, atr[1], account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"item_id":id,"item_kind":type}))['data']
+                data = (await self.bot.do(self.bot.gbf.request, atr[1], account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={atr[2]:None,atr[4]:id,atr[5]:type}))['data']
 
             rarity = "{}".format(self.bot.emote.get({"2":"R", "3":"SR", "4":"SSR"}.get(data['rarity'], '')))
             msg = '{} {} {} {} at \⭐\⭐\⭐\n'.format(self.bot.emote.get('hp'), data['max_hp'], self.bot.emote.get('atk'), data['max_attack'])
@@ -794,10 +794,10 @@ class Watch(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwnerOrDebug()
     @commands.cooldown(1, 8, commands.BucketType.default)
-    async def loot(self, ctx, id : str):
+    async def loot(self, ctx, id : str, mode : str = ""):
         """Retrieve a weapon or summon description (Owner or Debug Server Only)"""
         try:
-            await self.atr(ctx, id)
+            if await self.atr(ctx, id, (mode == "turbo")) == 0: raise Exception()
         except:
             await self.bot.util.react(ctx.message, '❎') # white negative mark
 
