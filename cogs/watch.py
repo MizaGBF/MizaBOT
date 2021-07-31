@@ -784,7 +784,7 @@ class Watch(commands.Cog):
     @isOwnerOrDebug()
     @commands.cooldown(1, 10, commands.BucketType.default)
     async def item(self, ctx, id : int):
-        """Retrieve an item description (Owner or Debug Server Only)"""
+        """(Owner or Debug Server Only)"""
         try:
             data = await self.bot.do(self.bot.gbf.request, 'http://game.granbluefantasy.jp/rest/quest/droplist/drop_item_detail?PARAMS', account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"item_id":id,"item_kind":10})
             await ctx.reply(embed=self.bot.util.embed(title=data['name'], description=data['comment'].replace('<br>', ' '), thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/item/article/s/{}.jpg".format(id), footer=data['id'], color=self.color))
@@ -795,7 +795,7 @@ class Watch(commands.Cog):
     @isOwnerOrDebug()
     @commands.cooldown(1, 8, commands.BucketType.default)
     async def loot(self, ctx, id : str, mode : str = ""):
-        """Retrieve a weapon or summon description (Owner or Debug Server Only)"""
+        """(Owner or Debug Server Only)"""
         try:
             if await self.atr(ctx, id, (mode == "turbo")) == 0: raise Exception()
         except:
@@ -805,7 +805,7 @@ class Watch(commands.Cog):
     @isOwnerOrDebug()
     @commands.cooldown(1, 2, commands.BucketType.default)
     async def dd(self, ctx, id : str, mode : int = 0):
-        """Retrieve details (Owner or Debug Server Only)"""
+        """(Owner or Debug Server Only)"""
         if not await self.bot.do(self.bot.gbf.isAvailable):
             await ctx.reply(embed=self.bot.util.embed(title="Unavailable", color=self.color))
             return
@@ -819,7 +819,7 @@ class Watch(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwner()
     async def cn(self, ctx):
-        """Check content (Owner Only)"""
+        """(Owner Only)"""
         if not await self.bot.do(self.bot.gbf.isAvailable):
             await ctx.reply(embed=self.bot.util.embed(title="Unavailable", color=self.color))
             return

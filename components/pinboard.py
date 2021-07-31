@@ -113,7 +113,7 @@ class Pinboard():
                 except Exception as x:
                     await self.bot.sendError("pinboard check",x)
                 return True
-            return False
+        return False
 
     """add()
     Enable the system for a guild (or overwrite its previous settings)
