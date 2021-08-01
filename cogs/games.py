@@ -738,6 +738,66 @@ class Games(commands.Cog):
                         break
                 await asyncio.sleep(0.001)
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['loto'])
+    @commands.cooldown(1, 150, commands.BucketType.user)
+    async def fortune(self, ctx):
+        """Imitate the GBF summer fortune game from Summer 2021"""
+        a = str(random.randint(0, 999)).zfill(3)
+        b = [list(str(random.randint(0, 99)).zfill(2)), list(str(random.randint(0, 99)).zfill(2)), list(str(random.randint(0, 999)).zfill(3)), list(str(random.randint(0, 99)).zfill(2))] # tier 1 to 4
+        print(a)
+        print(b)
+        tier = None
+        thumb = None
+        for i in range(0, 4):
+            lost = False
+            if i == 0: x = a
+            elif i == 1: x = a[1:]
+            elif i == 2: x = a[:2]
+            elif i == 3: x = a[2]
+            for c in x:
+                if (c not in b[i]) and ('**'+c+'**' not in b[i]):
+                    lost = True
+                    break
+                else:
+                    for j in range(0, len(b[i])):
+                        if c == b[i][j]: b[i][j] = '**' + b[i][j] + '**'
+                if lost: break
+            if not lost:
+                b[i].append(':confetti_ball:')
+                if i == 0:
+                    tier = '\n:confetti_ball: **You won a Tier 1 prize**'
+                    thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/article/m/30041.jpg'
+                    break
+                elif i == 1:
+                    tier = '\n:clap: **You won a Tier 2 prize**'
+                    thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/normal/m/gem.jpg'
+                    break
+                elif i == 2:
+                    tier = '\n:hushed: You won a **Tier 3** prize'
+                    thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/1040004600.jpg'
+                    break
+                elif i == 3:
+                    tier = '\n:pensive: You won a **Tier 4** prize'
+                    thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/article/m/30033.jpg'
+                    break
+        if tier is None:
+            tier = '\n{} You lost'.format(self.bot.emote.get('kmr'))
+            thumb = None
+        title = '{} is tempting fate...'.format(ctx.author.display_name)
+        desc = "Your card number is **{}**".format(a)
+        message = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc, color=self.color))
+        await asyncio.sleep(2)
+        desc += '\nThe winning numbers are...\n'
+        for i in range(0, 4):
+            nums = ''
+            for j in range(0, i+1):
+                nums += "**Tier {}**▫️{}\n".format(4-j, ', '.join(b[3-j]))
+            await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc + nums, color=self.color))
+            await asyncio.sleep(1)
+        title = "{}'s fortune is...".format(ctx.author.display_name)
+        await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc + nums + tier, thumbnail=thumb, color=self.color))
+        await self.bot.util.clean(ctx, message, 45)
+
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 600, commands.BucketType.user)
     async def quota(self, ctx):

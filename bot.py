@@ -44,6 +44,7 @@ class MizaBot(commands.Bot):
         self.changelog = [ # changelog lines
             "**This MizaBOT version is a Beta**, please use `$bug_report` if you see anything wrong",
             "Online command list added [here](https://mizagbf.github.io/MizaBOT/)",
+            "Added `$fortune`",
             "Crew health indicator in `$crew` (Note: Values has been adjusted)",
             "Added `$gwspeed`, `$invite` and `$scam`",
             "Reworked the `$help` command",
