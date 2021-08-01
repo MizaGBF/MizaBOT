@@ -738,12 +738,24 @@ class Games(commands.Cog):
                         break
                 await asyncio.sleep(0.001)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['loto'])
+    def genLoto(self, n):
+        while True:
+            a = [str(random.randint(0, 9)) for i in range(0, n)]
+            bad = False
+            for i in range(0, len(a)-1):
+                if a[i] in a[i+1:]:
+                    bad = True
+                    break
+            if not bad:
+                break
+        return  list(''.join(a))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['loto', 'lotto'])
     @commands.cooldown(1, 150, commands.BucketType.user)
     async def fortune(self, ctx):
         """Imitate the GBF summer fortune game from Summer 2021"""
         a = str(random.randint(0, 999)).zfill(3)
-        b = [list(str(random.randint(0, 99)).zfill(2)), list(str(random.randint(0, 99)).zfill(2)), list(str(random.randint(0, 999)).zfill(3)), list(str(random.randint(0, 99)).zfill(2))] # tier 1 to 4
+        b = [self.genLoto(2), self.genLoto(2), self.genLoto(3), self.genLoto(2)] # tier 1 to 4
         print(a)
         print(b)
         tier = None
@@ -764,24 +776,26 @@ class Games(commands.Cog):
                 if lost: break
             if not lost:
                 b[i].append(':confetti_ball:')
-                if i == 0:
-                    tier = '\n:confetti_ball: **You won a Tier 1 prize**'
-                    thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/article/m/30041.jpg'
-                    break
-                elif i == 1:
-                    tier = '\n:clap: **You won a Tier 2 prize**'
-                    thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/normal/m/gem.jpg'
-                    break
-                elif i == 2:
-                    tier = '\n:hushed: You won a **Tier 3** prize'
-                    thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/1040004600.jpg'
-                    break
-                elif i == 3:
-                    tier = '\n:pensive: You won a **Tier 4** prize'
-                    thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/article/m/30033.jpg'
-                    break
+                if tier is None:
+                    if i == 0:
+                        tier = ':confetti_ball: **You won a Tier 1 prize**'
+                        thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/article/m/30041.jpg'
+                    elif i == 1:
+                        tier = ':clap: **You won a Tier 2 prize**'
+                        thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/normal/m/gem.jpg'
+                    elif i == 2:
+                        tier = ':hushed: You won a **Tier 3** prize'
+                        thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/1040004600.jpg'
+                    elif i == 3:
+                        tier = ':pensive: You won a **Tier 4** prize'
+                        thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/article/m/30033.jpg'
+            else:
+                if i == 0: b[i].append("▫*your 3 digits didn't match*")
+                elif i == 1: b[i].append("▫️ *your last 2 digits didn't match*")
+                elif i == 2: b[i].append("▫️ *your first 2 digits didn't match*")
+                elif i == 3: b[i].append("▫️ *your last digit didn't match*")
         if tier is None:
-            tier = '\n{} You lost'.format(self.bot.emote.get('kmr'))
+            tier = '{} You lost'.format(self.bot.emote.get('kmr'))
             thumb = None
         title = '{} is tempting fate...'.format(ctx.author.display_name)
         desc = "Your card number is **{}**".format(a)
@@ -791,7 +805,7 @@ class Games(commands.Cog):
         for i in range(0, 4):
             nums = ''
             for j in range(0, i+1):
-                nums += "**Tier {}**▫️{}\n".format(4-j, ', '.join(b[3-j]))
+                nums += "**Tier {}**▫️{}\n".format(4-j, ' '.join(b[3-j]))
             await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc + nums, color=self.color))
             await asyncio.sleep(1)
         title = "{}'s fortune is...".format(ctx.author.display_name)
