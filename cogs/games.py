@@ -841,7 +841,6 @@ class Games(commands.Cog):
     int: Prize tier (0 = lost)
     """
     def checkLotoWin(self, card, winning):
-        tier = 0
         for i in range(0, 4):
             lost = False
             if i == 0: x = card
@@ -853,25 +852,25 @@ class Games(commands.Cog):
                     lost = True
                     break
             if not lost:
-                tier = i + 1
-        return tier
+                return i + 1
+        return 0
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['loto', 'lotto'])
     @commands.cooldown(1, 200, commands.BucketType.user)
     async def fortune(self, ctx):
         """Imitate the GBF summer fortune game from Summer 2021"""
-        cards, winning = self.genLoto()
-        prize = [0, 0, 0, 0]
         title = '{} is tempting fate...'.format(ctx.author.display_name)
         message = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description="The winning numbers are...", color=self.color))
+        cards, winning = await self.bot.do(self.genLoto)
         await asyncio.sleep(2)
-        desc, thumb = self.printLoto([], winning, prize)
+        prize = [0, 0, 0, 0]
+        desc, thumb = await self.bot.do(self.printLoto, [], winning, prize)
         await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc, thumbnail=thumb, color=self.color))
         title = "{}'s fortune is".format(ctx.author.display_name)
         for i in range(0, len(cards)):
             tier = self.checkLotoWin(cards[:i+1][-1], winning)
             if tier != 0: prize[tier-1] += 1
-            desc, thumb = self.printLoto(cards[:i+1], winning, prize, (i == len(cards)-1))
+            desc, thumb = await self.bot.do(self.printLoto, cards[:i+1], winning, prize, (i == len(cards)-1))
             await asyncio.sleep(0.5)
             await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc, thumbnail=thumb, color=self.color))
         await self.bot.util.clean(ctx, message, 45)
