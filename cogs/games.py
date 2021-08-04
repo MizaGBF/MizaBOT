@@ -738,78 +738,142 @@ class Games(commands.Cog):
                         break
                 await asyncio.sleep(0.001)
 
-    def genLoto(self, n):
-        while True:
-            a = [str(random.randint(0, 9)) for i in range(0, n)]
-            bad = False
-            for i in range(0, len(a)-1):
-                if a[i] in a[i+1:]:
-                    bad = True
-                    break
-            if not bad:
-                break
-        return  list(''.join(a))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['loto', 'lotto'])
-    @commands.cooldown(1, 150, commands.BucketType.user)
-    async def fortune(self, ctx):
-        """Imitate the GBF summer fortune game from Summer 2021"""
-        a = str(random.randint(0, 999)).zfill(3)
-        b = [self.genLoto(2), self.genLoto(2), self.genLoto(3), self.genLoto(2)] # tier 1 to 4
-        print(a)
-        print(b)
-        tier = None
+    """genLoto()
+    Generate cards and winning numbers for the summer fortune minigame
+    
+    Returns
+    --------
+    tuple: Containing:
+        - List of cards
+        - List of tier winning digits
+    """
+    def genLoto(self):
+        cards = []
+        for i in range(0, 16):
+            while True:
+                if i < 10: c = str(10 * random.randint(0, 99) + i % 10).zfill(3) # generate unique last digit
+                else: c = str(random.randint(0, 999)).zfill(3)
+                if c not in cards:
+                    cards.append(c)
+                    break
+        random.shuffle(cards)
+        winning = []
+        for c in [2, 2, 3, 2]:
+            while True:
+                a = [str(random.randint(0, 9)) for i in range(0, c)]
+                bad = False
+                for i in range(0, len(a)-1):
+                    if a[i] in a[i+1:]:
+                        bad = True
+                        break
+                if not bad:
+                    break
+            winning.append(list(''.join(a)))
+        return cards, winning
+
+    """printLoto()
+    Generate the string and thumbnail for the summer fortune minigame
+    
+    Parameters
+    ----------
+    revealedCards: List of revealed cards
+    revealedWinning: List of revealed winning digits
+    prize: List of prize won currently
+    total: If true, will print the total prize won
+    
+    Returns
+    --------
+    tuple: Containing:
+        - Description string
+        - Thumbnail url
+    """
+    def printLoto(self, revealedCards, revealedWinning, prize, total=False):
+        desc = ''
         thumb = None
+        if len(revealedWinning) > 0:
+            desc += "The winning numbers are:\n"
+            for i in range(0, len(revealedWinning)):
+                desc += "**Tier {}**▫️{} ".format(4-i, ' '.join(revealedWinning[len(revealedWinning)-1-i]))
+                for j in range(0, prize[3-i]): desc += ":confetti_ball:"
+                desc += "\n"
+        if len(revealedCards) > 0:
+            desc += "Your cards are: "
+            for c in revealedCards:
+                desc += "**" + c + "**"
+                if c is not revealedCards[-1]: desc += ", "
+        if total:
+            if sum(prize) == 0: desc += "\n{} You won nothing".format(self.bot.emote.get('kmr'))
+            else:
+                if prize[0] > 0:
+                    desc += '\n:confetti_ball: '
+                    thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/article/m/30041.jpg'
+                elif prize[1] > 0:
+                    desc += '\n:clap: '
+                    thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/normal/m/gem.jpg'
+                elif prize[2] > 0:
+                    desc += '\n:hushed: '
+                    thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/1040004600.jpg'
+                elif prize[3] > 0:
+                    desc += '\n:pensive: '
+                    thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/article/m/30033.jpg'
+                add_comma = False
+                for i in range(0, 4):
+                    if prize[3-i] > 0:
+                        if add_comma: desc += ", "
+                        desc += "**{}** Tier {}".format(prize[3-i], 4-i)
+                        add_comma = True
+                desc += " prizes"
+                    
+        return desc, thumb
+
+    """checkLotoWin()
+    Check which tier the card is elligible for
+    (summer fortune minigame)
+    
+    Parameters
+    ----------
+    card: Card to compare
+    winning: List of winning digits
+    
+    Returns
+    --------
+    int: Prize tier (0 = lost)
+    """
+    def checkLotoWin(self, card, winning):
+        tier = 0
         for i in range(0, 4):
             lost = False
-            if i == 0: x = a
-            elif i == 1: x = a[1:]
-            elif i == 2: x = a[:2]
-            elif i == 3: x = a[2]
+            if i == 0: x = card
+            elif i == 1: x = card[1:]
+            elif i == 2: x = card[:2]
+            elif i == 3: x = card[2]
             for c in x:
-                if (c not in b[i]) and ('**'+c+'**' not in b[i]):
+                if c not in winning[i]:
                     lost = True
                     break
-                else:
-                    for j in range(0, len(b[i])):
-                        if c == b[i][j]: b[i][j] = '**' + b[i][j] + '**'
-                if lost: break
             if not lost:
-                b[i].append(':confetti_ball:')
-                if tier is None:
-                    if i == 0:
-                        tier = ':confetti_ball: **You won a Tier 1 prize**'
-                        thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/article/m/30041.jpg'
-                    elif i == 1:
-                        tier = ':clap: **You won a Tier 2 prize**'
-                        thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/normal/m/gem.jpg'
-                    elif i == 2:
-                        tier = ':hushed: You won a **Tier 3** prize'
-                        thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/1040004600.jpg'
-                    elif i == 3:
-                        tier = ':pensive: You won a **Tier 4** prize'
-                        thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/article/m/30033.jpg'
-            else:
-                if i == 0: b[i].append("▫*your 3 digits didn't match*")
-                elif i == 1: b[i].append("▫️ *your last 2 digits didn't match*")
-                elif i == 2: b[i].append("▫️ *your first 2 digits didn't match*")
-                elif i == 3: b[i].append("▫️ *your last digit didn't match*")
-        if tier is None:
-            tier = '{} You lost'.format(self.bot.emote.get('kmr'))
-            thumb = None
+                tier = i + 1
+        return tier
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['loto', 'lotto'])
+    @commands.cooldown(1, 200, commands.BucketType.user)
+    async def fortune(self, ctx):
+        """Imitate the GBF summer fortune game from Summer 2021"""
+        cards, winning = self.genLoto()
+        prize = [0, 0, 0, 0]
         title = '{} is tempting fate...'.format(ctx.author.display_name)
-        desc = "Your card number is **{}**".format(a)
-        message = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc, color=self.color))
+        message = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description="The winning numbers are...", color=self.color))
         await asyncio.sleep(2)
-        desc += '\nThe winning numbers are...\n'
-        for i in range(0, 4):
-            nums = ''
-            for j in range(0, i+1):
-                nums += "**Tier {}**▫️{}\n".format(4-j, ' '.join(b[3-j]))
-            await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc + nums, color=self.color))
+        desc, thumb = self.printLoto([], winning, prize)
+        await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc, thumbnail=thumb, color=self.color))
+        title = "{}'s fortune is".format(ctx.author.display_name)
+        for i in range(1, len(cards)):
+            tier = self.checkLotoWin(cards[:i][-1], winning)
+            if tier != 0: prize[tier-1] += 1
+            desc, thumb = self.printLoto(cards[:i], winning, prize, (i == len(cards)-1))
             await asyncio.sleep(1)
-        title = "{}'s fortune is...".format(ctx.author.display_name)
-        await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc + nums + tier, thumbnail=thumb, color=self.color))
+            await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc, thumbnail=thumb, color=self.color))
         await self.bot.util.clean(ctx, message, 45)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
