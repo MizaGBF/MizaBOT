@@ -750,7 +750,7 @@ class Games(commands.Cog):
     """
     def genLoto(self):
         cards = []
-        for i in range(0, 16):
+        for i in range(0, 14):
             while True:
                 if i < 10: c = str(10 * random.randint(0, 99) + i % 10).zfill(3) # generate unique last digit
                 else: c = str(random.randint(0, 999)).zfill(3)
@@ -868,11 +868,11 @@ class Games(commands.Cog):
         desc, thumb = self.printLoto([], winning, prize)
         await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc, thumbnail=thumb, color=self.color))
         title = "{}'s fortune is".format(ctx.author.display_name)
-        for i in range(1, len(cards)):
-            tier = self.checkLotoWin(cards[:i][-1], winning)
+        for i in range(0, len(cards)):
+            tier = self.checkLotoWin(cards[:i+1][-1], winning)
             if tier != 0: prize[tier-1] += 1
-            desc, thumb = self.printLoto(cards[:i], winning, prize, (i == len(cards)-1))
-            await asyncio.sleep(1)
+            desc, thumb = self.printLoto(cards[:i+1], winning, prize, (i == len(cards)-1))
+            await asyncio.sleep(0.5)
             await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc, thumbnail=thumb, color=self.color))
         await self.bot.util.clean(ctx, message, 45)
 
