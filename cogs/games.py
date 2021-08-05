@@ -796,7 +796,7 @@ class Games(commands.Cog):
         if len(revealedCards) > 0:
             desc += "Your cards are: "
             for c in revealedCards:
-                desc += "**" + c + "**"
+                desc += c
                 if c is not revealedCards[-1]: desc += ", "
         if total:
             if sum(prize) == 0: desc += "\n{} You won nothing".format(self.bot.emote.get('kmr'))
@@ -866,7 +866,9 @@ class Games(commands.Cog):
         title = "{}'s fortune is".format(ctx.author.display_name)
         for i in range(0, len(cards)):
             tier = self.checkLotoWin(cards[:i+1][-1], winning)
-            if tier != 0: prize[tier-1] += 1
+            if tier != 0:
+                prize[tier-1] += 1
+                cards[i] = '**'+cards[i]+'**'
             desc, thumb = await self.bot.do(self.printLoto, cards[:i+1], winning, prize, (i == len(cards)-1))
             await asyncio.sleep(0.5)
             await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc, thumbnail=thumb, color=self.color))
