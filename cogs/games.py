@@ -758,18 +758,14 @@ class Games(commands.Cog):
                     cards.append(c)
                     break
         random.shuffle(cards)
-        winning = []
-        for c in [2, 2, 3, 2]:
+        temp = []
+        for i in range(0, 9):
             while True:
-                a = [str(random.randint(0, 9)) for i in range(0, c)]
-                bad = False
-                for i in range(0, len(a)-1):
-                    if a[i] in a[i+1:]:
-                        bad = True
-                        break
-                if not bad:
+                c = str(random.randint(0, 999)).zfill(3)
+                if c not in temp:
+                    temp.append(c)
                     break
-            winning.append(list(''.join(a)))
+        winning = [temp[:2], temp[2:4], temp[4:7], temp[7:]]
         return cards, winning
 
     """printLoto()
@@ -794,7 +790,7 @@ class Games(commands.Cog):
         if len(revealedWinning) > 0:
             desc += "The winning numbers are:\n"
             for i in range(0, len(revealedWinning)):
-                desc += "**Tier {}**▫️{} ".format(4-i, ' '.join(revealedWinning[len(revealedWinning)-1-i]))
+                desc += "**Tier {}**▫️{} ".format(4-i, ', '.join(revealedWinning[len(revealedWinning)-1-i]))
                 for j in range(0, prize[3-i]): desc += ":confetti_ball:"
                 desc += "\n"
         if len(revealedCards) > 0:
@@ -847,11 +843,12 @@ class Games(commands.Cog):
             elif i == 1: x = card[1:]
             elif i == 2: x = card[:2]
             elif i == 3: x = card[2]
-            for c in x:
-                if c not in winning[i]:
-                    lost = True
-                    break
-            if not lost:
+            nums = winning[i].copy()
+            for j in range(0, len(nums)):
+                if i == 1: nums[j] = nums[j][1:]
+                elif i == 2: nums[j] = nums[j][:2]
+                elif i == 3: nums[j] = nums[j][2]
+            if x in nums:
                 return i + 1
         return 0
 
