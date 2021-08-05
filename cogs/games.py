@@ -756,8 +756,8 @@ class Games(commands.Cog):
                 else: c = str(random.randint(0, 999)).zfill(3)
                 if c not in cards:
                     cards.append(c)
+                    if len(cards) == 10: random.shuffle(cards)
                     break
-        random.shuffle(cards)
         winning = [[], [], [], []]
         patterns = [[3, 2], [2, 2], [2, 3], [1, 2]]
         for i in range(0, len(patterns)):
