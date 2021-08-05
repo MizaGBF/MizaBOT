@@ -758,14 +758,17 @@ class Games(commands.Cog):
                     cards.append(c)
                     break
         random.shuffle(cards)
-        temp = []
-        for i in range(0, 9):
-            while True:
-                c = str(random.randint(0, 999)).zfill(3)
-                if c not in temp:
-                    temp.append(c)
-                    break
-        winning = [temp[:2], temp[2:4], temp[4:7], temp[7:]]
+        winning = [[], [], [], []]
+        patterns = [[3, 2], [2, 2], [2, 3], [1, 2]]
+        for i in range(0, len(patterns)):
+            pad = '{:<0' + str(patterns[i][0]+1) + 'd}'
+            pad = int(pad.format(1))
+            for j in range(0, patterns[i][1]):
+                while True:
+                    c = str(random.randint(0, pad-1)).zfill(patterns[i][0])
+                    if c not in winning[i]:
+                        winning[i].append(c)
+                        break
         return cards, winning
 
     """printLoto()
@@ -843,12 +846,7 @@ class Games(commands.Cog):
             elif i == 1: x = card[1:]
             elif i == 2: x = card[:2]
             elif i == 3: x = card[2]
-            nums = winning[i].copy()
-            for j in range(0, len(nums)):
-                if i == 1: nums[j] = nums[j][1:]
-                elif i == 2: nums[j] = nums[j][:2]
-                elif i == 3: nums[j] = nums[j][2]
-            if x in nums:
+            if x in winning[i]:
                 return i + 1
         return 0
 
