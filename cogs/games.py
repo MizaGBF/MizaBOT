@@ -793,7 +793,11 @@ class Games(commands.Cog):
         if len(revealedWinning) > 0:
             desc += "The winning numbers are:\n"
             for i in range(0, len(revealedWinning)):
-                desc += "**Tier {}**▫️{} ".format(4-i, ', '.join(revealedWinning[len(revealedWinning)-1-i]))
+                desc += "**Tier {}**▫️".format(4-i)
+                if i == 0: desc += "Last Digit▫️" # tier 4
+                elif i == 1: desc += "First Two▫️" # tier 3
+                elif i == 2: desc += "Last Two▫️" # tier 2
+                desc += "{} ".format(', '.join(revealedWinning[len(revealedWinning)-1-i]))
                 for j in range(0, prize[3-i]): desc += ":confetti_ball:"
                 desc += "\n"
         if len(revealedCards) > 0:
