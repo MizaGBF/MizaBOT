@@ -1,6 +1,7 @@
 ﻿from discord.ext import commands
 import asyncio
 import random
+import math
 from datetime import datetime
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -874,6 +875,28 @@ class Games(commands.Cog):
             desc, thumb = await self.bot.do(self.printLoto, cards[:i+1], winning, prize, (i == len(cards)-1))
             await asyncio.sleep(0.5)
             await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc, thumbnail=thumb, color=self.color))
+        await self.bot.util.clean(ctx, message, 45)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['lotochance', 'lottochance', 'fortunecalc', 'lotocalc', 'lottocalc'])
+    @commands.cooldown(2, 40, commands.BucketType.user)
+    async def fortunechance(self, ctx, *, cards : str):
+        """Calculate your chance at the GBF summer fortune game from Summer 2021
+        Input your card numbers separated by spaces"""
+        cards = cards.split(" ")
+        tier3 = []
+        tier2 = []
+        tier1 = []
+        for c in cards:
+            try:
+                if len(c) > 3 or int(c) < 0: raise Exception()
+            except:
+                await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid card number `{}`".format(c), color=self.color))
+                return
+            sc = c.zfill(3)
+            if sc[:2] not in tier3: tier3.append(sc[:2])
+            if sc[1:] not in tier2: tier2.append(sc[1:])
+            if sc not in tier1: tier1.append(sc)
+        await ctx.reply(embed=self.bot.util.embed(title="Summer Fortune Calculator", description="Your chances of winning at least one\n**Tier 3** ▫️ {:.2f}%\n**Tier 2** ▫️ {:.2f}%\n**Tier 1** ▫️ {:.2f}%".format(100*(1-math.pow(1-0.03, len(tier3))), 100*(1-math.pow(1-0.02, len(tier2))), 100*(1-math.pow(1-0.002, len(tier1)))), color=self.color))
         await self.bot.util.clean(ctx, message, 45)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
