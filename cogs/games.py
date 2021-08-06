@@ -890,13 +890,14 @@ class Games(commands.Cog):
             try:
                 if len(c) > 3 or int(c) < 0: raise Exception()
             except:
-                await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid card number `{}`".format(c), color=self.color))
+                message = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid card number `{}`".format(c), color=self.color))
+                await self.bot.util.clean(ctx, message, 45)
                 return
             sc = c.zfill(3)
             if sc[:2] not in tier3: tier3.append(sc[:2])
             if sc[1:] not in tier2: tier2.append(sc[1:])
             if sc not in tier1: tier1.append(sc)
-        await ctx.reply(embed=self.bot.util.embed(title="Summer Fortune Calculator", description="Your chances of winning at least one\n**Tier 3** ▫️ {:.2f}%\n**Tier 2** ▫️ {:.2f}%\n**Tier 1** ▫️ {:.2f}%".format(100*(1-math.pow(1-0.03, len(tier3))), 100*(1-math.pow(1-0.02, len(tier2))), 100*(1-math.pow(1-0.002, len(tier1)))), color=self.color))
+        message = await ctx.reply(embed=self.bot.util.embed(title="Summer Fortune Calculator", description="Your chances of winning at least one\n**Tier 3** ▫️ {:.2f}%\n**Tier 2** ▫️ {:.2f}%\n**Tier 1** ▫️ {:.2f}%".format(100*(1-math.pow(1-0.03, len(tier3))), 100*(1-math.pow(1-0.02, len(tier2))), 100*(1-math.pow(1-0.002, len(tier1)))), color=self.color))
         await self.bot.util.clean(ctx, message, 45)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
