@@ -337,7 +337,7 @@ class Games(commands.Cog):
         try:
             if count == '' or int(count) <= 0 or int(count) > 600: raise Exception("Please specify a valid number of rolls")
             count = int(count)
-            msg = "Your chances of getting at least one of the following rate ups:\n"
+            msg = "Your chances of getting at least one of the following rate ups with {} rolls:\n".format(count)
             rateups = self.gachaRateUp()[1]
             if rateups is None: raise Exception("Unavailable")
             for r in rateups:
