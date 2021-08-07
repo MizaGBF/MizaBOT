@@ -330,6 +330,23 @@ class Games(commands.Cog):
             return
         await self._roll(ctx, ("{}" + " is rolling {} times...".format(count), "{} " + "rolled {} times".format(count)), 3, count=count, mode='ten', legfest=self.checkLegfest(double))
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rollcalc'])
+    @commands.cooldown(2, 30, commands.BucketType.user)
+    async def rollchance(self, ctx, count : str):
+        """Calculate your chance of rolling the rate up for a given amount of rolls."""
+        try:
+            if count == '' or int(count) <= 0 or int(count) > 600: raise Exception("Please specify a valid number of rolls")
+            count = int(count)
+            msg = "Your chances of getting at least one of the following rate ups:\n"
+            rateups = self.gachaRateUp()[1]
+            if rateups is None: raise Exception("Unavailable")
+            for r in rateups:
+                msg += "{:} **{:}%** ▫️ {:.2f}%\n".format(self.bot.emote.get('SSR'), r, 100*(1-math.pow(1-float(r)*0.01, count)))
+            msg = await ctx.reply(embed=self.bot.util.embed(title="Roll Chance Calculator", description=msg, color=self.color))
+        except Exception as e:
+            msg = await ctx.reply(embed=self.bot.util.embed(title="Roll Chance Calculator Error", description=str(e), color=self.color))
+        await self.bot.util.clean(ctx, msg, 45)
+
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(15, 30, commands.BucketType.guild)
     async def spark(self, ctx, double : str = ""):
