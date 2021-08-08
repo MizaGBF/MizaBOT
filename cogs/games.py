@@ -332,11 +332,19 @@ class Games(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rollcalc'])
     @commands.cooldown(2, 30, commands.BucketType.user)
-    async def rollchance(self, ctx, count : str):
+    async def rollchance(self, ctx, count : str = ""):
         """Calculate your chance of rolling the rate up for a given amount of rolls."""
         try:
-            if count == '' or int(count) <= 0: raise Exception("Please specify a valid number of rolls")
-            count = int(count)
+            if count == '':
+                if str(ctx.message.author.id) in self.bot.data.save['spark']:
+                    s = self.bot.data.save['spark'][str(ctx.message.author.id)]
+                    count = (s[0] // 300) + s[1] + s[2] * 10
+                else:
+                    raise Exception("Please specify a valid number of rolls")
+            elif int(count) <= 0:
+                raise Exception("Please specify a valid number of rolls")
+            else:
+                count = int(count)
             msg = "Your chances of getting at least one of the following rate ups with {} rolls:\n".format(count)
             rateups = self.gachaRateUp()[1]
             if rateups is None: raise Exception("Unavailable")
