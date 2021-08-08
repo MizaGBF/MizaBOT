@@ -335,7 +335,7 @@ class Games(commands.Cog):
     async def rollchance(self, ctx, count : str):
         """Calculate your chance of rolling the rate up for a given amount of rolls."""
         try:
-            if count == '' or int(count) <= 0 or int(count) > 600: raise Exception("Please specify a valid number of rolls")
+            if count == '' or int(count) <= 0: raise Exception("Please specify a valid number of rolls")
             count = int(count)
             msg = "Your chances of getting at least one of the following rate ups with {} rolls:\n".format(count)
             rateups = self.gachaRateUp()[1]
