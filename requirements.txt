@@ -1,5 +1,5 @@
 discord.py==1.7.3
-pydrive2==1.8.3
+pydrive2==1.9.0
 psutil==5.8.0
 beautifulsoup4==4.9.3
 tweepy==3.10.0
