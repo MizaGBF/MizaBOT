@@ -883,11 +883,24 @@ class Games(commands.Cog):
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['loto', 'lotto'])
     @commands.cooldown(1, 200, commands.BucketType.user)
-    async def fortune(self, ctx):
-        """Imitate the GBF summer fortune game from Summer 2021"""
+    async def fortune(self, ctx, *, usercards : str = ""):
+        """Imitate the GBF summer fortune game from Summer 2021
+        You can specify your own cards with this command"""
         title = '{} is tempting fate...'.format(ctx.author.display_name)
         message = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description="The winning numbers are...", color=self.color))
         cards, winning = await self.bot.do(self.genLoto)
+        cvt = []
+        usercards = usercards.split(" ")
+        for c in usercards:
+            try:
+                if c == "": continue
+                if len(c) > 3 or int(c) < 0: raise Exception()
+            except:
+                cvt = []
+                break
+            cvt.append(c.zfill(3))
+            if len(cvt) >= 20: break
+        if len(cvt) != 0: cards = cvt
         await asyncio.sleep(2)
         prize = [0, 0, 0, 0]
         desc, thumb = await self.bot.do(self.printLoto, [], winning, prize)
@@ -914,6 +927,7 @@ class Games(commands.Cog):
         tier1 = []
         for c in cards:
             try:
+                if c == "": continue
                 if len(c) > 3 or int(c) < 0: raise Exception()
             except:
                 message = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid card number `{}`".format(c), color=self.color))
