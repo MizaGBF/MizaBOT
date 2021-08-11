@@ -333,7 +333,8 @@ class Games(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rollcalc'])
     @commands.cooldown(2, 30, commands.BucketType.user)
     async def rollchance(self, ctx, count : str = ""):
-        """Calculate your chance of rolling the rate up for a given amount of rolls."""
+        """Calculate your chance of rolling the rate up for a given amount of rolls.
+        Leave empty and it will use your roll count from the setRoll command"""
         try:
             if count == '':
                 if str(ctx.message.author.id) in self.bot.data.save['spark']:

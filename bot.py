@@ -40,7 +40,7 @@ import functools
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "8.0-beta-8" # bot version
+        self.version = "8.0-beta-9" # bot version
         self.changelog = [ # changelog lines
             "**This MizaBOT version is a Beta**, please use `$bug_report` if you see anything wrong",
             "Online command list added [here](https://mizagbf.github.io/MizaBOT/)",
@@ -522,11 +522,12 @@ class MizaBot(commands.Bot):
     """
     async def on_command_error(self, ctx, error): # called when an uncatched exception happens in a command
         msg = str(error)
-        if msg.find('You are on cooldown.') == 0:
+        if msg.startswith('You are on cooldown.'):
             await self.util.react(ctx.message, 'cooldown')
-        elif msg.find('required argument that is missing') != -1:
-            return
         elif msg.find('check functions for command') != -1:
+            return
+        elif msg.find('required argument that is missing') != -1 or msg.startswith('Converting to "int" failed for parameter'):
+            await self.util.react(ctx.message, '❎')
             return
         elif msg.find('Member "') == 0 or msg.find('Command "') == 0 or msg.startswith('Command raised an exception: Forbidden: 403'):
             return

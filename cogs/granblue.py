@@ -875,7 +875,7 @@ class GranblueFantasy(commands.Cog):
         """Give the time elapsed of various GBF related releases"""
         msg = ""
         wiki_checks = ["Category:Campaign", "Surprise_Special_Draw_Set", "Damascus_Ingot", "Gold_Brick", "Sunlight_Stone", "Sephira_Evolite"]
-        regexs = ["<td>(\\d+ days)<\\/td>\\s*<td><span class=\"image_link\"><a href=\"/Four_Symbols_Stone\"", "<td>(\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(-\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td style=\"text-align: left;\">Time since last ", "<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td>(\\d+ days)<\\/td>\\s*"]
+        regexs = ["<td>(\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(-\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td style=\"text-align: left;\">Time since last ", "<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td>(\\d+ days)<\\/td>\\s*"]
         for w in wiki_checks:
             async with aiohttp.ClientSession() as session:
                 async with session.get("https://gbf.wiki/{}".format(w)) as r:
@@ -884,7 +884,7 @@ class GranblueFantasy(commands.Cog):
                         for r in regexs:
                             m = re.search(r, t)
                             if m:
-                                msg += "**{}** since the last {}\n".format(m.group(1), w.replace("_", " ").replace("Category:", ""))
+                                msg += "**{}** since the last {}\n".format(m.group(1), w.replace("_", " ").replace("Category:", "").replace('Sunlight', 'Arcarum Sunlight').replace('Sephira', 'Arcarum Sephira').replace('Gold', 'ROTB Gold'))
                                 break
 
         # grand (for memes, might remove later)
