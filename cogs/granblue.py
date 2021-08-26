@@ -392,8 +392,8 @@ class GranblueFantasy(commands.Cog):
 
                         x = data.get('object', None)
                         if x is None: # if no match
-                            final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=data.get('description', None), image=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
-                        elif x == 0: # charater
+                            final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=data.get('description', ''), image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
+                        elif x == 0: # character
                             if 'title' in data: title = title + ", " + data['title']
                             if 'rarity' in data: title = "{} {}".format(self.bot.emote.get(data['rarity']), title)
                             try:
@@ -407,9 +407,9 @@ class GranblueFantasy(commands.Cog):
                                 desc = "This character has other versions\n"
                                 for e in elems:
                                     desc += "[{}](https://gbf.wiki/{})\n".format(e, e.replace(" ", "_"))
-                                final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=desc, image=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
+                                final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=desc, image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
                             except: # if none, just send the link
-                                final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=data.get('description', None), image=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
+                                final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=data.get('description', ''), image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
                         else: # summon and weapon
                             data = await self.bot.do(self.processWikiItem, data, tables)
                             # final message
@@ -438,7 +438,7 @@ class GranblueFantasy(commands.Cog):
                             if 'aura' in data: desc += "{} **Aura**▫️{}\n".format(self.bot.emote.get('skill2'), data['aura'])
                             if 'subaura' in data: desc += "{} **Sub Aura**▫️{}\n".format(self.bot.emote.get('skill2'), data['subaura'])
 
-                            final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=desc, thumbnail=data.get('image', None), url=url, footer=data.get('id', None), color=self.color))
+                            final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=desc, thumbnail=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
         await self.bot.util.clean(ctx, final_msg, 80)
 
 
@@ -599,7 +599,7 @@ class GranblueFantasy(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def eternal(self, ctx):
         """Post a link to my Eternal Sheet"""
-        await ctx.reply(embed=self.bot.util.embed(title="Eternal Transcendance Tracking Sheet", description=self.bot.data.config['strings']["eternal()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/npc/s/30400{}.jpg".format(random.choice(['30000_04', '31000_04', '32000_03', '33000_03', '34000_03', '35000_03', '36000_03', '37000_03', '38000_03', '39000_03'])), color=self.color))
+        await ctx.reply(embed=self.bot.util.embed(title="Eternal Transcendance Tracking Sheet", description=self.bot.data.config['strings']["eternal()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/npc/s/30400{}.jpg".format(random.choice(['30000_04', '31000_04', '32000_04', '33000_04', '34000_04', '35000_04', '36000_04', '37000_04', '38000_04', '39000_04'])), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwskin', 'blueskin'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
@@ -887,8 +887,9 @@ class GranblueFantasy(commands.Cog):
                                 msg += "**{}** since the last {}\n".format(m.group(1), w.replace("_", " ").replace("Category:", "").replace('Sunlight', 'Arcarum Sunlight').replace('Sephira', 'Arcarum Sephira').replace('Gold', 'ROTB Gold'))
                                 break
 
-        # grand (for memes, might remove later)
+        # summer disaster and grands
         c = self.bot.util.JST()
+        msg += "**{} days** since the Summer Fortune 2021\n".format(self.bot.util.delta2str(c - c.replace(year=2021, month=8, day=16, hour=19, minute=0, second=0, microsecond=0), 3).split('d')[0])
         grands = {
             "fire": c.replace(year=2020, month=4, day=30, hour=12, minute=0, second=0, microsecond=0),
             "water": c.replace(year=2021, month=7, day=31, hour=12, minute=0, second=0, microsecond=0),
@@ -1462,7 +1463,7 @@ class GranblueFantasy(commands.Cog):
                     self.dlAndPasteImage(img, mh[0].attrs['src'].replace('img_low', 'img').replace('/ls/', '/m/'), (0, portrait_size[1]+lvl_box_height), equip_size)
                     plus = eq.findChildren("div", class_="prt-weapon-quality", recursive=True)
                     if len(plus) > 0:
-                        d.text((equip_size[0]-50, portrait_size[1]+lvl_box_height+equip_size[1]-30), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
+                        d.text((equip_size[0]-50, portrait_size[1]+lvl_box_height+equip_size[1]-30), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
                     continue
                 ms = eq.findChildren('img', class_='img-summon', recursive=True)
                 if len(ms) > 0: # main summon

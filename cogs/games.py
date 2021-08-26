@@ -777,14 +777,11 @@ class Games(commands.Cog):
     """
     def genLoto(self):
         cards = []
-        for i in range(0, 14):
-            while True:
-                if i < 10: c = str(10 * random.randint(0, 99) + i % 10).zfill(3) # generate unique last digit
-                else: c = str(random.randint(0, 999)).zfill(3)
-                if c not in cards:
-                    cards.append(c)
-                    if len(cards) == 10: random.shuffle(cards)
-                    break
+        for i in range(0, 13):
+            if i < 10: c = str(10 * random.randint(0, 99) + i % 10).zfill(3) # generate unique last digit
+            else: c = str(random.randint(0, 999)).zfill(3)
+            cards.append(c)
+            if len(cards) == 10: random.shuffle(cards)
         winning = [[], [], [], []]
         patterns = [[3, 2], [2, 2], [2, 3], [1, 2]]
         for i in range(0, len(patterns)):

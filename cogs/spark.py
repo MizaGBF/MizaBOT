@@ -108,7 +108,7 @@ class Sparking(commands.Cog):
     """
     def _estimate(self, r, timestamp):
         # from january to december
-        month_min = [80, 80, 160, 90, 70, 80, 80, 200, 80, 80, 80, 160]
+        month_min = [80, 80, 160, 90, 70, 80, 80, 170, 80, 80, 80, 160]
         month_max = [70, 70, 120, 70, 50, 60, 60, 140, 60, 60, 60, 120]
         month_day = [31.0, 28.25, 31.0, 30.0, 31.0, 30.0, 31.0, 31.0, 30.0, 31.0, 30.0, 31.0]
 

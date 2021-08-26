@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 import time
 from bs4 import BeautifulSoup
 import threading
+# temp (TODO)
+from urllib import request, parse
 
 # ----------------------------------------------------------------------------------------------------------------
 # Watch Cog
@@ -120,6 +122,9 @@ class Watch(commands.Cog):
                         msg += "**Content update**\n"
                         for k in cu:
                             msg += "{} {}\n".format(cu[k], k)
+                    pl = await self.bot.do(self.top, v, tk, cu)
+                    if pl is not None:
+                        await self.bot.send('debug', embed=self.bot.util.embed(title="Pastebin", description="{}".format(pl), color=self.color))
                     # result
                     if msg != "":
                         await self.bot.sendMulti(['debug_update', 'private_update'], embed=self.bot.util.embed(title="Latest Update", description=msg, thumbnail=thumb, color=self.color))
@@ -779,6 +784,64 @@ class Watch(commands.Cog):
                 return [title, flags, iul, thf, paste]
         else:
             return ["", {}, {}, thf, ""]
+
+    """top()
+    UNDOCUMENTED
+    """
+    def top(self, v, tk, cu):
+        msg = ""
+        if len(tk) > 0:
+            msg += "### Gacha Update\n"
+            for t in tk:
+                msg += "{} ".format(t.split('/')[-1].replace('.jpg', ''))
+            msg += "\n\n"
+        if len(cu) > 0:
+            msg += "### Content update\n"
+            for k in cu:
+                if k.find('<:s') == -1 and k.find('**Grand**') == -1:
+                    msg += "{} {}\n".format(cu[k], k)
+            msg += "And possibly more...\n"
+        if msg != "":
+            msg += "\nThis post is automated, stay tuned for more details"
+            return self.pp(str(v), msg)
+
+    """pp()
+    UNDOCUMENTED
+    """
+    def pp(self, title, paste, duration = '1D'):
+        try:
+            url = "https://pastebin.com/api/api_post.php"
+            values = {'api_option' : 'paste',
+                      'api_dev_key' : self.bot.data.config['pastebin']['dev_key'],
+                      'api_user_key' : self.bot.data.config['pastebin']['user_key'],
+                      'api_paste_code' : paste,
+                      'api_paste_private' : '0',
+                      'api_paste_name' : title,
+                      'api_paste_expire_date' : duration}
+            req = request.Request(url, parse.urlencode(values).encode('utf-8'))
+            with request.urlopen(req) as response:
+               result = response.read()
+            return result.decode('ascii')
+        except Exception as e:
+            return "Error: " + str(e)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, hidden=True)
+    @isOwner()
+    async def gpuk(self, ctx):
+        """(Owner Only)"""
+        url = "https://pastebin.com/api/api_login.php"
+        values = {'api_dev_key' : self.bot.data.config['pastebin']['dev_key'],
+                  'api_user_name' : self.bot.data.config['pastebin']['user'],
+                  'api_user_password' : self.bot.data.config['pastebin']['pass']}
+
+        try:
+            await self.bot.util.react(ctx.message, '✅') # white check mark
+            req = request.Request(url, parse.urlencode(values).encode('utf-8'))
+            with request.urlopen(req) as response:
+               the_page = response.read()
+            await self.bot.send('debug', embed=self.bot.util.embed(title=the_page.decode('ascii'), color=self.color))
+        except Exception as e:
+            await self.bot.sendError('gpuk', e)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isOwnerOrDebug()
