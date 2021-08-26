@@ -789,21 +789,30 @@ class Watch(commands.Cog):
     UNDOCUMENTED
     """
     def top(self, v, tk, cu):
-        msg = ""
-        if len(tk) > 0:
-            msg += "### Gacha Update\n"
-            for t in tk:
-                msg += "{} ".format(t.split('/')[-1].replace('.jpg', ''))
-            msg += "\n\n"
-        if len(cu) > 0:
-            msg += "### Content update\n"
-            for k in cu:
-                if k.find('<:s') == -1 and k.find('**Grand**') == -1:
-                    msg += "{} {}\n".format(cu[k], k)
-            msg += "And possibly more...\n"
-        if msg != "":
-            msg += "\nThis post is automated, stay tuned for more details"
-            return self.pp(str(v), msg)
+        try:
+            pstr = self.bot.data.config['gbfwatch']['pstr']
+            msg = ""
+            if len(tk) > 0:
+                msg += "### Gacha Update\n"
+                for t in tk:
+                    msg += "{} ".format(t.split('/')[-1].replace('.jpg', ''))
+                msg += "\n\n"
+            if len(cu) > 0:
+                msg += "### Content update\n"
+                for k in cu:
+                    passed = True
+                    for ps in pstr:
+                        if k.find(ps) != -1:
+                            passed = False
+                            break
+                    if passed:
+                        msg += "{} {}\n".format(cu[k], k)
+                msg += "And possibly more...\n"
+            if msg != "":
+                msg += "\nThis post is automated, stay tuned for more details"
+                return self.pp(str(v), msg)
+        except:
+            return ""
 
     """pp()
     UNDOCUMENTED
