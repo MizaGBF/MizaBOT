@@ -1,3 +1,4 @@
+# **Development is on hold for an undetermined amount of time following [discord.py death](https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1").**  
 
 # MizaBOT  
 * [Granblue Fantasy](http://game.granbluefantasy.jp) Discord Bot.  
@@ -13,8 +14,6 @@
 * [leather](https://pypi.org/project/leather/).  
 * [CairoSVG](https://pypi.org/project/CairoSVG/).  
 * `pip install -r requirements.txt` to install all the modules.  
-  
-<font size="40" color=red><b>Development is on hold for an undetermined amount of time following <a href="https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1">discord.py death</a></b></font>  
   
 ### Informations  
 MizaBOT is a Discord Bot themed around the game [Granblue Fantasy](http://game.granbluefantasy.jp).  
