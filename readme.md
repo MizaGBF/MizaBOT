@@ -1,4 +1,4 @@
-# **Development is on hold for an undetermined amount of time following [discord.py death](https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1").**  
+# **Development is on hold for an undetermined amount of time following [discord.py death](https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1).**  
 
 # MizaBOT  
 * [Granblue Fantasy](http://game.granbluefantasy.jp) Discord Bot.  
