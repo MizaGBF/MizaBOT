@@ -116,7 +116,7 @@ def get_version():
 def generate_html(command_list):
     ver = get_version()
     metadata = '<!--This page is automatically generated, please excuse the poor formatting--><head><title>MizaBOT Online Command List v{}</title><meta name="title" content=" MizaBOT Online Command List v{}"><meta name="description" content="Online Help and Command List for the Granblue Fantasy Discord bot MizaBOT."><meta property="og:type" content="website"><meta property="og:url" content="https://mizagbf.github.io/MizaBOT/"><meta property="og:title" content=" MizaBOT Online Command List v{}"><meta property="og:description" content="Online Help and Command List for the Granblue Fantasy Discord bot MizaBOT."><meta property="og:image" content="https://mizagbf.github.io/MizaBOT/img/card.png"><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://mizagbf.github.io/MizaBOT/"><meta property="twitter:title" content=" MizaBOT Online Command List v{}"><meta property="twitter:description" content="Online Help and Command List for the Granblue Fantasy Discord bot MizaBOT."><meta property="twitter:image" content="https://mizagbf.github.io/MizaBOT/img/card.png"><link rel="icon" type="image/png" href="img/icon.png" /></head>'.format(ver, ver, ver, ver)
-    header = '<h1 style="width:630px;margin-left: auto; margin-right: auto;"><img src="img/icon.png" style="vertical-align:middle;border-radius: 50%;box-shadow: 0 0 0 2pt #981cd6">&nbsp;MizaBOT Online Command List<br>&nbsp;<small>v{}</small></h1><br>'.format(ver)
+    header = '<h1 style="width:630px;margin-left: auto; margin-right: auto;"><img src="img/icon.png" style="vertical-align:middle;border-radius: 50%;box-shadow: 0 0 0 2pt #981cd6">&nbsp;MizaBOT Online Command List<br>&nbsp;<small>v{}</small></h1><font size="40" color=red><b>Development is on hold for an undetermined amount of time following <a href="https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1">discord.py death</a></b></font><br><br>'.format(ver)
     tabs = '''<div class="tab"><button class="tablinks" onclick="openTab(event, 'Commands')">Commands</button><button class="tablinks" onclick="openTab(event, 'About')">About</button></div>'''
     filters = '<div id="buttons"><button class="btn active" onclick="filterSelection(\'all\')" style="background: #050505;">All</button>'
     containers = '<ul id="commandList">'
@@ -140,6 +140,7 @@ It provides various commands, ranging from utilty to recreative ones.<br>
 The official version is semi open to invitations:<br>
 <a href=" https://discord.com/oauth2/authorize?client_id=614723060100104193&scope=bot&permissions=8589934591"><img src="img/invite.png"></a><br>
 Currently only servers of 30 members or more can be added to limit the number of new servers.<br>
+The bot is also limited to 75 servers because of <b>Discord built-in restrictions</b>.<br>
 You'll have to wait for approval (Your server owner will be notified if accepted).<br>
 Misuses of this link will result in a server-wide ban.<br>
 I have limited resources so I reserve to myself the right to refuse your server, sorry in advance.<br>

@@ -503,8 +503,10 @@ class Watch(commands.Cog):
                                 msg += ')'
                             elif sk['masterable_level'] != '1':
                                 msg += " (unlocks at lvl {})".format(sk['masterable_level'])
+                        if turbo:
+                            msg += " ▫️ [Icon]({})".format(self.bot.data.config["gbfwatch"]["wur"]["atr1s"].format(sk['image']))
                         msg += "\n{}\n".format(sk['comment'].replace('<span class=text-blue>', '').replace('</span>', ''))
-                url = 'http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/weapon/m/{}.jpg'.format(data['id'])
+                url = self.bot.data.config["gbfwatch"]["wur"]["atr1"].format(data['id'])
             elif type == 2:
                 kind = '{}'.format(self.bot.emote.get('summon'))
                 msg += "{} **{}**\n".format(self.bot.emote.get('skill1'), data['special_skill']['name'])
@@ -516,7 +518,7 @@ class Watch(commands.Cog):
                 if 'sub_skill' in data:
                     msg += "{} **Sub Aura**\n".format(self.bot.emote.get('skill2'))
                     msg += "{}\n".format(data['sub_skill']['comment'])
-                url = 'http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/summon/m/{}.jpg'.format(data['id'])
+                url = self.bot.data.config["gbfwatch"]["wur"]["atr2"].format(data['id'])
             await target.send(embed=self.bot.util.embed(title="{}{}{} {}".format(rarity, kind, data['name'], data.get('series_name', '')), description=msg, thumbnail=url, footer=data['id'], color=self.color))
             if 'grand' in data.get('series_name', '').lower():
                 try:
