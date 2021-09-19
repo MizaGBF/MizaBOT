@@ -13,6 +13,7 @@
 * [Pillow](https://pillow.readthedocs.io/en/stable/).  
 * [leather](https://pypi.org/project/leather/).  
 * [CairoSVG](https://pypi.org/project/CairoSVG/).  
+* [uvloop](https://github.com/MagicStack/uvloop) (UNIX only).  
 * `pip install -r requirements.txt` to install all the modules.  
   
 ### Informations  
