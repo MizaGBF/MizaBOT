@@ -5,6 +5,9 @@ import json
 from datetime import datetime
 import multiprocessing
 from ctypes import c_int
+import io
+import gzip
+import os
 
 # ----------------------------------------------------------------------------------------------------------------
 # Drive Component
@@ -16,6 +19,47 @@ from ctypes import c_int
 # all interactions with Google Drive is made in another process, using the multiprocessing module, to mitigate a possible memory leak
 # this will be reverted back if a fix is found
 # ----------------------------------------------------------------------------------------------------------------
+
+"""decompressJSON()
+Decompress the given byte array (which must be valid compressed gzip data) and return the decoded text (utf-8).
+
+Returns
+--------
+str: Decompressed string
+"""
+def decompressJSON(inputBytes):
+    with io.BytesIO() as bio:
+        with io.BytesIO(inputBytes) as stream:
+            decompressor = gzip.GzipFile(fileobj=stream, mode='r')
+            while True:  # until EOF
+                chunk = decompressor.read(8192)
+                if not chunk:
+                    decompressor.close()
+                    bio.seek(0)
+                    return bio.read().decode("utf-8")
+                bio.write(chunk)
+            return None
+
+"""compressJSON()
+Read the given string, encode it in utf-8, compress the data and return it as a byte array.
+json.dumps() must have been used before this function.
+
+Returns
+--------
+bytes: Compressed string
+"""
+def compressJSON(inputString):
+    with io.BytesIO() as bio:
+        bio.write(inputString.encode("utf-8"))
+        bio.seek(0)
+        with io.BytesIO() as stream:
+            compressor = gzip.GzipFile(fileobj=stream, mode='w')
+            while True:  # until EOF
+                chunk = bio.read(8192)
+                if not chunk: # EOF?
+                    compressor.close()
+                    return stream.getvalue()
+                compressor.write(chunk)
 
 """access()
 Return a valid GoogleDrive instance
@@ -50,6 +94,16 @@ def load(folder, ret): # load save.json from the folder id in bot.tokens
         file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
         # search the save file
         for s in file_list:
+            if s['title'] == "save.gzip":
+                s.GetContentFile(s['title']) # iterate until we find save.json and download it
+                with open("save.gzip", "rb") as stream:
+                    with open("save.json", "w") as out:
+                        out.write(decompressJSON(stream.read()))
+                os.remove("save.gzip")
+                ret.value = 1
+                return
+        # legacy
+        for s in file_list:
             if s['title'] == "save.json":
                 s.GetContentFile(s['title']) # iterate until we find save.json and download it
                 ret.value = 1
@@ -79,15 +133,18 @@ def save(data, folder, ret): # write save.json to the folder id in bot.tokens
                 if f['title'].find('backup') == 0:
                     f.Delete()
         for f in file_list: # search the previous save(s)
-            if f['title'] == "save.json":
+            if f['title'] == "save.json" or f['title'] == "save.gzip":
                 prev.append(f)
+        # compress
+        cdata = compressJSON(data)
         # saving
-        s = drive.CreateFile({'title':'save.json', 'mimeType':'text/JSON', "parents": [{"kind": "drive#file", "id": folder}]})
-        s.SetContentString(data)
-        s.Upload()
+        s = drive.CreateFile({'title':'save.gzip', 'mimeType':'application/gzip', "parents": [{"kind": "drive#file", "id": folder}]})
+        with io.BytesIO(cdata) as stream:
+            s.content = stream
+            s.Upload()
         # rename the previous save(s)
         for f in prev:
-            f['title'] = "backup_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".json"
+            f['title'] = "backup_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "." + f['title'].split(".")[-1]
             f.Upload()
         ret.value = 1
     except Exception as e:
@@ -108,8 +165,10 @@ def saveFile(data, name, folder, ret): # write a json file to a folder
     try:
         drive = access()
         s = drive.CreateFile({'title':name, 'mimeType':'text/JSON', "parents": [{"kind": "drive#file", "id": folder}]})
-        s.SetContentString(data)
-        s.Upload()
+        with io.BytesIO() as stream:
+            stream.write(data.encode('utf-8'))
+            s.content = stream
+            s.Upload()
         ret.value = 1
     except:
         ret.value = 0
@@ -129,8 +188,9 @@ def saveDiskFile(target, mime, name, folder, ret): # write a file from the local
     try:
         drive = access()
         s = drive.CreateFile({'title':name, 'mimeType':mime, "parents": [{"kind": "drive#file", "id": folder}]})
-        s.SetContentFile(target)
-        s.Upload()
+        with open(target, "rb") as stream:
+            s.content = stream
+            s.Upload()
         ret.value = 1
     except:
         ret.value = 0
@@ -153,8 +213,9 @@ def overwriteFile(target, mime, name, folder, ret): # write a file from the loca
         for s in file_list:
             if s['title'] == name:
                 new_file = drive.CreateFile({'id': s['id']})
-                new_file.SetContentFile(target)
-                new_file.Upload()
+                with open(target, "rb") as stream:
+                    s.content = stream
+                    s.Upload()
                 ret.value = 1
                 return
         # not found

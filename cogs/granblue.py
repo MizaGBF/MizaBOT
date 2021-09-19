@@ -7,10 +7,11 @@ import re
 from bs4 import BeautifulSoup
 from urllib import request, parse
 from urllib.parse import unquote
-from xml.sax import saxutils as su
+import html
 from PIL import Image, ImageFont, ImageDraw
 from io import BytesIO
 import threading
+import math
 
 # ----------------------------------------------------------------------------------------------------------------
 # GranblueFantasy Cog
@@ -35,7 +36,6 @@ class GranblueFantasy(commands.Cog):
         self.possiblesum = {'10':'fire', '11':'fire', '20':'water', '21':'water', '30':'earth', '31':'earth', '40':'wind', '41':'wind', '50':'light', '51':'light', '60':'dark', '61':'dark', '00':'misc', '01':'misc'}
         self.imgcache = {}
         self.imglock = threading.Lock()
-
 
     """isOwner()
     Command decorator, to check if the command is used by the bot owner
@@ -660,7 +660,7 @@ class GranblueFantasy(commands.Cog):
     @commands.cooldown(1, 15, commands.BucketType.guild)
     async def belial(self, ctx):
         """Post the Belial HL Triggers"""
-        await ctx.reply(embed=self.bot.util.embed(title="The Fallen Angel of Cunning", url="https://gbf.wiki/Belial_(Raid)", description="**On Join**{}️ Lemegeton (20K Plain)\n**75, 50, 25%**▫️ Debuff Wipe\n**65%** ▫️ Asmodeus (multi, debuff) [Dispel]\n**50% Form** ▫️ Triple elemental absorption\n**50%** ▫️ Anagenesis (dark dmg based on stack)\n**30%** ▫️ Goetia (multi, slashed/supp debuff) [FC]\n**5%** ▫️ Lemegeton (Let you continue, Full diamond)\n**Before 50%**\n**N & OD**▫️ Amadeus (party, perma debuffs)\n**Turn 3**▫️ Goetia (multi, slashed/supp debuff) [15M]\n**Turn 6**▫️ Lemegeton (party, dispel x2, diamond+1) [35 hits]\n**After 50%**\n**N & OD**{} Amadeus (**Raid Wipe**)\n**Turn 3**▫️ Goetia (multi, atk up, stack up) [FC]\n**Turn 6**▫️ Lemegeton (30K, skill & CA seal) [Dispel]\nTurn Triggers **repeat every 6 turns**\n".format(self.bot.emote.get('misc'), self.bot.emote.get('misc')), footer="Delay to win", color=self.color))
+        await ctx.reply(embed=self.bot.util.embed(title="The Fallen Angel of Cunning", url="https://gbf.wiki/Belial_(Raid)", description="**On Join**{}️ Lemegeton (20K Plain)\n**75, 50, 25%**▫️ Debuff Wipe\n**65%** ▫️ Asmodeus (multi, debuff, omega fruit) [Dispel]\n**50% Form** ▫️ Triple elemental absorption\nGroups: {}{} / {}{} / {}{}\n**50%** ▫️ Anagenesis (dark dmg based on stack)\n**30%** ▫️ Goetia (multi, slashed/supp debuff) [FC]\n**5%** ▫️ Lemegeton (Let you continue, Full diamond)\n**Before 50%**\n**N & OD**▫️ Amadeus (party, perma debuffs)\n**Turn 3**▫️ Goetia (multi, slashed/supp debuff) [15M]\n**Turn 6**▫️ Lemegeton (party, dispel x2, diamond+1) [35 hits]\n**After 50%**\n**N & OD**{} Amadeus (**Raid Wipe**)\n**Turn 3**▫️ Goetia (multi, atk up, stack up) [FC]\n**Turn 6**▫️ Lemegeton (30K, skill & CA seal) [Dispel]\nTurn Triggers above **repeat every 6 turns**\n**Every 3T**▫️ Random fruit applied to party".format(self.bot.emote.get('misc'), self.bot.emote.get('fire'), self.bot.emote.get('wind'), self.bot.emote.get('water'), self.bot.emote.get('earth'), self.bot.emote.get('light'), self.bot.emote.get('dark'), self.bot.emote.get('misc')), footer="Delay to win", color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["christmas", "anniversary", "anniv", "summer"])
     @commands.cooldown(3, 30, commands.BucketType.guild)
@@ -869,6 +869,24 @@ class GranblueFantasy(commands.Cog):
                 final_msg = await ctx.reply(embed=self.bot.util.embed(title="Critical Calculator", description="Error", footer=str(e), color=self.color))
         await self.bot.util.clean(ctx, final_msg, 40)
 
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['exp', 'experience'])
+    @commands.cooldown(2, 15, commands.BucketType.user)
+    async def xp(self, ctx, start_level : int = 1, end_level : int = -1):
+        """Character experience calculator
+        You can specify the start level (1 to 149) and the end level (2 to 150)"""
+        xptable = [None, 30, 70, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 550, 600, 650, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 3600, 3800, 4000, 4200, 4400, 4600, 4800, 5000, 5250, 5500, 5750, 6000, 6250, 6500, 6750, 7000, 7250, 7500, 7800, 8100, 8400, 8700, 9000, 9500, 10000, 10500, 11000, 11500, 12000, 12500, 13000, 13500, 14000, 14500, 15000, 15500, 16000, 50000, 20000, 21000, 22000, 23000, 24000, 25000, 26000, 27000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000, 500000, 1000000, 1000000, 1200000, 1200000, 1200000, 1200000, 1200000, 1250000, 1250000, 1250000, 1250000, 1250000, 1300000, 1300000, 1300000, 1300000, 1300000, 1350000, 1350000, 1350000, 1350000, 1350000, 1400000, 1400000, 1400000, 1400000, 1400000, 1450000, 1450000, 1450000, 1450000, 1450000, 1500000, 1500000, 1500000, 1500000, 1500000, 1550000, 1550000, 1550000, 1550000, 1550000, 1600000, 1600000, 1600000, 1600000, 1600000, 1650000, 1650000, 1650000, 1650000, 0]
+        if start_level < 1: start_level = 1
+        elif start_level >= 150: start_level = 149
+        msg = "From level **{}**, you need:\n".format(start_level)
+        xpcount = xptable[start_level]
+        for lvl in range(start_level+1, 151):
+            if lvl in [80, 100, 110, 120, 130, 140, 150, end_level]:
+                msg += "**{:,} XP** for lvl **{:}** ({:} books or {:,} candies)\n".format(xpcount, lvl, math.ceil(xpcount / 300000), math.ceil(xpcount / 745))
+                if lvl == end_level: break
+            xpcount += xptable[lvl]
+        msg = await ctx.reply(embed=self.bot.util.embed(title="Experience Calculator", description=msg, color=self.color))
+        await self.bot.util.clean(ctx, msg, 40)
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["doom", "doompost", "magnafest", "magnafes", "campaign", "brick", "bar", "sunlight", "stone", "suptix", "surprise", "evolite", "fugdidmagnafeststart", "alivegame", "alive"])
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def deadgame(self, ctx):
@@ -896,7 +914,7 @@ class GranblueFantasy(commands.Cog):
             "earth": c.replace(year=2020, month=12, day=28, hour=12, minute=0, second=0, microsecond=0),
             "wind": c.replace(year=2021, month=4, day=30, hour=12, minute=0, second=0, microsecond=0),
             "light": c.replace(year=2021, month=6, day=18, hour=19, minute=0, second=0, microsecond=0),
-            "dark": c.replace(year=2020, month=2, day=29, hour=12, minute=0, second=0, microsecond=0)
+            "dark": c.replace(year=2021, month=9, day=15, hour=19, minute=0, second=0, microsecond=0)
         }
         for e in grands:
             msg += "**{} days** since the last {} Grand\n".format(self.bot.util.delta2str(c - grands[e], 3).split('d')[0], self.bot.emote.get(e))
@@ -1358,7 +1376,7 @@ class GranblueFantasy(commands.Cog):
             brank = " "
             rank = ""
         trophy = soup.find_all("div", class_="prt-title-name")[0].string
-        comment = su.unescape(soup.find_all("div", class_="prt-other-comment")[0].string).replace('\t', '').replace('\n', '')
+        comment = html.unescape(soup.find_all("div", class_="prt-other-comment")[0].string).replace('\t', '').replace('\n', '')
         if comment == "": pass
         elif rank == "": comment = "💬 `{}`".format(comment.replace('`', '\''))
         else: comment = " ▫️ 💬 `{}`".format(comment.replace('`', '\''))
@@ -1425,7 +1443,7 @@ class GranblueFantasy(commands.Cog):
             try: msg += " ▫️ **{}** EMP".format(self.empre.findall(star_section)[0]) # emp
             except: pass
             starcom = self.starcomre.findall(star_section)
-            if starcom is not None and starcom[0] != "(Blank)": msg += "\n\u202d💬 `{}`".format(su.unescape(starcom[0].replace('`', '\'')))
+            if starcom is not None and starcom[0] != "(Blank)": msg += "\n\u202d💬 `{}`".format(html.unescape(starcom[0].replace('`', '\'')))
             star = "\n{} **Star Character**\n{}".format(self.bot.emote.get('skill2'), msg)
         except:
             star = ""

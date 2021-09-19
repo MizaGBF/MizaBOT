@@ -633,7 +633,9 @@ class Ranking():
         data = [None, None]
         dbs = [self.bot.sql.get("GW_old.sql"), self.bot.sql.get("GW.sql")] # get access
         cs = []
-        for n in [0, 1]: cs.append(dbs[n].open()) # get a cursor for both
+        for n in [0, 1]:
+            try: cs.append(dbs[n].open()) # get a cursor for both
+            except: cs.append(None)
 
         st = 1 if mode >= 10 else 0 # search type (crew or player)
         for n in [0, 1]: # for both database

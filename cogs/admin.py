@@ -281,7 +281,7 @@ class Admin(commands.Cog):
         """List the GW buff list for (You) (Owner Only)"""
         await self.bot.util.react(ctx.message, '✅') # white check mark
         msg = ""
-        for b in self.bot.gw['buffs']:
+        for b in self.bot.data.save['gw']['buffs']:
             msg += '{0:%m/%d %H:%M}: '.format(b[0])
             if b[1]: msg += '[Normal Buffs] '
             if b[2]: msg += '[FO Buffs] '

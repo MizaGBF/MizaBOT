@@ -19,37 +19,21 @@ import signal
 import time
 import concurrent.futures
 import functools
-
-"""
-    TODO:
-        ctrl+F all NOTE
-        rollback beta status in config.json
-        check @commands and cooldown stuff
-        puthon 3.10: use the new match feature
-    
-    discord.py 2.0 breaking changes:
-    https://github.com/Rapptz/discord.py/projects/3
-        * remove bot.logout() calls
-        * check the custom help
-        * remove permissions_in
-        * check timestamp timezone
-        * fix config.json status
-        * clean_prefix for help
-"""
+# conditional import
+try:
+    import uvloop
+    uvloop.install()
+except:
+    pass
 
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "8.10" # bot version
+        self.version = "8.11" # bot version
         self.changelog = [ # changelog lines
-            "**This MizaBOT version is a Beta**, please use `$bug_report` if you see anything wrong",
+            "Please use `$bug_report` if you see anything wrong",
             "Online command list added [here](https://mizagbf.github.io/MizaBOT/)",
-            "Added `$fortune`, `$fortunechance` and `$rollchance`",
-            "Crew health indicator in `$crew` (Note: Values has been adjusted)",
-            "Added `$gwspeed`, `$invite` and `$scam`",
-            "Reworked the `$help` command",
-            "All servers can now access the pinboard system using `$enablePinboard` and `$disablePinboard`",
-            "Added `$here`, `$when`, `$dbbox`, `$dbtoken`, `$zeroroll`, `$belial`, `$addRoll`, `$dice`, `$8ball` and `$coin`"
+            "**DEVELOPMENT IS ON HOLD FOR AN UNDETERMINED AMOUNT OF TIME FOLLOWING [DISCORD.PY DEATH](https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1)**"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event

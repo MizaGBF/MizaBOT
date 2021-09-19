@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import random
 import math
 from bs4 import BeautifulSoup
-from xml.sax import saxutils as su
+import html
 from urllib.parse import unquote
 import statistics
 
@@ -54,12 +54,12 @@ class GuildWar(commands.Cog):
                                 msg += "{} {}\n".format(self.bot.emote.get('foace'), fo_role.mention)
                             if self.bot.data.save['gw']['buffs'][0][4]:
                                 if self.bot.data.save['gw']['buffs'][0][3]:
-                                    msg += '*Buffs in 5 minutes* **(Use twice this time! They are reset later.)**'
+                                    msg += '*Buffs in* **5 minutes (Use twice this time! They are reset later.)**'
                                 else:
                                     msg += 'Buffs now! **(Use twice this time! They are reset later.)**'
                             else:
                                 if self.bot.data.save['gw']['buffs'][0][3]:
-                                    msg += '*Buffs in 5 minutes*'
+                                    msg += '*Buffs in* **5 minutes**'
                                 else:
                                     msg += 'Buffs now!'
                             msg += "\nhttp://game.granbluefantasy.jp/#event/teamraid{}/guild_ability".format(str(self.bot.data.save['gw']['id']).zfill(3))
@@ -143,8 +143,23 @@ class GuildWar(commands.Cog):
     """
     def escape(self, s, lite=False):
         # add the RLO character before
-        if lite: return '\u202d' + s.replace('\\', '\\\\').replace('`', '\\`')
-        else: return '\u202d' + s.replace('\\', '\\\\').replace('`', '\'').replace('*', '\\*').replace('_', '\\_').replace('{', '\\{').replace('}', '\\}').replace('[', '').replace(']', '').replace('(', '\\(').replace(')', '\\)').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('.', '\\.').replace('!', '\\!').replace('|', '\\|')
+        x = html.unescape(s)
+        if lite: return '\u202d' + x.replace('\\', '\\\\').replace('`', '\\`')
+        else: return '\u202d' + x.replace('\\', '\\\\').replace('`', '\'').replace('*', '\\*').replace('_', '\\_').replace('{', '\\{').replace('}', '\\}').replace('[', '').replace(']', '').replace('(', '\\(').replace(')', '\\)').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('.', '\\.').replace('!', '\\!').replace('|', '\\|')
+
+    """htmlescape()
+    Escape special characters into html notation (used for crew and player names)
+    
+    Parameters
+    ----------
+    s: String to escape
+    
+    Returns
+    --------
+    str: Escaped string
+    """
+    def htmlescape(self, s):
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;").replace('\'', "&#039;")
 
     """isOwner()
     Command decorator, to check if the command is used by the bot owner
@@ -629,6 +644,7 @@ class GuildWar(commands.Cog):
                 msg += '(version {})'.format(vers[i].get('ver', 'ERROR'))
             msg += "\n"
         await self.bot.send('debug', embed=self.bot.util.embed(title="Guild War Databases", description=msg, timestamp=self.bot.util.timestamp(), color=self.color))
+        await self.bot.util.react(ctx.message, '✅') # white check mark
 
     """findranking()
     Extract parameters from terms and call searchGWDB() with the proper settings.
@@ -668,7 +684,7 @@ class GuildWar(commands.Cog):
 
                 # check if the %== or %eq options are included and extract it
                 if terms.startswith("%== ") or terms.startswith("%eq "):
-                    terms = terms[4:]
+                    terms = self.htmlescape(terms[4:])
                     mode = 1
                 elif terms.startswith("%id "):
                     try:
@@ -686,6 +702,7 @@ class GuildWar(commands.Cog):
                         raise Exception("Returning")
                 else:
                     mode = 0
+                    terms = self.htmlescape(terms)
 
                 # do our search
                 data = await self.bot.do(self.bot.ranking.searchGWDB, terms, (mode+10 if type else mode))
@@ -700,7 +717,7 @@ class GuildWar(commands.Cog):
                     raise Exception("Returning")
 
                 if len(result) == 0: # check number of matches
-                    msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="`{}` not found".format(terms), footer="help find{} for details".format(txt), color=self.color))
+                    msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="`{}` not found".format(html.unescape(terms)), footer="help find{} for details".format(txt), color=self.color))
                     raise Exception("Returning")
                 elif all: # set number of results to send if %all if set
                     if type: xl = 36
@@ -716,7 +733,7 @@ class GuildWar(commands.Cog):
                 fields = []
                 for i in range(0, x):
                     if type: # crew -----------------------------------------------------------------
-                        fields.append({'name':"{}".format(result[i].name), 'value':''})
+                        fields.append({'name':"{}".format(html.unescape(result[i].name)), 'value':''})
                         if result[i].ranking is not None: fields[-1]['value'] += "▫️**#{}**\n".format(result[i].ranking)
                         else: fields[-1]['value'] += "\n"
                         if result[i].preliminaries is not None: fields[-1]['value'] += "**P.** ▫️{:,}\n".format(result[i].preliminaries)
@@ -1030,20 +1047,20 @@ class GuildWar(commands.Cog):
                         crew['timestamp'] = datetime.utcnow()
                         crew['footer'] = ""
                         crew['private'] = False # in preparation
-                        crew['name'] = su.unescape(get['guild_name'])
+                        crew['name'] = html.unescape(get['guild_name'])
                         crew['rank'] = get['guild_rank']
                         crew['ship'] = "http://game-a.granbluefantasy.jp/assets_en/img/sp/guild/thumb/top/{}.png".format(get['ship_img'])
                         crew['ship_element'] = {"10001":"wind", "20001":"fire", "30001":"water", "40001":"earth", "50001":"light", "60001":"dark"}.get(get['ship_img'].split('_')[0], 'gw')
-                        crew['leader'] = su.unescape(get['leader_name'])
+                        crew['leader'] = html.unescape(get['leader_name'])
                         crew['leader_id'] = get['leader_user_id']
-                        crew['donator'] = su.unescape(get['most_donated_name'])
+                        crew['donator'] = html.unescape(get['most_donated_name'])
                         crew['donator_id'] = get['most_donated_id']
                         crew['donator_amount'] = get['most_donated_lupi']
-                        crew['message'] = su.unescape(get['introduction'])
+                        crew['message'] = html.unescape(get['introduction'])
                     else:
                         if 'player' not in crew: crew['player'] = []
                         for p in get['list']:
-                            crew['player'].append({'id':p['id'], 'name':su.unescape(p['name']), 'level':p['level'], 'is_leader':p['is_leader'], 'member_position':p['member_position'], 'honor':None}) # honor is a placeholder
+                            crew['player'].append({'id':p['id'], 'name':html.unescape(p['name']), 'level':p['level'], 'is_leader':p['is_leader'], 'member_position':p['member_position'], 'honor':None}) # honor is a placeholder
             
             if mode == 1: return crew
             data = self.getCrewSummary(id)
@@ -1532,17 +1549,20 @@ class GuildWar(commands.Cog):
             if self.bot.data.save['matchtracker'] is None or not self.bot.data.save['matchtracker']['init']:
                 await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Unavailable, either wait the next ranking update or add the opponent id after the command to initialize it", color=self.color))
             else:
+                ct = self.bot.util.JST()
                 you_id = self.bot.data.config['granblue']['gbfgcrew'].get('you', None)
-                d = self.bot.util.JST() - self.bot.data.save['matchtracker']['last']
+                d = ct - self.bot.data.save['matchtracker']['last']
                 msg = "Updated: **{}** ago".format(self.bot.util.delta2str(d, 0))
                 if d.seconds >= 1200 and d.seconds <= 1800: msg += " ▫ *updating*"
                 msg += "\n"
                 end_time = self.bot.data.save['matchtracker']['last'].replace(day=self.bot.data.save['matchtracker']['last'].day+1, hour=0, minute=0, second=0, microsecond=0)
                 remaining = end_time - self.bot.data.save['matchtracker']['last']
                 msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ **{:,}**".format(self.bot.data.save['matchtracker']['names'][0], you_id, self.bot.data.save['matchtracker']['scores'][0])
+                lead_speed = None
                 if self.bot.data.save['matchtracker']['speed'] is not None:
+                    lead_speed = self.bot.data.save['matchtracker']['speed'][0]
                     if self.bot.data.save['matchtracker']['speed'][0] == self.bot.data.save['matchtracker']['top_speed'][0]:
-                        msg += "\n**Speed** ▫️ **Now {}/m** ▫️ **Top {}/m**".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][0]), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][0]))
+                        msg += "\n**Speed** ▫️ **Now {}/m** ▫️ **Top {}/m** :white_check_mark:".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][0]), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][0]))
                     else:
                         msg += "\n**Speed** ▫ Now {}/m ▫️ Top {}/m".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][0]), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][0]))
                     if end_time > self.bot.data.save['matchtracker']['last']:
@@ -1550,16 +1570,67 @@ class GuildWar(commands.Cog):
                 msg += "\n\n"
                 msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ **{:,}**".format(self.bot.data.save['matchtracker']['names'][1], self.bot.data.save['matchtracker']['id'], self.bot.data.save['matchtracker']['scores'][1])
                 if self.bot.data.save['matchtracker']['speed'] is not None:
+                    if lead_speed is not None:
+                        lead_speed -= self.bot.data.save['matchtracker']['speed'][1]
                     if self.bot.data.save['matchtracker']['speed'][1] == self.bot.data.save['matchtracker']['top_speed'][1]:
-                        msg += "\n**Speed** ▫️ **Now {}/m** ▫️ **Top {}/m**".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][1]), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][1]))
+                        msg += "\n**Speed** ▫️ **Now {}/m** ▫️ **Top {}/m** :warning:".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][1]), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][1]))
                     else:
                         msg += "\n**Speed** ▫️ Now {}/m ▫️ Top {}/m".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][1]), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][1]))
                     if end_time > self.bot.data.save['matchtracker']['last']:
-                        msg += "\n**Estimation** ▫ Now {} ▫️ Top {}".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][1] + self.bot.data.save['matchtracker']['speed'][1] * remaining.seconds//60), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][1] + self.bot.data.save['matchtracker']['top_speed'][1] * remaining.seconds//60))
+                        current_estimation = self.bot.data.save['matchtracker']['scores'][1] + self.bot.data.save['matchtracker']['speed'][1] * remaining.seconds//60
+                        top_estimation = self.bot.data.save['matchtracker']['scores'][1] + self.bot.data.save['matchtracker']['top_speed'][1] * remaining.seconds//60
+                        msg += "\n**Estimation** ▫ Now {} ▫️ Top {}".format(self.bot.util.valToStrBig(current_estimation), self.bot.util.valToStrBig(top_estimation))
+                else:
+                    lead_speed = None
                 msg += "\n\n"
-                lead = abs(self.bot.data.save['matchtracker']['scores'][0] - self.bot.data.save['matchtracker']['scores'][1])
-                if lead >= 0:
-                    msg += "**Difference** ▫️ {:,}\n".format(lead)
+                lead = self.bot.data.save['matchtracker']['scores'][0] - self.bot.data.save['matchtracker']['scores'][1]
+                if lead != 0:
+                    msg += "**Difference** ▫️ {:,}".format(abs(lead))
+                    if lead_speed is not None and lead_speed != 0:
+                        try:
+                            if lead < 0: lead_speed *= -1
+                            msg += " ▫ {}/m".format(self.bot.util.valToStrBig(lead_speed))
+                            if lead_speed < 0:
+                                minute = abs(lead) / abs(lead_speed)
+                                d = self.bot.data.save['matchtracker']['last'] + timedelta(seconds=minute*60)
+                                e = ct.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+                                if e > d:
+                                    if lead > 0: msg += "\n:warning: "
+                                    else: msg += "\n:white_check_mark: "
+                                    msg += "The Lead switches in **{}** at current speeds".format(self.bot.util.delta2str(d - ct))
+                                elif lead > 0:
+                                    if self.bot.data.save['matchtracker']['scores'][0] > top_estimation:
+                                        msg += "\n:confetti_ball: Opponent can't catch up without surpassing their **top speed**"
+                                    elif self.bot.data.save['matchtracker']['scores'][0] > current_estimation:
+                                        msg += "\n:white_check_mark: Opponent can't catch up without increasing their **current speed**"
+                                    else:
+                                        msg += "\n:ok: Opponent can't catch up at **current speeds**, keep going!"
+                        except:
+                            pass
 
                 final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.emote.get('gw'), self.bot.data.save['matchtracker']['gwid'], self.bot.data.save['matchtracker']['day']-1), description=msg, timestamp=self.bot.util.timestamp(), thumbnail=self.bot.data.save['matchtracker'].get('chart', None), color=self.color))
                 await self.bot.util.clean(ctx, final_msg, 90)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['nm95', 'nmdragon', 'solodragon'])
+    @commands.cooldown(1, 15, commands.BucketType.guild)
+    async def nm(self, ctx, hp_percent : int = 100):
+        """Give the dragon solo equivalent of NM95"""
+        if hp_percent > 100: hp_percent = 100
+        elif hp_percent < 1: hp_percent = 1
+        todo = (131250000 * hp_percent) // 100
+        drag = {
+            'fire':('Ewiyar (Solo)', 180000000),
+            'water':('Wilnas (Solo)', 165000000),
+            'earth':('Wamdus (Solo)', 182000000),
+            'wind':('Galleon (Solo)', 196000000),
+            'light': None,
+            'dark':('Lu Woh (Solo)', 192000000)
+        }
+        msg = "To do **{}% of NM95**, you must have:\n".format(hp_percent)
+        for el in drag:
+            if drag[el] is None:
+                msg += "{} No equivalent\n".format(self.bot.emote.get(el))
+            else:
+                msg += "{:} **{:.1f}% HP** remaining on {:} \n".format(self.bot.emote.get(el), 100 * ((drag[el][1] - todo) / drag[el][1]), drag[el][0])
+        final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} Guild War ▫️ NM95 Simulation".format(self.bot.emote.get('gw')), description=msg, color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 90)

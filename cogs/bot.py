@@ -34,7 +34,9 @@ class Bot(commands.Cog):
         if len(terms) == 0:
             return
         await self.bot.send('debug', embed=self.bot.util.embed(title="Bug Report", description=terms, footer="{} ▫️ User ID: {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar_url, color=self.color))
-        await self.bot.util.react(ctx.message, '✅') # white check mark
+        #await self.bot.util.react(ctx.message, '✅') # white check mark
+        final_msg = await ctx.reply(embed=self.bot.util.embed(title="Information", description="**Development is on hold for an undetermined amount of time following [discord.py death](https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1)**, no new features will be added until an alternative is found.", footer="Your report has still been transmitted to my owner", color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 40) # TODO
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['source'])
     @commands.cooldown(1, 20, commands.BucketType.guild)

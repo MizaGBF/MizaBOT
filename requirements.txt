@@ -1,8 +1,9 @@
 discord.py==1.7.3
-pydrive2==1.9.0
+pydrive2==1.9.2
 psutil==5.8.0
 beautifulsoup4==4.9.3
 tweepy==3.10.0
 pillow==8.3.2
 leather==0.3.3
 cairosvg==2.5.2
+uvloop==0.16.0; sys_platform == 'linux'

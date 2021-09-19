@@ -257,20 +257,29 @@ class Data():
         new_schedule = []
         if self.bot.twitter.api is not None and d.days < 1: # retrieve schedule from @granblue_en if we are close to the date
             time.sleep(d.seconds) # wait until koregra to try to get the schedule
-            tw = self.bot.twitter.timeline('granblue_en')
-            if tw is not None:
-                for t in tw:
-                    txt = t.full_text
-                    if txt.find(" = ") != -1 and txt.find("chedule\n") != -1:
-                        try:
-                            s = txt.find("https://t.co/")
-                            if s != -1: txt = txt[:s]
-                            txt = txt.replace('\n\n', '\n')
-                            txt = txt[txt.find("chedule\n")+len("chedule\n"):]
-                            new_schedule = txt.replace('\n', ' = ').split(' = ')
-                            while len(new_schedule) > 0 and new_schedule[0] == '': new_schedule.pop(0)
-                        except: pass
+            count = 0
+            while count < 5 and len(new_schedule) == 0:
+                tw = self.bot.twitter.timeline('granblue_en')
+                if tw is not None:
+                    for t in tw:
+                        txt = t.full_text
+                        if txt.find(" = ") != -1 and txt.find("chedule\n") != -1:
+                            try:
+                                s = txt.find("https://t.co/")
+                                if s != -1: txt = txt[:s]
+                                txt = txt.replace('\n\n', '\n')
+                                txt = txt[txt.find("chedule\n")+len("chedule\n"):]
+                                new_schedule = txt.replace('\n', ' = ').split(' = ')
+                                while len(new_schedule) > 0 and new_schedule[0] == '': new_schedule.pop(0)
+                            except: pass
+                            break
+                    if len(new_schedule) == 0:
+                        count += 1
+                        time.sleep(1000)
+                    else:
                         break
+                else:
+                    break
         else: # else, just clean up old entries
             for i in range(0, ((len(self.bot.data.save['schedule'])//2)*2), 2):
                 try:
