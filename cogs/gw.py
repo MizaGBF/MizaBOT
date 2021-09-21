@@ -1261,7 +1261,7 @@ class GuildWar(commands.Cog):
                     members.append([pdata[1][0].id, pdata[1][0].name, pdata[1][0].current]) # id, name, honor
         await self.bot.util.unreact(ctx.message, 'time')
         if len(members) == 0:
-            await ctx.send(embed=self.bot.util.embed(title="{} Top 30 of {}".format(self.bot.emote.get('gw'), ctx.guild.name), description="Unavailable", inline=True, thumbnail=ctx.guild.icon_url, color=self.color))
+            await ctx.send(embed=self.bot.util.embed(title="{} Top 30 of {}".format(self.bot.emote.get('gw'), ctx.guild.name), description="Unavailable", inline=True, thumbnail=ctx.guild.icon.url, color=self.color))
             return
         members = await self.bot.do(self._sortMembers, members)
         fields = []
@@ -1272,7 +1272,7 @@ class GuildWar(commands.Cog):
             fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) \▫️ **{}**\n".format(members[i][1], members[i][0], self.bot.util.valToStr(members[i][2]))
             total += members[i][2]
         if gwid is None: gwid = ""
-        final_msg = await ctx.send(embed=self.bot.util.embed(author={'name':"Top 30 of {}".format(ctx.guild.name), 'icon_url':ctx.guild.icon_url}, description="{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.emote.get('question'), gwid, self.bot.util.valToStr(total), self.bot.util.valToStr(total // min(30, len(members)))), fields=fields, inline=True, color=self.color))
+        final_msg = await ctx.send(embed=self.bot.util.embed(author={'name':"Top 30 of {}".format(ctx.guild.name), 'icon_url':ctx.guild.icon.url}, description="{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.emote.get('question'), gwid, self.bot.util.valToStr(total), self.bot.util.valToStr(total // min(30, len(members)))), fields=fields, inline=True, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 60)
 
     """getCrewLeaders()
@@ -1443,7 +1443,7 @@ class GuildWar(commands.Cog):
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def recruit(self, ctx):
         """Post all recruiting /gbfg/ crews"""
-        if not await self.bot.do(self.bot.gbf.isAvailable): # NOTE: slow?
+        if not await self.bot.do(self.bot.gbf.isAvailable):
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} /gbfg/ recruiting crews".format(self.bot.emote.get('crew')), description="Unavailable", color=self.color))
         else:
             await self.bot.util.react(ctx.message, 'time')

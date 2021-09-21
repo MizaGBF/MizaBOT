@@ -285,10 +285,27 @@ class Util():
     """
     async def clean(self, ctx, msg, timeout, all=False): # delete a message after X amount of time if posted in an unauthorized channel (all = False) or everywhere (all = True)
         try:
-            if all or not self.bot.isAuthorized(ctx): # TODO
+            if all or not self.bot.isAuthorized(ctx):
                 if timeout is None or timeout > 0: await asyncio.sleep(timeout)
                 await msg.delete()
                 await self.react(ctx.message, '✅') # white check mark
+        except:
+            pass
+
+    """cleanInter()
+    Interaction version of clean
+    
+    Parameters
+    ----------
+    inter: Interaction
+    timeout: Time in second before deletion
+    all: if True, the message will be deleted, if False, the message is deleted it it was posted in an unauthorized channel
+    """
+    async def cleanInter(self, inter, timeout, all=False): # delete a message after X amount of time if posted in an unauthorized channel (all = False) or everywhere (all = True)
+        try:
+            if all or not self.bot.isAuthorized(inter):
+                if timeout is None or timeout > 0: await asyncio.sleep(timeout)
+                await inter.edit_original_message(content='\u200b✅', embed=None, view=None)
         except:
             pass
 

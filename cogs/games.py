@@ -3,6 +3,9 @@ import asyncio
 import random
 import math
 from datetime import datetime
+from views.roll_tap import Tap
+from views.scratcher import Scratcher
+from views.chest_rush import ChestRush
 
 # ----------------------------------------------------------------------------------------------------------------
 # Games Cog
@@ -31,11 +34,6 @@ class Games(commands.Cog):
         self.scratcher_thumb = {
             'Siero Ticket':'item/article/s/30041.jpg', 'Sunlight Stone':'item/evolution/s/20014.jpg', 'Gold Brick':'item/evolution/s/20004.jpg', 'Damascus Ingot':'item/evolution/s/20005.jpg','Agni':'summon/s/2040094000.jpg', 'Varuna':'summon/s/2040100000.jpg', 'Titan':'summon/s/2040084000.jpg', 'Zephyrus':'summon/s/2040098000.jpg', 'Zeus':'summon/s/2040080000.jpg', 'Hades':'summon/s/2040090000.jpg', 'Shiva':'summon/s/2040185000.jpg', 'Europa':'summon/s/2040225000.jpg', 'Godsworn Alexiel':'summon/s/2040205000.jpg', 'Grimnir':'summon/s/2040261000.jpg', 'Lucifer':'summon/s/2040056000.jpg', 'Bahamut':'summon/s/2040030000.jpg', 'Michael':'summon/s/2040306000.jpg', 'Gabriel':'summon/s/2040311000.jpg', 'Uriel':'summon/s/2040203000.jpg', 'Raphael':'summon/s/2040202000.jpg', 'Metatron':'summon/s/2040330000.jpg', 'Sariel':'summon/s/2040327000.jpg', 'Belial':'summon/s/2040347000.jpg', 'Murgleis':'weapon/s/1040004600.jpg', 'Benedia':'weapon/s/1040502500.jpg',  'Gambanteinn':'weapon/s/1040404300.jpg',  'Love Eternal':'weapon/s/1040105400.jpg',  'AK-4A':'weapon/s/1040004600.jpg',  'Reunion':'weapon/s/1040108200.jpg',  'Ichigo-Hitofuri':'weapon/s/1040910000.jpg',  'Taisai Spirit Bow':'weapon/s/1040708700.jpg',  'Unheil':'weapon/s/1040809100.jpg',  'Sky Ace':'weapon/s/1040911500.jpg',  'Ivory Ark':'weapon/s/1040112500.jpg',  'Blutgang':'weapon/s/1040008700.jpg',  'Eden':'weapon/s/1040207000.jpg',  'Parazonium':'weapon/s/1040108700.jpg',  'Ixaba':'weapon/s/1040906400.jpg',  'Blue Sphere':'weapon/s/1040410000.jpg',  'Certificus':'weapon/s/1040309000.jpg',  'Fallen Sword':'weapon/s/1040014300.jpg',  'Mirror-Blade Shard':'weapon/s/1040110600.jpg',  'Galilei\'s Insight':'weapon/s/1040211600.jpg',  'Purifying Thunderbolt':'weapon/s/1040709000.jpg',  'Vortex of the Void':'weapon/s/1040212700.jpg',  'Sacred Standard':'weapon/s/1040213400.jpg',  'Bab-el-Mandeb':'weapon/s/1040004600.jpg',  'Cute Ribbon':'weapon/s/1040605900.jpg',  'Kerak':'weapon/s/1040812000.jpg',  'Sunya':'weapon/s/1040811800.jpg',  'Fist of Destruction':'weapon/s/1040612700.jpg',  'Yahata\'s Naginata':'weapon/s/1040312900.jpg',  'Cerastes':'weapon/s/1040215300.jpg',  'World Ender':'weapon/s/1040020900.jpg',  'Ouroboros Prime':'weapon/s/1040418600.jpg', 'Crystals x3000':'item/normal/s/gem.jpg', 'Damascus Crystal':'item/article/s/203.jpg', 'Intricacy Ring':'item/npcaugment/s/3.jpg', 'Gold Spellbook':'item/evolution/s/20403.jpg', 'Moonlight Stone':'item/evolution/s/20013.jpg', 'Gold Moon x2':'item/article/s/30033.jpg', 'Ultima Unit x3':'item/article/s/138.jpg', 'Silver Centrum x5':'item/article/s/107.jpg', 'Primeval Horn x3':'item/article/s/79.jpg', 'Horn of Bahamut x4':'item/article/s/59.jpg', 'Legendary Merit x5':'item/article/s/2003.jpg', 'Steel Brick':'item/evolution/s/20003.jpg', 'Brimston Earrings':'item/npcaugment/s/11.jpg', 'Permafrost Earrings':'item/npcaugment/s/12.jpg', 'Brickearth Earrings':'item/npcaugment/s/13.jpg', 'Jetstream Earrings':'item/npcaugment/s/14.jpg', 'Sunbeam Earrings':'item/npcaugment/s/15.jpg', 'Nightshade Earrings':'item/npcaugment/s/16.jpg', 'Lineage Ring x2':'item/npcaugment/s/2.jpg', 'Coronation Ring x3':'item/npcaugment/s/1.jpg', 'Silver Moon x5':'item/article/s/30032.jpg', 'Bronze Moon x10':'item/article/s/30031.jpg', 'Elixir x100':'item/normal/s/2.jpg', 'Soul Berry x300':'item/normal/s/5.jpg'
         }
-        self.scam = [(1000, 'Sunlight Stone', 'evolution/s/20014.jpg'), (1000, 'Damascus Ingot', 'evolution/s/20005.jpg'), (3000, 'Damascus Crystal x2', 'article/s/203.jpg'), (3000, 'Brimstone Earrings x2', 'npcaugment/s/11.jpg'), (3000, 'Permafrost Earrings x2', 'npcaugment/s/12.jpg'), (3000, 'Brickearth Earrings x2', 'npcaugment/s/13.jpg'), (3000, 'Jetstream Earrings x2', 'npcaugment/s/14.jpg'), (3000, 'Sunbeam Earrings x2', 'npcaugment/s/15.jpg'), (3000, 'Nightshade Earrings x2', 'npcaugment/s/16.jpg'), (7000, 'Intracacy Ring', 'npcaugment/s/3.jpg'), (7000, 'Ultima Unit x10', 'article/s/138.jpg'), (7000, 'Silver Centrum x5', 'article/s/107.jpg'), (7000, 'Astaroth Anima x10', 'article/s/20781.jpg'), (7000, 'Sephira Stone x10', 'article/s/25000.jpg'), (7000, 'Weapon Plus Mark x30', 'bonusstock/s/1.jpg'), (7000, 'Summon Plus Mark x30', 'bonusstock/s/2.jpg'), (7000, 'Gold Moon x2', 'article/s/30033.jpg'), (7000, 'Silver Moon x5', 'article/s/30032.jpg'), (7000, 'Half Elixir x100', 'normal/s/2.jpg'), (7000, 'Soul Berry x300', 'normal/s/5.jpg')]
-        self.scam_rate = 0
-        for r in self.scam:
-            self.scam_rate += r[0]
-        # scratcher rate calcul
         self.scratcher_total = 0
         self.scratcher_total_rare1 = 0
         self.scratcher_total_rare2 = 0
@@ -45,6 +43,11 @@ class Games(commands.Cog):
             self.scratcher_total += r * len(self.scratcher_loot[r])
             if self.scratcher_loot[r][0] == rare_divider1: self.scratcher_total_rare1 = self.scratcher_total
             if self.scratcher_loot[r][0] == rare_divider2: self.scratcher_total_rare2 = self.scratcher_total
+        
+        self.scam = [(1000, 'Sunlight Stone', 'evolution/s/20014.jpg'), (1000, 'Damascus Ingot', 'evolution/s/20005.jpg'), (3000, 'Damascus Crystal x2', 'article/s/203.jpg'), (3000, 'Brimstone Earrings x2', 'npcaugment/s/11.jpg'), (3000, 'Permafrost Earrings x2', 'npcaugment/s/12.jpg'), (3000, 'Brickearth Earrings x2', 'npcaugment/s/13.jpg'), (3000, 'Jetstream Earrings x2', 'npcaugment/s/14.jpg'), (3000, 'Sunbeam Earrings x2', 'npcaugment/s/15.jpg'), (3000, 'Nightshade Earrings x2', 'npcaugment/s/16.jpg'), (7000, 'Intracacy Ring', 'npcaugment/s/3.jpg'), (7000, 'Ultima Unit x10', 'article/s/138.jpg'), (7000, 'Silver Centrum x5', 'article/s/107.jpg'), (7000, 'Astaroth Anima x10', 'article/s/20781.jpg'), (7000, 'Sephira Stone x10', 'article/s/25000.jpg'), (7000, 'Weapon Plus Mark x30', 'bonusstock/s/1.jpg'), (7000, 'Summon Plus Mark x30', 'bonusstock/s/2.jpg'), (7000, 'Gold Moon x2', 'article/s/30033.jpg'), (7000, 'Silver Moon x5', 'article/s/30032.jpg'), (7000, 'Half Elixir x100', 'normal/s/2.jpg'), (7000, 'Soul Berry x300', 'normal/s/5.jpg')]
+        self.scam_rate = 0
+        for r in self.scam:
+            self.scam_rate += r[0]
 
     """gachaRateUp()
     Return the current real gacha from GBF, if it exists in the bot memory.
@@ -206,22 +209,23 @@ class Games(commands.Cog):
         else: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969231323070494/0_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761976275706445844/1_s.png'])
 
         # startup msg
-        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':titles[0].format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, image=crystal, color=self.color, footer=footer))
-        await asyncio.sleep(5)
+        view = Tap(self.bot, owner_id=ctx.author.id)
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':titles[0].format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, image=crystal, color=self.color, footer=footer), view=view)
+        await view.wait()
 
         # display result
         if rmode == 0: # single roll mode
             r = result['list'][0]
             if result['extended']:
-                await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="{} {}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1]), color=self.color, footer=footer))
+                await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description="{} {}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1]), color=self.color, footer=footer), view=None)
             else:
-                await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="{}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0]))), color=self.color, footer=footer))
+                await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description="{}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0]))), color=self.color, footer=footer), view=None)
         elif rmode == 1: # memeroll mode
             counter = [0, 0, 0]
             text = ""
             for i in range(0, len(result['list'])):
                 if i > 0 and i % 3 == 0:
-                    await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[0].format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer))
+                    await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[0].format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
                     await asyncio.sleep(1)
                     text = ""
                 if result['extended']:
@@ -230,7 +234,7 @@ class Games(commands.Cog):
                     text += "{} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(result['list'][i][0])))
                 counter[result['list'][i][0]] += 1
             title = titles[1].format(ctx.author.display_name, len(result['list'])) if (len(result['list']) < 300) else "{} sparked".format(ctx.author.display_name)
-            await final_msg.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer))
+            await final_msg.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar.url}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
         elif rmode == 2: # ten roll mode
             if result['extended']:
                 for i in range(0, 11):
@@ -243,7 +247,7 @@ class Games(commands.Cog):
                         msg += '{}'.format(self.bot.emote.get('crystal{}'.format(result['list'][j][0])))
                         if j % 2 == 1: msg += "\n"
                     await asyncio.sleep(0.75)
-                    await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+                    await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color, footer=footer), view=None)
             else:
                 msg = ""
                 i = 0
@@ -253,7 +257,7 @@ class Games(commands.Cog):
                     if r == 2: msg += '{}'.format(self.bot.emote.get('SSR'))
                     elif r == 1: msg += '{}'.format(self.bot.emote.get('SR'))
                     else: msg += '{}'.format(self.bot.emote.get('R'))
-                await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+                await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color, footer=footer), view=None)
         else: # others
             count = len(result['list'])
             rate = (100*result['detail'][2]/count)
@@ -265,7 +269,7 @@ class Games(commands.Cog):
                     for item in rolls:
                         msg += item
                         if rolls[item] > 1: msg += " x{}".format(rolls[item])
-                        await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+                        await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color, footer=footer), view=None)
                         await asyncio.sleep(0.75)
                         msg += ", "
                     msg = msg[:-2]
@@ -273,7 +277,7 @@ class Games(commands.Cog):
             elif rollOptions.get('mode', '') == 'mukku': amsg = "Mukku stopped after **{}** rolls\n".format(len(result['list']))
             else: amsg = ""
             msg = "{}{:} {:} ▫️ {:} {:} ▫️ {:} {:}\n{:}\n**{:.2f}%** SSR rate".format(amsg, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), msg, rate)
-            await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+            await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color, footer=footer), view=None)
         await self.bot.util.clean(ctx, final_msg, 25)
 
 
@@ -450,7 +454,7 @@ class Games(commands.Cog):
             else:
                 msg = "**10** rolls :pensive:\n"
                 roll = 10
-        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is spinning the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is spinning the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color, footer=footer))
         if not enableJanken and state < 2: state = 1
         running = True
         while running:
@@ -503,7 +507,7 @@ class Games(commands.Cog):
                 msg += ":confetti_ball: **Super Mukku** ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
                 running = False
 
-            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color, footer=footer))
+            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color, footer=footer))
 
         await self.bot.util.clean(ctx, final_msg, 45)
 
@@ -520,9 +524,9 @@ class Games(commands.Cog):
                 loot = r
                 break
         if loot is None: loot = self.scam[-1]
-        msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is getting scammed...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=":question: :question: :question:", color=self.color))
+        msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is getting scammed...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description=":question: :question: :question:", color=self.color))
         await asyncio.sleep(2)
-        await msg.edit(embed=self.bot.util.embed(author={'name':"{} got scammed".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description="{}".format(loot[1]), thumbnail='http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/item/{}'.format(loot[2]), color=self.color))
+        await msg.edit(embed=self.bot.util.embed(author={'name':"{} got scammed".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description="{}".format(loot[1]), thumbnail='http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/item/{}'.format(loot[2]), color=self.color))
         await self.bot.util.clean(ctx, msg, 45)
         
 
@@ -530,7 +534,6 @@ class Games(commands.Cog):
     @commands.cooldown(1, 300, commands.BucketType.user)
     async def scratch(self, ctx, mode : str = ""):
         """Imitate the GBF scratch game from Anniversary 2020"""
-        message = None
         ct = self.bot.util.JST()
         # settings
         fixedS = ct.replace(year=2021, month=3, day=29, hour=19, minute=0, second=0, microsecond=0) # beginning of good scratcher
@@ -542,7 +545,7 @@ class Games(commands.Cog):
         if enableBetterDuringPeriod and ct >= fixedS and ct < fixedE:
             betterScratcher = True
 
-        # user options
+        # debug options
         if mode == "debug" and ctx.author.id == self.bot.data.config['ids']['owner']:
             msg = "`$scratch` Debug Values\nTotal: {} (100%)\n".format(self.scratcher_total)
             for r in self.scratcher_loot:
@@ -553,6 +556,7 @@ class Games(commands.Cog):
             betterScratcher = True
             footer = "Debug mode"
 
+        # scratcher generation
         if random.randint(1, 100) <= 10:
             betterScratcher = True # to simulate the rare scratcher card thing, currently 10%
         if footer == "" and betterScratcher: footer = "Rare card"
@@ -584,88 +588,36 @@ class Games(commands.Cog):
                 if found: break
         
         # build the scratch grid
-        hidden = "▄▄▄▄▄▄▄▄▄▄▄"
         grid = []
-        win = ""
         keys = list(selected.keys())
         for x in keys: # add all our loots once
-            grid.append([x, False])
+            grid.append(x)
             selected[x] = 1
         # add the first one twice (it's the winning one)
-        grid.append([keys[0], False])
-        grid.append([keys[0], False])
+        grid.append(keys[0])
+        grid.append(keys[0])
         selected[keys[0]] = 3
-        win = keys[0]
         nofinal = False
         while len(grid) < 10: # fill the grid up to TEN times
             n = random.randint(1, len(keys)-1)
             if selected[keys[n]] < 2:
-                grid.append([keys[n], False])
+                grid.append(keys[n])
                 selected[keys[n]] += 1
             elif len(grid) == 9: # 10 means final scratch so we stop at 9 and raise a flag if the chance arises
-                grid.append(['', False])
+                grid.append('')
                 nofinal = True
                 break
         while True: # shuffle the grid until we get a valid one
             random.shuffle(grid)
-            if nofinal and grid[-1][0] == "":
+            if nofinal and grid[-1] == "":
                 break
-            elif not nofinal and grid[-1][0] == keys[0]:
-                win = ""
+            elif not nofinal and grid[-1] == keys[0]:
                 break
             await asyncio.sleep(0.001)
 
-        # play the game
-        win_flag = False
-        reveal_count = 0
-        fields = [{'name': "{}".format(self.bot.emote.get('1')), 'value':''}, {'name': "{}".format(self.bot.emote.get('2')), 'value':''}, {'name': "{}".format(self.bot.emote.get('3')), 'value':''}]
-        pulled = {}
-        msg = ""
-        # main loop
-        while True:
-            # print the grid
-            for i in range(0, 9):
-                if i < 3: fields[i]['value'] = ''
-                if grid[i][1] == False: fields[i%3]['value'] += "{}\n".format(hidden)
-                else:
-                    c = pulled[grid[i][0]]
-                    if c == 3: fields[i%3]['value'] += "**{}**\n".format(grid[i][0])
-                    elif c == 2: fields[i%3]['value'] += "__{}__\n".format(grid[i][0])
-                    else: fields[i%3]['value'] += "{}\n".format(grid[i][0])
-            # send the message
-            if message is None:
-                message = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, inline=True, footer=footer, fields=fields, color=self.color))
-            else:
-                await message.edit(embed=self.bot.util.embed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, inline=True, footer=footer, fields=fields, color=self.color))
-            await asyncio.sleep(1)
-            # win sequence
-            if win_flag:
-                if win == "": # final scratch must happens
-                    win = grid[-1][0]
-                    msg += "*The Final scratch...*\n"
-                    await message.edit(embed=self.bot.util.embed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, footer=footer, fields=fields, color=self.color))
-                    await asyncio.sleep(2)
-                msg += ":confetti_ball: :tada: **{}** :tada: :confetti_ball:".format(win)
-                for i in range(0, 9): # update the grid
-                    if i < 3: fields[i%3]['value'] = ''
-                    c = pulled.get(grid[i][0], 0)
-                    if grid[i][1] == False: fields[i%3]['value'] += "~~{}~~\n".format(grid[i][0])
-                    elif c == 3: fields[i%3]['value'] += "**{}**\n".format(grid[i][0])
-                    elif c == 2: fields[i%3]['value'] += "__{}__\n".format(grid[i][0])
-                    else: fields[i%3]['value'] += "{}\n".format(grid[i][0])
-                await message.edit(embed=self.bot.util.embed(author={'name':"{} scratched".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, inline=True, footer=footer, fields=fields, thumbnail='http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/' + self.scratcher_thumb.get(win, ''), color=self.color))
-                await self.bot.util.clean(ctx, message, 45)
-                return
-            # next pull
-            i = random.randint(0, 8)
-            while grid[i][1] == True:
-                i = random.randint(0, 8)
-            grid[i][1] = True
-            reveal_count += 1
-            selected[grid[i][0]] -= 1
-            pulled[grid[i][0]] = pulled.get(grid[i][0], 0) + 1
-            if reveal_count == 9 or (selected[grid[i][0]] == 0 and grid[i][0] == win):
-                win_flag = True
+        # call the view
+        view = Scratcher(self.bot, ctx.author.id, grid, self.scratcher_thumb, self.color, footer)
+        await ctx.send(embed=self.bot.util.embed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description="Click to play the game", footer=footer, color=self.color), view=view)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['chests', 'rush'])
     @commands.cooldown(1, 300, commands.BucketType.user)
@@ -705,65 +657,14 @@ class Games(commands.Cog):
                 else:
                     c += loot[x]
             if check != "":
-                if n < rm and len(results) == l - 1: results.append(["**" + check + "**", -1])
-                else: results.append([check, 0])
-
-        while len(results) < 9: results.append([None, 0])
-        random.shuffle(results)
-
-        opened = 0
-        game_over = False
-        display_chest = True
-        fields = [{'name': "{}".format(self.bot.emote.get('1')), 'value':''}, {'name': "{}".format(self.bot.emote.get('2')), 'value':''}, {'name': "{}".format(self.bot.emote.get('3')), 'value':''}]
-        title = "{} is opening...".format(ctx.author.display_name)
-        while True:
-            for i in range(9):
-                if i < 3: fields[i]['value'] = ''
-                if results[i][1] == -3: fields[i%3]['value'] += "{0}{0}{0}{0}{0}{0}\n".format(self.bot.emote.get('red'))
-                elif results[i][1] == -2: fields[i%3]['value'] += "{0}{0}{0}{0}{0}{0}\n".format(self.bot.emote.get('kmr'))
-                elif results[i][1] <= 0 and display_chest: fields[i%3]['value'] += "{0}{0}{0}{0}{0}{0}\n".format(self.bot.emote.get('gold'))
-                elif results[i][1] <= 0: fields[i%3]['value'] += "✖️\n"
-                elif results[i][0] is None: fields[i%3]['value'] += "{0}{0}{0}{0}{0}{0}\n".format(self.bot.emote.get('kmr'))
-                else: fields[i%3]['value'] += results[i][0] + "\n"
-
-            if game_over:
-                title = "{} opened".format(ctx.author.display_name)
-            if message is None:
-                message = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, inline=True, fields=fields, color=self.color))
-            else:
-                await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, inline=True, fields=fields, color=self.color))
-            if game_over:
-                await self.bot.util.clean(ctx, message, 45)
-                return
-            await asyncio.sleep(1)
-
-            while True:
-                n = random.randint(0, 8)
-                if results[n][1] <= 0:
-                    if results[n][1] == -3:
-                        results[n][1] = 1
-                        opened += 1
-                        game_over = True
-                        break
-                    elif results[n][1] < 0:
-                        if l == opened + 1:
-                            results[n][1] -= 1
-                            display_chest = False
-                            break
-                    elif results[n][0] is None:
-                        if l == opened:
-                            results[n][1] = 1
-                            game_over = True
-                            display_chest = False
-                            break
-                    else:
-                        results[n][1] = 1
-                        opened += 1
-                        if opened == 9:
-                            game_over = True
-                            display_chest = False
-                        break
-                await asyncio.sleep(0.001)
+                if n < rm and len(results) == l - 1: results.append("###" + check) # special chest
+                elif n < rm: results.append("$$$" + check) # rare loot
+                else: results.append(check) # normal loot
+        results.reverse()
+        
+        # call the view
+        view = ChestRush(self.bot, ctx.author.id, results, self.color)
+        message = await ctx.reply(embed=self.bot.util.embed(author={'name':'{} is opening...'.format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, color=self.color), view=view)
 
 
     """genLoto()
@@ -884,7 +785,7 @@ class Games(commands.Cog):
         """Imitate the GBF summer fortune game from Summer 2021
         You can specify your own cards with this command"""
         title = '{} is tempting fate...'.format(ctx.author.display_name)
-        message = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description="The winning numbers are...", color=self.color))
+        message = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar.url}, description="The winning numbers are...", color=self.color))
         cards, winning = await self.bot.do(self.genLoto)
         cvt = []
         usercards = usercards.split(" ")
@@ -901,7 +802,7 @@ class Games(commands.Cog):
         await asyncio.sleep(2)
         prize = [0, 0, 0, 0]
         desc, thumb = await self.bot.do(self.printLoto, [], winning, prize)
-        await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc, thumbnail=thumb, color=self.color))
+        await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar.url}, description=desc, thumbnail=thumb, color=self.color))
         title = "{}'s fortune is".format(ctx.author.display_name)
         for i in range(0, len(cards)):
             tier = self.checkLotoWin(cards[:i+1][-1], winning)
@@ -910,7 +811,7 @@ class Games(commands.Cog):
                 cards[i] = '**'+cards[i]+'**'
             desc, thumb = await self.bot.do(self.printLoto, cards[:i+1], winning, prize, (i == len(cards)-1))
             await asyncio.sleep(0.5)
-            await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar_url}, description=desc, thumbnail=thumb, color=self.color))
+            await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar.url}, description=desc, thumbnail=thumb, color=self.color))
         await self.bot.util.clean(ctx, message, 45)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['lotochance', 'lottochance', 'fortunecalc', 'lotocalc', 'lottocalc'])
@@ -942,7 +843,7 @@ class Games(commands.Cog):
     async def quota(self, ctx):
         """Give you your GW quota for the day"""
         if ctx.author.id in self.bot.data.config['ids'].get('branded', []):
-            await ctx.reply(embed=self.bot.util.embed(title="{} {} is a bad boy".format(self.bot.emote.get('gw'), ctx.author.display_name), description="Your account is **restricted.**", thumbnail=ctx.author.avatar_url, color=self.color))
+            await ctx.reply(embed=self.bot.util.embed(title="{} {} is a bad boy".format(self.bot.emote.get('gw'), ctx.author.display_name), description="Your account is **restricted.**", thumbnail=ctx.author.avatar.url, color=self.color))
             return
 
         h = random.randint(800, 4000)
@@ -955,17 +856,17 @@ class Games(commands.Cog):
         if c <= 3:
             c = random.randint(1, 110)
             if c <= 2:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got the **Eternal Battlefield Pass** 🤖\nCongratulations!!!\nYou will now revive GW over and ovḛ̸̛̠͕̑̋͌̄̎̍͆̆͑̿͌̇̇̕r̸̛̗̥͆͂̒̀̈́͑̑̊͐̉̎̚̚͝ ̵̨̛͔͎͍̞̰̠́͛̒̊̊̀̃͘ư̷͎̤̥̜̘͈̪̬̅̑͂̂̀̃̀̃̅̊̏̎̚͜͝ͅņ̴̢̛̛̥̮͖͉̻̩͍̱̓̽̂̂͌́̃t̵̞̦̿͐̌͗͑̀͛̇̚͝͝ỉ̵͉͕̙͔̯̯͓̘̬̫͚̬̮̪͋̉͆̎̈́́͛̕͘̚͠ͅļ̸̧̨̛͖̹͕̭̝͉̣̜͉̘͙̪͙͔͔̫̟̹̞̪̦̼̻̘͙̮͕̜̼͉̦̜̰̙̬͎͚̝̩̥̪̖͇̖̲̣͎̖̤̥͖͇̟͎̿̊͗̿̈̊͗̆̈́͋͊̔͂̏̍̔̒̐͋̄̐̄̅̇͐̊̈́̐͛͑̌͛̔͗̈́͌̀͑̌̅̉́̔̇́̆̉͆̄̂͂̃̿̏̈͛̇̒͆͗̈́̀̃̕̕͘̚̚͘͘͠͠͠͝͝͠͝͝ͅͅ ̴̢̛̛̛̯̫̯͕̙͙͇͕͕̪̩̗̤̗̺̩̬̞̞͉̱̊̽̇̉̏̃̑̋̋̌̎̾́̉́͌̿̐̆̒̾̆͒͛͌́͒̄͗͊͑̈́̑̐̂̿̋̊͊̈́̃̋̀̀̈̏̅̍̈͆̊̋͋̀̽͑̉̈́͘͘̕̕͝y̷̧̧̨̢̧̮̭̝̦͙͈͉̜͈̳̰̯͔͓̘͚̳̭͎̳̯͈͓̣͕͙̳̭̱͍͎͖̋͊̀͋͘͘ơ̸̢̗̖̹̹͖̣̫̝̞̦̘̙̭̮͕̘̱̆͋̓͗̾͐̉̏̀͂̄̎̂̈́͌͑̅̆̉̈̒͆̈̈̊͐̔̓̀̿̓̈́͝͝͝͠͝u̶̡̧̡̧̨̧̡̡̢̢̢̪̯͙͍̱̦̠̗̹̼̠̳̣͉̞̩̹͕̫͔͚̬̭̗̳̗̫̥̞̰̘̖̞̤͖̳̮̙͎͎̗̙̳͙͖͓̪̱̞͖̠̣̮̘͍̱̥̹͎͎̦̬̹̼̜͕͙͖̫̝̰̯̜̹̬̯͚͕̰̪̼͓̞̫̖̘͙̞͖̺̩͓̹̘̙̫̩̲̻̪̠̞̺͚̫̰̠̼̖̬͔̗̮͙̱̬̩̮̟͓̫̭̲̘̤͎̱̓̊̇́̀̏̏̾̀̄̆̒̂͐̌͂̈̂̓͋̌̓͘̕̕̚͜͜͜͝ͅͅͅͅŗ̷̡̧̨̢̢̢̧̡̡̧̡̢̧̨̨̡̧̛̛̛̬͚̮̜̟̣̤͕̼̫̪̗̙͚͉̦̭̣͓̩̫̞͚̤͇̗̲̪͕̝͍͍̫̞̬̣̯̤̮͉̹̫̬͕̫̥̱̹̲͔͔̪̖̱͔̹͈͔̳͖̩͕͚͓̤̤̪̤̩̰̬͙̞͙̘̯̮̫͕͚̙̜̼̩̰̻̞̺͈̝̝̖͎̻̹̞̥̰̮̥̙̠͔͎̤̲͎͍̟̥̞̗̰͓͍̞̹͍̬͎̲̬̞͈͉̼̥̝͈̼̠̫̙͖̪̼̲̯̲̫̼̺̘̗̘͚̤͓̯̦̣̬͒̑̒́͑͊̍̿̉̇̓̒̅̎͌̈́̐̽͋̏̒͂̈̒̃̿̓̇̈̿̊̎̈́͐̒͂͊̿̈́̿̅̏̀͐͛̎̍͑͂̈́̃̇̀̈͋̾̔̈́̽͌̿̍̇̅̏̋̑̈́̾̊͐̉̊̅͑̀͊̽̂̈́̽̓͗́̄͆̄͑͒̈́́͋̏͊͋̒͗̆̋̌̈̀͑͗̽͂̄̌̕͘͘̚͘̕̕͜͜͜͜͜͜͜͠͝͝͝͝͝͝ͅͅͅ ̷̧̡̧̨̢̧̨̡̨̧̛̛̛̛̮̭͇̣͓̙̺͍̟̜̞̫̪̘̼̞̜̠͇̗̮͕̬̥͓͔͈̟̦͇̥̖̭̝̱̗̠̘̝̹̖͓̝͇̖̫̯̩̞̞̯̲̤̱̻̤͇̲͍͈͓͖̹̗̟̲̪̪̟̩͙̪̝̮̘̽̋̍́̔̊̍̈́͂̌̽͒̆͐͊̏̐͑͛̓̆̈́͌̂͒͆̔̅̓̽͊̅́̾̽̓̏̆̀̀͌̾̀͒̓̇̊̀̐͛̌̋̈͑̇́̂̆̽̈̕̕̚̚͜͠ͅͅͅͅḑ̶̛̛̯͓̠̖͎̭̞̫͑̋̄̄̈̽̎̊͛̽͌̾̋̔̽̔̀̀͐̿̈́̀̃͐͂͆̈̃͑̀̋̑͊̃̆̓̾̎̅̀̆̓̏͊̆̔̈̅͛̍̎̓̀͛͒́̐͆̂̋̋͛̆̈͐͂̏̊̏̏̓̿̔͆̓̽̂̅͆̔͑̔̈̾̈̽̂̃̋̈́̾̎̈́̂̓̃̒͐͆̌̍̀͗̈́̑̌̚̕̕̚͠͠͝ę̴̧̨̨̨̢̨̢̧̧̧̨̧̛̛̛̛̛̛̛̺̪̹̘͈̣͔̜͓̥̥̟͇̱͚͖̠͙͙̱̞̣̤͚̣̟̫̬̟͓̺͙̬͚̹͓̗̬̼͇͙̻͍̖̙̥̩͔̜͕̖͕͔͚̳͙̩͇͙̺͔̲̱̙͉̝̠̤̝̭̮̩̦͇̖̳̞̞̖͎̙͙̲̮̠̣͍̪͙̰̣͉̘͉̦̖̳̫͖͖̘̖̮̲̱̪͕̳̫̫̞̪̜̞̬͙͖͍͖̦͉̯̟̖͇̩͚͙͔̳̫͗̈́̒̎͂̇̀͒̈́̃͐̉͛̾̑̆̃͐̈́̉͒̇̓̏̀͌̐͌̅̓͐́̿͒̅͑̍̓̈́̉̊́̉̀̔̊̍̽͛͛͆̓̈͋̉͋̿̉́̋̈̓̐̈́̔̃͆͗͛̏́̀̑͋̀̽̔̓̎̒̆̌̐̈́̓͂̐̋͊̌͑̓̈́̊̿͋̈́́̃̏̓̉͛͆̂͐͗͗̾̅̌̾͌̈́͊͘̕̚̕̚̚̕͘̕͜͜͜͜͜͜͜͠͝͝͠͝͝͠ͅͅa̸̡͔̯͎̟͙̖̗͔̺̰͇͚̭̲̭͕̫̜͉̯͕̅̈͋̒͋͂̐̕ͅţ̶̡̨̢̢̡̡̡̨̢̡̧̨̢̛̥̭̞͈̼̖͙͇̝̳͇̞̬͎̲̙̰̙̱̳̟̣̗̫̣͉͖̪̩͙̲͇͙̫̘͖̖̜̝̦̥̟̜̠͔̠͎̭͔̘͓͚̩͇͙͎͎̰̘̟̳̪͖̠̪̦̦̫̞̟̗̹̹̤͓͍̜̯͔̼̱̮̹͎͖͍̲͎̠͉̟͈̠̦̯̲̼̥̱̬̜͙̘͕̣̳͇̞͓̝͈̼̞̻͚̘̩̟̩̖̼͍̯̘͉͔̤̘̥̦͑̒͗̅̉̾͗̾̓̈́̍̉̈́͛̀͊̋̀͐̏̈́̀̀̍̇̀̀̈́̃̀̅͛̅̈́̇̽̆̌̈̄͆̄̂͂̔͗͌͊̽̿́͑̒̾̑̊̿͗́̇̋̊̄̀̍̓̆͂̆̔̏̍̑̔̊̾̎̆͛͑̓͒̈̎͌̓͗̀̿̓̃̔̈́͗̃̓̽̓̉̀͛͂̿́̀̌͊̆̋̀̓̇́̔̓͆̋̊̀̋͑́̔́̌̒̾̂̎̋̈́́̀͗̈́̈́́̾̈́͑͋̇͒̀͋͆͗̾͐̆̈́͂͐̈̐̓̍̈́̈̅̓͐̚̚̚̚̕͘̕͘̚̚̚͘͜͜͜͜͜͜͝͠͠͠͝͠ͅͅḥ̴̨̧̧̢̧̢̢̛̛̙̱͚̺̬̖̮̪͈̟͉̦̪̘̰̺̳̱̲͔̲̮̦̦̪̪̲̠͓͎͇͕̯̥͉͍̱̥͓̲̤̫̳̠̝͖̺̙͖͎͙̠͓̺̗̝̩͍͕͎̞͕̤̻̰̘͇͕̟̹̳͇͈͇̳̳̞̗̣͖̙͓̼̬̯͚͎̮͚̳̰͙̙̟̊͆͒͆͌̂̈́̀́̽̿͌̓́̐̑͌͋͆͊͑͛͑̀̋͐̏͌̑̀͛͗̀́̈̀̓̽̇̐̋͊̅͑̊͒̈́̀̀̔̀̇͗̆͑̅̌̑̈́͌̒̅̌̓͋͂̀̍̈́͐̈́̆̐̈́̍͛͂̔̐̎͂̎̇͑̈́̈́̎̉̈́́̒̒̆̌̃̓̈́͂̽̓̆̋̈̂̽̆̓̔͗̓̀̄̈́̂̏͗̐̔͘̕͘͘͜͜͜͜͠͠͝͠͠͝͝͝͠͠͝ͅͅ", thumbnail=ctx.author.avatar_url, color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got the **Eternal Battlefield Pass** 🤖\nCongratulations!!!\nYou will now revive GW over and ovḛ̸̛̠͕̑̋͌̄̎̍͆̆͑̿͌̇̇̕r̸̛̗̥͆͂̒̀̈́͑̑̊͐̉̎̚̚͝ ̵̨̛͔͎͍̞̰̠́͛̒̊̊̀̃͘ư̷͎̤̥̜̘͈̪̬̅̑͂̂̀̃̀̃̅̊̏̎̚͜͝ͅņ̴̢̛̛̥̮͖͉̻̩͍̱̓̽̂̂͌́̃t̵̞̦̿͐̌͗͑̀͛̇̚͝͝ỉ̵͉͕̙͔̯̯͓̘̬̫͚̬̮̪͋̉͆̎̈́́͛̕͘̚͠ͅļ̸̧̨̛͖̹͕̭̝͉̣̜͉̘͙̪͙͔͔̫̟̹̞̪̦̼̻̘͙̮͕̜̼͉̦̜̰̙̬͎͚̝̩̥̪̖͇̖̲̣͎̖̤̥͖͇̟͎̿̊͗̿̈̊͗̆̈́͋͊̔͂̏̍̔̒̐͋̄̐̄̅̇͐̊̈́̐͛͑̌͛̔͗̈́͌̀͑̌̅̉́̔̇́̆̉͆̄̂͂̃̿̏̈͛̇̒͆͗̈́̀̃̕̕͘̚̚͘͘͠͠͠͝͝͠͝͝ͅͅ ̴̢̛̛̛̯̫̯͕̙͙͇͕͕̪̩̗̤̗̺̩̬̞̞͉̱̊̽̇̉̏̃̑̋̋̌̎̾́̉́͌̿̐̆̒̾̆͒͛͌́͒̄͗͊͑̈́̑̐̂̿̋̊͊̈́̃̋̀̀̈̏̅̍̈͆̊̋͋̀̽͑̉̈́͘͘̕̕͝y̷̧̧̨̢̧̮̭̝̦͙͈͉̜͈̳̰̯͔͓̘͚̳̭͎̳̯͈͓̣͕͙̳̭̱͍͎͖̋͊̀͋͘͘ơ̸̢̗̖̹̹͖̣̫̝̞̦̘̙̭̮͕̘̱̆͋̓͗̾͐̉̏̀͂̄̎̂̈́͌͑̅̆̉̈̒͆̈̈̊͐̔̓̀̿̓̈́͝͝͝͠͝u̶̡̧̡̧̨̧̡̡̢̢̢̪̯͙͍̱̦̠̗̹̼̠̳̣͉̞̩̹͕̫͔͚̬̭̗̳̗̫̥̞̰̘̖̞̤͖̳̮̙͎͎̗̙̳͙͖͓̪̱̞͖̠̣̮̘͍̱̥̹͎͎̦̬̹̼̜͕͙͖̫̝̰̯̜̹̬̯͚͕̰̪̼͓̞̫̖̘͙̞͖̺̩͓̹̘̙̫̩̲̻̪̠̞̺͚̫̰̠̼̖̬͔̗̮͙̱̬̩̮̟͓̫̭̲̘̤͎̱̓̊̇́̀̏̏̾̀̄̆̒̂͐̌͂̈̂̓͋̌̓͘̕̕̚͜͜͜͝ͅͅͅͅŗ̷̡̧̨̢̢̢̧̡̡̧̡̢̧̨̨̡̧̛̛̛̬͚̮̜̟̣̤͕̼̫̪̗̙͚͉̦̭̣͓̩̫̞͚̤͇̗̲̪͕̝͍͍̫̞̬̣̯̤̮͉̹̫̬͕̫̥̱̹̲͔͔̪̖̱͔̹͈͔̳͖̩͕͚͓̤̤̪̤̩̰̬͙̞͙̘̯̮̫͕͚̙̜̼̩̰̻̞̺͈̝̝̖͎̻̹̞̥̰̮̥̙̠͔͎̤̲͎͍̟̥̞̗̰͓͍̞̹͍̬͎̲̬̞͈͉̼̥̝͈̼̠̫̙͖̪̼̲̯̲̫̼̺̘̗̘͚̤͓̯̦̣̬͒̑̒́͑͊̍̿̉̇̓̒̅̎͌̈́̐̽͋̏̒͂̈̒̃̿̓̇̈̿̊̎̈́͐̒͂͊̿̈́̿̅̏̀͐͛̎̍͑͂̈́̃̇̀̈͋̾̔̈́̽͌̿̍̇̅̏̋̑̈́̾̊͐̉̊̅͑̀͊̽̂̈́̽̓͗́̄͆̄͑͒̈́́͋̏͊͋̒͗̆̋̌̈̀͑͗̽͂̄̌̕͘͘̚͘̕̕͜͜͜͜͜͜͜͠͝͝͝͝͝͝ͅͅͅ ̷̧̡̧̨̢̧̨̡̨̧̛̛̛̛̮̭͇̣͓̙̺͍̟̜̞̫̪̘̼̞̜̠͇̗̮͕̬̥͓͔͈̟̦͇̥̖̭̝̱̗̠̘̝̹̖͓̝͇̖̫̯̩̞̞̯̲̤̱̻̤͇̲͍͈͓͖̹̗̟̲̪̪̟̩͙̪̝̮̘̽̋̍́̔̊̍̈́͂̌̽͒̆͐͊̏̐͑͛̓̆̈́͌̂͒͆̔̅̓̽͊̅́̾̽̓̏̆̀̀͌̾̀͒̓̇̊̀̐͛̌̋̈͑̇́̂̆̽̈̕̕̚̚͜͠ͅͅͅͅḑ̶̛̛̯͓̠̖͎̭̞̫͑̋̄̄̈̽̎̊͛̽͌̾̋̔̽̔̀̀͐̿̈́̀̃͐͂͆̈̃͑̀̋̑͊̃̆̓̾̎̅̀̆̓̏͊̆̔̈̅͛̍̎̓̀͛͒́̐͆̂̋̋͛̆̈͐͂̏̊̏̏̓̿̔͆̓̽̂̅͆̔͑̔̈̾̈̽̂̃̋̈́̾̎̈́̂̓̃̒͐͆̌̍̀͗̈́̑̌̚̕̕̚͠͠͝ę̴̧̨̨̨̢̨̢̧̧̧̨̧̛̛̛̛̛̛̛̺̪̹̘͈̣͔̜͓̥̥̟͇̱͚͖̠͙͙̱̞̣̤͚̣̟̫̬̟͓̺͙̬͚̹͓̗̬̼͇͙̻͍̖̙̥̩͔̜͕̖͕͔͚̳͙̩͇͙̺͔̲̱̙͉̝̠̤̝̭̮̩̦͇̖̳̞̞̖͎̙͙̲̮̠̣͍̪͙̰̣͉̘͉̦̖̳̫͖͖̘̖̮̲̱̪͕̳̫̫̞̪̜̞̬͙͖͍͖̦͉̯̟̖͇̩͚͙͔̳̫͗̈́̒̎͂̇̀͒̈́̃͐̉͛̾̑̆̃͐̈́̉͒̇̓̏̀͌̐͌̅̓͐́̿͒̅͑̍̓̈́̉̊́̉̀̔̊̍̽͛͛͆̓̈͋̉͋̿̉́̋̈̓̐̈́̔̃͆͗͛̏́̀̑͋̀̽̔̓̎̒̆̌̐̈́̓͂̐̋͊̌͑̓̈́̊̿͋̈́́̃̏̓̉͛͆̂͐͗͗̾̅̌̾͌̈́͊͘̕̚̕̚̚̕͘̕͜͜͜͜͜͜͜͠͝͝͠͝͝͠ͅͅa̸̡͔̯͎̟͙̖̗͔̺̰͇͚̭̲̭͕̫̜͉̯͕̅̈͋̒͋͂̐̕ͅţ̶̡̨̢̢̡̡̡̨̢̡̧̨̢̛̥̭̞͈̼̖͙͇̝̳͇̞̬͎̲̙̰̙̱̳̟̣̗̫̣͉͖̪̩͙̲͇͙̫̘͖̖̜̝̦̥̟̜̠͔̠͎̭͔̘͓͚̩͇͙͎͎̰̘̟̳̪͖̠̪̦̦̫̞̟̗̹̹̤͓͍̜̯͔̼̱̮̹͎͖͍̲͎̠͉̟͈̠̦̯̲̼̥̱̬̜͙̘͕̣̳͇̞͓̝͈̼̞̻͚̘̩̟̩̖̼͍̯̘͉͔̤̘̥̦͑̒͗̅̉̾͗̾̓̈́̍̉̈́͛̀͊̋̀͐̏̈́̀̀̍̇̀̀̈́̃̀̅͛̅̈́̇̽̆̌̈̄͆̄̂͂̔͗͌͊̽̿́͑̒̾̑̊̿͗́̇̋̊̄̀̍̓̆͂̆̔̏̍̑̔̊̾̎̆͛͑̓͒̈̎͌̓͗̀̿̓̃̔̈́͗̃̓̽̓̉̀͛͂̿́̀̌͊̆̋̀̓̇́̔̓͆̋̊̀̋͑́̔́̌̒̾̂̎̋̈́́̀͗̈́̈́́̾̈́͑͋̇͒̀͋͆͗̾͐̆̈́͂͐̈̐̓̍̈́̈̅̓͐̚̚̚̚̕͘̕͘̚̚̚͘͜͜͜͜͜͜͝͠͠͠͝͠ͅͅḥ̴̨̧̧̢̧̢̢̛̛̙̱͚̺̬̖̮̪͈̟͉̦̪̘̰̺̳̱̲͔̲̮̦̦̪̪̲̠͓͎͇͕̯̥͉͍̱̥͓̲̤̫̳̠̝͖̺̙͖͎͙̠͓̺̗̝̩͍͕͎̞͕̤̻̰̘͇͕̟̹̳͇͈͇̳̳̞̗̣͖̙͓̼̬̯͚͎̮͚̳̰͙̙̟̊͆͒͆͌̂̈́̀́̽̿͌̓́̐̑͌͋͆͊͑͛͑̀̋͐̏͌̑̀͛͗̀́̈̀̓̽̇̐̋͊̅͑̊͒̈́̀̀̔̀̇͗̆͑̅̌̑̈́͌̒̅̌̓͋͂̀̍̈́͐̈́̆̐̈́̍͛͂̔̐̎͂̎̇͑̈́̈́̎̉̈́́̒̒̆̌̃̓̈́͂̽̓̆̋̈̂̽̆̓̔͗̓̀̄̈́̂̏͗̐̔͘̕͘͘͜͜͜͜͠͠͝͠͠͝͝͝͠͠͝ͅͅ", thumbnail=ctx.author.avatar.url, color=self.color))
             elif c <= 6:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Slave Pass** 🤖\nCongratulations!!!\nCall your boss and take a day off now!", footer="Full Auto and Botting are forbidden", thumbnail=ctx.author.avatar_url, color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Slave Pass** 🤖\nCongratulations!!!\nCall your boss and take a day off now!", footer="Full Auto and Botting are forbidden", thumbnail=ctx.author.avatar.url, color=self.color))
             elif c <= 16:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Chen Pass** 😈\nCongratulations!!!\nYour daily honor or meat count must be composed only of the digit 6.", thumbnail=ctx.author.avatar_url, color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Chen Pass** 😈\nCongratulations!!!\nYour daily honor or meat count must be composed only of the digit 6.", thumbnail=ctx.author.avatar.url, color=self.color))
             elif c <= 21:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Carry Pass** 😈\nDon't stop grinding, continue until your Crew gets the max rewards!", thumbnail=ctx.author.avatar_url, color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Carry Pass** 😈\nDon't stop grinding, continue until your Crew gets the max rewards!", thumbnail=ctx.author.avatar.url, color=self.color))
             elif c <= 26:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Relief Ace Pass** 😈\nPrepare to relieve carries of their 'stress' after the day!!!", footer="wuv wuv", thumbnail=ctx.author.avatar_url, color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Relief Ace Pass** 😈\nPrepare to relieve carries of their 'stress' after the day!!!", footer="wuv wuv", thumbnail=ctx.author.avatar.url, color=self.color))
             else:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Free Leech Pass** 👍\nCongratulations!!!", thumbnail=ctx.author.avatar_url, color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Free Leech Pass** 👍\nCongratulations!!!", thumbnail=ctx.author.avatar.url, color=self.color))
             await self.bot.util.clean(ctx, final_msg, 40)
             return
         elif c == 3:
@@ -1003,7 +904,7 @@ class Games(commands.Cog):
             elif c == 3: m = 666
             elif c == 4: m = 6666
 
-        final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.avatar_url, color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.avatar.url, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 40)
 
     """randint()
@@ -1044,7 +945,7 @@ class Games(commands.Cog):
             seed = self.randint(seed)
         msg += "**Rating** ▫️ {:.1f}".format(rarity_mod + (seed % 31) / 10)
 
-        msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color))
+        msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color))
         await self.bot.util.clean(ctx, msg, 30)
 
     @commands.command(no_pm=True, hidden=True, cooldown_after_parsing=True)

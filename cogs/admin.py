@@ -89,20 +89,20 @@ class Admin(commands.Cog):
         for s in self.bot.guilds:
             msg += "**{}** `{}`owned by **{}** `{}`\n".format(s.name, s.id, s.owner.name, s.owner.id)
             if len(msg) > 1800:
-                await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
+                await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar.url, color=self.color))
                 msg = ""
         for s in self.bot.data.save['guilds']['pending']:
             msg += "**{}** {} is **Pending**\n".format(s, self.bot.data.save['guilds']['pending'][s])
             if len(msg) > 1800:
-                await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
+                await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar.url, color=self.color))
                 msg = ""
         if msg != "":
-            await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
+            await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar.url, color=self.color))
             msg = ""
         if len(self.bot.data.save['guilds']['banned']) > 0:
             msg += "Banned Guilds are `" + "` `".join(str(x) for x in self.bot.data.save['guilds']['banned']) + "`\n"
         if msg != "":
-            await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar_url, color=self.color))
+            await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar.url, color=self.color))
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -140,7 +140,7 @@ class Admin(commands.Cog):
             for m in g.members:
                 for mr in m.roles:
                     if r.id == mr.id: count += 1
-            await ctx.send("Role `{}` has {} users".format(r.name, count)) # NOTE: possibly use the discord thread later?
+            await ctx.send("Role `{}` has {} users".format(r.name, count))
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -220,7 +220,7 @@ class Admin(commands.Cog):
                 self.bot.data.pending = True
             guild = self.bot.get_guild(id)
             if guild is not None:
-                try: await guild.owner.send(embed=self.bot.util.embed(title="I'm now available for use in {}".format(guild.name), description="I recommend setting up a channel to confine me in and then use `$toggleFullbot` in that channel.\n\nUse `$help` for my list of commands, `$help Management` for mod only commands.\nUse `$setPrefix` to change the command prefix (default: `$`)\nIf you encounter an issue, use `$bugreport` and describe the problem.\nIf I'm down or slow, I might be rebooting, in maintenance or Discord itself might be acting up.", thumbnail=guild.icon_url))
+                try: await guild.owner.send(embed=self.bot.util.embed(title="I'm now available for use in {}".format(guild.name), description="I recommend setting up a channel to confine me in and then use `$toggleFullbot` in that channel.\n\nUse `$help` for my list of commands, `$help Management` for mod only commands.\nUse `$setPrefix` to change the command prefix (default: `$`)\nIf you encounter an issue, use `$bugreport` and describe the problem.\nIf I'm down or slow, I might be rebooting, in maintenance or Discord itself might be acting up.", thumbnail=guild.icon.url))
                 except: pass
                 await self.bot.util.react(ctx.message, '✅') # white check mark
                 await self.guildList()
@@ -506,23 +506,6 @@ class Admin(commands.Cog):
 
     @commands.command(no_pm=True)
     @isOwner()
-    async def logout(self, ctx):
-        """Make the bot quit (Owner Only)"""
-        await self.bot.data.autosave()
-        self.bot.running = False
-        await self.bot.logout()
-
-    @commands.command(no_pm=True)
-    @isOwner()
-    async def reboot(self, ctx):
-        """Make the bot reboot (Owner Only)"""
-        await self.bot.data.autosave()
-        self.bot.retcode = 1 # heroku restart if the error code isn't 0
-        self.bot.running = False
-        await self.bot.logout()
-
-    @commands.command(no_pm=True)
-    @isOwner()
     async def config(self, ctx):
         """Post the current config file in the debug channel (Owner Only)"""
         try:
@@ -539,7 +522,7 @@ class Admin(commands.Cog):
         """Broadcast a message (Owner Only)"""
         if len(terms) == 0:
             return
-        embed=discord.Embed(title="{} Broadcast".format(ctx.guild.me.display_name), description=terms, thumbnail=ctx.guild.me.avatar_url, color=self.color)
+        embed=discord.Embed(title="{} Broadcast".format(ctx.guild.me.display_name), description=terms, thumbnail=ctx.guild.me.avatar.url, color=self.color)
         for g in self.bot.data.save['news']:
             for id in self.bot.data.save['news'][g]:
                 try:

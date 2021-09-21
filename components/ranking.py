@@ -721,7 +721,7 @@ class Ranking():
                         data[n].append(s) # append to our list
                     random.shuffle(data[n]) # shuffle the list once it's done
                 except Exception as e:
-                    print('searchGWDB', n, 'mode', mode, ':', self.bot.util.pexc(e)) # TODO: change that?
+                    print('searchGWDB', n, 'mode', mode, ':\n', self.bot.util.pexc(e))
                     self.bot.errn += 1
                     data[n] = None
                 dbs[n].close() # close access

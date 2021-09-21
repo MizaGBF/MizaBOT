@@ -41,7 +41,7 @@ class Moderation(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def joined(self, ctx, member : discord.Member):
         """Says when a member joined."""
-        final_msg = await ctx.reply(embed=self.bot.util.embed(title=ctx.guild.name, description="Joined at {0.joined_at}".format(member), thumbnail=member.avatar_url, color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.util.embed(title=ctx.guild.name, description="Joined at {0.joined_at}".format(member), thumbnail=member.avatar.url, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -58,7 +58,7 @@ class Moderation(commands.Cog):
         try:
             if id == 0: guild = ctx.guild
             else: guild = self.bot.get_guild(id)
-            msg = await ctx.send(embed=self.bot.util.embed(title=guild.name + " status", description="**ID** ▫️ `{}`\n**Owner** ▫️ {}\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon_url, timestamp=guild.created_at, color=self.color))
+            msg = await ctx.send(embed=self.bot.util.embed(title=guild.name + " status", description="**ID** ▫️ `{}`\n**Owner** ▫️ {}\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at, color=self.color))
         except:
             msg = await ctx.send(embed=self.bot.util.embed(title="Error", description="Can't find guild `{}`".format(id), color=self.color))
         await self.bot.util.clean(ctx, msg, 60)
@@ -92,7 +92,7 @@ class Moderation(commands.Cog):
                 self.bot.data.pending = True
             await self.bot.util.react(ctx.message, '✅') # white check mark
         else:
-            await ctx.send(embed=self.bot.util.embed(title=ctx.guild.name, description="No ST set on this server\nI can't delete.", thumbnail=ctx.guild.icon_url, color=self.color))
+            await ctx.send(embed=self.bot.util.embed(title=ctx.guild.name, description="No ST set on this server\nI can't delete.", thumbnail=ctx.guild.icon.url, color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isMod()
@@ -117,7 +117,7 @@ class Moderation(commands.Cog):
         if self.bot.ban.check(member.id, self.bot.ban.PROFILE): msg += "Banned from using `setProfile`\n"
         if self.bot.ban.check(member.id, self.bot.ban.OWNER): msg += "Banned from using the bot\n"
         if msg == "": msg = "No Bans set for this user"
-        msg = await ctx.send(embed=self.bot.util.embed(author={'name':ctx.author.display_name, 'icon_url':ctx.author.avatar_url}, description=msg, color=self.color))
+        msg = await ctx.send(embed=self.bot.util.embed(author={'name':ctx.author.display_name, 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color))
         await self.bot.util.clean(ctx, msg, 50)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['banspark'])
@@ -130,7 +130,7 @@ class Moderation(commands.Cog):
         if str(member.id) in self.bot.data.save['spark']:
             self.bot.ban.set(member.id, self.bot.ban.SPARK)
             await self.bot.util.react(ctx.message, '✅') # white check mark
-            await self.bot.send('debug', embed=self.bot.util.embed(title="{} ▫️ {}".format(member.display_name, id), description="Banned from all roll rankings by {}\nValues: `{}`".format(ctx.author.display_name, self.bot.data.save['spark'][str(member.id)]), thumbnail=member.avatar_url, color=self.color, footer=ctx.guild.name))
+            await self.bot.send('debug', embed=self.bot.util.embed(title="{} ▫️ {}".format(member.display_name, id), description="Banned from all roll rankings by {}\nValues: `{}`".format(ctx.author.display_name, self.bot.data.save['spark'][str(member.id)]), thumbnail=member.avatar.url, color=self.color, footer=ctx.guild.name))
         else:
             await self.util.react(ctx.message, '❎')
 
@@ -171,9 +171,9 @@ class Moderation(commands.Cog):
             with self.bot.data.lock:
                 self.bot.data.save['permitted'].pop(gid)
                 self.bot.data.pending = True
-            await ctx.send(embed=self.bot.util.embed(title="Commands are now sauthorized everywhere", thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
+            await ctx.send(embed=self.bot.util.embed(title="Commands are now sauthorized everywhere", thumbnail=ctx.guild.icon.url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
         else:
-            await ctx.send(embed=self.bot.util.embed(title="Commands are already sauthorized everywhere", thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
+            await ctx.send(embed=self.bot.util.embed(title="Commands are already sauthorized everywhere", thumbnail=ctx.guild.icon.url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isMod()
@@ -188,9 +188,9 @@ class Moderation(commands.Cog):
                         msg += c.name + "\n"
                     except:
                         pass
-            await ctx.send(embed=self.bot.util.embed(title="Channels permitted to use all commands", description=msg, thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
+            await ctx.send(embed=self.bot.util.embed(title="Channels permitted to use all commands", description=msg, thumbnail=ctx.guild.icon.url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
         else:
-            await ctx.send(embed=self.bot.util.embed(title="Commands are sauthorized everywhere", thumbnail=ctx.guild.icon_url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
+            await ctx.send(embed=self.bot.util.embed(title="Commands are sauthorized everywhere", thumbnail=ctx.guild.icon.url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @isMod()

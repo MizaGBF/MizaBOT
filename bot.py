@@ -15,10 +15,11 @@ import cogs
 
 import discord
 from discord.ext import commands
-import signal
+import asyncio
 import time
 import concurrent.futures
 import functools
+from signal import SIGTERM, SIGINT
 # conditional import
 try:
     import uvloop
@@ -29,7 +30,7 @@ except:
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "8.11" # bot version
+        self.version = "8.12" # bot version
         self.changelog = [ # changelog lines
             "Please use `$bug_report` if you see anything wrong",
             "Online command list added [here](https://mizagbf.github.io/MizaBOT/)",
@@ -40,7 +41,6 @@ class MizaBot(commands.Bot):
         self.tasks = {} # contain our user tasks
         self.cogn = 0 # number of cog loaded
         self.errn = 0 # number of internal errors
-        self.retcode = 0 # return code
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=30) # thread pool for blocking codes
         
         # components
@@ -83,9 +83,6 @@ class MizaBot(commands.Bot):
         self.ranking.init()
         self.ban.init()
 
-        # graceful exit
-        signal.signal(signal.SIGTERM, self.exit_gracefully) # SIGTERM is called by heroku when shutting down
-
         # intents (for guilds and stuff)
         intents = discord.Intents.default()
         intents.members = True
@@ -103,6 +100,11 @@ class MizaBot(commands.Bot):
     """
     def go(self):
         self.cogn = cogs.load(self) # load cogs
+        # graceful exit setup
+        graceful_exit = self.loop.create_task(self.exit_gracefully())
+        for s in [SIGTERM, SIGINT]:
+            self.loop.add_signal_handler(s, graceful_exit.cancel)
+        # main loop
         while self.running:
             try:
                 self.loop.run_until_complete(self.start(self.data.config['tokens']['discord'])) # start the bot
@@ -118,25 +120,24 @@ class MizaBot(commands.Bot):
             print('Autosave Success')
         else:
             print('Autosave Failed')
-        return self.retcode
 
     """exit_gracefully()
-    Triggered when SIGTERM is received to exit properly
-    
-    Parameters
-    ----------
-    signum: Signal Number
-    frame: Current Stack frame
+    Coroutine triggered when SIGTERM is received, to close the bot
     """
-    def exit_gracefully(self, signum, frame): # graceful exit (when SIGTERM is received)
-        self.running = False
-        if self.data.pending:
-            self.data.autosaving = False
-            if self.data.saveData():
-                print('Autosave Success')
-            else:
-                print('Autosave Failed')
-        exit(self.retcode)
+    async def exit_gracefully(self): # graceful exit (when SIGTERM is received)
+        try:
+            while self.running: # we wait until we receive the signal
+                await asyncio.sleep(3600)
+        except asyncio.CancelledError:
+            self.running = False
+            if self.data.pending:
+                self.data.autosaving = False
+                if self.data.saveData():
+                    print('Autosave Success')
+                else:
+                    print('Autosave Failed')
+            await self.close()
+            exit(0)
 
     """prefix()
     Return the prefix of the server the command is invoked in (default: $)
@@ -161,7 +162,7 @@ class MizaBot(commands.Bot):
     
     Parameters
     ----------
-    ctx: Command context
+    ctx: Command context or interaction
     
     Returns
     --------
@@ -278,9 +279,9 @@ class MizaBot(commands.Bot):
     --------
     discord.Message: The sent message or None if error
     """
-    async def send(self, channel_name : str, msg : str = "", embed : discord.Embed = None, file : discord.File = None): # send something to a registered channel
+    async def send(self, channel_name : str, msg : str = "", embed : discord.Embed = None, file : discord.File = None, view : discord.ui.View = None): # send something to a registered channel
         try:
-            return await self.channel.get(channel_name).send(msg, embed=embed, file=file)
+            return await self.channel.get(channel_name).send(msg, embed=embed, file=file, view=view)
         except Exception as e:
             self.errn += 1
             print("Channel {} error: {}".format(channel_name, self.util.pexc(e)))
@@ -334,7 +335,7 @@ class MizaBot(commands.Bot):
         if not self.booted:
             # set our used channels for the send function
             self.channel.setMultiple([['debug', 'debug_channel'], ['image', 'image_upload'], ['debug_update', 'debug_update'], ['you_pinned', 'you_pinned'], ['gbfg_pinned', 'gbfg_pinned'], ['gbfglog', 'gbfg_log'], ['youlog', 'you_log']])
-            await self.send('debug', embed=self.util.embed(title="{} is Ready".format(self.user.display_name), description=self.util.statusString(), thumbnail=self.user.avatar_url, timestamp=self.util.timestamp()))
+            await self.send('debug', embed=self.util.embed(title="{} is Ready".format(self.user.display_name), description=self.util.statusString(), thumbnail=self.user.avatar.url, timestamp=self.util.timestamp()))
             # start the task
             await self.startTasks()
             self.booted = True
@@ -446,24 +447,24 @@ class MizaBot(commands.Bot):
             return
         elif id in self.data.save['guilds']['banned'] or self.ban.check(guild.owner.id, self.ban.OWNER): # leave if the server is blacklisted
             try:
-                await self.send('debug', embed=self.util.embed(title="Banned guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon_url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
+                await self.send('debug', embed=self.util.embed(title="Banned guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon.url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
             except Exception as e:
                 await self.sendError("on_guild_join", e)
             await guild.leave()
         elif 'invite' not in self.data.save or self.data.save['invite']['state'] == False or (len(self.guilds) - len(self.data.save['guilds']['pending'])) >= self.data.save['invite']['limit']:
-            try: await guild.owner.send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon_url))
+            try: await guild.owner.send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon.url))
             except: pass
             await guild.leave()
         elif len(guild.members) < 30:
-            try: await guild.owner.send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=guild.icon_url))
+            try: await guild.owner.send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=guild.icon.url))
             except: pass
             await guild.leave()
         else: # notify me and add to the pending servers
             self.data.save['guilds']['pending'][id] = guild.name
             self.data.pending = True
-            try: await guild.owner.send(embed=self.util.embed(title="Pending guild request", description="Please wait for your server to be accepted.", thumbnail=guild.icon_url))
+            try: await guild.owner.send(embed=self.util.embed(title="Pending guild request", description="Please wait for your server to be accepted.", thumbnail=guild.icon.url))
             except: pass
-            await self.send('debug', msg="{} Please review this new server".format(self.get_user(self.data.config['ids']['owner']).mention), embed=self.util.embed(title="Pending guild request for " + guild.name, description="**ID** ▫️ `{}`\n**Owner** ▫️ {} ▫️ `{}`\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}\n\nUse `$accept` or `$refuse`".format(guild.id, guild.owner, guild.owner.id, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon_url, timestamp=guild.created_at))
+            await self.send('debug', msg="{} Please review this new server".format(self.get_user(self.data.config['ids']['owner']).mention), embed=self.util.embed(title="Pending guild request for " + guild.name, description="**ID** ▫️ `{}`\n**Owner** ▫️ {} ▫️ `{}`\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}\n\nUse `$accept` or `$refuse`".format(guild.id, guild.owner, guild.owner.id, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at))
 
     """global_check()
     Check if the command is authorized to run
@@ -518,7 +519,7 @@ class MizaBot(commands.Bot):
         else:
             await self.util.react(ctx.message, '❎')
             self.errn += 1
-            await self.send('debug', embed=self.util.embed(title="⚠ Error caused by {}".format(ctx.message.author), description=self.util.pexc(error), thumbnail=ctx.author.avatar_url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=self.util.timestamp()))
+            await self.send('debug', embed=self.util.embed(title="⚠ Error caused by {}".format(ctx.message.author), description=self.util.pexc(error), thumbnail=ctx.author.avatar.url, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=self.util.timestamp()))
 
     """on_raw_reaction_add()
     Event. Called when a new reaction is added by an user
@@ -547,16 +548,16 @@ class MizaBot(commands.Bot):
         if before.guild.id in guilds:
             channel = guilds[before.guild.id]
             if before.display_name != after.display_name:
-                    await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Name change".format(after.display_name), 'icon_url':after.avatar_url}, description="{}\n**Before** ▫️ {}\n**After** ▫️ {}".format(after.mention, before.display_name, after.display_name), footer="User ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
+                    await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Name change".format(after.display_name), 'icon_url':after.avatar.url}, description="{}\n**Before** ▫️ {}\n**After** ▫️ {}".format(after.mention, before.display_name, after.display_name), footer="User ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
             elif len(before.roles) < len(after.roles):
                 for r in after.roles:
                     if r not in before.roles:
-                        await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Role added".format(after.name), 'icon_url':after.avatar_url}, description="{} was given the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x1b55b3, timestamp=self.util.timestamp()))
+                        await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Role added".format(after.name), 'icon_url':after.avatar.url}, description="{} was given the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x1b55b3, timestamp=self.util.timestamp()))
                         break
             elif len(before.roles) > len(after.roles):
                 for r in before.roles:
                     if r not in after.roles:
-                        await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Role removed".format(after.name), 'icon_url':after.avatar_url}, description="{} was removed from the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x0b234a, timestamp=self.util.timestamp()))
+                        await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Role removed".format(after.name), 'icon_url':after.avatar.url}, description="{} was removed from the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x0b234a, timestamp=self.util.timestamp()))
                         break
 
     """on_member_remove()
@@ -570,7 +571,7 @@ class MizaBot(commands.Bot):
         if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
         guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
         if member.guild.id in guilds:
-            await self.send(guilds[member.guild.id], embed=self.util.embed(author={'name':"{} ▫️ Left the server".format(member.name), 'icon_url':member.avatar_url}, footer="User ID: {}".format(member.id), timestamp=self.util.timestamp(), color=0xff0000))
+            await self.send(guilds[member.guild.id], embed=self.util.embed(author={'name':"{} ▫️ Left the server".format(member.name), 'icon_url':member.avatar.url}, footer="User ID: {}".format(member.id), timestamp=self.util.timestamp(), color=0xff0000))
 
     """on_member_join()
     Event. Called when a guild member joins
@@ -584,7 +585,7 @@ class MizaBot(commands.Bot):
         guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
         if member.guild.id in guilds:
             channel = guilds[member.guild.id]
-            await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Joined the server".format(member.name), 'icon_url':member.avatar_url}, footer="User ID: {}".format(member.id), timestamp=self.util.timestamp(), color=0x00ff3c))
+            await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Joined the server".format(member.name), 'icon_url':member.avatar.url}, footer="User ID: {}".format(member.id), timestamp=self.util.timestamp(), color=0x00ff3c))
 
     """on_member_ban()
     Event. Called when an user is banned from a guild
@@ -598,7 +599,7 @@ class MizaBot(commands.Bot):
         if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
         guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
         if guild.id in guilds:
-            await self.send(guilds[guild.id], embed=self.util.embed(author={'name':"{} ▫️ Banned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=self.util.timestamp(), color=0xff0000))
+            await self.send(guilds[guild.id], embed=self.util.embed(author={'name':"{} ▫️ Banned from the server".format(user.name), 'icon_url':user.avatar.url}, footer="User ID: {}".format(user.id), timestamp=self.util.timestamp(), color=0xff0000))
 
     """on_member_unban()
     Event. Called when an user is unbanned from a guild
@@ -612,7 +613,7 @@ class MizaBot(commands.Bot):
         if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
         guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
         if guild.id in guilds:
-            await self.send(guilds[guild.id], embed=self.util.embed(author={'name':"{} ▫️ Unbanned from the server".format(user.name), 'icon_url':user.avatar_url}, footer="User ID: {}".format(user.id), timestamp=self.util.timestamp(), color=0x00ff3c))
+            await self.send(guilds[guild.id], embed=self.util.embed(author={'name':"{} ▫️ Unbanned from the server".format(user.name), 'icon_url':user.avatar.url}, footer="User ID: {}".format(user.id), timestamp=self.util.timestamp(), color=0x00ff3c))
 
     """on_guild_emojis_update()
     Event. Called when a guild emoji status is updated
@@ -723,4 +724,4 @@ class MizaBot(commands.Bot):
 
 if __name__ == "__main__":
     bot = MizaBot()
-    exit(bot.go())
+    bot.go()

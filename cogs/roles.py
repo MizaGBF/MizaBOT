@@ -64,9 +64,9 @@ class Roles(commands.Cog):
         add 'exact' at the end to force an exact match"""
         i, exact, g, name = await self.bot.do(self._roleStats, ctx, name)
         if exact != "exact":
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Roles containing: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon_url, footer="on server {}".format(g.name), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Roles containing: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon.url, footer="on server {}".format(g.name), color=self.color))
         else:
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Roles matching: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon_url, footer="on server {}".format(g.name), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Roles matching: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon.url, footer="on server {}".format(g.name), color=self.color))
         await self.bot.util.clean(ctx, final_msg, 20)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)

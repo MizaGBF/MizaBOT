@@ -1,4 +1,4 @@
-discord.py==1.7.3
+git+git://github.com/Rapptz/discord.py@master
 pydrive2==1.9.2
 psutil==5.8.0
 beautifulsoup4==4.9.3

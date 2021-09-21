@@ -114,7 +114,7 @@ class Reminder(commands.Cog):
             await ctx.reply(embed=self.bot.util.embed(title="Reminder Error", description="You don't have any reminders", color=self.color))
         else:
             embed = discord.Embed(title="{}'s Reminder List".format(ctx.author.display_name), color=self.color)
-            embed.set_thumbnail(url=ctx.author.avatar_url)
+            embed.set_thumbnail(url=ctx.author.avatar.url)
             for i in range(0, len(self.bot.data.save['reminders'][id])):
                 embed.add_field(name="#{} ▫️ {:%Y/%m/%d %H:%M} JST".format(i, self.bot.data.save['reminders'][id][i][0]), value="[{}](https://discordapp.com/channels/{})".format(self.bot.data.save['reminders'][id][i][1], self.bot.data.save['reminders'][id][i][2]), inline=False)
             await ctx.reply(embed=embed)

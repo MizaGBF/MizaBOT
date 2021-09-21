@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 import time
 from bs4 import BeautifulSoup
 import threading
-# temp (TODO)
 from urllib import request, parse
 
 # ----------------------------------------------------------------------------------------------------------------

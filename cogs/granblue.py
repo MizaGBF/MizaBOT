@@ -584,7 +584,7 @@ class GranblueFantasy(commands.Cog):
         """Post the (You) google drive
         (You) server only"""
         try:
-            image = self.bot.get_guild(self.bot.data.config['ids']['you_server']).icon_url
+            image = self.bot.get_guild(self.bot.data.config['ids']['you_server']).icon.url
         except:
             image = ""
         await ctx.reply(embed=self.bot.util.embed(title="(You) Public Google Drive", description=self.bot.data.config['strings']["gdrive()"], thumbnail=image, color=self.color))
