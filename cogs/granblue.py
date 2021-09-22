@@ -887,6 +887,63 @@ class GranblueFantasy(commands.Cog):
         msg = await ctx.reply(embed=self.bot.util.embed(title="Experience Calculator", description=msg, color=self.color))
         await self.bot.util.clean(ctx, msg, 40)
 
+    """getGrandList()
+    Request the grand character list from the wiki page and return the list of latest released ones
+    
+    Returns
+    ----------
+    dict: Grand per element
+    """
+    async def getGrandList(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.get('https://gbf.wiki/SSR_Characters_List#Grand_Series') as r:
+                if r.status != 200:
+                    raise Exception("HTTP Error 404: Not Found")
+                else:
+                    cnt = await r.content.read()
+                    try: cnt = cnt.decode('utf-8')
+                    except: cnt = cnt.decode('iso-8859-1')
+                    soup = BeautifulSoup(cnt, 'html.parser') # parse the html
+                    tables = soup.find_all("table", class_="wikitable")
+                    for t in tables:
+                        if "Gala" in str(t):
+                            table = t
+                            break
+                    children = table.findChildren("tr")
+                    grand_list = {'fire':None, 'water':None, 'earth':None, 'wind':None, 'light':None, 'dark':None}
+                    for c in children:
+                        td = c.findChildren("td")
+                        grand = {}
+                        for elem in td:
+                            # name search
+                            if 'name' not in grand and elem.text != "" and "Base uncap" not in elem.text:
+                                try:
+                                    int(elem.text)
+                                except:
+                                    grand['name'] = elem.text
+                            # elem search
+                            if 'element' not in grand:
+                                imgs = elem.findChildren("img")
+                                for i in imgs:
+                                    try:
+                                        label = i['alt']
+                                        if label.startswith('Label Element '):
+                                            grand['element'] = label[len('Label Element '):-4].lower()
+                                            break
+                                    except:
+                                        pass
+                            # date search
+                            if 'date' not in grand and elem.text != "":
+                                try:
+                                    date_e = elem.text.split('-')
+                                    grand['date'] = datetime.utcnow().replace(year=int(date_e[0]), month=int(date_e[1]), day=int(date_e[2]), hour=(12 if (int(date_e[2]) > 25) else 19), minute=0, second=0, microsecond=0)
+                                except:
+                                    pass
+                        if len(grand.keys()) > 2:
+                            if grand_list[grand['element']] is None or grand['date'] > grand_list[grand['element']]['date']:
+                                grand_list[grand['element']] = grand
+                    return grand_list
+
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["doom", "doompost", "magnafest", "magnafes", "campaign", "brick", "bar", "sunlight", "stone", "suptix", "surprise", "evolite", "fugdidmagnafeststart", "alivegame", "alive"])
     @commands.cooldown(1, 60, commands.BucketType.guild)
     async def deadgame(self, ctx):
@@ -894,8 +951,8 @@ class GranblueFantasy(commands.Cog):
         msg = ""
         wiki_checks = ["Category:Campaign", "Surprise_Special_Draw_Set", "Damascus_Ingot", "Gold_Brick", "Sunlight_Stone", "Sephira_Evolite"]
         regexs = ["<td>(\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(-\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td style=\"text-align: left;\">Time since last ", "<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td>(\\d+ days)<\\/td>\\s*"]
-        for w in wiki_checks:
-            async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession() as session:
+            for w in wiki_checks:
                 async with session.get("https://gbf.wiki/{}".format(w)) as r:
                     if r.status == 200:
                         t = await r.text()
@@ -905,19 +962,17 @@ class GranblueFantasy(commands.Cog):
                                 msg += "**{}** since the last {}\n".format(m.group(1), w.replace("_", " ").replace("Category:", "").replace('Sunlight', 'Arcarum Sunlight').replace('Sephira', 'Arcarum Sephira').replace('Gold', 'ROTB Gold'))
                                 break
 
-        # summer disaster and grands
+        # summer disaster
         c = self.bot.util.JST()
         msg += "**{} days** since the Summer Fortune 2021\n".format(self.bot.util.delta2str(c - c.replace(year=2021, month=8, day=16, hour=19, minute=0, second=0, microsecond=0), 3).split('d')[0])
-        grands = {
-            "fire": c.replace(year=2020, month=4, day=30, hour=12, minute=0, second=0, microsecond=0),
-            "water": c.replace(year=2021, month=7, day=31, hour=12, minute=0, second=0, microsecond=0),
-            "earth": c.replace(year=2020, month=12, day=28, hour=12, minute=0, second=0, microsecond=0),
-            "wind": c.replace(year=2021, month=4, day=30, hour=12, minute=0, second=0, microsecond=0),
-            "light": c.replace(year=2021, month=6, day=18, hour=19, minute=0, second=0, microsecond=0),
-            "dark": c.replace(year=2021, month=9, day=15, hour=19, minute=0, second=0, microsecond=0)
-        }
-        for e in grands:
-            msg += "**{} days** since the last {} Grand\n".format(self.bot.util.delta2str(c - grands[e], 3).split('d')[0], self.bot.emote.get(e))
+        
+        # grand
+        try:
+            grands = await self.getGrandList()
+            for e in grands:
+                msg += "**{} days** since {} {}\n".format(self.bot.util.delta2str(c - grands[e]['date'], 3).split('d')[0], self.bot.emote.get(e), grands[e]['name'])
+        except:
+            pass
 
         if msg != "":
             final_msg = await ctx.send(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))

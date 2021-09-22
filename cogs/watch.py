@@ -482,7 +482,7 @@ class Watch(commands.Cog):
 
             rarity = "{}".format(self.bot.emote.get({"2":"R", "3":"SR", "4":"SSR"}.get(data['rarity'], '')))
             msg = '{} {} {} {} at \⭐\⭐\⭐\n'.format(self.bot.emote.get('hp'), data['max_hp'], self.bot.emote.get('atk'), data['max_attack'])
-            if turbo: msg += '*{}*\n'.format(data['comment'])
+            if data.get('comment', None) is not None: msg += '*{}*\n'.format(data['comment'])
             if type == 1:
                 kind = "{}".format(self.bot.emote.get({'1': 'sword','2': 'dagger','3': 'spear','4': 'axe','5': 'staff','6': 'gun','7': 'melee','8': 'bow','9': 'harp','10': 'katana'}.get(data.get('kind', ''), '')))
                 if 'special_skill' in data:
