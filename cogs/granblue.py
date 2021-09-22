@@ -12,6 +12,7 @@ from PIL import Image, ImageFont, ImageDraw
 from io import BytesIO
 import threading
 import math
+from views.url_button import UrlButton
 
 # ----------------------------------------------------------------------------------------------------------------
 # GranblueFantasy Cog
@@ -483,12 +484,24 @@ class GranblueFantasy(commands.Cog):
     async def reddit(self, ctx):
         """Post a link to /r/Granblue_en
         You wouldn't dare, do you?"""
-        await ctx.reply(embed=self.bot.util.embed(title="/r/Granblue_en/", url="https://www.reddit.com/r/Granblue_en/", thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/581522602325966864/lTgz7Yx_6n8VZemjf54viYVZgFhW2GlB6dlpj1ZwKbo.png", description="Disgusting :nauseated_face:", color=self.color))
+        view = UrlButton(self.bot, [('/r/Granblue_en/', 'https://www.reddit.com/r/Granblue_en/')])
+        msg = await ctx.reply('\u200b', view=view)
+        await self.bot.util.clean(ctx, msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['leech'])
     async def leechlist(self, ctx):
         """Post a link to /gbfg/ leechlist collection"""
-        await ctx.reply(embed=self.bot.util.embed(title="/gbfg/ Leechlist", description=self.bot.data.config['strings']["leechlist()"], thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/582191446182985734/unknown.png", color=self.color))
+        ls = self.bot.data.config['strings']["leechlist()"].split(";")
+        # note: string is in the following format:
+        # button label 1###url 1;button label 2###url 2;...;button label N###url N
+        urls = []
+        for l in ls:
+            if l == "": continue
+            urls.append(l.split("###"))
+        view = UrlButton(self.bot, urls)
+        msg = await ctx.reply('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(ctx, msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['time', 'st', 'reset', 'gbf'])
     @commands.cooldown(2, 2, commands.BucketType.guild)
@@ -583,60 +596,90 @@ class GranblueFantasy(commands.Cog):
     async def gdrive(self, ctx):
         """Post the (You) google drive
         (You) server only"""
-        try:
-            image = self.bot.get_guild(self.bot.data.config['ids']['you_server']).icon.url
-        except:
-            image = ""
-        await ctx.reply(embed=self.bot.util.embed(title="(You) Public Google Drive", description=self.bot.data.config['strings']["gdrive()"], thumbnail=image, color=self.color))
+        view = UrlButton(self.bot, [('(You) Google Drive', self.bot.data.config['strings']["gdrive()"])])
+        msg = await ctx.reply('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(ctx, msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['arcarum', 'arca', 'oracle', 'evoker', 'astra', 'sandbox', 'veritas', 'newworld', 'luster'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def arcanum(self, ctx):
         """Post a link to my Arcanum Sheet"""
-        await ctx.reply(embed=self.bot.util.embed(title="Arcanum Tracking Sheet", description=self.bot.data.config['strings']["arcanum()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img_low/sp/assets/item/article/s/250{:02d}.jpg".format(random.randint(1, 74)), color=self.color))
+        view = UrlButton(self.bot, [('Arcanum Tracking Sheet', self.bot.data.config['strings']["arcanum()"])])
+        msg = await ctx.reply('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(ctx, msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['eternals', 'transcendence', 'transc'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def eternal(self, ctx):
         """Post a link to my Eternal Sheet"""
-        await ctx.reply(embed=self.bot.util.embed(title="Eternal Transcendance Tracking Sheet", description=self.bot.data.config['strings']["eternal()"], thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/npc/s/30400{}.jpg".format(random.choice(['30000_04', '31000_04', '32000_04', '33000_04', '34000_04', '35000_04', '36000_04', '37000_04', '38000_04', '39000_04'])), color=self.color))
+        view = UrlButton(self.bot, [('Eternal Transcendance Sheet', self.bot.data.config['strings']["eternal()"])])
+        msg = await ctx.reply('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(ctx, msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwskin', 'blueskin'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def stayBlue(self, ctx):
         """Post a link to my blue eternal outfit grinding Sheet"""
-        await ctx.reply(embed=self.bot.util.embed(title="5* Eternal Skin Farming Sheet", description=self.bot.data.config['strings']["stayblue()"], color=self.color))
+        view = UrlButton(self.bot, [('Blue Skin Sheet', self.bot.data.config['strings']["stayblue()"])])
+        msg = await ctx.reply('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(ctx, msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['soldier'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def bullet(self, ctx):
         """Post a link to my bullet grind Sheet"""
-        await ctx.reply(embed=self.bot.util.embed(title="Bullet Grind Sheet", description=self.bot.data.config['strings']["bullet()"], color=self.color))
+        view = UrlButton(self.bot, [('Bullet Grind Sheet', self.bot.data.config['strings']["bullet()"])])
+        msg = await ctx.reply('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(ctx, msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gbfgcrew', 'gbfgpastebin'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def pastebin(self, ctx):
         """Post a link to the /gbfg/ crew pastebin"""
-        await ctx.reply(embed=self.bot.util.embed(title="/gbfg/ Guild Pastebin", description=self.bot.data.config['strings']["pastebin()"], thumbnail="https://cdn.discordapp.com/attachments/354370895575515138/582191446182985734/unknown.png", color=self.color))
+        view = UrlButton(self.bot, [('Leechers inside', self.bot.data.config['strings']["pastebin()"])])
+        msg = await ctx.reply('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(ctx, msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tracker'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def dps(self, ctx):
         """Post the custom Combat tracker"""
-        await ctx.reply(embed=self.bot.util.embed(title="GBF Combat Tracker", description=self.bot.data.config['strings']["dps()"], color=self.color))
+        view = UrlButton(self.bot, [('GBF Combat Tracker', self.bot.data.config['strings']["dps()"])])
+        msg = await ctx.reply('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(ctx, msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['raidfinder', 'python_raidfinder'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def pyfinder(self, ctx):
         """Post the (You) python raidfinder"""
-        await ctx.reply(embed=self.bot.util.embed(title="(You) Python Raidfinder", description=self.bot.data.config['strings']["pyfinder()"], color=self.color))
+        ls = self.bot.data.config['strings']["pyfinder()"].split(";")
+        # note: string is in the following format:
+        # button label 1###url 1;button label 2###url 2;...;button label N###url N
+        urls = []
+        for l in ls:
+            if l == "": continue
+            urls.append(l.split("###"))
+        view = UrlButton(self.bot, urls)
+        msg = await ctx.reply('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(ctx, msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(1, 20, commands.BucketType.guild)
     async def mizatube(self, ctx):
         """Post the owner youtube channel"""
         if 'mizatube()' in self.bot.data.config['strings']:
-            await ctx.reply(embed=self.bot.util.embed(title="Mizatube:tm:", description="[Link]({})".format(self.bot.data.config['strings']['mizatube()']), footer="Subscribe ;)", color=self.color))
+            view = UrlButton(self.bot, [('Subscribe ;)', self.bot.data.config['strings']["mizatube()"])])
+            msg = await ctx.reply('\u200b', view=view)
+            view.stopall()
+            await self.bot.util.clean(ctx, msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['ubhl', 'ubahahl'])
     @commands.cooldown(1, 15, commands.BucketType.guild)

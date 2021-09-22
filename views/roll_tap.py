@@ -34,7 +34,7 @@ class Tap(BaseView):
     async def tap(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.update_last(interaction)
         if not button.disabled and self.ownership_check(interaction):
-            self.stop()
+            self.stopall()
             button.disabled = True
         else:
             await interaction.response.send_message("You can't press this button", ephemeral=True)

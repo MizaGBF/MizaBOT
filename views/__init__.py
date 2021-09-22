@@ -1,4 +1,5 @@
 import discord
+import asyncio
 
 # ----------------------------------------------------------------------------------------------------------------
 # Base View
@@ -54,8 +55,31 @@ class BaseView(discord.ui.View):
     Called when the view times out
     """
     async def on_timeout(self):
-        self.stop()
+        self.stopall()
         if self.enable_timeout_cleanup:
+            self.bot.util.cleanInter(self.last_interaction, 0)
+
+    """stop()
+    Override discord.ui.View.stopall()
+    """
+    async def stopall(self):
+        for c in self.children:
+            c.disabled = True
+        self.stop()
+
+    """kill()
+    Coroutine callback
+    Stop and clean the view after X seconds
+    (Alternative way to clean up the view)
+    
+    Parameters
+    ----------
+    interaction: a Discord interaction
+    """
+    async def kill(self, timeout : int = 60, clean : bool = True):
+        if timeout > 0: await asyncio.sleep(timeout)
+        self.stopall()
+        if clean:
             self.bot.util.cleanInter(self.last_interaction, 0)
 
     """on_error()

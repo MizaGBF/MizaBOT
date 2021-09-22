@@ -1,5 +1,6 @@
 ﻿from discord.ext import commands
 import itertools
+from views.poll import Poll
 
 # ----------------------------------------------------------------------------------------------------------------
 # Bot Cog
@@ -62,6 +63,27 @@ class Bot(commands.Cog):
         if msg != "":
             final_msg = await ctx.send(embed=self.bot.util.embed(title="{} ▫️ v{}".format(ctx.guild.me.display_name, self.bot.version), description="**Changelog**\n" + msg, thumbnail=ctx.guild.me.avatar.url, color=self.color))
             await self.bot.util.clean(ctx, final_msg, 40)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['survey'])
+    @commands.cooldown(1, 200, commands.BucketType.guild)
+    async def poll(self, ctx, duration : int, *, poll_str : str):
+        """Make a poll
+        duration is in seconds (min 60, max 500)
+        poll_str format is: `title;choice1;choice2;...;choiceN`"""
+        try:
+            if poll_str == "": raise Exception('Please specify what to poll for\nFormat: `duration title;choice1;choice2;...;choiceN`')
+            splitted = poll_str.split(';')
+            if len(splitted) < 2: raise Exception('Specify at least a poll title and two choices\nFormat: `duration title;choice1;choice2;...;choiceN`')
+            view = Poll(self.bot, ctx.author, self.color, splitted[0], splitted[1:])
+            if duration < 60: duration = 60
+            elif duration > 500: duration = 500
+            msg = await ctx.send(embed=self.bot.util.embed(author={'name':'{} started a poll'.format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, title=splitted[0], description="{} seconds remaining to vote".format(duration), color=self.color), view=view)
+            await view.run_poll(duration, msg, ctx.channel)
+            await self.bot.util.clean(ctx, msg, 80)
+            view.stopall()
+        except Exception as e:
+            msg = await ctx.send(embed=self.bot.util.embed(title="Poll error", description="{}".format(e), color=self.color))
+            await self.bot.util.clean(ctx, msg, 120)
 
     """get_category()
     Retrieve a command category. Used for the help.

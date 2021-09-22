@@ -645,7 +645,7 @@ class Games(commands.Cog):
             if x == 'Premium 10-Part Ticket': rm = mm
 
         results = []
-        l = random.randint(0, 9)
+        l = random.randint(1, 9)
         while len(results) < l:
             n = random.randint(1, mm)
             c = 0

@@ -40,7 +40,7 @@ class ChestRushButton(discord.ui.Button):
             else:
                 self.style = discord.ButtonStyle.primary
             if self.view.check_status():
-                self.view.stop()
+                self.view.stopall()
                 msg = await interaction.response.edit_message(embed=self.view.bot.util.embed(author={'name':"{} opened".format(interaction.user.display_name), 'icon_url':interaction.user.avatar.url}, color=self.view.color), view=self.view)
                 await self.view.bot.util.cleanInter(interaction, 70)
             else:
