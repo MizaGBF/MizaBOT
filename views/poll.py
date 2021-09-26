@@ -83,8 +83,7 @@ class Poll(BaseView):
             if c >= timer: break
             await message.edit(embed=self.bot.util.embed(author=author, title=self.title, description="{} seconds remaining to vote\n{} participants".format((timer - c).seconds, len(self.votes)), color=self.color))
         self.stopall()
-        await message.edit(embed=self.bot.util.embed(author=author, title=self.title, description="{} participants".format(len(self.votes)), color=self.color), view=None)
-        await asyncio.sleep(1)
+        await message.delete()
         msg = "**{}** vote(s)\n".format(len(self.votes))
         count = {}
         for c in self.choices:

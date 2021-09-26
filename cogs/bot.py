@@ -77,10 +77,10 @@ class Bot(commands.Cog):
             view = Poll(self.bot, ctx.author, self.color, splitted[0], splitted[1:])
             if duration < 60: duration = 60
             elif duration > 500: duration = 500
-            msg = await ctx.send(embed=self.bot.util.embed(author={'name':'{} started a poll'.format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, title=splitted[0], description="{} seconds remaining to vote".format(duration), color=self.color), view=view)
-            await view.run_poll(duration, msg, ctx.channel)
-            await self.bot.util.clean(ctx, msg, 80)
-            view.stopall()
+            msg_to_edit = await ctx.send(embed=self.bot.util.embed(author={'name':'{} started a poll'.format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, title=splitted[0], description="{} seconds remaining to vote".format(duration), color=self.color))
+            msg_view = await ctx.send('\u200b', view=view)
+            await view.run_poll(duration, msg_to_edit, ctx.channel)
+            await msg_view.delete()
         except Exception as e:
             msg = await ctx.send(embed=self.bot.util.embed(title="Poll error", description="{}".format(e), color=self.color))
             await self.bot.util.clean(ctx, msg, 120)
