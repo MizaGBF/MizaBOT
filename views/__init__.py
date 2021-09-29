@@ -62,9 +62,10 @@ class BaseView(discord.ui.View):
     """stop()
     Override discord.ui.View.stopall()
     """
-    async def stopall(self):
+    def stopall(self):
         for c in self.children:
-            c.disabled = True
+            try: c.disabled = True
+            except: pass
         self.stop()
 
     """kill()

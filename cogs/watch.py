@@ -121,9 +121,9 @@ class Watch(commands.Cog):
                         msg += "**Content update**\n"
                         for k in cu:
                             msg += "{} {}\n".format(cu[k], k)
-                    pl = await self.bot.do(self.top, v, tk, cu)
+                    """pl = await self.bot.do(self.top, v, tk, cu)
                     if pl is not None:
-                        await self.bot.send('debug', embed=self.bot.util.embed(title="Pastebin", description="{}".format(pl), color=self.color))
+                        await self.bot.send('debug', embed=self.bot.util.embed(title="Pastebin", description="{}".format(pl), color=self.color))"""
                     # result
                     if msg != "":
                         await self.bot.sendMulti(['debug_update', 'private_update'], embed=self.bot.util.embed(title="Latest Update", description=msg, thumbnail=thumb, color=self.color))
@@ -339,7 +339,7 @@ class Watch(commands.Cog):
     async def do(self, executor, func, *args):
         return await self.bot.loop.run_in_executor(executor, func, *args)
 
-    """ut()
+    """ce()
     UNDOCUMENTED
     """
     def ce(self, ct, o, i, silent):
