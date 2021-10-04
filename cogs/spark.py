@@ -43,7 +43,7 @@ class Sparking(commands.Cog):
             try:
                 await self.bot.callCommand(ctx, 'seeRoll')
             except Exception as e:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':ctx.author.display_name, 'icon_url':ctx.author.avatar.url}, description="**{} {} {} {} {} {}**".format(self.bot.emote.get("crystal"), crystal, self.bot.emote.get("singledraw"), single, self.bot.emote.get("tendraw"), ten), color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':ctx.author.display_name, 'icon_url':ctx.author.display_avatar}, description="**{} {} {} {} {} {}**".format(self.bot.emote.get("crystal"), crystal, self.bot.emote.get("singledraw"), single, self.bot.emote.get("tendraw"), ten), color=self.color))
                 await self.bot.sendError('setRoll', e)
         except:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color, footer="setRoll <crystal> [single] [ten]"))
@@ -75,7 +75,7 @@ class Sparking(commands.Cog):
                 try:
                     await self.bot.callCommand(ctx, 'seeRoll')
                 except Exception as e:
-                    final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':ctx.author.display_name, 'icon_url':ctx.author.avatar.url}, description="**{} {} {} {} {} {}**".format(self.bot.emote.get("crystal"), crystal, self.bot.emote.get("singledraw"), single, self.bot.emote.get("tendraw"), ten), color=self.color))
+                    final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':ctx.author.display_name, 'icon_url':ctx.author.display_avatar}, description="**{} {} {} {} {} {}**".format(self.bot.emote.get("crystal"), crystal, self.bot.emote.get("singledraw"), single, self.bot.emote.get("tendraw"), ten), color=self.color))
                     await self.bot.sendError('addRoll', e, 'A')
             else:
                 final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color, footer="setRoll <crystal> [single] [ten]"))
@@ -159,9 +159,9 @@ class Sparking(commands.Cog):
             if fr != 1: title += "s"
             # sending
             if s is None:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.avatar.url}, description="Update your rolls with the `setRoll` command", footer="Next spark between {} and {} from 0 rolls".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.display_avatar}, description="Update your rolls with the `setRoll` command", footer="Next spark between {} and {} from 0 rolls".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), color=self.color))
             else:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.avatar.url}, description="**{} {} {} {} {} {}**\n*Expecting {} to {} rolls in {}*".format(self.bot.emote.get("crystal"), s[0], self.bot.emote.get("singledraw"), s[1], self.bot.emote.get("tendraw"), s[2], expected[0], expected[1], now.strftime("%B")), footer="Next spark between {} and {}".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), timestamp=timestamp, color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.display_avatar}, description="**{} {} {} {} {} {}**\n*Expecting {} to {} rolls in {}*".format(self.bot.emote.get("crystal"), s[0], self.bot.emote.get("singledraw"), s[1], self.bot.emote.get("tendraw"), s[2], expected[0], expected[1], now.strftime("%B")), footer="Next spark between {} and {}".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), timestamp=timestamp, color=self.color))
         except Exception as e:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="I warned my owner", color=self.color, footer=str(e)))
             await self.bot.sendError('seeRoll', e)

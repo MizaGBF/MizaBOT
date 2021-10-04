@@ -210,22 +210,22 @@ class Games(commands.Cog):
 
         # startup msg
         view = Tap(self.bot, owner_id=ctx.author.id)
-        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':titles[0].format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, image=crystal, color=self.color, footer=footer), view=view)
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':titles[0].format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, image=crystal, color=self.color, footer=footer), view=view)
         await view.wait()
 
         # display result
         if rmode == 0: # single roll mode
             r = result['list'][0]
             if result['extended']:
-                await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description="{} {}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1]), color=self.color, footer=footer), view=None)
+                await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description="{} {}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1]), color=self.color, footer=footer), view=None)
             else:
-                await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description="{}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0]))), color=self.color, footer=footer), view=None)
+                await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description="{}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0]))), color=self.color, footer=footer), view=None)
         elif rmode == 1: # memeroll mode
             counter = [0, 0, 0]
             text = ""
             for i in range(0, len(result['list'])):
                 if i > 0 and i % 3 == 0:
-                    await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[0].format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
+                    await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[0].format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
                     await asyncio.sleep(1)
                     text = ""
                 if result['extended']:
@@ -234,7 +234,7 @@ class Games(commands.Cog):
                     text += "{} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(result['list'][i][0])))
                 counter[result['list'][i][0]] += 1
             title = titles[1].format(ctx.author.display_name, len(result['list'])) if (len(result['list']) < 300) else "{} sparked".format(ctx.author.display_name)
-            await final_msg.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar.url}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
+            await final_msg.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.display_avatar}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
         elif rmode == 2: # ten roll mode
             if result['extended']:
                 for i in range(0, 11):
@@ -247,7 +247,7 @@ class Games(commands.Cog):
                         msg += '{}'.format(self.bot.emote.get('crystal{}'.format(result['list'][j][0])))
                         if j % 2 == 1: msg += "\n"
                     await asyncio.sleep(0.75)
-                    await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color, footer=footer), view=None)
+                    await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
             else:
                 msg = ""
                 i = 0
@@ -257,7 +257,7 @@ class Games(commands.Cog):
                     if r == 2: msg += '{}'.format(self.bot.emote.get('SSR'))
                     elif r == 1: msg += '{}'.format(self.bot.emote.get('SR'))
                     else: msg += '{}'.format(self.bot.emote.get('R'))
-                await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color, footer=footer), view=None)
+                await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
         else: # others
             count = len(result['list'])
             rate = (100*result['detail'][2]/count)
@@ -269,7 +269,7 @@ class Games(commands.Cog):
                     for item in rolls:
                         msg += item
                         if rolls[item] > 1: msg += " x{}".format(rolls[item])
-                        await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color, footer=footer), view=None)
+                        await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name, count), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
                         await asyncio.sleep(0.75)
                         msg += ", "
                     msg = msg[:-2]
@@ -277,7 +277,7 @@ class Games(commands.Cog):
             elif rollOptions.get('mode', '') == 'mukku': amsg = "Mukku stopped after **{}** rolls\n".format(len(result['list']))
             else: amsg = ""
             msg = "{}{:} {:} ▫️ {:} {:} ▫️ {:} {:}\n{:}\n**{:.2f}%** SSR rate".format(amsg, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), msg, rate)
-            await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name, count), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color, footer=footer), view=None)
+            await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name, count), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
         await self.bot.util.clean(ctx, final_msg, 25)
 
 
@@ -454,7 +454,7 @@ class Games(commands.Cog):
             else:
                 msg = "**10** rolls :pensive:\n"
                 roll = 10
-        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is spinning the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color, footer=footer))
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is spinning the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color, footer=footer))
         if not enableJanken and state < 2: state = 1
         running = True
         while running:
@@ -507,7 +507,7 @@ class Games(commands.Cog):
                 msg += ":confetti_ball: **Super Mukku** ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
                 running = False
 
-            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color, footer=footer))
+            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color, footer=footer))
 
         await self.bot.util.clean(ctx, final_msg, 45)
 
@@ -524,9 +524,9 @@ class Games(commands.Cog):
                 loot = r
                 break
         if loot is None: loot = self.scam[-1]
-        msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is getting scammed...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description=":question: :question: :question:", color=self.color))
+        msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is getting scammed...".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=":question: :question: :question:", color=self.color))
         await asyncio.sleep(2)
-        await msg.edit(embed=self.bot.util.embed(author={'name':"{} got scammed".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description="{}".format(loot[1]), thumbnail='http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/item/{}'.format(loot[2]), color=self.color))
+        await msg.edit(embed=self.bot.util.embed(author={'name':"{} got scammed".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description="{}".format(loot[1]), thumbnail='http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/item/{}'.format(loot[2]), color=self.color))
         await self.bot.util.clean(ctx, msg, 45)
         
 
@@ -617,7 +617,7 @@ class Games(commands.Cog):
 
         # call the view
         view = Scratcher(self.bot, ctx.author.id, grid, self.scratcher_thumb, self.color, footer)
-        await ctx.send(embed=self.bot.util.embed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description="Click to play the game", footer=footer, color=self.color), view=view)
+        await ctx.send(embed=self.bot.util.embed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description="Click to play the game", footer=footer, color=self.color), view=view)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['chests', 'rush'])
     @commands.cooldown(1, 300, commands.BucketType.user)
@@ -664,7 +664,7 @@ class Games(commands.Cog):
         
         # call the view
         view = ChestRush(self.bot, ctx.author.id, results, self.color)
-        message = await ctx.reply(embed=self.bot.util.embed(author={'name':'{} is opening...'.format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, color=self.color), view=view)
+        message = await ctx.reply(embed=self.bot.util.embed(author={'name':'{} is opening...'.format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, color=self.color), view=view)
 
 
     """genLoto()
@@ -785,7 +785,7 @@ class Games(commands.Cog):
         """Imitate the GBF summer fortune game from Summer 2021
         You can specify your own cards with this command"""
         title = '{} is tempting fate...'.format(ctx.author.display_name)
-        message = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar.url}, description="The winning numbers are...", color=self.color))
+        message = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.display_avatar}, description="The winning numbers are...", color=self.color))
         cards, winning = await self.bot.do(self.genLoto)
         cvt = []
         usercards = usercards.split(" ")
@@ -802,7 +802,7 @@ class Games(commands.Cog):
         await asyncio.sleep(2)
         prize = [0, 0, 0, 0]
         desc, thumb = await self.bot.do(self.printLoto, [], winning, prize)
-        await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar.url}, description=desc, thumbnail=thumb, color=self.color))
+        await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.display_avatar}, description=desc, thumbnail=thumb, color=self.color))
         title = "{}'s fortune is".format(ctx.author.display_name)
         for i in range(0, len(cards)):
             tier = self.checkLotoWin(cards[:i+1][-1], winning)
@@ -811,7 +811,7 @@ class Games(commands.Cog):
                 cards[i] = '**'+cards[i]+'**'
             desc, thumb = await self.bot.do(self.printLoto, cards[:i+1], winning, prize, (i == len(cards)-1))
             await asyncio.sleep(0.5)
-            await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.avatar.url}, description=desc, thumbnail=thumb, color=self.color))
+            await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.display_avatar}, description=desc, thumbnail=thumb, color=self.color))
         await self.bot.util.clean(ctx, message, 45)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['lotochance', 'lottochance', 'fortunecalc', 'lotocalc', 'lottocalc'])
@@ -843,7 +843,7 @@ class Games(commands.Cog):
     async def quota(self, ctx):
         """Give you your GW quota for the day"""
         if ctx.author.id in self.bot.data.config['ids'].get('branded', []):
-            await ctx.reply(embed=self.bot.util.embed(title="{} {} is a bad boy".format(self.bot.emote.get('gw'), ctx.author.display_name), description="Your account is **restricted.**", thumbnail=ctx.author.avatar.url, color=self.color))
+            await ctx.reply(embed=self.bot.util.embed(title="{} {} is a bad boy".format(self.bot.emote.get('gw'), ctx.author.display_name), description="Your account is **restricted.**", thumbnail=ctx.author.display_avatar, color=self.color))
             return
 
         h = random.randint(800, 4000)
@@ -856,17 +856,17 @@ class Games(commands.Cog):
         if c <= 3:
             c = random.randint(1, 110)
             if c <= 2:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got the **Eternal Battlefield Pass** 🤖\nCongratulations!!!\nYou will now revive GW over and ovḛ̸̛̠͕̑̋͌̄̎̍͆̆͑̿͌̇̇̕r̸̛̗̥͆͂̒̀̈́͑̑̊͐̉̎̚̚͝ ̵̨̛͔͎͍̞̰̠́͛̒̊̊̀̃͘ư̷͎̤̥̜̘͈̪̬̅̑͂̂̀̃̀̃̅̊̏̎̚͜͝ͅņ̴̢̛̛̥̮͖͉̻̩͍̱̓̽̂̂͌́̃t̵̞̦̿͐̌͗͑̀͛̇̚͝͝ỉ̵͉͕̙͔̯̯͓̘̬̫͚̬̮̪͋̉͆̎̈́́͛̕͘̚͠ͅļ̸̧̨̛͖̹͕̭̝͉̣̜͉̘͙̪͙͔͔̫̟̹̞̪̦̼̻̘͙̮͕̜̼͉̦̜̰̙̬͎͚̝̩̥̪̖͇̖̲̣͎̖̤̥͖͇̟͎̿̊͗̿̈̊͗̆̈́͋͊̔͂̏̍̔̒̐͋̄̐̄̅̇͐̊̈́̐͛͑̌͛̔͗̈́͌̀͑̌̅̉́̔̇́̆̉͆̄̂͂̃̿̏̈͛̇̒͆͗̈́̀̃̕̕͘̚̚͘͘͠͠͠͝͝͠͝͝ͅͅ ̴̢̛̛̛̯̫̯͕̙͙͇͕͕̪̩̗̤̗̺̩̬̞̞͉̱̊̽̇̉̏̃̑̋̋̌̎̾́̉́͌̿̐̆̒̾̆͒͛͌́͒̄͗͊͑̈́̑̐̂̿̋̊͊̈́̃̋̀̀̈̏̅̍̈͆̊̋͋̀̽͑̉̈́͘͘̕̕͝y̷̧̧̨̢̧̮̭̝̦͙͈͉̜͈̳̰̯͔͓̘͚̳̭͎̳̯͈͓̣͕͙̳̭̱͍͎͖̋͊̀͋͘͘ơ̸̢̗̖̹̹͖̣̫̝̞̦̘̙̭̮͕̘̱̆͋̓͗̾͐̉̏̀͂̄̎̂̈́͌͑̅̆̉̈̒͆̈̈̊͐̔̓̀̿̓̈́͝͝͝͠͝u̶̡̧̡̧̨̧̡̡̢̢̢̪̯͙͍̱̦̠̗̹̼̠̳̣͉̞̩̹͕̫͔͚̬̭̗̳̗̫̥̞̰̘̖̞̤͖̳̮̙͎͎̗̙̳͙͖͓̪̱̞͖̠̣̮̘͍̱̥̹͎͎̦̬̹̼̜͕͙͖̫̝̰̯̜̹̬̯͚͕̰̪̼͓̞̫̖̘͙̞͖̺̩͓̹̘̙̫̩̲̻̪̠̞̺͚̫̰̠̼̖̬͔̗̮͙̱̬̩̮̟͓̫̭̲̘̤͎̱̓̊̇́̀̏̏̾̀̄̆̒̂͐̌͂̈̂̓͋̌̓͘̕̕̚͜͜͜͝ͅͅͅͅŗ̷̡̧̨̢̢̢̧̡̡̧̡̢̧̨̨̡̧̛̛̛̬͚̮̜̟̣̤͕̼̫̪̗̙͚͉̦̭̣͓̩̫̞͚̤͇̗̲̪͕̝͍͍̫̞̬̣̯̤̮͉̹̫̬͕̫̥̱̹̲͔͔̪̖̱͔̹͈͔̳͖̩͕͚͓̤̤̪̤̩̰̬͙̞͙̘̯̮̫͕͚̙̜̼̩̰̻̞̺͈̝̝̖͎̻̹̞̥̰̮̥̙̠͔͎̤̲͎͍̟̥̞̗̰͓͍̞̹͍̬͎̲̬̞͈͉̼̥̝͈̼̠̫̙͖̪̼̲̯̲̫̼̺̘̗̘͚̤͓̯̦̣̬͒̑̒́͑͊̍̿̉̇̓̒̅̎͌̈́̐̽͋̏̒͂̈̒̃̿̓̇̈̿̊̎̈́͐̒͂͊̿̈́̿̅̏̀͐͛̎̍͑͂̈́̃̇̀̈͋̾̔̈́̽͌̿̍̇̅̏̋̑̈́̾̊͐̉̊̅͑̀͊̽̂̈́̽̓͗́̄͆̄͑͒̈́́͋̏͊͋̒͗̆̋̌̈̀͑͗̽͂̄̌̕͘͘̚͘̕̕͜͜͜͜͜͜͜͠͝͝͝͝͝͝ͅͅͅ ̷̧̡̧̨̢̧̨̡̨̧̛̛̛̛̮̭͇̣͓̙̺͍̟̜̞̫̪̘̼̞̜̠͇̗̮͕̬̥͓͔͈̟̦͇̥̖̭̝̱̗̠̘̝̹̖͓̝͇̖̫̯̩̞̞̯̲̤̱̻̤͇̲͍͈͓͖̹̗̟̲̪̪̟̩͙̪̝̮̘̽̋̍́̔̊̍̈́͂̌̽͒̆͐͊̏̐͑͛̓̆̈́͌̂͒͆̔̅̓̽͊̅́̾̽̓̏̆̀̀͌̾̀͒̓̇̊̀̐͛̌̋̈͑̇́̂̆̽̈̕̕̚̚͜͠ͅͅͅͅḑ̶̛̛̯͓̠̖͎̭̞̫͑̋̄̄̈̽̎̊͛̽͌̾̋̔̽̔̀̀͐̿̈́̀̃͐͂͆̈̃͑̀̋̑͊̃̆̓̾̎̅̀̆̓̏͊̆̔̈̅͛̍̎̓̀͛͒́̐͆̂̋̋͛̆̈͐͂̏̊̏̏̓̿̔͆̓̽̂̅͆̔͑̔̈̾̈̽̂̃̋̈́̾̎̈́̂̓̃̒͐͆̌̍̀͗̈́̑̌̚̕̕̚͠͠͝ę̴̧̨̨̨̢̨̢̧̧̧̨̧̛̛̛̛̛̛̛̺̪̹̘͈̣͔̜͓̥̥̟͇̱͚͖̠͙͙̱̞̣̤͚̣̟̫̬̟͓̺͙̬͚̹͓̗̬̼͇͙̻͍̖̙̥̩͔̜͕̖͕͔͚̳͙̩͇͙̺͔̲̱̙͉̝̠̤̝̭̮̩̦͇̖̳̞̞̖͎̙͙̲̮̠̣͍̪͙̰̣͉̘͉̦̖̳̫͖͖̘̖̮̲̱̪͕̳̫̫̞̪̜̞̬͙͖͍͖̦͉̯̟̖͇̩͚͙͔̳̫͗̈́̒̎͂̇̀͒̈́̃͐̉͛̾̑̆̃͐̈́̉͒̇̓̏̀͌̐͌̅̓͐́̿͒̅͑̍̓̈́̉̊́̉̀̔̊̍̽͛͛͆̓̈͋̉͋̿̉́̋̈̓̐̈́̔̃͆͗͛̏́̀̑͋̀̽̔̓̎̒̆̌̐̈́̓͂̐̋͊̌͑̓̈́̊̿͋̈́́̃̏̓̉͛͆̂͐͗͗̾̅̌̾͌̈́͊͘̕̚̕̚̚̕͘̕͜͜͜͜͜͜͜͠͝͝͠͝͝͠ͅͅa̸̡͔̯͎̟͙̖̗͔̺̰͇͚̭̲̭͕̫̜͉̯͕̅̈͋̒͋͂̐̕ͅţ̶̡̨̢̢̡̡̡̨̢̡̧̨̢̛̥̭̞͈̼̖͙͇̝̳͇̞̬͎̲̙̰̙̱̳̟̣̗̫̣͉͖̪̩͙̲͇͙̫̘͖̖̜̝̦̥̟̜̠͔̠͎̭͔̘͓͚̩͇͙͎͎̰̘̟̳̪͖̠̪̦̦̫̞̟̗̹̹̤͓͍̜̯͔̼̱̮̹͎͖͍̲͎̠͉̟͈̠̦̯̲̼̥̱̬̜͙̘͕̣̳͇̞͓̝͈̼̞̻͚̘̩̟̩̖̼͍̯̘͉͔̤̘̥̦͑̒͗̅̉̾͗̾̓̈́̍̉̈́͛̀͊̋̀͐̏̈́̀̀̍̇̀̀̈́̃̀̅͛̅̈́̇̽̆̌̈̄͆̄̂͂̔͗͌͊̽̿́͑̒̾̑̊̿͗́̇̋̊̄̀̍̓̆͂̆̔̏̍̑̔̊̾̎̆͛͑̓͒̈̎͌̓͗̀̿̓̃̔̈́͗̃̓̽̓̉̀͛͂̿́̀̌͊̆̋̀̓̇́̔̓͆̋̊̀̋͑́̔́̌̒̾̂̎̋̈́́̀͗̈́̈́́̾̈́͑͋̇͒̀͋͆͗̾͐̆̈́͂͐̈̐̓̍̈́̈̅̓͐̚̚̚̚̕͘̕͘̚̚̚͘͜͜͜͜͜͜͝͠͠͠͝͠ͅͅḥ̴̨̧̧̢̧̢̢̛̛̙̱͚̺̬̖̮̪͈̟͉̦̪̘̰̺̳̱̲͔̲̮̦̦̪̪̲̠͓͎͇͕̯̥͉͍̱̥͓̲̤̫̳̠̝͖̺̙͖͎͙̠͓̺̗̝̩͍͕͎̞͕̤̻̰̘͇͕̟̹̳͇͈͇̳̳̞̗̣͖̙͓̼̬̯͚͎̮͚̳̰͙̙̟̊͆͒͆͌̂̈́̀́̽̿͌̓́̐̑͌͋͆͊͑͛͑̀̋͐̏͌̑̀͛͗̀́̈̀̓̽̇̐̋͊̅͑̊͒̈́̀̀̔̀̇͗̆͑̅̌̑̈́͌̒̅̌̓͋͂̀̍̈́͐̈́̆̐̈́̍͛͂̔̐̎͂̎̇͑̈́̈́̎̉̈́́̒̒̆̌̃̓̈́͂̽̓̆̋̈̂̽̆̓̔͗̓̀̄̈́̂̏͗̐̔͘̕͘͘͜͜͜͜͠͠͝͠͠͝͝͝͠͠͝ͅͅ", thumbnail=ctx.author.avatar.url, color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got the **Eternal Battlefield Pass** 🤖\nCongratulations!!!\nYou will now revive GW over and ovḛ̸̛̠͕̑̋͌̄̎̍͆̆͑̿͌̇̇̕r̸̛̗̥͆͂̒̀̈́͑̑̊͐̉̎̚̚͝ ̵̨̛͔͎͍̞̰̠́͛̒̊̊̀̃͘ư̷͎̤̥̜̘͈̪̬̅̑͂̂̀̃̀̃̅̊̏̎̚͜͝ͅņ̴̢̛̛̥̮͖͉̻̩͍̱̓̽̂̂͌́̃t̵̞̦̿͐̌͗͑̀͛̇̚͝͝ỉ̵͉͕̙͔̯̯͓̘̬̫͚̬̮̪͋̉͆̎̈́́͛̕͘̚͠ͅļ̸̧̨̛͖̹͕̭̝͉̣̜͉̘͙̪͙͔͔̫̟̹̞̪̦̼̻̘͙̮͕̜̼͉̦̜̰̙̬͎͚̝̩̥̪̖͇̖̲̣͎̖̤̥͖͇̟͎̿̊͗̿̈̊͗̆̈́͋͊̔͂̏̍̔̒̐͋̄̐̄̅̇͐̊̈́̐͛͑̌͛̔͗̈́͌̀͑̌̅̉́̔̇́̆̉͆̄̂͂̃̿̏̈͛̇̒͆͗̈́̀̃̕̕͘̚̚͘͘͠͠͠͝͝͠͝͝ͅͅ ̴̢̛̛̛̯̫̯͕̙͙͇͕͕̪̩̗̤̗̺̩̬̞̞͉̱̊̽̇̉̏̃̑̋̋̌̎̾́̉́͌̿̐̆̒̾̆͒͛͌́͒̄͗͊͑̈́̑̐̂̿̋̊͊̈́̃̋̀̀̈̏̅̍̈͆̊̋͋̀̽͑̉̈́͘͘̕̕͝y̷̧̧̨̢̧̮̭̝̦͙͈͉̜͈̳̰̯͔͓̘͚̳̭͎̳̯͈͓̣͕͙̳̭̱͍͎͖̋͊̀͋͘͘ơ̸̢̗̖̹̹͖̣̫̝̞̦̘̙̭̮͕̘̱̆͋̓͗̾͐̉̏̀͂̄̎̂̈́͌͑̅̆̉̈̒͆̈̈̊͐̔̓̀̿̓̈́͝͝͝͠͝u̶̡̧̡̧̨̧̡̡̢̢̢̪̯͙͍̱̦̠̗̹̼̠̳̣͉̞̩̹͕̫͔͚̬̭̗̳̗̫̥̞̰̘̖̞̤͖̳̮̙͎͎̗̙̳͙͖͓̪̱̞͖̠̣̮̘͍̱̥̹͎͎̦̬̹̼̜͕͙͖̫̝̰̯̜̹̬̯͚͕̰̪̼͓̞̫̖̘͙̞͖̺̩͓̹̘̙̫̩̲̻̪̠̞̺͚̫̰̠̼̖̬͔̗̮͙̱̬̩̮̟͓̫̭̲̘̤͎̱̓̊̇́̀̏̏̾̀̄̆̒̂͐̌͂̈̂̓͋̌̓͘̕̕̚͜͜͜͝ͅͅͅͅŗ̷̡̧̨̢̢̢̧̡̡̧̡̢̧̨̨̡̧̛̛̛̬͚̮̜̟̣̤͕̼̫̪̗̙͚͉̦̭̣͓̩̫̞͚̤͇̗̲̪͕̝͍͍̫̞̬̣̯̤̮͉̹̫̬͕̫̥̱̹̲͔͔̪̖̱͔̹͈͔̳͖̩͕͚͓̤̤̪̤̩̰̬͙̞͙̘̯̮̫͕͚̙̜̼̩̰̻̞̺͈̝̝̖͎̻̹̞̥̰̮̥̙̠͔͎̤̲͎͍̟̥̞̗̰͓͍̞̹͍̬͎̲̬̞͈͉̼̥̝͈̼̠̫̙͖̪̼̲̯̲̫̼̺̘̗̘͚̤͓̯̦̣̬͒̑̒́͑͊̍̿̉̇̓̒̅̎͌̈́̐̽͋̏̒͂̈̒̃̿̓̇̈̿̊̎̈́͐̒͂͊̿̈́̿̅̏̀͐͛̎̍͑͂̈́̃̇̀̈͋̾̔̈́̽͌̿̍̇̅̏̋̑̈́̾̊͐̉̊̅͑̀͊̽̂̈́̽̓͗́̄͆̄͑͒̈́́͋̏͊͋̒͗̆̋̌̈̀͑͗̽͂̄̌̕͘͘̚͘̕̕͜͜͜͜͜͜͜͠͝͝͝͝͝͝ͅͅͅ ̷̧̡̧̨̢̧̨̡̨̧̛̛̛̛̮̭͇̣͓̙̺͍̟̜̞̫̪̘̼̞̜̠͇̗̮͕̬̥͓͔͈̟̦͇̥̖̭̝̱̗̠̘̝̹̖͓̝͇̖̫̯̩̞̞̯̲̤̱̻̤͇̲͍͈͓͖̹̗̟̲̪̪̟̩͙̪̝̮̘̽̋̍́̔̊̍̈́͂̌̽͒̆͐͊̏̐͑͛̓̆̈́͌̂͒͆̔̅̓̽͊̅́̾̽̓̏̆̀̀͌̾̀͒̓̇̊̀̐͛̌̋̈͑̇́̂̆̽̈̕̕̚̚͜͠ͅͅͅͅḑ̶̛̛̯͓̠̖͎̭̞̫͑̋̄̄̈̽̎̊͛̽͌̾̋̔̽̔̀̀͐̿̈́̀̃͐͂͆̈̃͑̀̋̑͊̃̆̓̾̎̅̀̆̓̏͊̆̔̈̅͛̍̎̓̀͛͒́̐͆̂̋̋͛̆̈͐͂̏̊̏̏̓̿̔͆̓̽̂̅͆̔͑̔̈̾̈̽̂̃̋̈́̾̎̈́̂̓̃̒͐͆̌̍̀͗̈́̑̌̚̕̕̚͠͠͝ę̴̧̨̨̨̢̨̢̧̧̧̨̧̛̛̛̛̛̛̛̺̪̹̘͈̣͔̜͓̥̥̟͇̱͚͖̠͙͙̱̞̣̤͚̣̟̫̬̟͓̺͙̬͚̹͓̗̬̼͇͙̻͍̖̙̥̩͔̜͕̖͕͔͚̳͙̩͇͙̺͔̲̱̙͉̝̠̤̝̭̮̩̦͇̖̳̞̞̖͎̙͙̲̮̠̣͍̪͙̰̣͉̘͉̦̖̳̫͖͖̘̖̮̲̱̪͕̳̫̫̞̪̜̞̬͙͖͍͖̦͉̯̟̖͇̩͚͙͔̳̫͗̈́̒̎͂̇̀͒̈́̃͐̉͛̾̑̆̃͐̈́̉͒̇̓̏̀͌̐͌̅̓͐́̿͒̅͑̍̓̈́̉̊́̉̀̔̊̍̽͛͛͆̓̈͋̉͋̿̉́̋̈̓̐̈́̔̃͆͗͛̏́̀̑͋̀̽̔̓̎̒̆̌̐̈́̓͂̐̋͊̌͑̓̈́̊̿͋̈́́̃̏̓̉͛͆̂͐͗͗̾̅̌̾͌̈́͊͘̕̚̕̚̚̕͘̕͜͜͜͜͜͜͜͠͝͝͠͝͝͠ͅͅa̸̡͔̯͎̟͙̖̗͔̺̰͇͚̭̲̭͕̫̜͉̯͕̅̈͋̒͋͂̐̕ͅţ̶̡̨̢̢̡̡̡̨̢̡̧̨̢̛̥̭̞͈̼̖͙͇̝̳͇̞̬͎̲̙̰̙̱̳̟̣̗̫̣͉͖̪̩͙̲͇͙̫̘͖̖̜̝̦̥̟̜̠͔̠͎̭͔̘͓͚̩͇͙͎͎̰̘̟̳̪͖̠̪̦̦̫̞̟̗̹̹̤͓͍̜̯͔̼̱̮̹͎͖͍̲͎̠͉̟͈̠̦̯̲̼̥̱̬̜͙̘͕̣̳͇̞͓̝͈̼̞̻͚̘̩̟̩̖̼͍̯̘͉͔̤̘̥̦͑̒͗̅̉̾͗̾̓̈́̍̉̈́͛̀͊̋̀͐̏̈́̀̀̍̇̀̀̈́̃̀̅͛̅̈́̇̽̆̌̈̄͆̄̂͂̔͗͌͊̽̿́͑̒̾̑̊̿͗́̇̋̊̄̀̍̓̆͂̆̔̏̍̑̔̊̾̎̆͛͑̓͒̈̎͌̓͗̀̿̓̃̔̈́͗̃̓̽̓̉̀͛͂̿́̀̌͊̆̋̀̓̇́̔̓͆̋̊̀̋͑́̔́̌̒̾̂̎̋̈́́̀͗̈́̈́́̾̈́͑͋̇͒̀͋͆͗̾͐̆̈́͂͐̈̐̓̍̈́̈̅̓͐̚̚̚̚̕͘̕͘̚̚̚͘͜͜͜͜͜͜͝͠͠͠͝͠ͅͅḥ̴̨̧̧̢̧̢̢̛̛̙̱͚̺̬̖̮̪͈̟͉̦̪̘̰̺̳̱̲͔̲̮̦̦̪̪̲̠͓͎͇͕̯̥͉͍̱̥͓̲̤̫̳̠̝͖̺̙͖͎͙̠͓̺̗̝̩͍͕͎̞͕̤̻̰̘͇͕̟̹̳͇͈͇̳̳̞̗̣͖̙͓̼̬̯͚͎̮͚̳̰͙̙̟̊͆͒͆͌̂̈́̀́̽̿͌̓́̐̑͌͋͆͊͑͛͑̀̋͐̏͌̑̀͛͗̀́̈̀̓̽̇̐̋͊̅͑̊͒̈́̀̀̔̀̇͗̆͑̅̌̑̈́͌̒̅̌̓͋͂̀̍̈́͐̈́̆̐̈́̍͛͂̔̐̎͂̎̇͑̈́̈́̎̉̈́́̒̒̆̌̃̓̈́͂̽̓̆̋̈̂̽̆̓̔͗̓̀̄̈́̂̏͗̐̔͘̕͘͘͜͜͜͜͠͠͝͠͠͝͝͝͠͠͝ͅͅ", thumbnail=ctx.author.display_avatar, color=self.color))
             elif c <= 6:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Slave Pass** 🤖\nCongratulations!!!\nCall your boss and take a day off now!", footer="Full Auto and Botting are forbidden", thumbnail=ctx.author.avatar.url, color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Slave Pass** 🤖\nCongratulations!!!\nCall your boss and take a day off now!", footer="Full Auto and Botting are forbidden", thumbnail=ctx.author.display_avatar, color=self.color))
             elif c <= 16:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Chen Pass** 😈\nCongratulations!!!\nYour daily honor or meat count must be composed only of the digit 6.", thumbnail=ctx.author.avatar.url, color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Chen Pass** 😈\nCongratulations!!!\nYour daily honor or meat count must be composed only of the digit 6.", thumbnail=ctx.author.display_avatar, color=self.color))
             elif c <= 21:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Carry Pass** 😈\nDon't stop grinding, continue until your Crew gets the max rewards!", thumbnail=ctx.author.avatar.url, color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Carry Pass** 😈\nDon't stop grinding, continue until your Crew gets the max rewards!", thumbnail=ctx.author.display_avatar, color=self.color))
             elif c <= 26:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Relief Ace Pass** 😈\nPrepare to relieve carries of their 'stress' after the day!!!", footer="wuv wuv", thumbnail=ctx.author.avatar.url, color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Relief Ace Pass** 😈\nPrepare to relieve carries of their 'stress' after the day!!!", footer="wuv wuv", thumbnail=ctx.author.display_avatar, color=self.color))
             else:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Free Leech Pass** 👍\nCongratulations!!!", thumbnail=ctx.author.avatar.url, color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Free Leech Pass** 👍\nCongratulations!!!", thumbnail=ctx.author.display_avatar, color=self.color))
             await self.bot.util.clean(ctx, final_msg, 40)
             return
         elif c == 3:
@@ -904,7 +904,7 @@ class Games(commands.Cog):
             elif c == 3: m = 666
             elif c == 4: m = 6666
 
-        final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.avatar.url, color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.display_avatar, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 40)
 
     """randint()
@@ -945,7 +945,7 @@ class Games(commands.Cog):
             seed = self.randint(seed)
         msg += "**Rating** ▫️ {:.1f}".format(rarity_mod + (seed % 31) / 10)
 
-        msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color))
+        msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color))
         await self.bot.util.clean(ctx, msg, 30)
 
     @commands.command(no_pm=True, hidden=True, cooldown_after_parsing=True)

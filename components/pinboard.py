@@ -77,7 +77,7 @@ class Pinboard():
                         if len(content) > 1900: dict['description'] = content[:1900] + "...\n\n"
                         else: dict['description'] = content + "\n\n"
                     else: dict['description'] = ""
-                    dict['thumbnail'] = {'url':str(message.author.avatar.url)}
+                    dict['thumbnail'] = {'url':str(message.author.display_avatar)}
                     dict['fields'] = []
                     # for attachments
                     if message.attachments:

@@ -25,8 +25,8 @@ class Bot(commands.Cog):
             msg = await ctx.reply(embed=self.bot.util.embed(title="Invite Error", description="Invitations are currently closed.", timestamp=self.bot.util.timestamp(), color=self.color))
             await self.bot.util.clean(ctx, msg, 45)
         else:
-            await self.bot.send('debug', embed=self.bot.util.embed(title="Invite Request", description="{} ▫️ `{}`".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar.url, timestamp=self.bot.util.timestamp(), color=self.color))
-            await ctx.author.send(embed=self.bot.util.embed(title=ctx.guild.me.name, description="{}\nCurrently only servers of 30 members or more can be added.\nYou'll have to wait for my owner approval (Your server owner will be notified if accepted).\nMisuses of this link will result in a server-wide ban.".format(self.bot.data.config['strings']["invite()"]), thumbnail=ctx.guild.me.avatar.url, timestamp=self.bot.util.timestamp(), color=self.color))
+            await self.bot.send('debug', embed=self.bot.util.embed(title="Invite Request", description="{} ▫️ `{}`".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.display_avatar, timestamp=self.bot.util.timestamp(), color=self.color))
+            await ctx.author.send(embed=self.bot.util.embed(title=ctx.guild.me.name, description="{}\nCurrently only servers of 30 members or more can be added.\nYou'll have to wait for my owner approval (Your server owner will be notified if accepted).\nMisuses of this link will result in a server-wide ban.".format(self.bot.data.config['strings']["invite()"]), thumbnail=ctx.guild.me.display_avatar, timestamp=self.bot.util.timestamp(), color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['bug', 'report', 'bug_report'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -34,7 +34,7 @@ class Bot(commands.Cog):
         """Send a bug report (or your love confessions) to the author"""
         if len(terms) == 0:
             return
-        await self.bot.send('debug', embed=self.bot.util.embed(title="Bug Report", description=terms, footer="{} ▫️ User ID: {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.avatar.url, color=self.color))
+        await self.bot.send('debug', embed=self.bot.util.embed(title="Bug Report", description=terms, footer="{} ▫️ User ID: {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.display_avatar, color=self.color))
         #await self.bot.util.react(ctx.message, '✅') # white check mark
         final_msg = await ctx.reply(embed=self.bot.util.embed(title="Information", description="**Development is on hold for an undetermined amount of time following [discord.py death](https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1)**, no new features will be added until an alternative is found.", footer="Your report has still been transmitted to my owner", color=self.color))
         await self.bot.util.clean(ctx, final_msg, 40) # TODO
@@ -43,14 +43,14 @@ class Bot(commands.Cog):
     @commands.cooldown(1, 20, commands.BucketType.guild)
     async def github(self, ctx):
         """Post the link to the bot code source"""
-        final_msg = await ctx.reply(embed=self.bot.util.embed(title=self.bot.description.splitlines()[0], description="Code source [here](https://github.com/MizaGBF/MizaBOT)\nCommand list available [here](https://mizagbf.github.io/MizaBOT/)", thumbnail=ctx.guild.me.avatar.url, color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.util.embed(title=self.bot.description.splitlines()[0], description="Code source [here](https://github.com/MizaGBF/MizaBOT)\nCommand list available [here](https://mizagbf.github.io/MizaBOT/)", thumbnail=ctx.guild.me.display_avatar, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 25)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['mizabot'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def status(self, ctx):
         """Post the bot status"""
-        final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} is Ready".format(self.bot.user.display_name), description=self.bot.util.statusString(), thumbnail=self.bot.user.avatar.url, timestamp=self.bot.util.timestamp(), color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} is Ready".format(self.bot.user.display_name), description=self.bot.util.statusString(), thumbnail=self.bot.user.display_avatar, timestamp=self.bot.util.timestamp(), color=self.color))
         await self.bot.util.clean(ctx, final_msg, 40)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
@@ -61,7 +61,7 @@ class Bot(commands.Cog):
         for c in self.bot.changelog:
             msg += "▫️ {}\n".format(c)
         if msg != "":
-            final_msg = await ctx.send(embed=self.bot.util.embed(title="{} ▫️ v{}".format(ctx.guild.me.display_name, self.bot.version), description="**Changelog**\n" + msg, thumbnail=ctx.guild.me.avatar.url, color=self.color))
+            final_msg = await ctx.send(embed=self.bot.util.embed(title="{} ▫️ v{}".format(ctx.guild.me.display_name, self.bot.version), description="**Changelog**\n" + msg, thumbnail=ctx.guild.me.display_avatar, color=self.color))
             await self.bot.util.clean(ctx, final_msg, 40)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['survey'])
@@ -77,7 +77,7 @@ class Bot(commands.Cog):
             view = Poll(self.bot, ctx.author, self.color, splitted[0], splitted[1:])
             if duration < 60: duration = 60
             elif duration > 500: duration = 500
-            msg_to_edit = await ctx.send(embed=self.bot.util.embed(author={'name':'{} started a poll'.format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, title=splitted[0], description="{} seconds remaining to vote".format(duration), color=self.color))
+            msg_to_edit = await ctx.send(embed=self.bot.util.embed(author={'name':'{} started a poll'.format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, title=splitted[0], description="{} seconds remaining to vote".format(duration), color=self.color))
             msg_view = await ctx.send('\u200b', view=view)
             await view.run_poll(duration, msg_to_edit, ctx.channel)
             await msg_view.delete()
@@ -281,7 +281,7 @@ class Bot(commands.Cog):
         for category, coms in to_iterate:
             if category != "":
                 cats += "{}\n".format(category)
-        return await ctx.reply(embed=self.bot.util.embed(title=me.name + " Help", description=self.bot.description + "\n\nUse `{}help <command_name>` or `{}help <category_name>` to get more informations\n**Categories:**\n".format(ctx.message.content[0], ctx.message.content[0]) + cats, thumbnail=me.avatar.url, color=self.color))
+        return await ctx.reply(embed=self.bot.util.embed(title=me.name + " Help", description=self.bot.description + "\n\nUse `{}help <command_name>` or `{}help <category_name>` to get more informations\n**Categories:**\n".format(ctx.message.content[0], ctx.message.content[0]) + cats, thumbnail=me.display_avatar, color=self.color))
 
     """category_help()
     Print the detailed category help. Used for the help.
@@ -342,7 +342,7 @@ class Bot(commands.Cog):
                 desc += "Category **{}**\n".format(res[1].qualified_name)
             elif res[0] == 1:
                 desc += "Command **{}**\n".format(res[1].name)
-        return await ctx.reply(embed=self.bot.util.embed(title=me.name + " Help", description=desc, thumbnail=me.avatar.url, color=self.color))
+        return await ctx.reply(embed=self.bot.util.embed(title=me.name + " Help", description=desc, thumbnail=me.display_avatar, color=self.color))
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['command', 'commands', 'category', 'categories', 'cog', 'cogs'])
     @commands.cooldown(2, 8, commands.BucketType.user)
@@ -354,13 +354,13 @@ class Bot(commands.Cog):
             flags = await self.search_help(ctx, terms)
             if len(flags) == 0: # no matches
                 me = ctx.author.guild.me # bot own user infos
-                msg = await ctx.reply(embed=self.bot.util.embed(title=me.name + " Help", description="`{}` not found".format(terms), thumbnail=me.avatar.url, color=self.color))
+                msg = await ctx.reply(embed=self.bot.util.embed(title=me.name + " Help", description="`{}` not found".format(terms), thumbnail=me.display_avatar, color=self.color))
             elif len(flags) == 1: # one match
                 if flags[0][0] == 0: msg = await self.category_help(terms, ctx, flags[0][1])
                 elif flags[0][0] == 1: msg = await self.command_help(terms, ctx, flags[0][1])
             elif len(flags) > 20: # more than 20 matches
                 me = ctx.author.guild.me # bot own user infos
-                msg = await ctx.reply(embed=self.bot.util.embed(title=me.name + " Help", description="Too many results, please try to be a bit more specific or use the [Online Help](https://mizagbf.github.io/MizaBOT/)", thumbnail=me.avatar.url, color=self.color))
+                msg = await ctx.reply(embed=self.bot.util.embed(title=me.name + " Help", description="Too many results, please try to be a bit more specific or use the [Online Help](https://mizagbf.github.io/MizaBOT/)", thumbnail=me.display_avatar, color=self.color))
             else: # multiple matches
                 msg = await self.multiple_help(terms, ctx, flags)
         await self.bot.util.clean(ctx, msg, 60)

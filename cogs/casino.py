@@ -128,7 +128,7 @@ class Casino(commands.Cog):
             card = str(random.randint(2, 14)) + random.choice(["D", "S", "H", "C"])
             if card not in hand:
                 hand.append(card)
-        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}'s hand".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description="🎴, 🎴, 🎴, 🎴, 🎴", color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}'s hand".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description="🎴, 🎴, 🎴, 🎴, 🎴", color=self.color))
         for x in range(0, 5):
             await asyncio.sleep(1)
             # check result
@@ -141,7 +141,7 @@ class Casino(commands.Cog):
             if x == 4:
                 await asyncio.sleep(2)
                 msg += await self.bot.do(self.checkPokerHand, hand)
-            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{}'s hand".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color))
+            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{}'s hand".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 45)
 
     """pokerNameStrip()
@@ -339,8 +339,8 @@ class Casino(commands.Cog):
                     if j == (len(rolls) - 1): msg = msg[:-2]
                 if len(rolls) == n:
                     msg += "\n**Total**: {:}, **Average**: {:}, **Percentile**: {:.1f}%".format(sum(rolls), round(sum(rolls)/len(rolls)), sum(rolls) * 100 / (n * d)).replace('.0%', '%')
-                if final_msg is None: final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"🎲 {} rolled {}...".format(ctx.author.display_name, dice_string), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color))
-                else: await final_msg.edit(embed=self.bot.util.embed(author={'name':"🎲 {} rolled {}...".format(ctx.author.display_name, dice_string), 'icon_url':ctx.author.avatar.url}, description=msg, color=self.color))
+                if final_msg is None: final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"🎲 {} rolled {}...".format(ctx.author.display_name, dice_string), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color))
+                else: await final_msg.edit(embed=self.bot.util.embed(author={'name':"🎲 {} rolled {}...".format(ctx.author.display_name, dice_string), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color))
                 await asyncio.sleep(1)
         except:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="🎲 Dice Rolls", description="Invalid string `{}`\nFormat must be `NdN` (minimum is `1d6`, maximum is `10d100`)".format(dice_string), color=self.color))
@@ -351,7 +351,7 @@ class Casino(commands.Cog):
     async def coin(self, ctx):
         """Flip a coin"""
         coin = random.randint(0, 1)
-        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} flipped a coin...".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description=(":coin: It landed on **Head**" if (coin == 0) else ":coin: It landed on **Tail**"), color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} flipped a coin...".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=(":coin: It landed on **Head**" if (coin == 0) else ":coin: It landed on **Tail**"), color=self.color))
         await self.bot.util.clean(ctx, final_msg, 60)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['chose', 'choice'])
@@ -362,7 +362,7 @@ class Casino(commands.Cog):
         try:
             possible = choices.split(";")
             if len(possible) < 2: raise Exception()
-            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}'s choice".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description=random.choice(possible), color=self.color))
+            final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}'s choice".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=random.choice(possible), color=self.color))
         except:
             final_msg = await ctx.reply(embed=self.bot.util.embed(title="Give me a list of something to choose from, separated by `;`", color=self.color))
         await self.bot.util.clean(ctx, final_msg, 45)
@@ -371,12 +371,12 @@ class Casino(commands.Cog):
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def _8ball(self, ctx, *, question : str):
         """Ask the magic ball a question"""
-        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} asked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description="`{}`\n{}".format(question, random.choice(["It is Certain.","It is decidedly so.","Without a doubt.","Yes definitely.","You may rely on it.","As I see it, yes.","Most likely.","Outlook good.","Yes.","Signs point to yes.","Reply hazy, try again.","Ask again later.","Better not tell you now.","Cannot predict now.","Concentrate and ask again.","Don't count on it.","My reply is no.","My sources say no.","Outlook not so good.","Very doubtful."])), color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} asked".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description="`{}`\n{}".format(question, random.choice(["It is Certain.","It is decidedly so.","Without a doubt.","Yes definitely.","You may rely on it.","As I see it, yes.","Most likely.","Outlook good.","Yes.","Signs point to yes.","Reply hazy, try again.","Ask again later.","Better not tell you now.","Cannot predict now.","Concentrate and ask again.","Don't count on it.","My reply is no.","My sources say no.","Outlook not so good.","Very doubtful."])), color=self.color))
         await self.bot.util.clean(ctx, final_msg, 45)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def when(self, ctx, *, question : str = ""):
         """Ask the magic ball when will something happen"""
-        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} asked".format(ctx.author.display_name), 'icon_url':ctx.author.avatar.url}, description="`{}`\n{}".format(ctx.message.content[1:], random.choice(["Never", "Soon:tm:", "Ask again tomorrow", "Can't compute", "42", "One day, my friend", "Next year", "It's a secret to everybody", "Soon enough", "When it's ready", "Five minutes", "This week, surely", "My sources say next month", "NOW!", "I'm not so sure", "In three days"])), color=self.color))
+        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} asked".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description="`{}`\n{}".format(ctx.message.content[1:], random.choice(["Never", "Soon:tm:", "Ask again tomorrow", "Can't compute", "42", "One day, my friend", "Next year", "It's a secret to everybody", "Soon enough", "When it's ready", "Five minutes", "This week, surely", "My sources say next month", "NOW!", "I'm not so sure", "In three days"])), color=self.color))
         await self.bot.util.clean(ctx, final_msg, 45)

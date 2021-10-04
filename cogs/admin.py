@@ -89,20 +89,20 @@ class Admin(commands.Cog):
         for s in self.bot.guilds:
             msg += "**{}** `{}`owned by **{}** `{}`\n".format(s.name, s.id, s.owner.name, s.owner.id)
             if len(msg) > 1800:
-                await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar.url, color=self.color))
+                await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.display_avatar, color=self.color))
                 msg = ""
         for s in self.bot.data.save['guilds']['pending']:
             msg += "**{}** {} is **Pending**\n".format(s, self.bot.data.save['guilds']['pending'][s])
             if len(msg) > 1800:
-                await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar.url, color=self.color))
+                await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.display_avatar, color=self.color))
                 msg = ""
         if msg != "":
-            await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar.url, color=self.color))
+            await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.display_avatar, color=self.color))
             msg = ""
         if len(self.bot.data.save['guilds']['banned']) > 0:
             msg += "Banned Guilds are `" + "` `".join(str(x) for x in self.bot.data.save['guilds']['banned']) + "`\n"
         if msg != "":
-            await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.avatar.url, color=self.color))
+            await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.display_avatar, color=self.color))
 
     @commands.command(no_pm=True)
     @isOwner()
@@ -522,7 +522,7 @@ class Admin(commands.Cog):
         """Broadcast a message (Owner Only)"""
         if len(terms) == 0:
             return
-        embed=discord.Embed(title="{} Broadcast".format(ctx.guild.me.display_name), description=terms, thumbnail=ctx.guild.me.avatar.url, color=self.color)
+        embed=discord.Embed(title="{} Broadcast".format(ctx.guild.me.display_name), description=terms, thumbnail=ctx.guild.me.display_avatar, color=self.color)
         for g in self.bot.data.save['news']:
             for id in self.bot.data.save['news'][g]:
                 try:

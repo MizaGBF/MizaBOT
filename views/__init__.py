@@ -89,4 +89,4 @@ class BaseView(discord.ui.View):
     """
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction):
         self.bot.errn += 1
-        await self.bot.send('debug', embed=self.bot.util.embed(title="⚠ Error caused by {}".format(interaction.user), description="{} Exception\n{}".format(item, self.bot.util.pexc(error)), thumbnail=interaction.user.avatar.url, footer='{}'.format(interaction.user.id), timestamp=self.bot.util.timestamp()))
+        await self.bot.send('debug', embed=self.bot.util.embed(title="⚠ Error caused by {}".format(interaction.user), description="{} Exception\n{}".format(item, self.bot.util.pexc(error)), thumbnail=interaction.user.display_avatar, footer='{}'.format(interaction.user.id), timestamp=self.bot.util.timestamp()))

@@ -76,7 +76,7 @@ class Poll(BaseView):
     """
     async def run_poll(self, duration : int, message : discord.Message, channel : discord.TextChannel):
         timer = self.bot.util.JST() + timedelta(seconds=duration)
-        author={'name':'{} started a poll'.format(self.author.display_name), 'icon_url':self.author.avatar.url}
+        author={'name':'{} started a poll'.format(self.author.display_name), 'icon_url':self.author.display_avatar}
         while True:
             await asyncio.sleep(1)
             c = self.bot.util.JST()
@@ -92,4 +92,4 @@ class Poll(BaseView):
             if self.votes[id] in count: count[self.votes[id]] += 1
         for v in count:
             msg += "`{}` :white_small_square: {}\n".format(v, count[v])
-        await channel.send(embed=self.bot.util.embed(author={'name':"{}'s poll ended".format(self.author.display_name), 'icon_url':self.author.avatar.url}, title=self.title, description=msg, color=self.color))
+        await channel.send(embed=self.bot.util.embed(author={'name':"{}'s poll ended".format(self.author.display_name), 'icon_url':self.author.display_avatar}, title=self.title, description=msg, color=self.color))

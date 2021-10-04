@@ -39,7 +39,7 @@ class ScratcherButton(discord.ui.Button):
             self.style = discord.ButtonStyle.primary
             if self.view.check_status(self.item):
                 self.view.stopall()
-                msg = await interaction.response.edit_message(embed=self.view.bot.util.embed(author={'name':"{} scratched".format(interaction.user.display_name), 'icon_url':interaction.user.avatar.url}, description="You won **{}**".format(self.item), thumbnail='http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/' + self.view.thumbs.get(self.item, ''), footer=self.view.footer, color=self.view.color), view=self.view)
+                msg = await interaction.response.edit_message(embed=self.view.bot.util.embed(author={'name':"{} scratched".format(interaction.user.display_name), 'icon_url':interaction.user.display_avatar}, description="You won **{}**".format(self.item), thumbnail='http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/' + self.view.thumbs.get(self.item, ''), footer=self.view.footer, color=self.view.color), view=self.view)
                 await self.view.bot.util.cleanInter(interaction, 70)
             else:
                 await interaction.response.edit_message(view=self.view)
