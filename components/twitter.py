@@ -47,7 +47,7 @@ class Twitter():
     unknwon: None if error or the user if not
     """
     def user(self, screen_name : str):
-        try: return self.api.get_user(screen_name)
+        try: return self.api.get_user(screen_name=screen_name)
         except: return None
 
     """timeline()
@@ -62,5 +62,5 @@ class Twitter():
     unknwon: None if error or the user timeline if not
     """
     def timeline(self, screen_name):
-        try: return self.api.user_timeline(screen_name, tweet_mode='extended')
+        try: return self.api.user_timeline(screen_name=screen_name, tweet_mode='extended')
         except: return None
