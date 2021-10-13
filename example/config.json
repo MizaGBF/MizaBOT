@@ -15,10 +15,7 @@
         "pass" : ""
     },
     "twitter": {
-        "key" : "",
-        "secret" : "",
-        "access" : "",
-        "access_secret" : ""
+        "bearer" : ""
     },
     "ids" : {
         "debug_channel" : <id of the channel where the bot will write debug infos. all ids are numbers, so no quotes>,
