@@ -63,9 +63,9 @@ class Twitter():
         try: 
             user = self.user(screen_name)
             if token is None:
-                return self.client.get_users_tweets(id=user.data.id, tweet_fields=['context_annotations', 'created_at', 'entities', 'public_metrics'], user_fields=['profile_image_url'], media_fields=['preview_image_url', 'url'], expansions=['author_id', 'attachments.media_keys', 'entities.mentions.username', 'referenced_tweets.id,' 'referenced_tweets.id.author_id'], max_results=10)
+                return self.client.get_users_tweets(id=user.data.id, tweet_fields=['context_annotations', 'created_at', 'entities', 'public_metrics'], user_fields=['profile_image_url'], media_fields=['preview_image_url', 'url'], expansions=['author_id', 'attachments.media_keys', 'entities.mentions.username', 'referenced_tweets.id', 'referenced_tweets.id.author_id'], max_results=10)
             else:
-                return self.client.get_users_tweets(id=user.data.id, tweet_fields=['context_annotations', 'created_at', 'entities', 'public_metrics'], user_fields=['profile_image_url'], media_fields=['preview_image_url', 'url'], expansions=['author_id', 'attachments.media_keys', 'entities.mentions.username', 'referenced_tweets.id,' 'referenced_tweets.id.author_id'], pagination_token=token, max_results=10)
+                return self.client.get_users_tweets(id=user.data.id, tweet_fields=['context_annotations', 'created_at', 'entities', 'public_metrics'], user_fields=['profile_image_url'], media_fields=['preview_image_url', 'url'], expansions=['author_id', 'attachments.media_keys', 'entities.mentions.username', 'referenced_tweets.id', 'referenced_tweets.id.author_id'], pagination_token=token, max_results=10)
         except:
             return None
 
@@ -102,6 +102,6 @@ class Twitter():
     """
     def tweet(self, ids):
         try: 
-            return self.client.get_tweets(ids=ids, tweet_fields=['context_annotations', 'created_at', 'entities', 'public_metrics'], user_fields=['profile_image_url'], media_fields=['preview_image_url', 'url'], expansions=['author_id', 'attachments.media_keys', 'entities.mentions.username', 'referenced_tweets.id,' 'referenced_tweets.id.author_id'])
+            return self.client.get_tweets(ids=ids, tweet_fields=['context_annotations', 'created_at', 'entities', 'public_metrics'], user_fields=['profile_image_url'], media_fields=['preview_image_url', 'url'], expansions=['author_id', 'attachments.media_keys', 'entities.mentions.username', 'referenced_tweets.id', 'referenced_tweets.id.author_id'])
         except:
             return None
