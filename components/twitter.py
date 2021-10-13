@@ -26,7 +26,7 @@ class Twitter():
     """
     def login(self):
         try:
-            self.client = tweepy.Client(bearer_token="AAAAAAAAAAAAAAAAAAAAAB9eUgEAAAAAaerPL8%2FiHVZD968zWSWO%2FBUquvQ%3DS3VIPkauDuMnkVFeqlDGusZ3KvfCB8CK0mYCR4JPD2TbDwLzk6")
+            self.client = tweepy.Client(bearer_token=self.bot.data.config['twitter']['bearer'])
             self.client.get_user(username='granblue_en', user_fields=['description', 'profile_image_url', 'pinned_tweet_id'])
             return True
         except:
