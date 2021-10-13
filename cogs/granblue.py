@@ -1833,7 +1833,7 @@ class GranblueFantasy(commands.Cog):
         else:
             user = self.bot.twitter.user(target[0])
         if user is not None:
-            pic = user.profile_image_url
+            pic = user.data.profile_image_url
         else:
             pic = None
 
@@ -1841,10 +1841,10 @@ class GranblueFantasy(commands.Cog):
             if user is None:
                 await ctx.reply(embed=self.bot.util.embed(title=target[0], url="https://twitter.com/{}".format(target[0]), description=target[1], thumbnail=pic, color=self.color))
             else:
-                await ctx.reply(embed=self.bot.util.embed(title=user.name, url="https://twitter.com/{}".format(target[0]), description=target[1], thumbnail=pic, color=self.color))
+                await ctx.reply(embed=self.bot.util.embed(title=user.data.name, url="https://twitter.com/{}".format(target[0]), description=target[1], thumbnail=pic, color=self.color))
         elif user is None:
             await ctx.reply(embed=self.bot.util.embed(title="Error", description="`{}` not found".format(term), color=self.color))
         elif ctx.channel.is_nsfw():
-            await ctx.reply(embed=self.bot.util.embed(title=user.name, url="https://twitter.com/{}".format(user.screen_name), thumbnail=pic, color=self.color))
+            await ctx.reply(embed=self.bot.util.embed(title=user.data.name, url="https://twitter.com/{}".format(user.data.username), thumbnail=pic, color=self.color))
         else:
-            await ctx.reply(embed=self.bot.util.embed(title="NSFW protection", description="Check at your own risk\n[{}](https://twitter.com/{})".format(user.name, user.screen_name), color=self.color))
+            await ctx.reply(embed=self.bot.util.embed(title="NSFW protection", description="Check at your own risk\n[{}](https://twitter.com/{})".format(user.data.name, user.data.username), color=self.color))
