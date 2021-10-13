@@ -1833,7 +1833,7 @@ class GranblueFantasy(commands.Cog):
         else:
             user = self.bot.twitter.user(target[0])
         if user is not None:
-            pic = user.profile_image_url.replace("normal", "bigger")
+            pic = user.profile_image_url
         else:
             pic = None
 

@@ -249,37 +249,33 @@ class Data():
     """
     def clean_schedule(self): # clean up schedule
         c = self.bot.util.JST()
-        fd = c.replace(day=1, hour=12, minute=15, second=0, microsecond=0) # day of the next schedule drop, 15min after
+        fd = c.replace(day=1, hour=12, minute=45, second=0, microsecond=0) # day of the next schedule drop, 15min after
         if fd < c:
             if fd.month == 12: fd = fd.replace(year=fd.year+1, month=1)
             else: fd = fd.replace(month=fd.month+1)
         d = fd - c
         new_schedule = []
-        if self.bot.twitter.api is not None and d.days < 1: # retrieve schedule from @granblue_en if we are close to the date
+        if self.bot.twitter.client is not None and d.days < 1: # retrieve schedule from @granblue_en if we are close to the date
             time.sleep(d.seconds) # wait until koregra to try to get the schedule
             count = 0
             while count < 5 and len(new_schedule) == 0:
-                tw = self.bot.twitter.timeline('granblue_en')
-                if tw is not None:
-                    for t in tw:
-                        txt = t.full_text
-                        if txt.find(" = ") != -1 and txt.find("chedule\n") != -1:
-                            try:
-                                s = txt.find("https://t.co/")
-                                if s != -1: txt = txt[:s]
-                                txt = txt.replace('\n\n', '\n')
-                                txt = txt[txt.find("chedule\n")+len("chedule\n"):]
-                                new_schedule = txt.replace('\n', ' = ').split(' = ')
-                                while len(new_schedule) > 0 and new_schedule[0] == '': new_schedule.pop(0)
-                            except: pass
-                            break
-                    if len(new_schedule) == 0:
-                        count += 1
-                        time.sleep(1000)
-                    else:
+                tw = self.bot.twitter.pinned('granblue_en')
+                if tw is not None and tw.created_at.month != c.month:
+                    txt = tw.text
+                    if txt.find(" = ") != -1 and txt.find("chedule\n") != -1:
+                        try:
+                            s = txt.find("https://t.co/")
+                            if s != -1: txt = txt[:s]
+                            txt = txt.replace('\n\n', '\n')
+                            txt = txt[txt.find("chedule\n")+len("chedule\n"):]
+                            new_schedule = txt.replace('\n', ' = ').split(' = ')
+                            while len(new_schedule) > 0 and new_schedule[0] == '': new_schedule.pop(0)
+                        except:
+                            pass
                         break
                 else:
-                    break
+                    count += 1
+                    time.sleep(1000)
         else: # else, just clean up old entries
             for i in range(0, ((len(self.bot.data.save['schedule'])//2)*2), 2):
                 try:

@@ -370,23 +370,22 @@ class Admin(commands.Cog):
     async def getSchedule(self, ctx):
         """Retrieve the monthly schedule from @granble_en (Owner Only / Tweepy Only)
         The tweet must be recent"""
-        tw = self.bot.twitter.timeline('granblue_en')
+        tw = self.bot.twitter.pinned('granblue_en')
         if tw is not None:
-            for t in tw:
-                txt = html.unescape(t.full_text)
-                if txt.find(" = ") != -1 and txt.find("chedule") != -1:
-                    s = txt.find("https://t.co/")
-                    if s != -1: txt = txt[:s]
-                    lines = txt.split('\n')
-                    msg = lines[0] + '\n`'
-                    for i in range(1, len(lines)):
-                        if lines[i] != "":
-                            msg += lines[i].replace(" = ", ";") + ";"
-                    msg = msg[:-1]
-                    msg += "`"
-                    await self.bot.send('debug', embed=self.bot.util.embed(title="Granblue Fantasy Schedule from @granblue_en", description=msg, color=self.color))
-                    await self.bot.util.react(ctx.message, '✅') # white check mark
-                    return
+            txt = html.unescape(tw.text)
+            if txt.find(" = ") != -1 and txt.find("chedule") != -1:
+                s = txt.find("https://t.co/")
+                if s != -1: txt = txt[:s]
+                lines = txt.split('\n')
+                msg = lines[0] + '\n`'
+                for i in range(1, len(lines)):
+                    if lines[i] != "":
+                        msg += lines[i].replace(" = ", ";") + ";"
+                msg = msg[:-1]
+                msg += "`"
+                await self.bot.send('debug', embed=self.bot.util.embed(title="Granblue Fantasy Schedule from @granblue_en", description=msg, color=self.color))
+                await self.bot.util.react(ctx.message, '✅') # white check mark
+                return
         await self.bot.util.react(ctx.message, '❎') # white negative mark
 
     @commands.command(no_pm=True)

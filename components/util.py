@@ -213,7 +213,7 @@ class Util():
             "Server Count": str(len(self.bot.guilds)),
             "Pending Servers": ("**{}**".format(len(self.bot.data.save['guilds']['pending'])) if len(self.bot.data.save['guilds']['pending']) > 0 else str(len(self.bot.data.save['guilds']['pending']))),
             "Cogs Loaded": "{}/{}".format(len(self.bot.cogs), self.bot.cogn) if (len(self.bot.cogs) == self.bot.cogn) else "**{}**/{}".format(len(self.bot.cogs), self.bot.cogn),
-            "Twitter": ("Disabled" if (self.bot.twitter.api is None) else "Online")
+            "Twitter": ("Disabled" if (self.bot.twitter.client is None) else "Online")
         }
 
     """statusString()
