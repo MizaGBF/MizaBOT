@@ -1,727 +1,366 @@
-from components.data import Data
-from components.drive import Drive
-from components.util import Util
-from components.gbf import GBF
-from components.twitter import Twitter
-from components.pinboard import Pinboard
-from components.emote import Emote
-from components.calc import Calc
-from components.channel import Channel
-from components.file import File
-from components.sql import SQL
-from components.ranking import Ranking
-from components.ban import Ban
-import cogs
+﻿from discord.ext import commands
+import itertools
+from views.poll import Poll
 
-import discord
-from discord.ext import commands
-import asyncio
-import time
-import concurrent.futures
-import functools
-from signal import SIGTERM, SIGINT
-# conditional import
-try:
-    import uvloop
-    uvloop.install()
-except:
-    pass
+# ----------------------------------------------------------------------------------------------------------------
+# Bot Cog
+# ----------------------------------------------------------------------------------------------------------------
+# Commands related to the current instance of MizaBOT
+# ----------------------------------------------------------------------------------------------------------------
 
-# Main Bot Class (overload commands.Bot)
-class MizaBot(commands.Bot):
-    def __init__(self):
-        self.version = "8.13" # bot version
-        self.changelog = [ # changelog lines
-            "Please use `$bug_report` if you see anything wrong",
-            "Online command list added [here](https://mizagbf.github.io/MizaBOT/)",
-            "**DEVELOPMENT IS ON HOLD FOR AN UNDETERMINED AMOUNT OF TIME FOLLOWING [DISCORD.PY DEATH](https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1)**"
-        ]
-        self.running = True # is False when the bot is shutting down
-        self.booted = False # goes up to True after the first on_ready event
-        self.tasks = {} # contain our user tasks
-        self.cogn = 0 # number of cog loaded
-        self.errn = 0 # number of internal errors
-        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=30) # thread pool for blocking codes
-        
-        # components
-        self.data = Data(self)
-        self.drive = Drive(self)
-        self.util = Util(self)
-        self.gbf = GBF(self)
-        self.twitter = Twitter(self)
-        self.pinboard = Pinboard(self)
-        self.emote = Emote(self)
-        self.calc = Calc(self)
-        self.channel = Channel(self)
-        self.file = File(self)
-        self.sql = SQL(self)
-        self.ranking = Ranking(self)
-        self.ban = Ban(self)
-        
-        # loading data
-        self.data.loadConfig()
-        for i in range(0, 100): # try multiple times in case google drive is unresponsive
-            if self.drive.load(): break # attempt to download the save file
-            elif i == 99:
-                print("Google Drive might be unavailable")
-                exit(3)
-            time.sleep(20) # wait 20 sec
-        if not self.data.loadData(): exit(2) # load the save file
-        
-        # initialize components
-        self.data.init()
-        self.drive.init()
-        self.util.init()
-        self.gbf.init()
-        self.twitter.init()
-        self.pinboard.init()
-        self.emote.init()
-        self.calc.init()
-        self.channel.init()
-        self.file.init()
-        self.sql.init()
-        self.ranking.init()
-        self.ban.init()
+class Bot(commands.Cog):
+    """MizaBot commands."""
+    def __init__(self, bot):
+        self.bot = bot
+        self.color = 0xd12e57
 
-        # intents (for guilds and stuff)
-        intents = discord.Intents.default()
-        intents.members = True
-        
-        # init base class
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\n[Source code](https://github.com/MizaGBF/MizaBOT)▫️[Online Command List](https://mizagbf.github.io/MizaBOT/)\nDefault command prefix is `$`, use `$setPrefix` to change it on your server.".format(self.version), help_command=None, owner=self.data.config['ids']['owner'], max_messages=None, intents=intents)
-        self.add_check(self.global_check)
-
-    """go()
-    Main Bot Loop
-    
-    Returns
-    --------
-    int: Exit value
-    """
-    def go(self):
-        self.cogn = cogs.load(self) # load cogs
-        # graceful exit setup
-        graceful_exit = self.loop.create_task(self.exit_gracefully())
-        for s in [SIGTERM, SIGINT]:
-            self.loop.add_signal_handler(s, graceful_exit.cancel)
-        # main loop
-        while self.running:
-            try:
-                self.loop.run_until_complete(self.start(self.data.config['tokens']['discord'])) # start the bot
-            except Exception as e: # handle exceptions here to avoid the bot dying
-                if self.data.pending: # save if anything weird happened (if needed)
-                    self.data.saveData()
-                if str(e).startswith("429 Too Many Requests"): # ignore the rate limit error
-                    time.sleep(100)
-                else:
-                    self.errn += 1
-                    print("Main Loop Exception:\n" + self.util.pexc(e))
-        if self.data.saveData():
-            print('Autosave Success')
+    @commands.command(no_pm=True)
+    @commands.cooldown(1, 500, commands.BucketType.user)
+    async def invite(self, ctx):
+        """Get the MizaBOT invite link"""
+        if 'invite' not in self.bot.data.save:
+            msg = await ctx.reply(embed=self.bot.util.embed(title="Invite Error", description="Invitation settings aren't set, hence the bot can't be invited.\nIf you are the server owner, check the `setInvite` command", timestamp=self.bot.util.timestamp(), color=self.color))
+            await self.bot.util.clean(ctx, msg, 45)
+        elif self.bot.data.save['invite']['state'] == False or (len(self.bot.guilds) - len(self.bot.data.save['guilds']['pending'])) >= self.bot.data.save['invite']['limit']:
+            msg = await ctx.reply(embed=self.bot.util.embed(title="Invite Error", description="Invitations are currently closed.", timestamp=self.bot.util.timestamp(), color=self.color))
+            await self.bot.util.clean(ctx, msg, 45)
         else:
-            print('Autosave Failed')
+            await self.bot.send('debug', embed=self.bot.util.embed(title="Invite Request", description="{} ▫️ `{}`".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.display_avatar, timestamp=self.bot.util.timestamp(), color=self.color))
+            await ctx.author.send(embed=self.bot.util.embed(title=ctx.guild.me.name, description="{}\nCurrently only servers of 30 members or more can be added.\nYou'll have to wait for my owner approval (Your server owner will be notified if accepted).\nMisuses of this link will result in a server-wide ban.".format(self.bot.data.config['strings']["invite()"]), thumbnail=ctx.guild.me.display_avatar, timestamp=self.bot.util.timestamp(), color=self.color))
 
-    """exit_gracefully()
-    Coroutine triggered when SIGTERM is received, to close the bot
-    """
-    async def exit_gracefully(self): # graceful exit (when SIGTERM is received)
-        try:
-            while self.running: # we wait until we receive the signal
-                await asyncio.sleep(3600)
-        except asyncio.CancelledError:
-            self.running = False
-            if self.data.pending:
-                self.data.autosaving = False
-                if self.data.saveData():
-                    print('Autosave Success')
-                else:
-                    print('Autosave Failed')
-            await self.close()
-            exit(0)
-
-    """prefix()
-    Return the prefix of the server the command is invoked in (default: $)
-    
-    Parameters
-    ----------
-    client: Client instance (unused, it should be equal to self)
-    message: The message to process
-    
-    Returns
-    --------
-    str: Server prefix
-    """
-    def prefix(self, client, message): # command prefix check
-        try:
-            return self.data.save['prefixes'][str(message.guild.id)] # get the guild prefix if set
-        except:
-            return '$' # else, return the default prefix $
-
-    """isAuthorized()
-    Check if the command is authorized to be invoked in this channel
-    
-    Parameters
-    ----------
-    ctx: Command context or interaction
-    
-    Returns
-    --------
-    bool: True if authorized, False if not
-    """
-    def isAuthorized(self, ctx): # check if the command is authorized in the channel
-        id = str(ctx.guild.id)
-        if id in self.data.save['permitted']: # if id is found, it means the check is enabled
-            if ctx.channel.id in self.data.save['permitted'][id]:
-                return True # permitted
-            return False # not permitted
-        return True # default
-
-    """isServer()
-    Check if the context is matching this server (server must be set in config.json)
-    
-    Parameters
-    ----------
-    ctx: Command context
-    id_string: Server identifier in config.json
-    
-    Returns
-    --------
-    bool: True if matched, False if not
-    """
-    def isServer(self, ctx, id_string : str): # check if the context is in the targeted guild (guild id must be in config.json)
-        if ctx.message.author.guild.id == self.data.config['ids'].get(id_string, -1):
-            return True
-        return False
-
-    """isChannel()
-    Check if the context is matching this channel (channel must be set in config.json)
-    
-    Parameters
-    ----------
-    ctx: Command context
-    id_string: Channel identifier in config.json
-    
-    Returns
-    --------
-    bool: True if matched, False if not
-    """
-    def isChannel(self, ctx, id_string : str): # check if the context is in the targeted channel (channel is must be in config.json)
-        if ctx.channel.id == self.data.config['ids'].get(id_string, -1):
-            return True
-        return False
-
-    """isMod()
-    Check if the context author has the manage message permission
-    
-    Parameters
-    ----------
-    ctx: Command context
-    
-    Returns
-    --------
-    bool: True if it does, False if not
-    """
-    def isMod(self, ctx): # check if the member has the manage_message permission
-        if ctx.author.guild_permissions.manage_messages or ctx.author.id == self.data.config['ids'].get('owner', -1):
-            return True
-        return False
-
-    """isOwner()
-    Check if the context author is the owner (id must be set in config.json)
-    
-    Parameters
-    ----------
-    ctx: Command context
-    
-    Returns
-    --------
-    bool: True if it does, False if not
-    """
-    def isOwner(self, ctx): # check if the member is the bot owner
-        if ctx.message.author.id == self.data.config['ids'].get('owner', -1): # must be defined in config.json
-            return True
-        return False
-
-    """callCommand()
-    Invoke a command from another command
-    
-    Parameters
-    ----------
-    ctx: Command context
-    command: New command to be called
-    *args: New command parameters
-    **kargs: New command keyword parameters
-    
-    Raises
-    ------
-    Exception: If the command isn't found
-    """
-    async def callCommand(self, ctx, command, *args, **kwargs): #call a command from another cog or command
-        for cn in self.cogs:
-            cmds = self.get_cog(cn).get_commands()
-            for cm in cmds:
-                if cm.name == command:
-                    await ctx.invoke(cm, *args, **kwargs)
-                    return
-        raise Exception("Command `{}` not found".format(command))
-
-    """send()
-    Send a message to a registered channel (must be set in config.json)
-    
-    Parameters
-    ----------
-    channel_name: Channel name identifier
-    msg: Text message
-    embed: Discord Embed
-    file: Discord File
-    
-    Returns
-    --------
-    discord.Message: The sent message or None if error
-    """
-    async def send(self, channel_name : str, msg : str = "", embed : discord.Embed = None, file : discord.File = None, view : discord.ui.View = None): # send something to a registered channel
-        try:
-            return await self.channel.get(channel_name).send(msg, embed=embed, file=file, view=view)
-        except Exception as e:
-            self.errn += 1
-            print("Channel {} error: {}".format(channel_name, self.util.pexc(e)))
-            return None
-
-    """sendMulti()
-    Send a message to multiple registered channel (must be set in config.json)
-    
-    Parameters
-    ----------
-    channel_names: List of Channel name identifiers
-    msg: Text message
-    embed: Discord Embed
-    file: Discord File
-    
-    Returns
-    --------
-    list: A list of the successfully sent messages
-    """
-    async def sendMulti(self, channel_names : list, msg : str = "", embed : discord.Embed = None, file : discord.File = None): # send to multiple registered channel at the same time
-        r = []
-        for c in channel_names:
-            try:
-                r.append(await self.send(c, msg, embed, file))
-            except:
-                await self.sendError('sendMulti', 'Failed to send a message to channel `{}`'.format(c))
-                r.append(None)
-        return r
-
-    """sendError()
-    Send an error message to the debuf channel (must be set in config.json)
-    
-    Parameters
-    ----------
-    func_name: Name of the function where the error happened
-    error: Exception
-    id: Optional identifier to locate the error more precisely
-    """
-    async def sendError(self, func_name : str, error, id = None): # send an error to the debug channel
-        if str(error).startswith("403 FORBIDDEN"): return # I'm tired of those errors because people didn't set their channel permissions right so I ignore it
-        if self.errn >= 30: return # disable error messages if too many messages got sent
-        if id is None: id = ""
-        else: id = " {}".format(id)
-        self.errn += 1
-        await self.send('debug', embed=self.util.embed(title="Error in {}() {}".format(func_name, id), description=self.util.pexc(error), timestamp=self.util.timestamp()))
-
-    """on_ready()
-    Event. Called on connection
-    """
-    async def on_ready(self): # called when the bot starts
-        if not self.booted:
-            # set our used channels for the send function
-            self.channel.setMultiple([['debug', 'debug_channel'], ['image', 'image_upload'], ['debug_update', 'debug_update'], ['you_pinned', 'you_pinned'], ['gbfg_pinned', 'gbfg_pinned'], ['gbfglog', 'gbfg_log'], ['youlog', 'you_log']])
-            await self.send('debug', embed=self.util.embed(title="{} is Ready".format(self.user.display_name), description=self.util.statusString(), thumbnail=self.user.display_avatar, timestamp=self.util.timestamp()))
-            # start the task
-            await self.startTasks()
-            self.booted = True
-
-    """do()
-    Run a non awaitable function in the bot event loop
-    
-    Parameters
-    ----------
-    func: Function to be called
-    *args: Function parameters
-    **kargs: Function keyword parameters
-    
-    Returns
-    --------
-    unknown: The function return value
-    """
-    async def do(self, func, *args, **kwargs): # routine to run blocking code in a separate thread
-        return await self.loop.run_in_executor(self.executor, functools.partial(func, *args, **kwargs))
-
-    """doAsync()
-    Run an awaitable function in the bot event loop
-    
-    Parameters
-    ----------
-    coro: The coroutine to be called
-    
-    Returns
-    --------
-    unknown: The function return value
-    """
-    def doAsync(self, coro): # add a task to the event loop (return the task)
-        return self.loop.create_task(coro)
-
-    """doAsync()
-    Run an awaitable function from non async code (Warning: slow and experimental)
-    
-    Parameters
-    ----------
-    coro: The coroutine to be called
-    
-    Returns
-    --------
-    unknown: The function return value
-    """
-    def doAsTask(self, coro): # run a coroutine from a normal function (slow, don't abuse it for small functions)
-        task = self.doAsync(coro)
-        while not task.done(): # NOTE: is there a way to make it faster?
-            time.sleep(0.01)
-        return task.result()
-
-    """runTask()
-    Start a new bot task (cancel any previous one with the same name
-    
-    Parameters
-    ----------
-    name: Task identifier
-    coro: The coroutine to be called
-    """
-    def runTask(self, name, func): # start a task (cancel a previous one with the same name)
-        self.cancelTask(name)
-        self.tasks[name] = self.loop.create_task(func())
-
-    """cancelTask()
-    Stop a bot task
-    
-    Parameters
-    ----------
-    name: Task identifier
-    """
-    def cancelTask(self, name): # cancel a task
-        if name in self.tasks:
-            self.tasks[name].cancel()
-
-    """startTasks()
-    Start all tasks from each cogs (if any)
-    """
-    async def startTasks(self): # start all our tasks
-        for c in self.cogs:
-            try: self.get_cog(c).startTasks()
-            except: pass
-        msg = ""
-        for t in self.tasks:
-            msg += "\▫️ {}\n".format(t)
-        if msg != "":
-            await self.send('debug', embed=self.util.embed(title="{} user tasks started".format(len(self.tasks)), description=msg, timestamp=self.util.timestamp()))
-
-    """on_message()
-    Event. Called when a message is received
-    
-    Parameters
-    ----------
-    message: Discord Message to be processed
-    """
-    async def on_message(self, message): # to do something with a message
-        if self.running: # don't process commands if exiting
-            await self.process_commands(message) # never forget this line
-
-    """on_guild_join()
-    Event. Called when the bot join a guild
-    
-    Parameters
-    ----------
-    guild: Discord Guild
-    """
-    async def on_guild_join(self, guild): # when the bot joins a new guild
-        id = str(guild.id)
-        if id == str(self.data.config['ids']['debug_server']):
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['bug', 'report', 'bug_report'])
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def bugReport(self, ctx, *, terms : str):
+        """Send a bug report (or your love confessions) to the author"""
+        if len(terms) == 0:
             return
-        elif id in self.data.save['guilds']['banned'] or self.ban.check(guild.owner.id, self.ban.OWNER): # leave if the server is blacklisted
-            try:
-                await self.send('debug', embed=self.util.embed(title="Banned guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon.url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
-            except Exception as e:
-                await self.sendError("on_guild_join", e)
-            await guild.leave()
-        elif 'invite' not in self.data.save or self.data.save['invite']['state'] == False or (len(self.guilds) - len(self.data.save['guilds']['pending'])) >= self.data.save['invite']['limit']:
-            try: await guild.owner.send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon.url))
-            except: pass
-            await guild.leave()
-        elif len(guild.members) < 30:
-            try: await guild.owner.send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=guild.icon.url))
-            except: pass
-            await guild.leave()
-        else: # notify me and add to the pending servers
-            self.data.save['guilds']['pending'][id] = guild.name
-            self.data.pending = True
-            try: await guild.owner.send(embed=self.util.embed(title="Pending guild request", description="Please wait for your server to be accepted.", thumbnail=guild.icon.url))
-            except: pass
-            await self.send('debug', msg="{} Please review this new server".format(self.get_user(self.data.config['ids']['owner']).mention), embed=self.util.embed(title="Pending guild request for " + guild.name, description="**ID** ▫️ `{}`\n**Owner** ▫️ {} ▫️ `{}`\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}\n\nUse `$accept` or `$refuse`".format(guild.id, guild.owner, guild.owner.id, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at))
+        await self.bot.send('debug', embed=self.bot.util.embed(title="Bug Report", description=terms, footer="{} ▫️ User ID: {}".format(ctx.author.name, ctx.author.id), thumbnail=ctx.author.display_avatar, color=self.color))
+        #await self.bot.util.react(ctx.message, '✅') # white check mark
+        final_msg = await ctx.reply(embed=self.bot.util.embed(title="Information", description="**Development is on hold for an undetermined amount of time following [discord.py death](https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1)**, no new features will be added until an alternative is found.", footer="Your report has still been transmitted to my owner", color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 40) # TODO
 
-    """global_check()
-    Check if the command is authorized to run
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['source'])
+    @commands.cooldown(1, 20, commands.BucketType.guild)
+    async def github(self, ctx):
+        """Post the link to the bot code source"""
+        final_msg = await ctx.reply(embed=self.bot.util.embed(title=self.bot.description.splitlines()[0], description="Code source [here](https://github.com/MizaGBF/MizaBOT)\nCommand list available [here](https://mizagbf.github.io/MizaBOT/)", thumbnail=ctx.guild.me.display_avatar, color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 25)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['mizabot'])
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def status(self, ctx):
+        """Post the bot status"""
+        final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} is Ready".format(self.bot.user.display_name), description=self.bot.util.statusString(), thumbnail=self.bot.user.display_avatar, timestamp=self.bot.util.timestamp(), color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 40)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def changelog(self, ctx):
+        """Post the bot changelog"""
+        msg = ""
+        for c in self.bot.changelog:
+            msg += "▫️ {}\n".format(c)
+        if msg != "":
+            final_msg = await ctx.send(embed=self.bot.util.embed(title="{} ▫️ v{}".format(ctx.guild.me.display_name, self.bot.version), description="**Changelog**\n" + msg, thumbnail=ctx.guild.me.display_avatar, color=self.color))
+            await self.bot.util.clean(ctx, final_msg, 40)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['survey'])
+    @commands.cooldown(1, 200, commands.BucketType.guild)
+    async def poll(self, ctx, duration : int, *, poll_str : str):
+        """Make a poll
+        duration is in seconds (min 60, max 500)
+        poll_str format is: `title;choice1;choice2;...;choiceN`"""
+        try:
+            if poll_str == "": raise Exception('Please specify what to poll for\nFormat: `duration title;choice1;choice2;...;choiceN`')
+            splitted = poll_str.split(';')
+            if len(splitted) < 2: raise Exception('Specify at least a poll title and two choices\nFormat: `duration title;choice1;choice2;...;choiceN`')
+            view = Poll(self.bot, ctx.author, self.color, splitted[0], splitted[1:])
+            if duration < 60: duration = 60
+            elif duration > 500: duration = 500
+            msg_to_edit = await ctx.send(embed=self.bot.util.embed(author={'name':'{} started a poll'.format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, title=splitted[0], description="{} seconds remaining to vote".format(duration), color=self.color))
+            msg_view = await ctx.send('\u200b', view=view)
+            await view.run_poll(duration, msg_to_edit, ctx.channel)
+            await msg_view.delete()
+        except Exception as e:
+            msg = await ctx.send(embed=self.bot.util.embed(title="Poll error", description="{}".format(e), color=self.color))
+            await self.bot.util.clean(ctx, msg, 120)
+
+    """get_category()
+    Retrieve a command category. Used for the help.
     
     Parameters
     ----------
-    ctx: Command context
+    command: The command object
+    no_category: Default string if no category found
     
     Returns
-    --------
-    bool: True if the command can be processed, False if not
+    ------
+    str: Category name and description or the content of no_category if no category
     """
-    async def global_check(self, ctx): # called whenever a command is used
-        if ctx.guild is None: # if none, the command has been sent via a direct message
-            return False # so we ignore
+    def get_category(self, command, *, no_category=""):
+        cog = command.cog
+        return ('**' + cog.qualified_name + '** :white_small_square: ' + cog.description) if cog is not None else no_category
+
+    """predicate()
+    Check if the command can run in the current context. Used for the help.
+    
+    Parameters
+    ----------
+    ctx: The command context
+    cmd: The command object
+    
+    Returns
+    ------
+    bool: True if it can runs, False if it can't
+    """
+    async def predicate(self, ctx, cmd):
         try:
-            id = str(ctx.guild.id)
-            if self.ban.check(ctx.author.id, self.ban.USE_BOT):
-                return False
-            elif id in self.data.save['guilds']['banned'] or self.ban.check(ctx.guild.owner.id, self.ban.OWNER): # ban check
-                await ctx.guild.leave() # leave the server if banned
-                return False
-            elif id in self.data.save['guilds']['pending']: # pending check
-                await self.util.react(ctx.message, 'cooldown')
-                return False
-            elif ctx.guild.owner.id in self.data.config['banned']:
-                return False
-            return True
-        except Exception as e:
-            await self.sendError('global_check', e)
+            return await cmd.can_run(ctx)
+        except Exception:
             return False
 
-    """on_command_error()
-    Event. Called when a command raise an uncaught error
+    """filter_commands()
+    Smaller implementation of filter_commands() from discord.py help. Used for the help.
+    Only allowed commands in the current context can pass the filter.
     
     Parameters
     ----------
-    ctx: Command context
-    error: Exception
+    ctx: The command context
+    cmds: List of commands
+    
+    Returns
+    ------
+    list: List of sorted and filtered commands
     """
-    async def on_command_error(self, ctx, error): # called when an uncatched exception happens in a command
-        msg = str(error)
-        if msg.startswith('You are on cooldown.'):
-            await self.util.react(ctx.message, 'cooldown')
-        elif msg.find('check functions for command') != -1:
-            return
-        elif msg.find('required argument that is missing') != -1 or msg.startswith('Converting to "int" failed for parameter'):
-            await self.util.react(ctx.message, '❎')
-            return
-        elif msg.find('Member "') == 0 or msg.find('Command "') == 0 or msg.startswith('Command raised an exception: Forbidden: 403'):
-            return
-        else:
-            await self.util.react(ctx.message, '❎')
-            self.errn += 1
-            await self.send('debug', embed=self.util.embed(title="⚠ Error caused by {}".format(ctx.message.author), description=self.util.pexc(error), thumbnail=ctx.author.display_avatar, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=self.util.timestamp()))
+    async def filter_commands(self, ctx, cmds):
+        iterator = filter(lambda c: not c.hidden, cmds)
 
-    """on_raw_reaction_add()
-    Event. Called when a new reaction is added by an user
+        ret = []
+        for cmd in iterator:
+            valid = await self.predicate(ctx, cmd)
+            if valid:
+                ret.append(cmd)
+
+        ret.sort(key=self.get_category)
+        return ret
+
+
+    """get_command_signature()
+    Implementation of get_command_signature() from discord.py help. Used for the help.
     
     Parameters
     ----------
-    payload: Raw payload
-    """
-    async def on_raw_reaction_add(self, payload):
-        await self.pinboard.check(payload)
-
-    # under is the log system used by my crew and another server, remove if you don't need those
-    # it's a sort of live audit log
-
-    """on_member_update()
-    Event. Called when a guild member status is updated
+    ctx: The command context
+    command: The command object
     
-    Parameters
-    ----------
-    before: Previous Member status
-    after: New Member status
+    Returns
+    ------
+    str: The command signature
     """
-    async def on_member_update(self, before, after):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if before.guild.id in guilds:
-            channel = guilds[before.guild.id]
-            if before.display_name != after.display_name:
-                    await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Name change".format(after.display_name), 'icon_url':after.display_avatar}, description="{}\n**Before** ▫️ {}\n**After** ▫️ {}".format(after.mention, before.display_name, after.display_name), footer="User ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
-            elif len(before.roles) < len(after.roles):
-                for r in after.roles:
-                    if r not in before.roles:
-                        await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Role added".format(after.name), 'icon_url':after.display_avatar}, description="{} was given the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x1b55b3, timestamp=self.util.timestamp()))
-                        break
-            elif len(before.roles) > len(after.roles):
-                for r in before.roles:
-                    if r not in after.roles:
-                        await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Role removed".format(after.name), 'icon_url':after.display_avatar}, description="{} was removed from the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x0b234a, timestamp=self.util.timestamp()))
-                        break
-
-    """on_member_remove()
-    Event. Called when a guild member leaves
-    
-    Parameters
-    ----------
-    member: Member status
-    """
-    async def on_member_remove(self, member):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if member.guild.id in guilds:
-            await self.send(guilds[member.guild.id], embed=self.util.embed(author={'name':"{} ▫️ Left the server".format(member.name), 'icon_url':member.display_avatar}, footer="User ID: {}".format(member.id), timestamp=self.util.timestamp(), color=0xff0000))
-
-    """on_member_join()
-    Event. Called when a guild member joins
-    
-    Parameters
-    ----------
-    member: Member status
-    """
-    async def on_member_join(self, member):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if member.guild.id in guilds:
-            channel = guilds[member.guild.id]
-            await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Joined the server".format(member.name), 'icon_url':member.display_avatar}, footer="User ID: {}".format(member.id), timestamp=self.util.timestamp(), color=0x00ff3c))
-
-    """on_member_ban()
-    Event. Called when an user is banned from a guild
-    
-    Parameters
-    ----------
-    guild: Guild where it happened
-    user: Banned user
-    """
-    async def on_member_ban(self, guild, user):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if guild.id in guilds:
-            await self.send(guilds[guild.id], embed=self.util.embed(author={'name':"{} ▫️ Banned from the server".format(user.name), 'icon_url':user.display_avatar}, footer="User ID: {}".format(user.id), timestamp=self.util.timestamp(), color=0xff0000))
-
-    """on_member_unban()
-    Event. Called when an user is unbanned from a guild
-    
-    Parameters
-    ----------
-    guild: Guild where it happened
-    user: Unbanned user
-    """
-    async def on_member_unban(self, guild, user):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if guild.id in guilds:
-            await self.send(guilds[guild.id], embed=self.util.embed(author={'name':"{} ▫️ Unbanned from the server".format(user.name), 'icon_url':user.display_avatar}, footer="User ID: {}".format(user.id), timestamp=self.util.timestamp(), color=0x00ff3c))
-
-    """on_guild_emojis_update()
-    Event. Called when a guild emoji status is updated
-    
-    Parameters
-    ----------
-    before: Previous Emoji status
-    after: New Emoji status
-    """
-    async def on_guild_emojis_update(self, guild, before, after):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if guild.id in guilds:
-            channel = guilds[guild.id]
-            if len(before) < len(after):
-                for e in after:
-                    if e not in before:
-                        await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Emoji added".format(e.name), 'icon_url':e.url}, footer="Emoji ID: {}".format(e.id), timestamp=self.util.timestamp(), color=0x00ff3c))
-                        break
+    def get_command_signature(self, ctx, command):
+        parent = command.parent
+        entries = []
+        while parent is not None:
+            if not parent.signature or parent.invoke_without_command:
+                entries.append(parent.name)
             else:
-                for e in before:
-                    if e not in after:
-                        await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Emoji removed".format(e.name), 'icon_url':e.url}, footer="Emoji ID: {}".format(e.id), timestamp=self.util.timestamp(), color=0xff0000))
-                        break
+                entries.append(parent.name + ' ' + parent.signature)
+            parent = parent.parent
+        parent_sig = ' '.join(reversed(entries))
 
-    """on_guild_role_create()
-    Event. Called when a new role is created
+        if len(command.aliases) > 0:
+            aliases = '|'.join(command.aliases)
+            fmt = f'[{command.name}|{aliases}]'
+            if parent_sig:
+                fmt = parent_sig + ' ' + fmt
+            alias = fmt
+        else:
+            alias = command.name if not parent_sig else parent_sig + ' ' + command.name
+
+        return f'{ctx.clean_prefix}{alias} {command.signature}'
+
+    """search_help()
+    Search the bot categories and help for a match. Used for the help.
     
     Parameters
     ----------
-    role: New Role
+    ctx: The command context
+    terms: The search string
+    
+    Returns
+    ------
+    list: List of matches, a match being a list of length 2 containing an ID (0 for category, 1 for command) and the matched object (either a Cog or Command)
     """
-    async def on_guild_role_create(self, role):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if role.guild.id in guilds:
-            channel = guilds[role.guild.id]
-            await self.send(channel, embed=self.util.embed(title="Role created ▫️ `{}`".format(role.name), footer="Role ID: {}".format(role.id), timestamp=self.util.timestamp(), color=0x00ff3c))
+    async def search_help(self, ctx, terms):
+        flags = []
+        t = terms.lower()
+        # searching category match
+        for key in self.bot.cogs:
+            if t == self.bot.cogs[key].qualified_name.lower():
+                return [[0, self.bot.cogs[key]]]
+            elif t in self.bot.cogs[key].qualified_name.lower():
+                flags.append([0, self.bot.cogs[key]])
+            elif t in self.bot.cogs[key].description.lower():
+                flags.append([0, self.bot.cogs[key]])
+        # searching command match
+        for cmd in self.bot.commands:
+            if not await self.predicate(ctx, cmd):
+                continue
+            if t == cmd.name.lower():
+                return [[1, cmd]]
+            elif t in cmd.name.lower() or t in cmd.help.lower():
+                flags.append([1, cmd])
+            else:
+                for al in cmd.aliases:
+                    if t == al.lower() or t in al.lower():
+                        flags.append([1, cmd])
+        return flags
 
-    """on_guild_role_delete()
-    Event. Called when a guild role is deleted
+
+    """get_cog_help()
+    Send the cog detailed help to the user via DM. Used for the help.
     
     Parameters
     ----------
-    role: Deleted Role
+    ctx: The command context
+    cog: The cog object to output via DM
+    
+    Returns
+    ------
+    discord.Message: Error message or None if no errors
     """
-    async def on_guild_role_delete(self, role):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if role.guild.id in guilds:
-            channel = guilds[role.guild.id]
-            await self.send(channel, embed=self.util.embed(title="Role deleted ▫️ `{}`".format(role.name), footer="Role ID: {}".format(role.id), timestamp=self.util.timestamp(), color=0xff0000))
+    async def get_cog_help(self, ctx, cog):
+        try:
+            await self.bot.util.react(ctx.message, '📬')
+        except:
+            return await ctx.reply(embed=self.bot.util.embed(title="Help Error", description="Unblock me to receive the Help"))
 
-    """on_guild_role_update()
-    Event. Called when a guild role is updated
+        filtered = await self.filter_commands(ctx, cog.get_commands()) # sort
+        fields = []
+        for c in filtered:
+            if c.short_doc == "": fields.append({'name':"{} ▫ {}".format(c.name, self.get_command_signature(ctx, c)), 'value':"No description"})
+            else: fields.append({'name':"{} ▫ {}".format(c.name, self.get_command_signature(ctx, c)), 'value':c.short_doc})
+            if len(str(fields)) > 5800 or len(fields) > 24: # embeds have a 6000 and 25 fields characters limit, I send and make a new embed if needed
+                try:
+                    await ctx.author.send(embed=self.bot.util.embed(title="{} **{}** Category".format(self.bot.emote.get('mark'), cog.qualified_name), description=cog.description, fields=fields, color=cog.color)) # author.send = dm
+                    fields = []
+                except:
+                    msg = await ctx.reply(embed=self.bot.util.embed(title="Help Error", description="I can't send you a direct message"))
+                    await self.bot.util.unreact(ctx.message, '📬')
+                    return msg
+        if len(fields) > 0:
+            try:
+                await ctx.author.send(embed=self.bot.util.embed(title="{} **{}** Category".format(self.bot.emote.get('mark'), cog.qualified_name), description=cog.description, fields=fields, color=cog.color)) # author.send = dm
+            except:
+                msg = await ctx.reply(embed=self.bot.util.embed(title="Help Error", description="I can't send you a direct message"))
+                await self.bot.util.unreact(ctx.message, '📬')
+                return msg
+
+        await self.bot.util.unreact(ctx.message, '📬')
+        return None
+
+
+    """default_help()
+    Print the default help when no search terms is specifieed. Used for the help.
     
     Parameters
     ----------
-    before: Previous Role state
-    after: New Role state
+    ctx: The command context
+    
+    Returns
+    ------
+    discord.Message
     """
-    async def on_guild_role_update(self, before, after):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if before.guild.id in guilds:
-            channel = guilds[before.guild.id]
-            if before.name != after.name:
-                await self.send(channel, embed=self.util.embed(title="Role name updated", fields=[{'name':"Before", 'value':before.name}, {'name':"After", 'value':after.name}], footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
-            elif before.colour != after.colour:
-                await self.send(channel, embed=self.util.embed(title="Role updated ▫️ `" + after.name + "`", description="Color changed", footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
-            elif before.hoist != after.hoist:
-                if after.hoist:
-                    await self.send(channel, embed=self.util.embed(title="Role updated ▫️ `{}`".format(after.name), description="Role is displayed separately from other members", footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
-                else:
-                    await self.send(channel, embed=self.util.embed(title="Role updated ▫️ `{}`".format(after.name), description="Role is displayed as the other members", footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
-            elif before.mentionable != after.mentionable:
-                if after.mentionable:
-                    await self.send(channel, embed=self.util.embed(title="Role updated ▫️ `{}`".format(after.name), description="Role is mentionable", footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
-                else:
-                    await self.send(channel, embed=self.util.embed(title="Role updated ▫️ `{}`".format(after.name), description="Role isn't mentionable", footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
+    async def default_help(self, ctx):
+        me = ctx.author.guild.me # bot own user infos
+        # get command categories
+        filtered = await self.filter_commands(ctx, self.bot.commands) # sort all category and commands
+        to_iterate = itertools.groupby(filtered, key=self.get_category)
+        # categories to string
+        cats = ""
+        for category, coms in to_iterate:
+            if category != "":
+                cats += "{}\n".format(category)
+        return await ctx.reply(embed=self.bot.util.embed(title=me.name + " Help", description=self.bot.description + "\n\nUse `{}help <command_name>` or `{}help <category_name>` to get more informations\n**Categories:**\n".format(ctx.message.content[0], ctx.message.content[0]) + cats, thumbnail=me.display_avatar, color=self.color))
 
-    """on_guild_channel_create()
-    Event. Called when a new channel is created
+    """category_help()
+    Print the detailed category help. Used for the help.
+    Wrapper for get_cog_help(), might change it later.
     
     Parameters
     ----------
-    channel: New Channel
+    terms: The search string
+    ctx: The command context
+    cog: The cog object
+    
+    Returns
+    ------
+    discord.Message
     """
-    async def on_guild_channel_create(self, channel):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if channel.guild.id in guilds:
-            await self.send(guilds[channel.guild.id], embed=self.util.embed(title="Channel created ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=self.util.timestamp(), color=0xebe007))
+    async def category_help(self, terms, ctx, cog):
+        me = ctx.author.guild.me # bot own user infos
+        msg = await self.get_cog_help(ctx, cog)
+        if msg is None:
+            msg = await ctx.reply(embed=self.bot.util.embed(title=me.name + " Help", description="Full help for `{}` has been sent via direct messages".format(terms), color=self.color))
+        return msg
 
-    """on_guild_channel_delete()
-    Event. Called when a guild channel is deleted
+    """command_help()
+    Print the detailed command help. Used for the help.
     
     Parameters
     ----------
-    channel: Deleted Channel
+    terms: The search string
+    ctx: The command context
+    cmg: The command object
+    
+    Returns
+    ------
+    discord.Message
     """
-    async def on_guild_channel_delete(self, channel):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if channel.guild.id in guilds:
-            await self.send(guilds[channel.guild.id], embed=self.util.embed(title="Channel deleted ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=self.util.timestamp(), color=0x8a8306))
+    async def command_help(self, terms, ctx, cmd):
+        me = ctx.author.guild.me # bot own user infos
+        return await ctx.reply(embed=self.bot.util.embed(title="{} **{}** Command".format(self.bot.emote.get('mark'), cmd.name), description=cmd.help, fields=[{'name':'Usage', 'value':self.get_command_signature(ctx, cmd)}], color=self.color))
 
+    """multiple_help()
+    Print multiple help search matches. Used for the help.
+    
+    Parameters
+    ----------
+    terms: The search string
+    ctx: The command context
+    flags: The matching list
+    
+    Returns
+    ------
+    discord.Message
+    """
+    async def multiple_help(self, terms, ctx, flags):
+        me = ctx.author.guild.me # bot own user infos
+        desc = "**Please specify what you are looking for**\n"
+        for res in flags:
+            if res[0] == 0:
+                desc += "Category **{}**\n".format(res[1].qualified_name)
+            elif res[0] == 1:
+                desc += "Command **{}**\n".format(res[1].name)
+        return await ctx.reply(embed=self.bot.util.embed(title=me.name + " Help", description=desc, thumbnail=me.display_avatar, color=self.color))
 
-if __name__ == "__main__":
-    bot = MizaBot()
-    bot.go()
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['command', 'commands', 'category', 'categories', 'cog', 'cogs'])
+    @commands.cooldown(2, 8, commands.BucketType.user)
+    async def help(self, ctx, *, terms : str = ""):
+        """Get the bot help"""
+        if len(terms) == 0: # no parameters
+            msg = await self.default_help(ctx)
+        else: # search parameter
+            flags = await self.search_help(ctx, terms)
+            if len(flags) == 0: # no matches
+                me = ctx.author.guild.me # bot own user infos
+                msg = await ctx.reply(embed=self.bot.util.embed(title=me.name + " Help", description="`{}` not found".format(terms), thumbnail=me.display_avatar, color=self.color))
+            elif len(flags) == 1: # one match
+                if flags[0][0] == 0: msg = await self.category_help(terms, ctx, flags[0][1])
+                elif flags[0][0] == 1: msg = await self.command_help(terms, ctx, flags[0][1])
+            elif len(flags) > 20: # more than 20 matches
+                me = ctx.author.guild.me # bot own user infos
+                msg = await ctx.reply(embed=self.bot.util.embed(title=me.name + " Help", description="Too many results, please try to be a bit more specific or use the [Online Help](https://mizagbf.github.io/MizaBOT/)", thumbnail=me.display_avatar, color=self.color))
+            else: # multiple matches
+                msg = await self.multiple_help(terms, ctx, flags)
+        await self.bot.util.clean(ctx, msg, 60)
