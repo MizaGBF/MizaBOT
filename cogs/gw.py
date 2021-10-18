@@ -1001,9 +1001,10 @@ class GuildWar(commands.Cog):
     def getCrewData(self, target, mode=0):
         if not self.bot.gbf.isAvailable(): # check for maintenance
             return {'error':'Game is in maintenance'}
-        if isinstance(target, list) or isinstance(target, tuple): id = " ".join(target)
-        elif isinstance(target, int): id = str(target)
-        else: id = target
+        match target:
+            case list() | tuple(): id = " ".join(target)
+            case int(): id = str(target)
+            case _: id = target
         crew_id_list = {**(self.bot.data.config['granblue']['gbfgcrew']), **(self.bot.data.config['granblue'].get('othercrew', {}))}
         id = crew_id_list.get(id.lower(), id) # check if the id is a gbfgcrew
         # check id validityy
@@ -1030,10 +1031,11 @@ class GuildWar(commands.Cog):
             for i in range(0, 4): # for each page (page 0 being the crew page, 1 to 3 being the crew page
                 if i > 0 and mode > 0: break
                 get = self.requestCrew(id, i)
-                if get == "Maintenance":
-                    return {'error':'Maintenance'}
-                elif get == "Down":
-                    return {'error':'Unavailable'}
+                match get:
+                    case "Maintenance":
+                        return {'error':'Maintenance'}
+                    case "Down":
+                        return {'error':'Unavailable'}
                 if get is None:
                     if i == 0: # if error on page 0, the crew doesn't exist
                         self.badcrewcache.append(id)
@@ -1118,9 +1120,10 @@ class GuildWar(commands.Cog):
         else:
             footer = "Public crew member lists are updated at least once per day"
             # get GW data
-            if mode == 2: gwstate = True
-            elif mode == 1: gwstate = False
-            else: gwstate = self.isGWRunning()
+            match mode:
+                case 2: gwstate = True
+                case 1: gwstate = False
+                case _: gwstate = self.isGWRunning()
             players = crew['player'].copy()
             gwid = None
             if gwstate:
@@ -1165,11 +1168,12 @@ class GuildWar(commands.Cog):
             for p in players:
                 if i % 10 == 0: fields.append({'name':'Page {}'.format(self.bot.emote.get('{}'.format(len(fields)+1))), 'value':''})
                 i += 1
-                if p['member_position'] == "1": r = "captain"
-                elif p['member_position'] == "2": r = "foace"
-                elif p['member_position'] == "3": r = "atkace"
-                elif p['member_position'] == "4": r = "deface"
-                else: r = "ensign"
+                match p['member_position']:
+                    case "1": r = "captain"
+                    case "2": r = "foace"
+                    case "3": r = "atkace"
+                    case "4": r = "deface"
+                    case _: r = "ensign"
                 entry = '{} [{}](http://game.granbluefantasy.jp/#profile/{})'.format(self.bot.emote.get(r), self.escape(self.bot.util.shortenName(p['name'])), p['id'])
                 if gwstate:  entry += " \▫️ {}".format(self.bot.util.valToStr(p['honor']))
                 else: entry += " \▫️ r**{}**".format(p['level'])

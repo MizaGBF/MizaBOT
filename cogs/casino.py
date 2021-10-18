@@ -309,10 +309,11 @@ class Casino(commands.Cog):
                     if status[p]['state'] == 0: status[p]['state'] = 1
                     elif status[p]['state'] == 1: status[p]['state'] = 0
                     msg += " \▫️ "
-                    if status[p]['state'] == 4: msg += "**Blackjack**\n"
-                    elif status[p]['state'] == 3: msg += "**21**\n"
-                    elif status[p]['state'] == 2: msg += "Best {}\n".format(status[p]['score'])
-                    else: msg += "{}\n".format(status[p]['score'])
+                    match status[p]['state']:
+                        case 4: msg += "**Blackjack**\n"
+                        case 3: msg += "**21**\n"
+                        case 2: msg += "Best {}\n".format(status[p]['score'])
+                        case _: msg += "{}\n".format(status[p]['score'])
                 if final_msg is None: final_msg = await ctx.reply(embed=self.bot.util.embed(title="♠️ Multiplayer Blackjack ♥️", description=msg, color=self.color))
                 else: await final_msg.edit(embed=self.bot.util.embed(title="♠️ Multiplayer Blackjack ♥️", description=msg, color=self.color))
                 await asyncio.sleep(2)

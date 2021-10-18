@@ -76,12 +76,13 @@ class Ranking():
     def requestRanking(self, page, mode = 0): # get gw ranking data
         if self.bot.data.save['gw']['state'] == False or self.bot.util.JST() <= self.bot.data.save['gw']['dates']["Preliminaries"]:
             return None
-        if mode == 0: # crew
-            res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/totalguild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
-        elif mode == 1: # prelim crew
-            res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/guild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
-        elif mode == 2: # player
-            res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
+        match mode:
+            case 0: # crew
+                res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/totalguild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
+            case 1: # prelim crew
+                res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/guild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
+            case 2: # player
+                res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
         return res
 
     """updateRankingThread()
@@ -644,22 +645,23 @@ class Ranking():
                     data[n] = []
                     c = cs[n]
                     # search according to the mode
-                    if mode == 10: # crew name search
-                        c.execute("SELECT * FROM crews WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                    elif mode == 11: # crew name exact search
-                        c.execute("SELECT * FROM crews WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                    elif mode == 12: # crew id search
-                        c.execute("SELECT * FROM crews WHERE id = {}".format(terms))
-                    elif mode == 13: # crew ranking search
-                        c.execute("SELECT * FROM crews WHERE ranking = {}".format(terms))
-                    elif mode == 0: # player name search
-                        c.execute("SELECT * FROM players WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                    elif mode == 1: # player exact name search
-                        c.execute("SELECT * FROM players WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                    elif mode == 2: # player id search
-                        c.execute("SELECT * FROM players WHERE id = {}".format(terms))
-                    elif mode == 3: # player ranking search
-                        c.execute("SELECT * FROM players WHERE ranking = {}".format(terms))
+                    match mode:
+                        case 10: # crew name search
+                            c.execute("SELECT * FROM crews WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
+                        case 11: # crew name exact search
+                            c.execute("SELECT * FROM crews WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
+                        case 12: # crew id search
+                            c.execute("SELECT * FROM crews WHERE id = {}".format(terms))
+                        case 13: # crew ranking search
+                            c.execute("SELECT * FROM crews WHERE ranking = {}".format(terms))
+                        case 0: # player name search
+                            c.execute("SELECT * FROM players WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
+                        case 1: # player exact name search
+                            c.execute("SELECT * FROM players WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
+                        case 2: # player id search
+                            c.execute("SELECT * FROM players WHERE id = {}".format(terms))
+                        case 3: # player ranking search
+                            c.execute("SELECT * FROM players WHERE ranking = {}".format(terms))
                     results = c.fetchall() # fetch the result
                     
                     for r in results:

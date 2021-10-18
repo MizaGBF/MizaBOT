@@ -109,16 +109,17 @@ class GranblueFantasy(commands.Cog):
     def fixCase(self, term):
         fixed = ""
         up = False
-        if term.lower() == "and": # if it's just 'and', we don't don't fix anything and return a lowercase 'and'
-            return "and"
-        elif term.lower() == "of":
-            return "of"
-        elif term.lower() == "(sr)":
-            return "(SR)"
-        elif term.lower() == "(ssr)":
-            return "(SSR)"
-        elif term.lower() == "(r)":
-            return "(R)"
+        match term.lower():
+            case "and": # if it's just 'and', we don't don't fix anything and return a lowercase 'and'
+                return "and"
+            case "of":
+                return "of"
+            case "(sr)":
+                return "(SR)"
+            case "(ssr)":
+                return "(SSR)"
+            case "(r)":
+                return "(R)"
         for i in range(0, len(term)): # for each character
             if term[i].isalpha(): # if letter
                 if term[i].isupper(): # is uppercase
@@ -392,54 +393,55 @@ class GranblueFantasy(commands.Cog):
                         data, tables = await self.bot.do(self.processWikiMatch, soup)
 
                         x = data.get('object', None)
-                        if x is None: # if no match
-                            final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=data.get('description', ''), image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
-                        elif x == 0: # character
-                            if 'title' in data: title = title + ", " + data['title']
-                            if 'rarity' in data: title = "{} {}".format(self.bot.emote.get(data['rarity']), title)
-                            try:
-                                # check all character versions
-                                versions = soup.find_all("div", class_="character__versions")[0].findChildren("table", recursive=False)[0].findChildren("tbody", recursive=False)[0].findChildren("tr", recursive=False)[2].findChildren("td", recursive=False)
-                                elems = []
-                                for v in versions:
-                                    s = v.findChildren("a", recursive=False)[0].text
-                                    if s != title: elems.append(s)
-                                if len(elems) == 0: raise Exception()
-                                desc = "This character has other versions\n"
-                                for e in elems:
-                                    desc += "[{}](https://gbf.wiki/{})\n".format(e, e.replace(" ", "_"))
-                                final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=desc, image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
-                            except: # if none, just send the link
+                        match x:
+                            case None: # if no match
                                 final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=data.get('description', ''), image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
-                        else: # summon and weapon
-                            data = await self.bot.do(self.processWikiItem, data, tables)
-                            # final message
-                            title = ""
-                            title += "{}".format(self.bot.emote.get(data.get('element', '')))
-                            title += "{}".format(self.bot.emote.get(data.get('rarity', '')))
-                            title += "{}".format(self.bot.emote.get(data.get('type', '')))
-                            title += "{}".format(data.get('name', ''))
-                            if 'title' in data: title += ", {}".format(data['title'])
+                            case 0: # character
+                                if 'title' in data: title = title + ", " + data['title']
+                                if 'rarity' in data: title = "{} {}".format(self.bot.emote.get(data['rarity']), title)
+                                try:
+                                    # check all character versions
+                                    versions = soup.find_all("div", class_="character__versions")[0].findChildren("table", recursive=False)[0].findChildren("tbody", recursive=False)[0].findChildren("tr", recursive=False)[2].findChildren("td", recursive=False)
+                                    elems = []
+                                    for v in versions:
+                                        s = v.findChildren("a", recursive=False)[0].text
+                                        if s != title: elems.append(s)
+                                    if len(elems) == 0: raise Exception()
+                                    desc = "This character has other versions\n"
+                                    for e in elems:
+                                        desc += "[{}](https://gbf.wiki/{})\n".format(e, e.replace(" ", "_"))
+                                    final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=desc, image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
+                                except: # if none, just send the link
+                                    final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=data.get('description', ''), image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
+                            case _: # summon and weapon
+                                data = await self.bot.do(self.processWikiItem, data, tables)
+                                # final message
+                                title = ""
+                                title += "{}".format(self.bot.emote.get(data.get('element', '')))
+                                title += "{}".format(self.bot.emote.get(data.get('rarity', '')))
+                                title += "{}".format(self.bot.emote.get(data.get('type', '')))
+                                title += "{}".format(data.get('name', ''))
+                                if 'title' in data: title += ", {}".format(data['title'])
 
-                            desc = ""
-                            if 'lvl' in data: desc += "**Lvl {}** ".format(data['lvl'])
-                            if 'hp' in data: desc += "{} {} ".format(self.bot.emote.get('hp'), data['hp'])
-                            if 'atk' in data: desc += "{} {}".format(self.bot.emote.get('atk'), data['atk'])
-                            if desc != "": desc += "\n"
-                            if 'ca' in data: desc += "{} **{}**▫️{}\n".format(self.bot.emote.get('skill1'), data['ca'][0], data['ca'][1])
-                            if 'skill' in data:
-                                for s in data['skill']:
-                                    desc += "{} **{}**▫️{}\n".format(self.bot.emote.get('skill2'), s[0], s[1])
-                            if 'sm' in data:
+                                desc = ""
+                                if 'lvl' in data: desc += "**Lvl {}** ".format(data['lvl'])
+                                if 'hp' in data: desc += "{} {} ".format(self.bot.emote.get('hp'), data['hp'])
+                                if 'atk' in data: desc += "{} {}".format(self.bot.emote.get('atk'), data['atk'])
                                 if desc != "": desc += "\n"
-                                for s in data['sm']:
-                                    if s[0] == "Attack" or s[0] == "Defend": continue
-                                    desc += "**{}**▫️{}\n".format(s[0], s[1])
-                            if 'call' in data: desc += "{} **{}**▫️{}\n".format(self.bot.emote.get('skill1'), data['call'][0], data['call'][1])
-                            if 'aura' in data: desc += "{} **Aura**▫️{}\n".format(self.bot.emote.get('skill2'), data['aura'])
-                            if 'subaura' in data: desc += "{} **Sub Aura**▫️{}\n".format(self.bot.emote.get('skill2'), data['subaura'])
+                                if 'ca' in data: desc += "{} **{}**▫️{}\n".format(self.bot.emote.get('skill1'), data['ca'][0], data['ca'][1])
+                                if 'skill' in data:
+                                    for s in data['skill']:
+                                        desc += "{} **{}**▫️{}\n".format(self.bot.emote.get('skill2'), s[0], s[1])
+                                if 'sm' in data:
+                                    if desc != "": desc += "\n"
+                                    for s in data['sm']:
+                                        if s[0] == "Attack" or s[0] == "Defend": continue
+                                        desc += "**{}**▫️{}\n".format(s[0], s[1])
+                                if 'call' in data: desc += "{} **{}**▫️{}\n".format(self.bot.emote.get('skill1'), data['call'][0], data['call'][1])
+                                if 'aura' in data: desc += "{} **Aura**▫️{}\n".format(self.bot.emote.get('skill2'), data['aura'])
+                                if 'subaura' in data: desc += "{} **Sub Aura**▫️{}\n".format(self.bot.emote.get('skill2'), data['subaura'])
 
-                            final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=desc, thumbnail=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
+                                final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=desc, thumbnail=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
         await self.bot.util.clean(ctx, final_msg, 80)
 
 
@@ -1039,9 +1041,10 @@ class GranblueFantasy(commands.Cog):
                 if i == self.bot.data.save['gbfcurrent']: msg += "👉 "
                 else: msg += "{} ".format(i)
                 msg += "**{}** ".format(acc[0])
-                if acc[3] == 0: msg += "❔"
-                elif acc[3] == 1: msg += "✅"
-                elif acc[3] == 2: msg += "❎"
+                match acc[3]:
+                    case 0: msg += "❔"
+                    case 1: msg += "✅"
+                    case 2: msg += "❎"
                 msg += "\n"
             await self.bot.send('debug', embed=self.bot.util.embed(title="GBF Account status", description=msg, color=self.color))
             await self.bot.util.react(ctx.message, '✅') # white check mark
@@ -1373,17 +1376,19 @@ class GranblueFantasy(commands.Cog):
                 await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="Invalid ID", color=self.color))
                 return
             data = await self.bot.do(self.getProfileData, id)
-            if data == "Maintenance":
-                await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="Game is in maintenance, try again later.", color=self.color))
-                return
-            elif data == "Down":
-                return
-            elif data is None:
-                await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="Profile not found", color=self.color))
-                return
-            elif (await self.bot.do(self.searchProfile, id)) is not None:
-                await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="This id is already in use", footer="use the bugreport command if it's a case of griefing", color=self.color))
-                return
+            match data:
+                case "Maintenance":
+                    await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="Game is in maintenance, try again later.", color=self.color))
+                    return
+                case "Down":
+                    return
+                case None:
+                    await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="Profile not found", color=self.color))
+                    return
+                case _:
+                    if (await self.bot.do(self.searchProfile, id)) is not None:
+                        await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="This id is already in use", footer="use the bugreport command if it's a case of griefing", color=self.color))
+                        return
             # register
             with self.bot.data.lock:
                 self.bot.data.save['gbfids'][str(ctx.author.id)] = id
@@ -1666,18 +1671,19 @@ class GranblueFantasy(commands.Cog):
                 return None
             await self.bot.util.react(ctx.message, 'time')
             data = await self.bot.do(self.getProfileData, id)
-            if data == "Maintenance":
-                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Game is in maintenance", color=self.color))
-                await self.bot.util.unreact(ctx.message, 'time')
-                return
-            elif data == "Down":
-                await self.bot.util.unreact(ctx.message, 'time')
-                return
-            elif data is None:
-                self.badprofilecache.append(id)
-                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Profile not found", color=self.color))
-                await self.bot.util.unreact(ctx.message, 'time')
-                return
+            match data:
+                case "Maintenance":
+                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Game is in maintenance", color=self.color))
+                    await self.bot.util.unreact(ctx.message, 'time')
+                    return
+                case "Down":
+                    await self.bot.util.unreact(ctx.message, 'time')
+                    return
+                case None:
+                    self.badprofilecache.append(id)
+                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Profile not found", color=self.color))
+                    await self.bot.util.unreact(ctx.message, 'time')
+                    return
             soup = BeautifulSoup(data, 'html.parser')
             try: name = soup.find_all("span", class_="txt-other-name")[0].string
             except: name = None

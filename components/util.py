@@ -38,17 +38,18 @@ class Util():
     def json_deserial_array(self, array):
         a = []
         for v in array:
-            if isinstance(v, list):
-                a.append(self.json_deserial_array(v))
-            elif isinstance(v, dict):
-                a.append(self.json_deserial_dict(list(v.items())))
-            elif isinstance(v, str):
-                try:
-                    a.append(datetime.strptime(v, "%Y-%m-%dT%H:%M:%S")) # needed for datetimes
-                except ValueError:
+            match v:
+                case list():
+                    a.append(self.json_deserial_array(v))
+                case dict():
+                    a.append(self.json_deserial_dict(list(v.items())))
+                case str():
+                    try:
+                        a.append(datetime.strptime(v, "%Y-%m-%dT%H:%M:%S")) # needed for datetimes
+                    except ValueError:
+                        a.append(v)
+                case _:
                     a.append(v)
-            else:
-                a.append(v)
         return a
 
     """json_deserial_dict()
@@ -152,10 +153,11 @@ class Util():
     str: Resulting string
     """
     def delta2str(self, delta, mode=1):
-        if mode == 3: return "{}d{}h{}m{}s".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60, delta.seconds % 60)
-        elif mode == 2: return "{}d{}h{}m".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60)
-        elif mode == 1: return "{}h{}m".format(delta.seconds // 3600, (delta.seconds // 60) % 60)
-        else: return "{}m".format(delta.seconds // 60)
+        match mode:
+            case 3: return "{}d{}h{}m{}s".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60, delta.seconds % 60)
+            case 2: return "{}d{}h{}m".format(delta.days, delta.seconds // 3600, (delta.seconds // 60) % 60)
+            case 1: return "{}h{}m".format(delta.seconds // 3600, (delta.seconds // 60) % 60)
+            case _: return "{}m".format(delta.seconds // 60)
 
     """str2delta()
     Convert string to a a timedelta object (format: XdXhXmXs)
@@ -182,12 +184,10 @@ class Util():
                 if tmp < 0:
                     return None
                 flags[c] = True
-                if c == 'd':
-                    sum += tmp * 86400
-                elif c == 'h':
-                    sum += tmp * 3600
-                elif c == 'm':
-                    sum += tmp * 60
+                match c:
+                    case 'd': sum += tmp * 86400
+                    case 'h': sum += tmp * 3600
+                    case 'm': sum += tmp * 60
                 tmp = 0
             else:
                 return None

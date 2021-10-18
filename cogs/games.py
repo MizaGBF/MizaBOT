@@ -459,53 +459,54 @@ class Games(commands.Cog):
         running = True
         while running:
             await asyncio.sleep(2)
-            if state == 0: # RPS
-                if enableJanken and d >= 2000 and random.randint(0, 2) > 0:
-                    a = 0
-                    b = 0
-                    while a == b:
-                        a = random.randint(0, 2)
-                        b = random.randint(0, 2)
-                    msg += "You got **{}**, Gachapin got **{}**".format(rps[a], rps[b])
-                    if (a == 1 and b == 0) or (a == 2 and b == 1) or (a == 0 and b == 2):
-                        msg += " :thumbsup:\nYou **won** rock paper scissor, your rolls are **doubled** :confetti_ball:\n"
-                        roll = roll * 2
-                        if roll > (200 if enable200 else 100): roll = (200 if enable200 else 100)
-                        maxJanken -= 1
-                        if maxJanken == 0:
+            match state:
+                case 0: # RPS
+                    if enableJanken and d >= 2000 and random.randint(0, 2) > 0:
+                        a = 0
+                        b = 0
+                        while a == b:
+                            a = random.randint(0, 2)
+                            b = random.randint(0, 2)
+                        msg += "You got **{}**, Gachapin got **{}**".format(rps[a], rps[b])
+                        if (a == 1 and b == 0) or (a == 2 and b == 1) or (a == 0 and b == 2):
+                            msg += " :thumbsup:\nYou **won** rock paper scissor, your rolls are **doubled** :confetti_ball:\n"
+                            roll = roll * 2
+                            if roll > (200 if enable200 else 100): roll = (200 if enable200 else 100)
+                            maxJanken -= 1
+                            if maxJanken == 0:
+                                state = 1
+                        else:
+                            msg += " :pensive:\n"
                             state = 1
                     else:
-                        msg += " :pensive:\n"
                         state = 1
-                else:
-                    state = 1
-            elif state == 1: # normal rolls
-                result, rate, tmp, count = await self.bot.do(self.getRoulette, roll, 'ten', double)
-                footer = "{}% SSR rate".format(result['rate'])
-                msg += "{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
-                if superFlag: state = 4
-                else: running = False
-            elif state == 2: # gachapin
-                result, rate, tmp, count = await self.bot.do(self.getRoulette, 300, 'gachapin', double)
-                footer = "{}% SSR rate".format(result['rate'])
-                msg += "Gachapin ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
-                if count == 10 and random.randint(1, 100) < 99: state = 3
-                elif count == 20 and random.randint(1, 100) < 60: state = 3
-                elif count == 30 and random.randint(1, 100) < 30: state = 3
-                else: running = False
-            elif state == 3:
-                result, rate, tmp, count = await self.bot.do(self.getRoulette, 300, 'mukku', double)
-                msg += ":confetti_ball: Mukku ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
-                if doubleMukku:
-                    if random.randint(1, 100) < 25: pass
+                case 1: # normal rolls
+                    result, rate, tmp, count = await self.bot.do(self.getRoulette, roll, 'ten', double)
+                    footer = "{}% SSR rate".format(result['rate'])
+                    msg += "{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
+                    if superFlag: state = 4
                     else: running = False
-                    doubleMukku = False
-                else:
+                case 2: # gachapin
+                    result, rate, tmp, count = await self.bot.do(self.getRoulette, 300, 'gachapin', double)
+                    footer = "{}% SSR rate".format(result['rate'])
+                    msg += "Gachapin ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
+                    if count == 10 and random.randint(1, 100) < 99: state = 3
+                    elif count == 20 and random.randint(1, 100) < 60: state = 3
+                    elif count == 30 and random.randint(1, 100) < 30: state = 3
+                    else: running = False
+                case 3:
+                    result, rate, tmp, count = await self.bot.do(self.getRoulette, 300, 'mukku', double)
+                    msg += ":confetti_ball: Mukku ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
+                    if doubleMukku:
+                        if random.randint(1, 100) < 25: pass
+                        else: running = False
+                        doubleMukku = False
+                    else:
+                        running = False
+                case 4:
+                    result, rate, tmp, count = await self.bot.do(self.getRoulette, 300, 'supermukku', double)
+                    msg += ":confetti_ball: **Super Mukku** ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
                     running = False
-            elif state == 4:
-                result, rate, tmp, count = await self.bot.do(self.getRoulette, 300, 'supermukku', double)
-                msg += ":confetti_ball: **Super Mukku** ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
-                running = False
 
             await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color, footer=footer))
 
@@ -719,9 +720,10 @@ class Games(commands.Cog):
             desc += "The winning numbers are:\n"
             for i in range(0, len(revealedWinning)):
                 desc += "**Tier {}**▫️".format(4-i)
-                if i == 0: desc += "Last Digit▫️" # tier 4
-                elif i == 1: desc += "First Two▫️" # tier 3
-                elif i == 2: desc += "Last Two▫️" # tier 2
+                match i:
+                    case 0: desc += "Last Digit▫️" # tier 4
+                    case 1: desc += "First Two▫️" # tier 3
+                    case 2: desc += "Last Two▫️" # tier 2
                 desc += "{} ".format(', '.join(revealedWinning[len(revealedWinning)-1-i]))
                 for j in range(0, prize[3-i]): desc += ":confetti_ball:"
                 desc += "\n"
@@ -771,10 +773,11 @@ class Games(commands.Cog):
     def checkLotoWin(self, card, winning):
         for i in range(0, 4):
             lost = False
-            if i == 0: x = card
-            elif i == 1: x = card[1:]
-            elif i == 2: x = card[:2]
-            elif i == 3: x = card[2]
+            match i:
+                case 0: x = card
+                case 1: x = card[1:]
+                case 2: x = card[:2]
+                case 3: x = card[2]
             if x in winning[i]:
                 return i + 1
         return 0
@@ -891,18 +894,18 @@ class Games(commands.Cog):
         m = m * 10
 
         if ctx.author.id == self.bot.data.config['ids'].get('chen', -1):
-            c = random.randint(3, 8)
-            if c == 3: h = 666
-            elif c == 4: h = 6666
-            elif c == 5: h = 66666
-            elif c == 6: h = 666666
-            elif c == 7: h = 6666666
-            elif c == 8: h = 66666666
-            c = random.randint(1, 4)
-            if c == 1: m = 6
-            elif c == 2: m = 66
-            elif c == 3: m = 666
-            elif c == 4: m = 6666
+            match random.randint(3, 8):
+                case 3: h = 666
+                case 4: h = 6666
+                case 5: h = 66666
+                case 6: h = 666666
+                case 7: h = 6666666
+                case 8: h = 66666666
+            match random.randint(1, 4):
+                case 1: m = 6
+                case 2: m = 66
+                case 3: m = 666
+                case 4: m = 6666
 
         final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.display_avatar, color=self.color))
         await self.bot.util.clean(ctx, final_msg, 40)
