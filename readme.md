@@ -24,10 +24,11 @@ Check the [Command List](https://mizagbf.github.io/MizaBOT/) for details.
 It's designed to be used on [Heroku](https://www.heroku.com) and isn't intended to be setup and used by anyone. Still, if you are interested, details are available on the [Wiki](https://github.com/MizaGBF/MizaBOT/wiki) and in this [issue](https://github.com/MizaGBF/MizaBOT/issues/1).  
   
 ### Code Overview  
-* The bot is divided in three parts:
+* The bot is divided in four parts:
   * The client itself in [bot.py](https://github.com/MizaGBF/MizaBOT/blob/master/bot.py)  
-  * The [components](https://github.com/MizaGBF/MizaBOT/tree/master/components), which features various utility functions for the bot well being   
-  * The [cogs](https://github.com/MizaGBF/MizaBOT/tree/master/cogs), where you can find all the user commands
+  * The [components](https://github.com/MizaGBF/MizaBOT/tree/master/components), which features various utility functions for the bot well being  
+  * The [cogs](https://github.com/MizaGBF/MizaBOT/tree/master/cogs), where you can find all the user commands  
+  * The [views](https://github.com/MizaGBF/MizaBOT/tree/master/views), containing the interactive Views used by some functions  
 * All data (from the config and save files) are centralized in the Data component and are accessible by the Bot, Cogs or other Components at any time.  
 * A "Graceful Exit" is needed for a proper use on [Heroku](https://www.heroku.com). A `SIGTERM` signal is sent when a restart happens on the [Heroku](https://www.heroku.com) side (usually every 24 hours, when you push a change or in some other cases). If needed, the bot also saves when this happens.  
 Check the `exit_gracefully()` function for details.  
