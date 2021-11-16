@@ -1068,8 +1068,8 @@ class GuildWar(commands.Cog):
             data = self.getCrewSummary(id)
             if data is not None:
                 crew = {**crew, **data}
-            if not crew['private']: self.crewcache[id] = crew # only cache public crews
             if mode > 0: return crew
+            if not crew['private']: self.crewcache[id] = crew # only cache public crews
 
         # get the last gw score
         crew['scores'] = []
