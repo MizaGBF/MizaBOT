@@ -1068,8 +1068,8 @@ class GuildWar(commands.Cog):
             data = self.getCrewSummary(id)
             if data is not None:
                 crew = {**crew, **data}
-            if mode > 0: return crew
             if not crew['private']: self.crewcache[id] = crew # only cache public crews
+            if mode > 0: return crew
 
         # get the last gw score
         crew['scores'] = []
@@ -1310,7 +1310,8 @@ class GuildWar(commands.Cog):
     async def resetleader(self, ctx):
         """Reset the saved captain list (Owner Only)"""
         with self.bot.data.lock:
-            self.bot.data.save['gbfdata'].pop('leader')
+            if 'leader' in self.bot.data.save['gbfdata']:
+                self.bot.data.save['gbfdata'].pop('leader')
             self.bot.data.pending = True
         await self.bot.util.react(ctx.message, '✅') # white check mark
 
