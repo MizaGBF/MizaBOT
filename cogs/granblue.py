@@ -869,7 +869,7 @@ class GranblueFantasy(commands.Cog):
     async def crit(self, ctx, *, weapons : str = ""):
         """Calculate critical rate
         Do the command without parameters for the full modifier list
-        Add `f` before a modifier to make it unboosted"""
+        Add `u` before a modifier to make it unboosted by the aura"""
         values = {'small10':2, 'small15':3, 'small20':4, 'medium10':5, 'medium15':6.5, 'medium20':7.5, 'big10':8, 'big15':10, 'big20':11, 'bigii15':12, 'wamdus':20, 'hercules':11.5, 'sephira':30}
         ts = {'small':'small15', 'med':'medium15', 'medium':'medium15', 'big':'big15', 'big2':'bigii15', 's10':'small10', 's15':'small15', 's20':'small20', 'm10':'medium10', 'm15':'medium15', 'm20':'medium20', 'med10':'medium10', 'med15':'medium15', 'med20':'medium20', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'bii10':'bigii10', 'bii15':'bigii15', 'b210':'bigii10', 'b215':'bigii15', 'big210':'bigii10', 'big215':'bigii15', 'ameno':'medium20', 'gaebulg':'medium20', 'bulg':'medium20', 'bulge':'medium20', 'gae':'medium20', 'mjolnir':'small20', 'herc':'hercules', 'ecke':'medium15', 'eckesachs':'medium15', 'sachs':'medium15', 'blut':'small15', 'blutgang':'small15', 'indra':'medium15', 'ivory':'bigii15', 'ivoryark':'bigii15', 'ark':'bigii15', 'auberon':'medium15', 'aub':'medium15', 'taisai':'big15', 'pholia':'big15', 'galilei':'medium15', 'europa':'medium15', 'benedia':'medium15', 'thunderbolt':'big15', 'shibow':'big15', 'rein':'bigii15', 'babel':'bigii15', 'mandeb':'bigii15', 'bab-el-mandeb':'bigii15', 'arca':'sephira', 'arcarum':'sephira', 'spoon':'medium15', 'coruscant':'medium15', 'crozier':'medium15', 'eva':'bigii15', 'evanescence':'bigii15', 'opus':'medium20'}
         flats = ['wamdus', 'sephira']
@@ -885,7 +885,7 @@ class GranblueFantasy(commands.Cog):
                     flat += values[ts.get(m, m)]
                     s2 += "{}+".format(values[ts.get(m, m)])
                 else:
-                    if len(m) > 0 and m[0] == 'f':
+                    if len(m) > 0 and m[0] == 'u':
                         flat += values[ts.get(m[1:], m[1:])]
                         s2 += "{}+".format(values[ts.get(m[1:], m[1:])])
                     else:
@@ -894,7 +894,7 @@ class GranblueFantasy(commands.Cog):
             if s1 != "": s1 = "Boosted " + s1[:-1]
             if s2 != "":
                 if s1 != "": s1 += ", "
-                s1 = s1 + "Flat " + s2[:-1]
+                s1 = s1 + "Unboosted " + s2[:-1]
             msg =  "**Aura ▫️ Critical ▫️▫️ Aura ▫️ Critical**\n"
             msg += "140% ▫️ {:.1f}% ▫️▫️ 290% ▫️ {:.1f}%\n".format(min(base*2.4 + flat, 100), min(base*3.9 + flat, 100))
             msg += "150% ▫️ {:.1f}% ▫️▫️ 300% ▫️ {:.1f}%\n".format(min(base*2.5 + flat, 100), min(base*4 + flat, 100))
@@ -909,9 +909,133 @@ class GranblueFantasy(commands.Cog):
                     modstr += "`{}`, ".format(m)
                 for m in ts:
                     modstr += "`{}`, ".format(m)
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="Critical Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `f` before a modifier to make it unboosted" , color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="Critical Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `u` before a modifier to make it unboosted" , color=self.color))
             else:
                 final_msg = await ctx.reply(embed=self.bot.util.embed(title="Critical Calculator", description="Error", footer=str(e), color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 40)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['backwater'])
+    @commands.cooldown(2, 5, commands.BucketType.user)
+    async def enmity(self, ctx, hp : int = 60, *, weapons : str = ""):
+        """Calculate enmity strength at a specific hp value
+        Do the command without parameters for the full modifier list
+        Add `u` before a modifier to make it unboosted by the aura"""
+        values = {'small10':6, 'small15':7, 'small20':7.5, 'medium10':8, 'medium15':10, 'big10':10, 'big15':12.5, 'big20':13.5}
+        ts = {'small':'small15', 'med':'medium15', 'medium':'medium15', 'big':'big15', 's10':'small10', 's15':'small15', 's20':'small20', 'm10':'medium10', 'm15':'medium15', 'med10':'medium10', 'med15':'medium15', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'opus':'big20'}
+        flats = []
+        try:
+            if hp < 1: hp = 1
+            elif hp > 100: hp = 100
+            if weapons == "": raise Exception("Empty Parameter")
+            mods = weapons.lower().split(' ')
+            s1 = ""
+            s2 = ""
+            base = 0
+            flat = 0
+            for m in mods:
+                if ts.get(m, m) in flats:
+                    flat += values[ts.get(m, m)]
+                    s2 += "{}+".format(values[ts.get(m, m)])
+                else:
+                    if len(m) > 0 and m[0] == 'u':
+                        flat += values[ts.get(m[1:], m[1:])]
+                        s2 += "{}+".format(values[ts.get(m[1:], m[1:])])
+                    else:
+                        base += values[ts.get(m, m)]
+                        s1 += "{}+".format(values[ts.get(m, m)])
+            if s1 != "": s1 = "Boosted " + s1[:-1]
+            if s2 != "":
+                if s1 != "": s1 += ", "
+                s1 = s1 + "Unboosted " + s2[:-1]
+            hp_ratio = 1 - hp / 100.0
+            base_val = base * ((1 + 2 * hp_ratio) * hp_ratio)
+            flat_val = flat * ((1 + 2 * hp_ratio) * hp_ratio)
+            msg =  "**Aura ▫️ Enmity ▫️▫️ Aura ▫️ Enmity**\n"
+            msg += "140% ▫️ {:.1f}% ▫️▫️ 290% ▫️ {:.1f}%\n".format(base_val*2.4 + flat_val, base_val*3.9 + flat_val)
+            msg += "150% ▫️ {:.1f}% ▫️▫️ 300% ▫️ {:.1f}%\n".format(base_val*2.5 + flat_val, base_val*4 + flat_val)
+            msg += "160% ▫️ {:.1f}% ▫️▫️ 310% ▫️ {:.1f}%\n".format(base_val*2.6 + flat_val, base_val*4.1 + flat_val)
+            msg += "170% ▫️ {:.1f}% ▫️▫️ 320% ▫️ {:.1f}%\n".format(base_val*2.7 + flat_val, base_val*4.2 + flat_val)
+            msg += "280% ▫️ {:.1f}%\n".format(base_val*3.8 + flat_val)
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Enmity Calculator ▫️ {}% HP".format(hp), description=msg.replace('.0%', '%'), footer=s1, color=self.color))
+        except Exception as e:
+            if str(e) == "Empty Parameter":
+                modstr = ""
+                for m in values:
+                    modstr += "`{}`, ".format(m)
+                for m in ts:
+                    modstr += "`{}`, ".format(m)
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="Enmity Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `u` before a modifier to make it unboosted" , color=self.color))
+            else:
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="Enmity Calculator", description="Error", footer=str(e), color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 40)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['frontwater', 'stam'])
+    @commands.cooldown(2, 5, commands.BucketType.user)
+    async def stamina(self, ctx, hp : int = 100, *, weapons : str = ""):
+        """Calculate stamina strength at a specific hp value
+        Do the command without parameters for the full modifier list
+        Add `u` before a modifier to make it unboosted by the aura"""
+        values = {'medium10':(10, 65), 'medium15':(15, 65), 'medium20':(20, 65), 'big10':(10, 56.4), 'big15':(15, 56.4), 'big20':(20, 56.4), 'bigii10':(10, 53.7), 'bigii15':(15, 53.7), 'ancestral':(15, 50.4), 'omegamedium10':(10, 60.4), 'omegamedium15':(15, 60.4), 'omegabig10':(10, 56.4), 'omegabig15':(15, 56.4)}
+        ts = {'med':'medium15', 'medium':'medium15', 'big':'big15', 'big2':'bigii15', 'omed':'omegamedium15', 'omedium':'omegamedium15', 'obig':'omegabig15', 'm10':'medium10', 'm15':'medium15', 'm20':'medium20', 'med10':'medium10', 'med15':'medium15', 'med20':'medium20', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'bii10':'bigii10', 'bii15':'bigii15', 'b210':'bigii10', 'b215':'bigii15', 'big210':'bigii10', 'big215':'bigii15', 'dragon':'ancestral', 'opus':'big20', 'om10':'omegamedium10', 'om15':'omegamedium15', 'omed10':'omegamedium10', 'omed15':'omegamedium15', 'ob10':'omegabig10', 'ob15':'omegabig15'}
+        flats = ['ancestral']
+        try:
+            if hp < 1: hp = 1
+            elif hp > 100: hp = 100
+            if weapons == "": raise Exception("Empty Parameter")
+            mods = weapons.lower().split(' ')
+            if hp < 25:
+                s1 = ""
+                base_val = 0
+                flat_val = 0
+            else:
+                s1 = ""
+                s2 = ""
+                base = 0
+                flat = 0
+                hp_ratio = hp / 100.0
+                for m in mods:
+                    if ts.get(m, m) in flats:
+                        v = values[ts.get(m, m)]
+                        if v[0] > 15: v = math.pow(hp_ratio / (v[1] - (15 + (0.4 * (v[0] - 15)))), 2.9) + 2.1
+                        else: v = math.pow(hp_ratio / (v[1] - v[0]), 2.9) + 2.1
+                        flat += v
+                        s2 += "{:.1f}+".format(v)
+                    else:
+                        if len(m) > 0 and m[0] == 'u':
+                            v = values[ts.get(m[1:], m[1:])]
+                            if v[0] > 15: v = math.pow(hp_ratio / (v[1] - (15 + (0.4 * (v[0] - 15)))), 2.9) + 2.1
+                            else: v = math.pow(hp_ratio / (v[1] - v[0]), 2.9) + 2.1
+                            flat += v
+                            s2 += "{:.1f}+".format(v)
+                        else:
+                            v = values[ts.get(m, m)]
+                            if v[0] > 15: v = math.pow(hp_ratio / (v[1] - (15 + (0.4 * (v[0] - 15)))), 2.9) + 2.1
+                            else: v = math.pow(hp_ratio / (v[1] - v[0]), 2.9) + 2.1
+                            base += v
+                            s1 += "{:.1f}+".format(v)
+                if s1 != "": s1 = "Boosted " + s1[:-1]
+                if s2 != "":
+                    if s1 != "": s1 += ", "
+                    s1 = s1 + "Unboosted " + s2[:-1]
+                base_val = base * ((1 + 2 * hp_ratio) * hp_ratio)
+                flat_val = flat * ((1 + 2 * hp_ratio) * hp_ratio)
+            msg =  "**Aura ▫️ Stamina ▫️▫️ Aura ▫️ Stamina**\n"
+            msg += "140% ▫️ {:.1f}% ▫️▫️ 290% ▫️ {:.1f}%\n".format(base_val*2.4 + flat_val, base_val*3.9 + flat_val)
+            msg += "150% ▫️ {:.1f}% ▫️▫️ 300% ▫️ {:.1f}%\n".format(base_val*2.5 + flat_val, base_val*4 + flat_val)
+            msg += "160% ▫️ {:.1f}% ▫️▫️ 310% ▫️ {:.1f}%\n".format(base_val*2.6 + flat_val, base_val*4.1 + flat_val)
+            msg += "170% ▫️ {:.1f}% ▫️▫️ 320% ▫️ {:.1f}%\n".format(base_val*2.7 + flat_val, base_val*4.2 + flat_val)
+            msg += "280% ▫️ {:.1f}%\n".format(base_val*3.8 + flat_val)
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Stamina Calculator ▫️ {}% HP".format(hp), description=msg.replace('.0%', '%'), footer=s1.replace('.0', ''), color=self.color))
+        except Exception as e:
+            if str(e) == "Empty Parameter":
+                modstr = ""
+                for m in values:
+                    modstr += "`{}`, ".format(m)
+                for m in ts:
+                    modstr += "`{}`, ".format(m)
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="Stamina Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `u` before a modifier to make it unboosted" , color=self.color))
+            else:
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="Stamina Calculator", description="Error", footer=str(e), color=self.color))
         await self.bot.util.clean(ctx, final_msg, 40)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['exp', 'experience'])

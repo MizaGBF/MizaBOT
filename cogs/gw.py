@@ -1457,10 +1457,12 @@ class GuildWar(commands.Cog):
             if len(sortedcrew) > 20: size = 15
             elif len(sortedcrew) > 10: size = 10
             else: size = 5
+            slots = 0
             for i in range(0, len(sortedcrew)):
                 if i % size == 0: fields.append({'name':'{}'.format(self.bot.emote.get(str(len(fields)+1))), 'value':''})
-                fields[-1]['value'] += "Rank **{}** \▫️  **{}** \▫️ **{}** slot\n".format(sortedcrew[i]['average'], sortedcrew[i]['name'], 30-sortedcrew[i]['count'])
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} /gbfg/ recruiting crews".format(self.bot.emote.get('crew')), fields=fields, inline=True, color=self.color, timestamp=self.bot.util.timestamp()))
+                fields[-1]['value'] += "Rank **{}** \▫️  **{}** \▫️ **{}** slots\n".format(sortedcrew[i]['average'], sortedcrew[i]['name'], 30-sortedcrew[i]['count'])
+                slots += 30-sortedcrew[i]['count']
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} /gbfg/ recruiting crews ▫️ {} slots".format(self.bot.emote.get('crew'), slots), fields=fields, inline=True, color=self.color, timestamp=self.bot.util.timestamp()))
         await self.bot.util.clean(ctx, final_msg, 90)
 
     """requestCrew()

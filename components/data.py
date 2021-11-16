@@ -275,7 +275,7 @@ class Data():
                         break
                 else:
                     count += 1
-                    time.sleep(1000)
+                    time.sleep(2000)
         else: # else, just clean up old entries
             for i in range(0, ((len(self.bot.data.save['schedule'])//2)*2), 2):
                 try:
