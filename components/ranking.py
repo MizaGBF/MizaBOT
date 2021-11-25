@@ -68,21 +68,22 @@ class Ranking():
     ----------
     page: Requested page
     mode: 0=crew ranking, 1=prelim crew ranking, 2=player ranking
+    timeout: if True, the request will have a timeout of 20 seconds
     
     Returns
     --------
     dict: JSON data
     """
-    def requestRanking(self, page, mode = 0): # get gw ranking data
+    def requestRanking(self, page, mode = 0, timeout=False): # get gw ranking data
         if self.bot.data.save['gw']['state'] == False or self.bot.util.JST() <= self.bot.data.save['gw']['dates']["Preliminaries"]:
             return None
         match mode:
             case 0: # crew
-                res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/totalguild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
+                res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/totalguild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, timeout=(20 if timeout else None))
             case 1: # prelim crew
-                res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/guild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
+                res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/guild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, timeout=(20 if timeout else None))
             case 2: # player
-                res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
+                res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, timeout=(20 if timeout else None))
         return res
 
     """updateRankingThread()
@@ -230,7 +231,7 @@ class Ranking():
                                 await self.bot.do(self.reloadGWDB) # reload db
                             elif scrapout != "Invalid day":
                                 await self.bot.sendError('gwscrap', 'Scraping failed\n' + scrapout)
-                            await asyncio.sleep(300)
+                            await asyncio.sleep(100)
                         else:
                             await asyncio.sleep(25)
                     else:
@@ -255,7 +256,7 @@ class Ranking():
                     continue
             data = None
             while data is None:
-                data = self.requestRanking(page, (0 if self.scrap_mode else 2)) # request the page
+                data = self.requestRanking(page, (0 if self.scrap_mode else 2), True) # request the page
                 if (self.bot.data.save['maintenance']['state'] and self.bot.data.save['maintenance']["duration"] == 0) or self.stoprankupdate: return
             for item in data['list']: # put the entries in the list
                 with self.scraplockOut:
@@ -328,7 +329,7 @@ class Ranking():
                 c.execute('CREATE TABLE players (ranking int, id int, name text, current_total int)')
             i = 0
             while i < self.scrap_count: # count is the number of entries to process
-                if not self.bot.running or self.bot.data.save['maintenance']['state'] or self.stoprankupdate or (self.bot.util.JST() - self.scrap_update_time > timedelta(seconds=1150)): # stop if the bot is stopping
+                if not self.bot.running or self.bot.data.save['maintenance']['state'] or self.stoprankupdate or (self.bot.util.JST() - self.scrap_update_time > timedelta(seconds=1000)): # stop if the bot is stopping
                     self.stoprankupdate = True # send the stop signal
                     try:
                         c.execute("commit")
@@ -418,7 +419,7 @@ class Ranking():
                     continue # disabled during interlude for crews
 
                 self.scrap_mode = (n == 0)
-                data = self.requestRanking(1, (0 if self.scrap_mode else 2)) # get the first page
+                data = self.requestRanking(1, (0 if self.scrap_mode else 2), True) # get the first page
                 if data is None or data['count'] == False:
                     return "gwscrap() can't access the ranking"
                 self.scrap_count = int(data['count']) # number of crews/players

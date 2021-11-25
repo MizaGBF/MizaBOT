@@ -33,7 +33,6 @@ class GranblueFantasy(commands.Cog):
         self.empre = re.compile("<div class=\"txt-npc-rank\">([0-9]+)<\\/div>")
         self.starringre = re.compile("<div class=\"ico-augment2-s\"><\\/div>\\s*<\\/div>\\s*<div class=\"prt-pushed-spec\">\\s*<div class=\"prt-pushed-info\">")
         self.starplusre = re.compile("<div class=\"prt-quality\">(\\+[0-9]+)<\\/div>")
-        self.badprofilecache = []
         self.possiblesum = {'10':'fire', '11':'fire', '20':'water', '21':'water', '30':'earth', '31':'earth', '40':'wind', '41':'wind', '50':'light', '51':'light', '60':'dark', '61':'dark', '00':'misc', '01':'misc'}
         self.imgcache = {}
         self.imglock = threading.Lock()
@@ -992,7 +991,7 @@ class GranblueFantasy(commands.Cog):
                 s2 = ""
                 base = 0
                 flat = 0
-                hp_ratio = hp / 100.0
+                hp_ratio = 100.0 * hp / 100.0
                 for m in mods:
                     if ts.get(m, m) in flats:
                         v = values[ts.get(m, m)]
@@ -1790,9 +1789,6 @@ class GranblueFantasy(commands.Cog):
             id = await self.bot.util.str2gbfid(ctx, target, self.color)
             if id is None:
                 return
-            if id in self.badprofilecache:
-                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Profile not found", color=self.color))
-                return None
             await self.bot.util.react(ctx.message, 'time')
             data = await self.bot.do(self.getProfileData, id)
             match data:
@@ -1804,7 +1800,6 @@ class GranblueFantasy(commands.Cog):
                     await self.bot.util.unreact(ctx.message, 'time')
                     return
                 case None:
-                    self.badprofilecache.append(id)
                     await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Profile not found", color=self.color))
                     await self.bot.util.unreact(ctx.message, 'time')
                     return
@@ -1863,9 +1858,6 @@ class GranblueFantasy(commands.Cog):
         try:
             id = await self.bot.util.str2gbfid(ctx, target, self.color)
             if id is None: return
-            if id in self.badprofilecache:
-                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Profile not found", color=self.color))
-                return None
             data = await self.bot.do(self.bot.gbf.request, "http://game.granbluefantasy.jp/forum/search_users_id?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"user_id":id})
             if data == "Maintenance":
                 await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Game is in maintenance", color=self.color))

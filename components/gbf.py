@@ -1,4 +1,3 @@
-import ssl
 import re
 import json
 import zlib
@@ -18,7 +17,6 @@ class GBF():
     def __init__(self, bot):
         self.bot = bot
         self.data = None
-        self.ssl = ssl.create_default_context() # not sure if needed
         self.vregex = re.compile("Game\.version = \"(\d+)\";") # for the gbf version check
 
     def init(self):
@@ -36,20 +34,16 @@ class GBF():
                 headers['Host'] = 'game.granbluefantasy.jp'
                 headers['Origin'] = 'http://game.granbluefantasy.jp'
                 headers['Referer'] = 'http://game.granbluefantasy.jp/'
-            if "headers" in options:
-                headers = {**headers, **options["headers"]}
+            if "headers" in options: headers = {**headers, **options["headers"]}
             id = options.get('account', None)
             if id is not None:
                 acc = self.get(id)
                 if not options.get('force_down', False) and acc[3] == 2: return "Down"
-            if options.get('check', False):
-                ver = self.version()
-            else:
-                ver = self.data.save['gbfversion']
+            if options.get('check', False): ver = self.version()
+            else: ver = self.data.save['gbfversion']
             url = url.replace("PARAMS", "_=TS1&t=TS2&uid=ID")
             if ver == "Maintenance": return "Maintenance"
-            elif ver is not None:
-                url = url.replace("VER", "{}".format(ver))
+            elif ver is not None: url = url.replace("VER", "{}".format(ver))
             ts = int(datetime.utcnow().timestamp() * 1000)
             url = url.replace("TS1", "{}".format(ts))
             url = url.replace("TS2", "{}".format(ts+300))
@@ -67,9 +61,10 @@ class GBF():
                 if not options.get('no_base_headers', False) and 'Content-Type' not in headers: headers['Content-Type'] = 'application/json'
                 if 'user_id' in payload and payload['user_id'] == "ID": payload['user_id'] = acc[0]
                 req = request.Request(url, headers=headers, data=json.dumps(payload).encode('utf-8'))
-            url_handle = request.urlopen(req, context=self.ssl)
-            if id is not None:
-                self.refresh(id, url_handle.info()['Set-Cookie'])
+            timeout = options.get('timeout', None)
+            if timeout is None or not isinstance(timeout, int): url_handle = request.urlopen(req)
+            else: url_handle = request.urlopen(req, timeout=timeout)
+            if id is not None: self.refresh(id, url_handle.info()['Set-Cookie'])
             if options.get('decompress', False): data = zlib.decompress(url_handle.read(), 16+zlib.MAX_WBITS)
             else: data = url_handle.read()
             url_handle.close()
@@ -81,10 +76,8 @@ class GBF():
             return None
 
     def get(self, id : int = 0):
-        try:
-            return self.data.save['gbfaccounts'][id]
-        except:
-            return None
+        try: return self.data.save['gbfaccounts'][id]
+        except: return None
 
     def add(self, uid : int, ck : str, ua : str):
         with self.data.lock:

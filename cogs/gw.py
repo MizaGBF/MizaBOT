@@ -1,4 +1,4 @@
-﻿from discord.ext import commands
+from discord.ext import commands
 import asyncio
 from datetime import datetime, timedelta
 import random
@@ -19,7 +19,6 @@ class GuildWar(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.color = 0xff0000
-        self.badcrewcache = []
         self.crewcache = {}
 
     def startTasks(self):
@@ -390,7 +389,7 @@ class GuildWar(commands.Cog):
             await ctx.reply(embed=self.bot.util.embed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
             await self.bot.sendError("fugdidgwstart", e)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['buff'])
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['buff', 'buffs', 'gwbuffs'])
     @isYou()
     @commands.cooldown(10, 10, commands.BucketType.guild)
     async def GWbuff(self, ctx):
@@ -451,16 +450,18 @@ class GuildWar(commands.Cog):
                     current_time_left -= timedelta(seconds=21300)
                     await ctx.send(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Estimations available in **{}**".format(self.bot.util.delta2str(current_time_left)), inline=True, color=self.color))
                     return
-                time_left = self.getGWTimeLeft(self.bot.data.save['gw']['ranking'][4])
+                seconds_left = self.getGWTimeLeft(self.bot.data.save['gw']['ranking'][4]).seconds
                 fields = [{'name':'**Crew Ranking**', 'value':''}, {'name':'**Player Ranking**', 'value':''}]
+                modifiers = [
+                    (1.00 + (0.7 * (seconds_left // 3600) + 0.5 * (seconds_left // 7200) + 0.4 * (seconds_left // 10800)) / 10), # minimum
+                    (1.08 + (1.4 * (seconds_left // 3600) + 1.0 * (seconds_left // 7200) + 0.5 * (seconds_left // 10800)) / 10)  # maximum
+                ]
                 for x in [0, 1]:
                     for c in self.bot.data.save['gw']['ranking'][x]:
                         if c in self.bot.data.save['gw']['ranking'][2+x] and self.bot.data.save['gw']['ranking'][2+x][c] > 0:
                             predi = [0, 0]
                             for y in [0, 1]:
-                                if y == 0: predi[y] = self.bot.data.save['gw']['ranking'][x][c] + (1 + 1.5 * (time_left.seconds // 7200) / 10) + self.bot.data.save['gw']['ranking'][2+x][c] * time_left.seconds / 60 # minimum
-                                elif y == 1:  predi[y] = self.bot.data.save['gw']['ranking'][x][c] + (1.1 + 1.3 * (time_left.seconds // 3600) / 10) * self.bot.data.save['gw']['ranking'][2+x][c] * time_left.seconds / 60 # maximum
-                                # formatting
+                                predi[y] = self.bot.data.save['gw']['ranking'][x][c] + modifiers[y] * self.bot.data.save['gw']['ranking'][2+x][c] * seconds_left / 60
                                 if predi[y] >= 1000:
                                     predi[y] = self.bot.util.valToStrBig(predi[y])
 
@@ -717,7 +718,7 @@ class GuildWar(commands.Cog):
                     raise Exception("Returning")
 
                 if len(result) == 0: # check number of matches
-                    msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="`{}` not found".format(html.unescape(terms)), footer="help find{} for details".format(txt), color=self.color))
+                    msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="`{}` not found".format(html.unescape(str(terms))), footer="help find{} for details".format(txt), color=self.color))
                     raise Exception("Returning")
                 elif all: # set number of results to send if %all if set
                     if type: xl = 36
@@ -780,7 +781,7 @@ class GuildWar(commands.Cog):
                 msg = await ctx.reply(embed=self.bot.util.embed(title="{} **Guild War {}**".format(self.bot.emote.get('gw'), gwnum), description=desc, fields=fields, inline=True, footer="help find{} for details".format(txt), color=self.color))
             except Exception as e:
                 if str(e) != "Returning":
-                    await self.bot.sendError('findranking', e)
+                    await self.bot.sendError('findranking (search: {})'.format(terms), e)
         try: await self.bot.util.clean(ctx, msg, 45)
         except: pass
 
@@ -889,6 +890,22 @@ class GuildWar(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['honors'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def honor(self, ctx, target : str):
+        try:
+            target = self.bot.util.strToInt(target)
+            if target < 10000: raise Exception()
+            exp = math.ceil(target / 80800)
+            nm90 = math.ceil(target / 260000)
+            nm95 = math.ceil(target / 910000)
+            nm100 = math.ceil(target / 2650000)
+            nm150 = math.ceil(target / 4100000)
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} Honor Calculator ▫️ {} honors".format(self.bot.emote.get('gw'), self.bot.util.valToStr(target)), description="**{:,}** EX+ (**{:,}** AP)\n**{:,}** NM90 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM95 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM100 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM150 (**{:,}** AP, **{:,}** meats)\n".format(exp, exp * 30, nm90, nm90 * 30, nm90 * 5, nm95, nm95 * 40, nm95 * 10, nm100, nm100 * 50, nm90 * 20, nm150, nm150 * 50, nm150* 20), color=self.color))
+        except:
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid honor number", color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 60)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(2, 10, commands.BucketType.guild)
+    async def honorplanning(self, ctx, target : str):
         """Calculate how many NM95 and 150 you need for your targeted honor"""
         try:
             target = self.bot.util.strToInt(target)
@@ -1015,8 +1032,6 @@ class GuildWar(commands.Cog):
             return {'error':"Invalid name `{}`\nOnly some crews are registered, please input an id instead".format(id)}
         if id < 0 or id >= 10000000:
             return {'error':'Out of range ID'}
-        if id in self.badcrewcache: # if already searched (to limit bad requests)
-            return {'error':'Crew not found'}
 
         if mode >= 10:
             skipcache = True
@@ -1038,7 +1053,6 @@ class GuildWar(commands.Cog):
                         return {'error':'Unavailable'}
                 if get is None:
                     if i == 0: # if error on page 0, the crew doesn't exist
-                        self.badcrewcache.append(id)
                         return {'error':'Crew not found'}
                     elif i == 1: # if error on page 1, the crew is private
                         crew['private'] = True
@@ -1479,8 +1493,8 @@ class GuildWar(commands.Cog):
     dict: Resulting data, None if error
     """
     def requestCrew(self, id : int, page : int): # get crew data
-        if page == 0: return self.bot.gbf.request("http://game.granbluefantasy.jp/guild_other/guild_info/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True)
-        else: return self.bot.gbf.request("http://game.granbluefantasy.jp/guild_other/member_list/{}/{}?PARAMS".format(page, id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True)
+        if page == 0: return self.bot.gbf.request("http://game.granbluefantasy.jp/guild_other/guild_info/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
+        else: return self.bot.gbf.request("http://game.granbluefantasy.jp/guild_other/member_list/{}/{}?PARAMS".format(page, id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
 
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwlead', 'gwcompare', 'gwcmp'])
     @commands.cooldown(2, 15, commands.BucketType.user)
