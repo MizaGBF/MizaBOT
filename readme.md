@@ -4,6 +4,7 @@
 * [Granblue Fantasy](http://game.granbluefantasy.jp) Discord Bot.  
 * Command List available [Here](https://mizagbf.github.io/MizaBOT/).  
 ### Requirements  
+[![CodeQL](https://github.com/MizaGBF/MizaBOT/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/MizaGBF/MizaBOT/actions/workflows/codeql-analysis.yml)
 * Python 3.10.  
 * [discord.py](https://github.com/Rapptz/discord.py) (formerly the rewrite branch).  
 * [PyDrive2](https://github.com/iterative/PyDrive2) to access the google drive where the save file is stored.  
