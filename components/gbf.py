@@ -62,8 +62,8 @@ class GBF():
                 if 'user_id' in payload and payload['user_id'] == "ID": payload['user_id'] = acc[0]
                 req = request.Request(url, headers=headers, data=json.dumps(payload).encode('utf-8'))
             timeout = options.get('timeout', None)
-            if timeout is None or not isinstance(timeout, int): url_handle = request.urlopen(req)
-            else: url_handle = request.urlopen(req, timeout=timeout)
+            if timeout is None or not isinstance(timeout, int): timeout = 20
+            url_handle = request.urlopen(req, timeout=timeout)
             if id is not None: self.refresh(id, url_handle.info()['Set-Cookie'])
             if options.get('decompress', False): data = zlib.decompress(url_handle.read(), 16+zlib.MAX_WBITS)
             else: data = url_handle.read()

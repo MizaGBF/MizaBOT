@@ -40,22 +40,24 @@ class Score():
 class Ranking():
     def __init__(self, bot):
         self.bot = bot
-        self.scraplockIn = threading.Lock()
-        self.scraplockOut = threading.Lock()
-        self.scrap_mode = False
-        self.scrap_qi = None
-        self.scrap_qo = None
-        self.scrap_count = 0
-        self.scrap_update_time = None
-        self.scrap_max_thread = 99
-        self.scrap_executor = concurrent.futures.ThreadPoolExecutor(max_workers=self.scrap_max_thread+1)
+        # stuff related to retrieving the ranking
+        self.getranklockIn = threading.Lock()
+        self.getranklockOut = threading.Lock()
+        self.getrank_mode = False
+        self.getrank_qi = None
+        self.getrank_qo = None
+        self.getrank_count = 0
+        self.getrank_update_time = None
+        self.getrank_max_thread = 79
+        self.getrank_executor = concurrent.futures.ThreadPoolExecutor(max_workers=self.getrank_max_thread+1)
         self.loadinggacha = False
         self.ranking_executor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
         self.rankingtargets = []
         self.rankingtempdata = []
         self.rankinglock = threading.Lock()
         self.stoprankupdate = False
-        self.dbstate = [True, True]
+        # gw databases
+        self.dbstate = [True, True] # indicate if dbs are available on the drive, True by default
         self.dblock = threading.Lock()
 
     def init(self):
@@ -74,16 +76,16 @@ class Ranking():
     --------
     dict: JSON data
     """
-    def requestRanking(self, page, mode = 0, timeout=False): # get gw ranking data
+    def requestRanking(self, page, mode = 0): # get gw ranking data
         if self.bot.data.save['gw']['state'] == False or self.bot.util.JST() <= self.bot.data.save['gw']['dates']["Preliminaries"]:
             return None
         match mode:
             case 0: # crew
-                res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/totalguild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, timeout=(20 if timeout else None))
+                res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/totalguild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
             case 1: # prelim crew
-                res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/guild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, timeout=(20 if timeout else None))
+                res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/guild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
             case 2: # player
-                res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, timeout=(20 if timeout else None))
+                res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
         return res
 
     """updateRankingThread()
@@ -217,20 +219,28 @@ class Ranking():
                                     self.bot.data.pending = True
 
                             # update DB
-                            scrapout = await self.gwscrap(update_time)
-                            if scrapout == "":
+                            getrankout = await self.gwgetrank(update_time)
+                            if getrankout == "":
                                 data = await self.bot.do(self.GWDBver)
-                                if data is not None and data[1] is not None:
-                                    if self.bot.data.save['gw']['id'] != data[1]['gw']: # different gw, we move
-                                        if data[0] is not None: # backup old gw if it exists
-                                            self.bot.drive.mvFile("GW_old.sql", self.bot.data.config['tokens']['files'], "GW{}_backup.sql".format(data[0]['gw']))
-                                        self.bot.drive.mvFile("GW.sql", self.bot.data.config['tokens']['files'], "GW_old.sql")
-                                if not self.bot.drive.overwriteFile("temp.sql", "application/sql", "GW.sql", self.bot.data.config['tokens']['files']): # upload
-                                    await self.bot.sendError('gwscrap', 'Upload failed')
-                                self.bot.file.rm('temp.sql')
-                                await self.bot.do(self.reloadGWDB) # reload db
-                            elif scrapout != "Invalid day":
-                                await self.bot.sendError('gwscrap', 'Scraping failed\n' + scrapout)
+                                with self.dblock:
+                                    if data is not None and data[1] is not None:
+                                        if self.bot.data.save['gw']['id'] != data[1]['gw']: # different gw, we move
+                                            if data[0] is not None: # backup old gw if it exists
+                                                self.bot.drive.mvFile("GW_old.sql", self.bot.data.config['tokens']['files'], "GW{}_backup.sql".format(data[0]['gw']))
+                                            self.bot.drive.mvFile("GW.sql", self.bot.data.config['tokens']['files'], "GW_old.sql")
+                                            self.bot.file.mv("GW.sql", "GW_old.sql")
+                                    if not self.bot.drive.overwriteFile("temp.sql", "application/sql", "GW.sql", self.bot.data.config['tokens']['files']): # upload
+                                        await self.bot.sendError('gwgetrank', 'Upload failed')
+                                    self.bot.file.mv('temp.sql', "GW.sql")
+                                    self.dbstate = [False, False]
+                                    fs = ["GW_old.sql", "GW.sql"]
+                                    for i in [0, 1]:
+                                        self.bot.sql.remove(fs[i])
+                                        if self.bot.file.exist(fs[i]):
+                                            self.bot.sql.add(fs[i])
+                                            self.dbstate[i] = True
+                            elif getrankout != "Invalid day" and getrankout != "Skipped":
+                                await self.bot.sendError('gwgetrank', 'Failed\n' + getrankout)
                             await asyncio.sleep(100)
                         else:
                             await asyncio.sleep(25)
@@ -243,24 +253,24 @@ class Ranking():
                 await self.bot.sendError('checkgwranking', e)
                 return
 
-    """scrapProcess()
+    """getrankProcess()
     Thread to retrieve mass data from the ranking
     """
-    def scrapProcess(self): # thread for ranking
-        while len(self.scrap_qi) > 0: # until the input queue is empty
+    def getrankProcess(self): # thread for ranking
+        while len(self.getrank_qi) > 0: # until the input queue is empty
             if not self.bot.running or self.stoprankupdate: return 
-            with self.scraplockIn:
+            with self.getranklockIn:
                 try:
-                    page = self.scrap_qi.pop() # retrieve the page number
+                    page = self.getrank_qi.pop() # retrieve the page number
                 except:
                     continue
             data = None
             while data is None:
-                data = self.requestRanking(page, (0 if self.scrap_mode else 2), True) # request the page
+                data = self.requestRanking(page, (0 if self.getrank_mode else 2)) # request the page
                 if (self.bot.data.save['maintenance']['state'] and self.bot.data.save['maintenance']["duration"] == 0) or self.stoprankupdate: return
             for item in data['list']: # put the entries in the list
-                with self.scraplockOut:
-                    self.scrap_qo.append(item)
+                with self.getranklockOut:
+                    self.getrank_qo.append(item)
 
     """getCurrentGWDayID()
     Associate the current GW day to an integer and return it
@@ -299,7 +309,7 @@ class Ranking():
             return None
 
     """gwdbbuilder()
-    Thread to build the GW database from scrapProcess output
+    Thread to build the GW database from getrankProcess output
     """
     def gwdbbuilder(self):
         try:
@@ -318,7 +328,7 @@ class Ranking():
                  c.execute('CREATE TABLE info (gw int, ver int)')
                  c.execute('INSERT INTO info VALUES ({}, 2)'.format(self.bot.data.save['gw']['id'])) # ver 2
 
-            if self.scrap_mode: # crew table creation (IF it doesn't exist)
+            if self.getrank_mode: # crew table creation (IF it doesn't exist)
                 c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='crews'")
                 if c.fetchone()[0] < 1:
                     c.execute('CREATE TABLE crews (ranking int, id int, name text, preliminaries int, total_1 int, total_2 int, total_3 int, total_4 int)')
@@ -328,22 +338,22 @@ class Ranking():
                     c.execute('DROP TABLE players')
                 c.execute('CREATE TABLE players (ranking int, id int, name text, current_total int)')
             i = 0
-            while i < self.scrap_count: # count is the number of entries to process
-                if not self.bot.running or self.bot.data.save['maintenance']['state'] or self.stoprankupdate or (self.bot.util.JST() - self.scrap_update_time > timedelta(seconds=1000)): # stop if the bot is stopping
+            while i < self.getrank_count: # count is the number of entries to process
+                if not self.bot.running or self.bot.data.save['maintenance']['state'] or self.stoprankupdate or (self.bot.util.JST() - self.getrank_update_time > timedelta(seconds=1000)): # stop if the bot is stopping
                     self.stoprankupdate = True # send the stop signal
                     try:
                         c.execute("commit")
                         conn.close()
                     except:
                         pass
-                    return "Forced stop\nMode: {}\nCount: {}/{}".format(self.scrap_mode, i, self.scrap_count)
+                    return "Forced stop\nMode: {}\nCount: {}/{}".format(self.getrank_mode, i, self.getrank_count)
                 try: 
-                    with self.scraplockOut:
-                        item = self.scrap_qo.pop() # retrieve an item
+                    with self.getranklockOut:
+                        item = self.getrank_qo.pop() # retrieve an item
                 except:
                     continue # skip if error or no item in the queue
 
-                if self.scrap_mode: # if crew, update the existing crew (if it exists) or create a new entry
+                if self.getrank_mode: # if crew, update the existing crew (if it exists) or create a new entry
                     c.execute("SELECT count(*) FROM crews WHERE id = {}".format(int(item['id'])))
                     if c.fetchone()[0] != 0:
                         c.execute("UPDATE crews SET ranking = {}, name = '{}', {} = {} WHERE id = {}".format(int(item['ranking']), item['name'].replace("'", "''"), {0:'preliminaries',1:'total_1',2:'total_2',3:'total_3',4:'total_4'}.get(day, 'undef'), int(item['point']), int(item['id'])))
@@ -353,15 +363,15 @@ class Ranking():
                 else: # if player, just add to the table
                     c.execute("INSERT INTO players VALUES ({},{},'{}',{})".format(int(item['rank']), int(item['user_id']), item['name'].replace("'", "''"), int(item['point'])))
                 i += 1
-                if i == self.scrap_count: # if we reached the end, commit
+                if i == self.getrank_count: # if we reached the end, commit
                     c.execute("COMMIT")
                     conn.close()
                 elif i % 1000 == 0:
                     c.execute("COMMIT")
                     c.execute("BEGIN") # start next one
             
-            self.scrap_qi = None
-            self.scrap_qo = None
+            self.getrank_qi = None
+            self.getrank_qo = None
             
             return ""
         except Exception as err:
@@ -373,8 +383,8 @@ class Ranking():
             self.stoprankupdate = True # send the stop signal if a critical error happened
             return 'gwdbbuilder() exception:\n' + self.bot.util.pexc(err)
 
-    """gwscrap()
-    Setup and manage the multithreading to scrap the ranking
+    """gwgetrank()
+    Setup and manage the multithreading to retrieve the ranking
     
     Parameters
     ----------
@@ -384,7 +394,7 @@ class Ranking():
     --------
     str: empty string if success, error message if not
     """
-    async def gwscrap(self, update_time):
+    async def gwgetrank(self, update_time):
         try:
             self.bot.drive.delFiles(["temp.sql"], self.bot.data.config['tokens']['files']) # delete previous temp file (if any)
             self.bot.file.rm('temp.sql') # locally too
@@ -412,29 +422,52 @@ class Ranking():
                     self.bot.file.rm('temp.sql')
 
             state = "" # return value
-            self.scrap_update_time = update_time
+            self.getrank_update_time = update_time
+            it = ['Day 5', 'Day 4', 'Day 3', 'Day 2', 'Day 1', 'Interlude', 'Preliminaries']
+            skip_mode = 0
+            for i in range(0, len(it)): # loop to not copy paste this 5 more times
+                if update_time > self.bot.data.save['gw']['dates'][it[i]]:
+                    match it[i]:
+                        case 'Preliminaries':
+                            if update_time - self.bot.data.save['gw']['dates'][it[i]] < timedelta(days=0, seconds=7200):
+                                skip_mode = 1 # skip all
+                            elif self.bot.data.save['gw']['dates'][it[i-1]] - update_time > timedelta(days=0, seconds=21600):
+                                skip_mode = 1 # skip all
+                        case 'Interlude':
+                            if update_time.minute > 10: # only update players hourly
+                                skip_mode = 1 # skip all
+                            else:
+                                skip_mode = 2 # skip crew
+                        case 'Day 5':
+                            skip_mode = 1 # skip all
+                        case _:
+                            if update_time - self.bot.data.save['gw']['dates'][it[i]] < timedelta(days=0, seconds=7200): # only update crews at the start
+                                skip_mode = 3 # skip player
+                            elif self.bot.data.save['gw']['dates'][it[i-1]] - update_time > timedelta(days=0, seconds=21600):
+                                skip_mode = 1 # skip all
+                    break
+            if skip_mode == 1: return 'Skipped'
             for n in [0, 1]: # n == 0 (crews) or 1 (players)
-                current_time = self.bot.util.JST()
-                if n == 0 and current_time >= self.bot.data.save['gw']['dates']["Interlude"] and current_time < self.bot.data.save['gw']['dates']["Day 1"]:
-                    continue # disabled during interlude for crews
+                if skip_mode == 2 and n == 0: continue
+                elif skip_mode == 3 and n == 1: continue
 
-                self.scrap_mode = (n == 0)
-                data = self.requestRanking(1, (0 if self.scrap_mode else 2), True) # get the first page
+                self.getrank_mode = (n == 0)
+                data = self.requestRanking(1, (0 if self.getrank_mode else 2)) # get the first page
                 if data is None or data['count'] == False:
-                    return "gwscrap() can't access the ranking"
-                self.scrap_count = int(data['count']) # number of crews/players
+                    return "gwgetrank() can't access the ranking"
+                self.getrank_count = int(data['count']) # number of crews/players
                 last = data['last'] # number of pages
 
-                self.scrap_qi = [] # input queue (contains id of each page not processed yet)
+                self.getrank_qi = [] # input queue (contains id of each page not processed yet)
                 for i in range(2, last+1): # queue the pages to retrieve
-                    self.scrap_qi.append(i)
-                self.scrap_qo = [] # output queue (contains json-data for each crew/player not processed yet)
+                    self.getrank_qi.append(i)
+                self.getrank_qo = [] # output queue (contains json-data for each crew/player not processed yet)
                 for item in data['list']: # queue what we already retrieved on the first page
-                    self.scrap_qo.append(item)
+                    self.getrank_qo.append(item)
                 self.stoprankupdate = False # if true, this flag will stop the threads
                 # run in threads
-                coros = [self.request_async(self.scrap_executor, self.scrapProcess) for _i in range(self.scrap_max_thread)]
-                coros.append(self.request_async(self.scrap_executor, self.gwdbbuilder))
+                coros = [self.request_async(self.getrank_executor, self.getrankProcess) for _i in range(self.getrank_max_thread)]
+                coros.append(self.request_async(self.getrank_executor, self.gwdbbuilder))
                 results = await asyncio.gather(*coros)
                 for r in results:
                     if r is not None: state = r
@@ -443,7 +476,7 @@ class Ranking():
                 if state != "":
                     return state
                     
-                if self.scrap_mode: # update tracker
+                if self.getrank_mode: # update tracker
                     try:
                         await self.updateTracker(update_time)
                     except Exception as ue:
