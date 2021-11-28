@@ -321,7 +321,7 @@ class GuildWar(commands.Cog):
     @isOwner()
     async def newgwtask(self, ctx):
         """Start a new checkGWBuff() task (Owner Only)"""
-        self.bot.runTask('check_buff', self.bot.get_cog('GuildWar').checkGWBuff)
+        self.bot.runTask('check_buff', self.checkGWBuff)
         await self.bot.util.react(ctx.message, '✅') # white check mark
 
     @commands.command(no_pm=True, cooldown_after_parsing=True)
