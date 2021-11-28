@@ -100,8 +100,8 @@ class Pinboard():
                             dict['image'] = {'url':content[s:e]}
                     # check embed
                     if len(message.embeds) > 0:
-                        if dict['description'] == "" and len(message.embeds[0].description) > 0: dict['description'] = message.embeds[0].description + "\n\n"
-                        if 'image' not in dict and message.embeds[0].image.url != discord.Embed.Empty: dict['image'] = {'url':message.embeds[0].image.url}
+                        if len(message.embeds[0].description) > 0: dict['fields'] = [{'inline': True, 'name':'Content', 'value':message.embeds[0].description}] + dict['fields']
+                        if message.embeds[0].image != message.embeds[0].Empty: dict['image'] = {'url':message.embeds[0].image.url}
                         if len(message.embeds[0].title) > 0: dict['title'] += " :white_small_square: " + message.embeds[0].title
                         elif message.embeds[0].author.name != discord.Embed.Empty: dict['title'] += " :white_small_square: " + message.embeds[0].author.name
                     # add link to description
