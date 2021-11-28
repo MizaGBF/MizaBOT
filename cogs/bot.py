@@ -208,7 +208,9 @@ class Bot(commands.Cog):
                 continue
             if t == cmd.name.lower():
                 return [[1, cmd]]
-            elif t in cmd.name.lower() or t in cmd.help.lower():
+            elif t in cmd.name.lower():
+                flags.append([1, cmd])
+            elif hasattr(cmd, 'help') and t in cmd.help.lower():
                 flags.append([1, cmd])
             else:
                 for al in cmd.aliases:

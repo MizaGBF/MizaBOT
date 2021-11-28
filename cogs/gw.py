@@ -890,6 +890,7 @@ class GuildWar(commands.Cog):
     @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['honors'])
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def honor(self, ctx, target : str):
+        """Convert how many meats/fights/APs you need for a given honor amount """
         try:
             target = self.bot.util.strToInt(target)
             if target < 10000: raise Exception()
