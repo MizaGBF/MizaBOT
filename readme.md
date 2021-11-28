@@ -2,7 +2,8 @@
 
 # MizaBOT  
 * [Granblue Fantasy](http://game.granbluefantasy.jp) Discord Bot.  
-* Command List available [Here](https://mizagbf.github.io/MizaBOT/).  [![CodeQL](https://github.com/MizaGBF/MizaBOT/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/MizaGBF/MizaBOT/actions/workflows/codeql-analysis.yml)  
+* Command List available [Here](https://mizagbf.github.io/MizaBOT/).  
+[![CodeQL](https://github.com/MizaGBF/MizaBOT/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/MizaGBF/MizaBOT/actions/workflows/codeql-analysis.yml)  
 ### Requirements  
 * Python 3.10.  
 * [discord.py](https://github.com/Rapptz/discord.py) (formerly the rewrite branch).  
