@@ -58,28 +58,14 @@ class FourChan(commands.Cog):
         except:
             return []
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 10, commands.BucketType.default)
-    async def gbfg(self, inter):
-        """Post the latest /gbfg/ threads"""
-        threads = await self.bot.do(self.get4chan, 'vg', '/gbfg/')
-        if len(threads) > 0:
-            msg = ""
-            for t in threads:
-                if len(t[2]) > 34:
-                    msg += ':poop: [{} replies](https://boards.4channel.org/vg/thread/{}) ▫️ {}...\n'.format(t[1], t[0], t[2][:33])
-                else:
-                    msg += ':poop: [{} replies](https://boards.4channel.org/vg/thread/{}) ▫️ {}\n'.format(t[1], t[0], t[2])
-                if len(msg) > 1800:
-                    msg += 'and more...'
-                    break
-            await inter.response.send_message(embed=self.bot.util.embed(title="/gbfg/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
-        else:
-            await inter.response.send_message(embed=self.bot.util.embed(title="/gbfg/ Error", description="I couldn't find a single /gbfg/ thread 😔", color=self.color),ephemeral=True)
-
     @commands.slash_command(default_permission=True, name="4chan")
     @commands.cooldown(1, 10, commands.BucketType.default)
-    async def _4chan(self, inter, board : str = commands.Param(description="The board to search on.", autocomplete=['/a/', '/v/', '/vg/']), search : str = commands.Param(description="Search string")):
+    async def fourchan(self, inter):
+        """Command Group"""
+        pass
+
+    @fourchan.sub_command()
+    async def search(self, inter, board : str = commands.Param(description="The board to search on.", autocomplete=['/a/', '/v/', '/vg/']), search : str = commands.Param(description="Search string")):
         """Search 4chan threads"""
         nsfw = ['b', 'r9k', 'pol', 'bant', 'soc', 's4s', 's', 'hc', 'hm', 'h', 'e', 'u', 'd', 'y', 't', 'hr', 'gif', 'aco', 'r']
         board = board.lower().replace('/', '')
@@ -100,3 +86,42 @@ class FourChan(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="4chan Search result", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
             await inter.response.send_message(embed=self.bot.util.embed(title="4chan Search result", description="No matching threads found", color=self.color), ephemeral=True)
+
+    @fourchan.sub_command()
+    async def gbfg(self, inter):
+        """Post the latest /gbfg/ threads"""
+        threads = await self.bot.do(self.get4chan, 'vg', '/gbfg/')
+        if len(threads) > 0:
+            msg = ""
+            for t in threads:
+                if len(t[2]) > 34:
+                    msg += ':poop: [{} replies](https://boards.4channel.org/vg/thread/{}) ▫️ {}...\n'.format(t[1], t[0], t[2][:33])
+                else:
+                    msg += ':poop: [{} replies](https://boards.4channel.org/vg/thread/{}) ▫️ {}\n'.format(t[1], t[0], t[2])
+                if len(msg) > 1800:
+                    msg += 'and more...'
+                    break
+            await inter.response.send_message(embed=self.bot.util.embed(title="/gbfg/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
+        else:
+            await inter.response.send_message(embed=self.bot.util.embed(title="/gbfg/ Error", description="I couldn't find a single /gbfg/ thread 😔", color=self.color),ephemeral=True)
+
+    @fourchan.sub_command()
+    async def hgg(self, inter):
+        """Post the latest /hgg2d/ threads (NSFW channels Only)"""
+        if not inter.channel.is_nsfw():
+            await inter.response.send_message(embed=self.bot.util.embed(title=':underage: NSFW channels only', color=self.color), ephemeral=True)
+            return
+        threads = await self.bot.do(self.get4chan, 'vg', '/hgg2d/')
+        if len(threads) > 0:
+            msg = ""
+            for t in threads:
+                if len(t[2]) > 34:
+                    msg += '🔞 [{} replies](https://boards.4channel.org/vg/thread/{}) ▫️ {}...\n'.format(t[1], t[0], t[2][:33])
+                else:
+                    msg += '🔞 [{} replies](https://boards.4channel.org/vg/thread/{}) ▫️ {}\n'.format(t[1], t[0], t[2])
+                if len(msg) > 1800:
+                    msg += 'and more...'
+                    break
+            await inter.response.send_message(embed=self.bot.util.embed(title="/hgg2d/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
+        else:
+            await inter.response.send_message(embed=self.bot.util.embed(title="/hgg2d/ Error", description="I couldn't find a single /hgg2d/ thread 😔", color=self.color),ephemeral=True)

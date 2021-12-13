@@ -396,6 +396,9 @@ class Util():
             try: id = int(target)
             except: return "`{}` isn't a valid target".format(target)
         if id < 0 or id >= 100000000:
+            try: id = self.bot.data.save['gbfids'][str(id)]
+            except: return "Invalid ID range"
+        if id < 0 or id >= 100000000:
             return "Invalid ID range"
         return id
 

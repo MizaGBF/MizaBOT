@@ -1,6 +1,8 @@
 import os
 import re
 
+func_index = {}
+
 def get_version():
     with open("../bot.py", "r", encoding="utf-8") as f:
         data = f.read()
@@ -58,30 +60,47 @@ def generate_html(command_list):
     tabs = '''<div class="tab"><button class="tablinks" onclick="openTab(event, 'Commands')">Commands</button><button class="tablinks" onclick="openTab(event, 'Guide')">Guide</button><button class="tablinks" onclick="openTab(event, 'FAQ')">FAQ</button></div>'''
     filters = '<div id="buttons"><button class="btn active" onclick="filterSelection(\'all\')" style="background: #050505;">All</button>\n'
     containers = '<ul id="commandList">\n'
-    cmd_color_type = ['92b3e8', '92e8a3', 'e892c8']
-    cmd_type = ['Slash Command', 'User Command', 'Message Command']
+    cmd_color_type = ['92b3e8', '92e8a3', 'e892c8', 'ffcf8c']
+    cmd_type = ['Slash Command', 'User Command', 'Message Command', 'Sub Command']
     cmd_count = 0
+    other_count = 0
+    prev_count = 0
+    cmd_cache = set()
     for cog in command_list:
         commands = command_list[cog]
         if len(commands) == 0: continue
         filters += '<button class="btn" onclick="filterSelection(\'{}\')" style="background: #{};">{}</button>\n'.format(cog.lower(), commands[0].get('color', '615d5d'), cog)
-        cmd_count += len(commands)
-        print(len(commands), "commands in Cog:", cog, "(total:", cmd_count, ")")
         for c in commands:
-            containers += '<li class="command {}"><div class="command-name"><span style="display: inline-block;background: #{};padding: 5px;text-shadow: 2px 2px 2px rgba(0,0,0,0.5);">{}</span>&nbsp;<span style="display: inline-block;background: #{};padding: 3px;text-shadow: 2px 2px 2px rgba(0,0,0,0.5); font-size: 14px;">{}</span>&nbsp;&nbsp;/{}'.format(cog.lower(), c.get('color', '615d5d'), cog, cmd_color_type[c['type']], cmd_type[c['type']], c['name'])
+            cn = ""
+            if c['type'] == 0: cn = "/"
+            elif c['type'] == 3: cn = "/{} ".format(func_index.get(c['parent'], c['parent']))
+            cn += c['name']
+            if cn in cmd_cache:
+                print("Warning: Command", cn, "is present twice or more")
+            else:
+                cmd_cache.add(cn)
+        
+            containers += '<li class="command {}"><div class="command-name"><span style="display: inline-block;background: #{};padding: 5px;text-shadow: 2px 2px 2px rgba(0,0,0,0.5);">{}</span>&nbsp;<span style="display: inline-block;background: #{};padding: 3px;text-shadow: 2px 2px 2px rgba(0,0,0,0.5); font-size: 14px;">{}</span>&nbsp;&nbsp;{}'.format(cog.lower(), c.get('color', '615d5d'), cog, cmd_color_type[c['type']], cmd_type[c['type']], cn)
             if c.get('comment', '') != '':
                 containers += '</div><div class="command-description"><b>Description :</b>&nbsp;{}'.format(c['comment'].replace('(Mod Only)', '<b>(Mod Only)</b>').replace('((You) Mod Only)', '<b>((You) Mod Only)</b>').replace('(NSFW channels Only)', '<b>(NSFW channels Only)</b>'))
                 if len(c['comment']) >= 100:
                     print("Warning: Command", c['name'], "description is too long")
             else:
                 print("Warning:", c['name'], "has no description")
-            if c['type'] == 0:
+            if c['type'] == 0 or c['type'] == 3:
                 out = make_parameters(c['args'])
                 if out != '':
                     containers += '</div><div class="command-use"><b>Parameters :</b><br>{}'.format(out)
             containers += '</div></li>\n'
+            if c['type'] == 0:
+                cmd_count += 1
+            else:
+                other_count += 1
+        print(cmd_count - prev_count, "slash commands in Cog:", cog, "(total:", cmd_count, ")")
+        prev_count = cmd_count
+    print("Total:", cmd_count, "slash commands,", other_count, "other commands")
     if cmd_count > 95:
-        print("Warning, the number of commands might be too high")
+        print("Warning, the number of slash commands might be too high")
     filters += '</div><br><input type="text" id="textSelection" onkeyup="searchSelection()" placeholder="Search a command"><br>\n'
     containers += '</ul>\n'
     commandList = '<div id="Commands" class="tabcontent">' + filters + containers + '</div>\n'
@@ -432,11 +451,18 @@ def retrieve_command_list(data, pos_list):
             tmp = search_interval(data, pos, fp, 'name=', ')')
             if tmp is not None:
                 c['name'] = tmp.replace('"', '').replace("'", "")
+                alias = c['name']
+            else:
+                alias = None
             fp += len('async def ')
-            if 'name' not in c:
-                c['name'] = search_interval(data, pos, max_pos, ' def ', '(') # add search for name
+            tmp = search_interval(data, pos, max_pos, ' def ', '(') # add search for name
+            if tmp is None: continue
+            if alias is None:
+                c['name'] = tmp
                 if c['name'] is None: continue
                 if c['name'].startswith('_'): c['name'] = c['name'][1:]
+            else:
+                func_index[tmp] = alias
             args = breakdown_parameters(search_interval(data, fp, max_pos, '(', '):'))
             args.pop(0)
             args.pop(0)
@@ -449,6 +475,8 @@ def retrieve_command_list(data, pos_list):
             if 'owner' not in c['comment'].lower():
                 c['color'] = color
                 c['type'] = pos_list[i][1]
+                if pos_list[i][1] == 3:
+                    c['parent'] = pos_list[i][2]
                 cl.append(c)
     return cl
 
@@ -456,22 +484,31 @@ def find_command_pos(data):
     pos_list = []
     cur = 0
     while True:
-        poss = [data.find('@commands.slash_command', cur), data.find('@commands.user_command', cur), data.find('@commands.message_command', cur)]
+        poss = [data.find('@commands.slash_command', cur), data.find('@commands.user_command', cur), data.find('@commands.message_command', cur), data.find('.sub_command', cur), data.find('.sub_command_group', cur)]
         idx = -1
         while True:
             idx += 1
-            if idx == 3: break
+            if idx == 5: break
             if poss[idx] == -1: continue
-            if poss[(idx+1)%3] != -1 and poss[(idx+1)%3] < poss[idx]: continue
-            if poss[(idx+2)%3] != -1 and poss[(idx+2)%3] < poss[idx]: continue
+            if poss[(idx+1)%5] != -1 and poss[(idx+1)%5] <= poss[idx]: continue
+            if poss[(idx+2)%5] != -1 and poss[(idx+2)%5] <= poss[idx]: continue
+            if poss[(idx+3)%5] != -1 and poss[(idx+3)%5] <= poss[idx]: continue
+            if poss[(idx+4)%5] != -1 and poss[(idx+4)%5] <= poss[idx]: continue
             break
-        if idx == 3: break
-        pos_list.append((poss[idx], idx))
-        cur = poss[idx] + 1
+        if idx == 4: continue
+        if idx == 5: break
+        if idx == 3: # sub command
+            x = data.find('@', poss[idx]-15)
+            pos_list.append((poss[idx], idx, data[x+1:poss[idx]]))
+        else:
+            pos_list.append((poss[idx], idx))
+        cur = poss[idx] + 10
     return pos_list
 
 def generate_help():
+    global func_index
     print("Generating index.html...")
+    func_index = {}
     r = re.compile("^class ([a-zA-Z0-9_]*)\\(commands\\.Cog\\):", re.MULTILINE)
     command_list = {}
     for f in os.listdir('../cogs/'): # list all files

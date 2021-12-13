@@ -52,9 +52,13 @@ class DreadBarrage(commands.Cog):
             return ""
 
     @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 40, commands.BucketType.user)
-    @commands.max_concurrency(1, commands.BucketType.default)
-    async def dreadbarrage(self, inter, gmt : int = commands.Param(description='Your timezone from GMT', ge=-12, le=14, default=9, autocomplete=[-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])):
+    @commands.cooldown(2, 10, commands.BucketType.guild)
+    async def db(self, inter):
+        """Command Group"""
+        pass
+
+    @db.sub_command()
+    async def time(self, inter, gmt : int = commands.Param(description='Your timezone from GMT', ge=-12, le=14, default=9, autocomplete=[-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])):
         """Post the Dread Barrage schedule"""
         if self.bot.data.save['valiant']['state'] == True:
             try:
@@ -92,60 +96,58 @@ class DreadBarrage(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="{} **Dread Barrage**".format(self.bot.emote.get('crew')), description="Not available", color=self.color))
             await self.bot.util.clean(inter, 40)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(2, 10, commands.BucketType.guild)
-    async def dreadhelp(self, inter, what : str = commands.Param(description="Type of Value", autcomplete=['box', 'token']), value : str = commands.Param(description="Value to convert (support B, M and K)")):
-        """Convert Dread Barrage boxes or tokens"""
-        match what.lower():
-            case 'token':
-                try:
-                    tok = self.bot.util.strToInt(tok)
-                    if tok < 1 or tok > 9999999999: raise Exception()
-                    b = 0
-                    t = tok
-                    if tok >= 1600:
-                        tok -= 1600
-                        b += 1
-                    while b < 4 and tok >= 2400:
-                        tok -= 2400
-                        b += 1
-                    while b < 20 and tok >= 2000:
-                        tok -= 2000
-                        b += 1
-                    while b < 40 and tok >= 10000:
-                        tok -= 10000
-                        b += 1
-                    while tok >= 15000:
-                        tok -= 15000
-                        b += 1
-                    s1 = math.ceil(t / 52.0)
-                    s2 = math.ceil(t / 70.0)
-                    s3 = math.ceil(t / 97.0)
-                    s4 = math.ceil(t / 146.0)
-                    s5 = math.ceil(t / 243.0)
-                    await inter.response.send_message(embed=self.bot.util.embed(title="{} Dread Barrage Token Calculator ▫️ {} tokens".format(self.bot.emote.get('crew'), t), description="**{:,}** box(s) and **{:,}** leftover tokens\n**{:,}** \⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐\⭐ (**{:,}** pots)".format(b, tok, s1, math.ceil(s1*30/75), s2, math.ceil(s2*30/75), s3, math.ceil(s3*40/75), s4, math.ceil(s4*50/75), s5, math.ceil(s5*50/75)), color=self.color), ephemeral=True)
-                except:
-                    await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid token number", color=self.color), ephemeral=True)
-            case 'box':
-                t = 0
-                b = box
-                if box >= 1: t += 1600
-                if box >= 2: t += 2400
-                if box >= 3: t += 2400
-                if box >= 4: t += 2400
-                if box > 40:
-                    t += (box - 40) * 15000
-                    box = 40
-                if box > 20:
-                    t += (box - 20) * 10000
-                    box = 20
-                if box > 4:
-                    t += (box - 4) * 2000
-                s1 = math.ceil(t / 52.0)
-                s2 = math.ceil(t / 70.0)
-                s3 = math.ceil(t / 97.0)
-                s4 = math.ceil(t / 146.0)
-                s5 = math.ceil(t / 243.0)
-                await inter.response.send_message(embed=self.bot.util.embed(title="{} Dread Barrage Token Calculator ▫️ {} box".format(self.bot.emote.get('crew'), b), description="**{:,}** tokens needed\n\n**{:,}** \⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐\⭐ (**{:,}** pots)".format(t, s1, math.ceil(s1*30/75), s2, math.ceil(s2*30/75), s3, math.ceil(s3*40/75), s4, math.ceil(s4*50/75), s5, math.ceil(s5*50/75)), color=self.color), ephemeral=True)
-            case _:
-                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid value type `{}`".format(what), color=self.color), ephemeral=True)
+    @db.sub_command()
+    async def token(self, inter, value : str = commands.Param(description="Value to convert (support B, M and K)")):
+        """Convert Dread Barrage token values"""
+        try:
+            tok = self.bot.util.strToInt(tok)
+            if tok < 1 or tok > 9999999999: raise Exception()
+            b = 0
+            t = tok
+            if tok >= 1600:
+                tok -= 1600
+                b += 1
+            while b < 4 and tok >= 2400:
+                tok -= 2400
+                b += 1
+            while b < 20 and tok >= 2000:
+                tok -= 2000
+                b += 1
+            while b < 40 and tok >= 10000:
+                tok -= 10000
+                b += 1
+            while tok >= 15000:
+                tok -= 15000
+                b += 1
+            s1 = math.ceil(t / 52.0)
+            s2 = math.ceil(t / 70.0)
+            s3 = math.ceil(t / 97.0)
+            s4 = math.ceil(t / 146.0)
+            s5 = math.ceil(t / 243.0)
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Dread Barrage Token Calculator ▫️ {} tokens".format(self.bot.emote.get('crew'), t), description="**{:,}** box(s) and **{:,}** leftover tokens\n**{:,}** \⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐\⭐ (**{:,}** pots)".format(b, tok, s1, math.ceil(s1*30/75), s2, math.ceil(s2*30/75), s3, math.ceil(s3*40/75), s4, math.ceil(s4*50/75), s5, math.ceil(s5*50/75)), color=self.color), ephemeral=True)
+        except:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid token number", color=self.color), ephemeral=True)
+
+    @db.sub_command()
+    async def box(self, inter, value : str = commands.Param(description="Value to convert (support B, M and K)")):
+        """Convert Dread Barrage box values"""
+        t = 0
+        b = box
+        if box >= 1: t += 1600
+        if box >= 2: t += 2400
+        if box >= 3: t += 2400
+        if box >= 4: t += 2400
+        if box > 40:
+            t += (box - 40) * 15000
+            box = 40
+        if box > 20:
+            t += (box - 20) * 10000
+            box = 20
+        if box > 4:
+            t += (box - 4) * 2000
+        s1 = math.ceil(t / 52.0)
+        s2 = math.ceil(t / 70.0)
+        s3 = math.ceil(t / 97.0)
+        s4 = math.ceil(t / 146.0)
+        s5 = math.ceil(t / 243.0)
+        await inter.response.send_message(embed=self.bot.util.embed(title="{} Dread Barrage Token Calculator ▫️ {} box".format(self.bot.emote.get('crew'), b), description="**{:,}** tokens needed\n\n**{:,}** \⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐\⭐ (**{:,}** pots)".format(t, s1, math.ceil(s1*30/75), s2, math.ceil(s2*30/75), s3, math.ceil(s3*40/75), s4, math.ceil(s4*50/75), s5, math.ceil(s5*50/75)), color=self.color), ephemeral=True)

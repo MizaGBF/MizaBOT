@@ -83,6 +83,14 @@ class Moderation(commands.Cog):
         if msg == "": msg = "No Bans set for this user"
         msg = await inter.response.send_message(embed=self.bot.util.embed(author={'name':inter.author.display_name, 'icon_url':inter.author.display_avatar}, description=msg, color=self.color), ephemeral=True)
 
+    @commands.user_command(default_permission=True, name="Ban Spark Ranking")
+    @isMod()
+    async def banroll(self, inter: disnake.UserCommandInteraction, member: disnake.Member):
+        """Ban an user from the roll ranking (Mod Only)"""
+        self.bot.ban.set(member.id, self.bot.ban.SPARK)
+        await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success.\nMy owner has been notified.", color=self.color), ephemeral=True)
+        await self.bot.send('debug', embed=self.bot.util.embed(title="{} ▫️ {}".format(member.display_name, id), description="Banned from all roll rankings by {}\nValues: `{}`".format(inter.author.display_name, self.bot.data.save['spark'][str(member.id)]), thumbnail=member.display_avatar, color=self.color, footer=inter.guild.name))
+
     """_seeCleanupSetting()
     Output the server cleanup settings
     

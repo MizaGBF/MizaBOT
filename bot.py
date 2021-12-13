@@ -30,7 +30,7 @@ except:
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "9.0" # bot version
+        self.version = "9.1" # bot version
         self.changelog = [ # changelog lines
             "Please use `$bug_report` if you see anything wrong",
             "Online command list added [here](https://mizagbf.github.io/MizaBOT/)"

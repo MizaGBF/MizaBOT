@@ -285,37 +285,52 @@ class Games(commands.Cog):
         await self.bot.util.clean(inter, 25)
 
     @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 60, commands.BucketType.user)
-    @commands.max_concurrency(5, commands.BucketType.default)
+    @commands.cooldown(1, 15, commands.BucketType.user)
+    @commands.max_concurrency(10, commands.BucketType.default)
+    async def roll(self, inter):
+        """Command Group"""
+        pass
+
+    @roll.sub_command()
+    async def single(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
+        """Simulate a single draw"""
+        await self._roll(inter, ("{} did a single roll...", "{} did a single roll"), 0, count=1, mode='single', legfest=self.checkLegfest(double))
+
+    @roll.sub_command()
+    async def ten(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
+        """Simulate a ten draw"""
+        await self._roll(inter, ("{} did ten rolls...", "{} did ten rolls"), 2, count=10, mode='ten', legfest=self.checkLegfest(double))
+
+    @roll.sub_command()
+    async def spark(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
+        """Simulate a spark"""
+        await self._roll(inter, ("{} is sparking...", "{} sparked"), 3, count=300, mode='ten', legfest=self.checkLegfest(double))
+
+    @roll.sub_command()
+    async def count(self, inter, count : int = commands.Param(description='Number of rolls', autocomplete=[1, 10, 50, 100, 120, 300, 600], default=10, ge=1, le=600), double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
+        """Simulate a specific amount of draw"""
+        await self._roll(inter, ("{}" + " is rolling {} times...".format(count), "{} " + "rolled {} times".format(count)), 3, count=count, mode='ten', legfest=self.checkLegfest(double))
+
+    @roll.sub_command()
+    async def gachapin(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
+        """Simulate a Gachapin Frenzy"""
+        await self._roll(inter, ("{} is rolling the Gachapin...", "{} rolled the Gachapin"), 3, count=300, mode='gachapin', legfest=self.checkLegfest(double))
+
+    @roll.sub_command()
+    async def mukku(self, inter, mode : str = commands.Param(description='Force a Super Mukku by putting "super".', autocomplete=["super"], default="")):
+        """Simulate a Mukku Frenzy"""
+        await self._roll(inter, ("{} is rolling the Mukku...", "{} rolled the Mukku"), 3, count=300, mode=('supermukku' if (mode.lower() == "super") else 'mukku'))
+
+    @roll.sub_command()
     async def memeroll(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default=""), rateup : str = commands.Param(description='Put `r` or `R` to roll until a rate up SSR', autocomplete=["r", "R"], default="")):
-        """Do single rolls until a SSR"""
+        """Simulate rolls until a SSR"""
         rateup = (rateup.lower() == "r")
         await self._roll(inter, ("{} is memerolling...", "{} memerolled {} times"), 1, mode='memerollB' if rateup else 'memerollA', legfest=self.checkLegfest(double))
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 20, commands.BucketType.user)
-    @commands.max_concurrency(10, commands.BucketType.default)
-    async def roll(self, inter, count : int = commands.Param(description='Number of rolls', autocomplete=[1, 10, 50, 100, 120, 300, 600], default=10, ge=1, le=600), double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
-        """Do an user-specified number gacha rolls"""
-        match count:
-            case 1:
-                await self._roll(inter, ("{} did a single roll...", "{} did a single roll"), 0, count=1, mode='single', legfest=self.checkLegfest(double))
-            case 10:
-                await self._roll(inter, ("{} did ten rolls...", "{} did ten rolls"), 2, count=10, mode='ten', legfest=self.checkLegfest(double))
-            case 300:
-                await self._roll(inter, ("{} is sparking...", "{} sparked"), 3, count=300, mode='ten', legfest=self.checkLegfest(double))
-            case _:
-                await self._roll(inter, ("{}" + " is rolling {} times...".format(count), "{} " + "rolled {} times".format(count)), 3, count=count, mode='ten', legfest=self.checkLegfest(double))
-
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 60, commands.BucketType.user)
-    @commands.max_concurrency(5, commands.BucketType.default)
-    async def gachapin(self, inter, double : str = commands.Param(description='Force 3%, 6%, Mukku or Super Mukku rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1", "mukku", "supermukku"], default="")):
-        """Do ten rolls until you get a ssr"""
-        if double.lower() in ['mukku', 'supermukku']:
-             await self._roll(inter, ("{} is rolling the Mukku...", "{} rolled the Mukku"), 3, count=300, mode=('supermukku' if (super.lower() == "super") else 'mukku'))
-        else:
-            await self._roll(inter, ("{} is rolling the Gachapin...", "{} rolled the Gachapin"), 3, count=300, mode='gachapin', legfest=self.checkLegfest(double))
+    @roll.sub_command()
+    async def srssr(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
+        """Simulate a SR/SSR Ticket draw"""
+        await self._roll(inter, ("{} is using a SR/SSR ticket...", "{} used a SR/SSR ticket"), 0, count=1, mode='srssr', legfest=self.checkLegfest(double))
 
     def getRoulette(self, count, mode, double):
         result = self.gachaRoll(count=count, mode=mode, legfest=self.checkLegfest(double))
@@ -336,7 +351,12 @@ class Games(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 100, commands.BucketType.user)
-    @commands.max_concurrency(5, commands.BucketType.default)
+    @commands.max_concurrency(10, commands.BucketType.default)
+    async def gbfgame(self, inter):
+        """Command Group"""
+        pass
+
+    @gbfgame.sub_command()
     async def roulette(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
         """Imitate the GBF roulette"""
         await inter.response.defer()
@@ -441,12 +461,10 @@ class Games(commands.Cog):
                     result, rate, tmp, count = await self.bot.do(self.getRoulette, 300, 'supermukku', double)
                     msg += ":confetti_ball: **Super Mukku** ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
                     running = False
-            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color, footer=footer))
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer))
         await self.bot.util.clean(inter, 45)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 100, commands.BucketType.user)
-    @commands.max_concurrency(5, commands.BucketType.default)
+    @gbfgame.sub_command()
     async def scratch(self, inter):
         """Imitate the GBF scratch game from Anniversary 2020"""
         await inter.response.defer()
@@ -523,10 +541,8 @@ class Games(commands.Cog):
         await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} is scratching...".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="Click to play the game", footer=footer, color=self.color), view=Scratcher(bot, inter.author.id, grid, self.scratcher_thumb, self.color, footer))
         await self.bot.util.clean(inter, 45)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 100, commands.BucketType.user)
-    @commands.max_concurrency(5, commands.BucketType.default)
-    async def chest(self, inter):
+    @gbfgame.sub_command()
+    async def chestrush(self, inter):
         """Imitate the GBF treasure game from Summer 2020"""
         await inter.response.defer()
         message = None
@@ -685,9 +701,7 @@ class Games(commands.Cog):
                 return i + 1
         return 0
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 100, commands.BucketType.user)
-    @commands.max_concurrency(5, commands.BucketType.default)
+    @gbfgame.sub_command()
     async def fortune(self, inter, usercards : str = commands.Param(description='List your cards here', default="")):
         """Imitate the GBF summer fortune game from Summer 2021"""
         title = '{} is tempting fate...'.format(inter.author.display_name)
@@ -827,6 +841,18 @@ class Games(commands.Cog):
         await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{}'s daily character".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color))
         await self.bot.util.clean(inter, 30)
 
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 100, commands.BucketType.guild)
+    async def xil(self, inter):
+        """Generate a random element for Xil (Private Joke)"""
+        g = random.Random()
+        elems = ['fire', 'water', 'earth', 'wind', 'light', 'dark']
+        g.seed(int((int(datetime.utcnow().timestamp()) // 86400) * (1.0 + 1.0/4.2)))
+        e = g.choice(elems)
+
+        final_msg = await inter.response.send_message(embed=self.bot.util.embed(title="Today, Xil's main element is", description="{} **{}**".format(self.bot.emote.get(e), e.capitalize()), color=self.color))
+        await self.bot.util.clean(inter, 30)
+
     """value2head()
     Convert a card value to a string.
     Heads are converted to the equivalent (J, Q, K, A)
@@ -964,8 +990,37 @@ class Games(commands.Cog):
         return False
 
     @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 30, commands.BucketType.guild)
+    @commands.cooldown(1, 30, commands.BucketType.user)
     @commands.max_concurrency(10, commands.BucketType.default)
+    async def minigame(self, inter):
+        """Command Group"""
+        pass
+
+    @minigame.sub_command()
+    async def deal(self, inter):
+        """Deal a random poker hand"""
+        hand = []
+        while len(hand) < 5:
+            card = str(random.randint(2, 14)) + random.choice(["D", "S", "H", "C"])
+            if card not in hand:
+                hand.append(card)
+        await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{}'s hand".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="🎴, 🎴, 🎴, 🎴, 🎴", color=self.color))
+        for x in range(0, 5):
+            await asyncio.sleep(1)
+            # check result
+            msg = ""
+            for i in range(len(hand)):
+                if i > x: msg += "🎴"
+                else: msg += self.valueNsuit2head(hand[i])
+                if i < 4: msg += ", "
+                else: msg += "\n"
+            if x == 4:
+                await asyncio.sleep(2)
+                msg += await self.bot.do(self.checkPokerHand, hand)
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{}'s hand".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color))
+        await self.bot.util.clean(inter, 45)
+
+    @minigame.sub_command()
     async def poker(self, inter):
         """Play a poker mini-game with other people"""
         await inter.response.defer()
@@ -1016,9 +1071,7 @@ class Games(commands.Cog):
             await asyncio.sleep(2)
         await self.bot.util.clean(inter, 45)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 30, commands.BucketType.guild)
-    @commands.max_concurrency(10, commands.BucketType.default)
+    @minigame.sub_command()
     async def blackjack(self, inter):
         """Play a blackjack mini-game with other people"""
         await inter.response.defer()
@@ -1083,9 +1136,7 @@ class Games(commands.Cog):
             await asyncio.sleep(2)
         await self.bot.util.clean(inter, 45)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 40, commands.BucketType.guild)
-    @commands.max_concurrency(10, commands.BucketType.default)
+    @minigame.sub_command()
     async def tictactoe(self, inter):
         """Play a game of Tic Tac Toe"""
         await inter.response.defer()
@@ -1107,9 +1158,7 @@ class Games(commands.Cog):
         view = TicTacToe(self.bot, bot_game, players, embed)
         await inter.edit_original_message(embed=embed, view=view)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 45, commands.BucketType.user)
-    @commands.max_concurrency(5, commands.BucketType.default)
+    @minigame.sub_command()
     async def dice(self, inter, dice_string : str = commands.Param(description="Format is NdN. Minimum is 1d6, Maximum is 10d100", autocomplete=['1d6', '4d10'])):
         """Roll some dies"""
         try:
@@ -1131,11 +1180,9 @@ class Games(commands.Cog):
                 await asyncio.sleep(1)
             await self.bot.util.clean(inter, 45)
         except:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Invalid string `{}`\nFormat must be `NdN` (minimum is `1d6`, maximum is `10d100`)".format(dice_string), color=self.color), ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Invalid string `{}`\nFormat must be `NdN` (minimum is `1d6`, maximum is `10d100`)".format(dice_string), color=self.color))
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 45, commands.BucketType.user)
-    @commands.max_concurrency(5, commands.BucketType.default)
+    @minigame.sub_command()
     async def coin(self, inter):
         """Flip a coin"""
         coin = random.randint(0, 1)

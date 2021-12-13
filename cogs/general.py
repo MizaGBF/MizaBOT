@@ -105,3 +105,9 @@ class General(commands.Cog):
         except Exception as e:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Error\n"+str(e), color=self.color), ephemeral=True)
         await self.bot.util.clean(inter, 60)
+
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 20, commands.BucketType.user)
+    async def jst(self, inter):
+        """Post the current time, JST timezone"""
+        await inter.response.send_message(embed=self.bot.util.embed(title="{} {:%Y/%m/%d %H:%M} JST".format(self.bot.emote.get('clock'), self.bot.util.JST()), color=self.color), ephemeral=True)

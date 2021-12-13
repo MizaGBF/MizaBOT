@@ -17,6 +17,12 @@ class Sparking(commands.Cog):
         self.bot = bot
         self.color = 0xeba834
 
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(2, 10, commands.BucketType.user)
+    async def spark(self, inter):
+        """Command Group"""
+        pass
+
     """_seeroll()
     Display the user roll count
     
@@ -59,10 +65,8 @@ class Sparking(commands.Cog):
             await self.bot.sendError('seeRoll', e)
             await inter.response.send_message(embed=self.bot.util.embed(title="Critical Error", description="I warned my owner", color=self.color, footer=str(e)), ephemeral=True)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 5, commands.BucketType.user)
-    @commands.max_concurrency(5, commands.BucketType.guild)
-    async def setroll(self, inter, crystal : int = commands.Param(description="Your amount of Crystals", ge=0, le=900000, default=0), single : int = commands.Param(description="Your amount of Single Draw Tickets", ge=0, le=1000, default=0), ten : int = commands.Param(description="Your amount of Ten Draw Tickets", ge=0, le=100, default=0)):
+    @spark.sub_command()
+    async def set(self, inter, crystal : int = commands.Param(description="Your amount of Crystals", ge=0, le=900000, default=0), single : int = commands.Param(description="Your amount of Single Draw Tickets", ge=0, le=1000, default=0), ten : int = commands.Param(description="Your amount of Ten Draw Tickets", ge=0, le=100, default=0)):
         """Set your roll count"""
         id = str(inter.message.author.id)
         try:
@@ -122,17 +126,13 @@ class Sparking(commands.Cog):
                 t_max += timedelta(days=1)
         return t_min, t_max, expected, now
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 5, commands.BucketType.user)
-    @commands.max_concurrency(5, commands.BucketType.guild)
-    async def seeroll(self, inter, member : disnake.Member = None):
+    @spark.sub_command()
+    async def see(self, inter, member : disnake.Member = None):
         """Post your (or the target) roll count"""
         await self._seeroll(inter, member, False)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 5, commands.BucketType.user)
-    @commands.max_concurrency(5, commands.BucketType.guild)
-    async def zeroroll(self, inter, day_difference: int = commands.Param(description="Add a number of days to today date", ge=0, default=0)):
+    @spark.sub_command()
+    async def zero(self, inter, day_difference: int = commands.Param(description="Add a number of days to today date", ge=0, default=0)):
         """Post a spark estimation based on today date"""
         try:
             t_min, t_max, expected, now = self._estimate(day_difference, None)
@@ -141,3 +141,72 @@ class Sparking(commands.Cog):
         except Exception as e:
             await inter.response.send_message(embed=self.bot.util.embed(title="Critical Error", description="I warned my owner", color=self.color, footer=str(e)), ephemeral=True)
             await self.bot.sendError('zeroRoll', e)
+
+    """_ranking()
+    Retrieve the spark data of this server users and rank them
+    
+    Parameters
+    ----------
+    inter: Command interaction
+    guild: Target guild
+    
+    Returns
+    --------
+    tuple: Containing:
+        - msg: String containing the ranking
+        - ar: Integer, Author ranking
+        - top: Integer, Top limit
+    """
+    async def _ranking(self, inter, guild):
+        ranking = {}
+        for id in self.bot.data.save['spark']:
+            if self.bot.ban.check(id, self.bot.ban.SPARK):
+                continue
+            m = await guild.get_or_fetch_member(int(id))
+            if m is not None:
+                s = self.bot.data.save['spark'][id]
+                if s[0] < 0 or s[1] < 0 or s[2] < 0:
+                    continue
+                r = (s[0] / 300) + s[1] + s[2] * 10
+                if r > 1800:
+                    continue
+                ranking[id] = r
+        if len(ranking) == 0:
+            return None, None, None
+        ar = -1
+        i = 0
+        emotes = {0:self.bot.emote.get('SSR'), 1:self.bot.emote.get('SR'), 2:self.bot.emote.get('R')}
+        msg = ""
+        top = 15
+        for key, value in sorted(ranking.items(), key = itemgetter(1), reverse = True):
+            if i < top:
+                fr = math.floor(value)
+                msg += "**#{:<2}{} {}** with {} roll".format(i+1, emotes.pop(i, "▫️"), guild.get_member(int(key)).display_name, fr)
+                if fr != 1: msg += "s"
+                msg += "\n"
+            if key == str(inter.message.author.id):
+                ar = i
+                if i >= top: break
+            i += 1
+            if i >= 100:
+                break
+        return msg, ar, top
+
+    @spark.sub_command()
+    async def ranking(self, inter):
+        """Show the ranking of everyone saving for a spark in the server"""
+        try:
+            await inter.response.defer()
+            guild = inter.author.guild
+            msg, ar, top = await self._ranking(inter, guild)
+            if msg is None:
+                await inter.edit_original_message(embed=self.bot.util.embed(title="The ranking of this server is empty"))
+                return
+            if ar >= top: footer = "You are ranked #{}".format(ar+1)
+            elif ar == -1: footer = "You aren't ranked ▫️ You need at least one roll to be ranked"
+            else: footer = ""
+            await inter.edit_original_message(embed=self.bot.util.embed(title="{} Spark ranking of {}".format(self.bot.emote.get('crown'), guild.name), color=self.color, description=msg, footer=footer, thumbnail=guild.icon.url))
+            await self.bot.util.clean(ctx, final_msg, 30)
+        except Exception as e:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Sorry, something went wrong :bow:", footer=str(e)))
+            await self.bot.sendError("rollRanking", e)
