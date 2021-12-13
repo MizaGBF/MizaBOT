@@ -1,5 +1,5 @@
 from . import BaseView
-import discord
+import disnake
 
 # ----------------------------------------------------------------------------------------------------------------
 # Scratcher View
@@ -7,7 +7,7 @@ import discord
 # Scratcher class and its button used by the scratcher game
 # ----------------------------------------------------------------------------------------------------------------
 
-class ScratcherButton(discord.ui.Button):
+class ScratcherButton(disnake.ui.Button):
     """__init__()
     Button Constructor
     
@@ -18,7 +18,7 @@ class ScratcherButton(discord.ui.Button):
     label: the default string label on the button
     style: the default Discord button style
     """
-    def __init__(self, item : str, row : int, label : str = '???', style : discord.ButtonStyle = discord.ButtonStyle.secondary):
+    def __init__(self, item : str, row : int, label : str = '???', style : disnake.ButtonStyle = disnake.ButtonStyle.secondary):
         super().__init__(style=style, label='\u200b', row=row)
         self.item = item
         self.label = label
@@ -31,16 +31,16 @@ class ScratcherButton(discord.ui.Button):
     ----------
     interaction: a Discord interaction
     """
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         self.view.update_last(interaction)
         if not self.disabled and self.view.ownership_check(interaction):
             self.disabled = True
             self.label = self.item
-            self.style = discord.ButtonStyle.primary
+            self.style = disnake.ButtonStyle.primary
             if self.view.check_status(self.item):
                 self.view.stopall()
-                msg = await interaction.response.edit_message(embed=self.view.bot.util.embed(author={'name':"{} scratched".format(interaction.user.display_name), 'icon_url':interaction.user.display_avatar}, description="You won **{}**".format(self.item), thumbnail='http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/' + self.view.thumbs.get(self.item, ''), footer=self.view.footer, color=self.view.color), view=self.view)
-                await self.view.bot.util.cleanInter(interaction, 70)
+                await interaction.response.edit_message(embed=self.view.bot.util.embed(author={'name':"{} scratched".format(interaction.user.display_name), 'icon_url':interaction.user.display_avatar}, description="You won **{}**".format(self.item), thumbnail='http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/' + self.view.thumbs.get(self.item, ''), footer=self.view.footer, color=self.view.color), view=self.view)
+                await self.view.bot.util.clean(interaction, 70)
             else:
                 await interaction.response.edit_message(view=self.view)
         else:
@@ -88,13 +88,13 @@ class Scratcher(BaseView):
         game_over = (self.state[item] == 3)
         for c in self.children:
             if c.disabled:
-                if self.state.get(c.item, 0) == 2: c.style = discord.ButtonStyle.success
-                elif self.state.get(c.item, 0) == 3: c.style = discord.ButtonStyle.danger
+                if self.state.get(c.item, 0) == 2: c.style = disnake.ButtonStyle.success
+                elif self.state.get(c.item, 0) == 3: c.style = disnake.ButtonStyle.danger
             elif game_over:
                 self.state[c.item] = self.state.get(c.item, 0) + 1
                 for e in self.children:
                     e.label = e.item
                     e.disabled = True
         if not game_over and self.counter == 9:
-            self.add_item(ScratcherButton(self.grid [9], 3, 'Final Scratch', discord.ButtonStyle.danger))
+            self.add_item(ScratcherButton(self.grid [9], 3, 'Final Scratch', disnake.ButtonStyle.danger))
         return game_over

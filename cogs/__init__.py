@@ -15,6 +15,7 @@ def loadCogFile(bot, p, f, r, relative="", package=None):
                     _class = getattr(module, class_name) # make
                     bot.add_cog(_class(bot)) # instantiate and add to the bot
                 except Exception as e:
+                    print("Cog Import Exception in file", p, ":", e)
                     print("Cog Import Exception in file", p, ":", bot.util.pexc(e))
                 return True
     except:
@@ -28,5 +29,7 @@ def load(bot): # load all cogs in the 'cog' folder
         p = os.path.join('cogs/', f)
         if f not in ['__init__.py'] and f.endswith('.py') and os.path.isfile(p): # search for valid python file
             if loadCogFile(bot, p, f, r, relative=".", package='cogs'): count += 1
+    # optional dev files
     if loadCogFile(bot, "debug.py", "debug.py", r): count += 1
+    if loadCogFile(bot, "test.py", "test.py", r): count += 1
     return count # return attempts

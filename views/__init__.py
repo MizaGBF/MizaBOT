@@ -1,4 +1,4 @@
-import discord
+import disnake
 import asyncio
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -7,7 +7,7 @@ import asyncio
 # Base View class used as parent for the bot views
 # ----------------------------------------------------------------------------------------------------------------
 
-class BaseView(discord.ui.View):
+class BaseView(disnake.ui.View):
     """__init__()
     Constructor
     
@@ -33,7 +33,7 @@ class BaseView(discord.ui.View):
     ----------
     interaction: a Discord interaction
     """
-    def update_last(self, interaction: discord.Interaction):
+    def update_last(self, interaction: disnake.Interaction):
          self.last_interaction = interaction
 
     """ownership_check()
@@ -47,7 +47,7 @@ class BaseView(discord.ui.View):
     --------
     bool: True if it matches, False if not
     """
-    def ownership_check(self, interaction: discord.Interaction):
+    def ownership_check(self, interaction: disnake.Interaction):
         return (self.owner_id is None or interaction.user.id == self.owner_id)
 
     """on_timeout()
@@ -57,10 +57,10 @@ class BaseView(discord.ui.View):
     async def on_timeout(self):
         self.stopall()
         if self.enable_timeout_cleanup:
-            self.bot.util.cleanInter(self.last_interaction, 0)
+            self.bot.util.clean(self.last_interaction, 0)
 
     """stop()
-    Override discord.ui.View.stopall()
+    Override disnake.ui.View.stopall()
     """
     def stopall(self):
         for c in self.children:
@@ -81,12 +81,12 @@ class BaseView(discord.ui.View):
         if timeout > 0: await asyncio.sleep(timeout)
         self.stopall()
         if clean:
-            self.bot.util.cleanInter(self.last_interaction, 0)
+            self.bot.util.clean(self.last_interaction, 0)
 
     """on_error()
     Coroutine callback
     Called when the view triggers an error
     """
-    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction):
+    async def on_error(self, error: Exception, item: disnake.ui.Item, interaction: disnake.Interaction):
         self.bot.errn += 1
         await self.bot.send('debug', embed=self.bot.util.embed(title="⚠ Error caused by {}".format(interaction.user), description="{} Exception\n{}".format(item, self.bot.util.pexc(error)), thumbnail=interaction.user.display_avatar, footer='{}'.format(interaction.user.id), timestamp=self.bot.util.timestamp()))

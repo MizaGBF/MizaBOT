@@ -1,5 +1,5 @@
 from . import BaseView
-import discord
+import disnake
 import random
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -8,7 +8,7 @@ import random
 # Chest Rush class and its button used by the chest rush game
 # ----------------------------------------------------------------------------------------------------------------
 
-class ChestRushButton(discord.ui.Button):
+class ChestRushButton(disnake.ui.Button):
     """__init__()
     Button Constructor
     
@@ -18,7 +18,7 @@ class ChestRushButton(discord.ui.Button):
     row: an integer indicating on what row to set the button on
     """
     def __init__(self, grid : str, row : int):
-        super().__init__(style=discord.ButtonStyle.secondary, label='Chest', row=row)
+        super().__init__(style=disnake.ButtonStyle.secondary, label='Chest', row=row)
         self.grid = grid
 
     """callback()
@@ -29,20 +29,20 @@ class ChestRushButton(discord.ui.Button):
     ----------
     interaction: a Discord interaction
     """
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         self.view.update_last(interaction)
         if not self.disabled and self.view.ownership_check(interaction):
             self.disabled = True
             self.label = self.view.grid.pop()
             if self.label.startswith('$$$'):
-                self.style = discord.ButtonStyle.success
+                self.style = disnake.ButtonStyle.success
                 self.label = self.label[3:]
             else:
-                self.style = discord.ButtonStyle.primary
+                self.style = disnake.ButtonStyle.primary
             if self.view.check_status():
                 self.view.stopall()
                 msg = await interaction.response.edit_message(embed=self.view.bot.util.embed(author={'name':"{} opened".format(interaction.user.display_name), 'icon_url':interaction.user.display_avatar}, color=self.view.color), view=self.view)
-                await self.view.bot.util.cleanInter(interaction, 70)
+                await self.view.bot.util.clean(interaction, 70)
             else:
                 await interaction.response.edit_message(view=self.view)
         else:
@@ -89,10 +89,10 @@ class ChestRush(BaseView):
             while True:
                 c = random.choice(self.children)
                 if c.disabled: continue
-                c.style = discord.ButtonStyle.danger
+                c.style = disnake.ButtonStyle.danger
                 c.label = "Surprise"
                 for c in self.children:
-                    if not c.disabled and c.style != discord.ButtonStyle.danger:
+                    if not c.disabled and c.style != disnake.ButtonStyle.danger:
                         c.disabled = True
                         c.label = '\u200b'
                 break

@@ -1,13 +1,13 @@
-import discord
+import disnake
 import threading
 import concurrent.futures
 import asyncio
-from datetime import timedelta
+from PIL import Image, ImageFont, ImageDraw
+from datetime import timedelta, datetime
 import time
-import leather
-import cairosvg
 import sqlite3
 import random
+import math
 
 # ----------------------------------------------------------------------------------------------------------------
 # Ranking Component
@@ -86,7 +86,6 @@ class Ranking():
                 res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/guild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
             case 2: # player
                 res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
-        return res
 
     """updateRankingThread()
     Thread to update the cutoff data
@@ -487,15 +486,6 @@ class Ranking():
             self.stoprankupdate = True
             return "Exception: " + self.bot.util.pexc(e)
 
-    def x(self, row, index):
-        return row['x']
-
-    def yA(self, row, index):
-        return row['q']['y'][0]
-
-    def yB(self, row, index):
-        return row['q']['y'][1]
-
     """searchScoreForTracker()
     Search the targeted crews for the YouTracker in the database being built
     
@@ -520,6 +510,84 @@ class Ranking():
         c.close()
         conn.close()
         return infos
+
+    """drawChart()
+    Draw the YouTracker chart (GW Match tracker for my crew)
+    
+    Parameters
+    ----------
+    plot: list of points, format: [datetime, float, float]
+    
+    Raises
+    ------
+    Exception: If an error occurs
+    
+    Returns
+    ----------
+    str: filename of the image, None if error
+    """
+    def drawChart(self, plot):
+        if len(plot) == 0: return None
+        img = Image.new("RGB", (800, 600), (255,255,255))
+        d = ImageDraw.Draw(img)
+        font = ImageFont.truetype("assets/font.ttf", 14)
+        
+        # y grid lines
+        for i in range(0, 4):
+            d.line([(50, 50+125*i), (750, 50+125*i)], fill=(200, 200, 200), width=1)
+        # x grid lines
+        for i in range(0, 10):
+            d.line([(120+70*i, 50), (120+70*i, 550)], fill=(200, 200, 200), width=1)
+        # legend
+        d.text((10, 10),"Speed (M/min)",font=font,fill=(0,0,0))
+        d.line([(150, 15), (170, 15)], fill=(0, 0, 255), width=2)
+        d.text((180, 10),"You",font=font,fill=(0,0,0))
+        d.line([(220, 15), (240, 15)], fill=(255, 0, 0), width=2)
+        d.text((250, 10),"Opponent",font=font,fill=(0,0,0))
+        d.text((720, 580),"Time (JST)",font=font,fill=(0,0,0))
+        
+        # y notes
+        miny = 999
+        maxy = 0
+        for p in plot:
+            miny = math.floor(min(miny, p[1], p[2]))
+            maxy = math.ceil(max(maxy, p[1], p[2]))
+        deltay= maxy - miny
+        tvar = maxy
+        for i in range(0, 5):
+            d.text((10, 40+125*i),"{:.2f}".format(float(tvar)).replace('.00', '').replace('.10', '.1').replace('.20', '.2').replace('.30', '.3').replace('.40', '.4').replace('.50', '.5').replace('.60', '.6').replace('.70', '.7').replace('.80', '.8').replace('.90', '.9').replace('.0', '').rjust(6),font=font,fill=(0,0,0))
+            tvar -= deltay / 4
+        # x notes
+        minx = plot[0][0]
+        maxx = plot[-1][0]
+        deltax = maxx - minx
+        deltax = (deltax.seconds + deltax.days * 86400)
+        tvar = minx
+        for i in range(0, 11):
+            d.text((35+70*i, 560),"{:02d}:{:02d}".format(tvar.hour, tvar.minute),font=font,fill=(0,0,0))
+            tvar += timedelta(seconds=deltax/10)
+
+        # lines
+        lines = [[], []]
+        for p in plot:
+            x = p[0] - minx
+            x = (x.seconds + x.days * 86400)
+            x = 50 + 700 * (x / deltax)
+            y = maxy - p[1]
+            y = 50 + 500 * (y / deltay)
+            lines[0].append((x, y))
+            y = maxy - p[2]
+            y = 50 + 500 * (y / deltay)
+            lines[1].append((x, y))
+
+        # plot lines
+        d.line([(50, 50), (50, 550), (750, 550)], fill=(0, 0, 0), width=1)
+        d.line(lines[0], fill=(0, 0, 255), width=2, joint="curve")
+        d.line(lines[1], fill=(255, 0, 0), width=2, joint="curve")
+
+        filename = "chart_{}.png".format(datetime.utcnow().timestamp())
+        img.save(filename, "PNG")
+        return filename
 
     """updateTracker()
     Update the YouTracker data (GW Match tracker for my crew)
@@ -563,21 +631,18 @@ class Ranking():
         newtracker['last'] = t
         newtracker['gwid'] = self.bot.data.save['gw']['id']
         if newtracker['speed'] is not None: # save chart data
-            newtracker['plot'].append({'x': t, 'q': { 'y': [newtracker['speed'][0] / 1000000, newtracker['speed'][1] / 1000000] }})
+            newtracker['plot'].append([t, newtracker['speed'][0] / 1000000, newtracker['speed'][1] / 1000000])
         if len(newtracker['plot']) > 1: # generate chart
-            chart = leather.Chart('Speed Chart')
-            chart.add_line(newtracker['plot'], x=self.x, y=self.yA, name="(You)")
-            chart.add_line(newtracker['plot'], x=self.x, y=self.yB, name="Opponent")
-            chart.to_svg('chart.svg')
-            cairosvg.svg2png(url="chart.svg", write_to="chart.png")
             try:
-                with open("chart.png", "rb") as f:
-                    df = discord.File(f)
+                imgfile = self.drawChart(newtracker['plot'])
+                with open(imgfile, "rb") as f:
+                    df = disnake.File(f)
                     message = await self.bot.send('image', file=df)
                     df.close()
+                    self.bot.file.rm(imgfile)
                     newtracker['chart'] = message.attachments[0].url
-            except:
-                pass
+            except Exception as e:
+                await self.bot.sendError('updatetracker', e)
         with self.bot.data.lock:
             self.bot.data.save['matchtracker'] = newtracker
             self.bot.data.pending = True
@@ -679,23 +744,22 @@ class Ranking():
                     data[n] = []
                     c = cs[n]
                     # search according to the mode
-                    match mode:
-                        case 10: # crew name search
-                            c.execute("SELECT * FROM crews WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                        case 11: # crew name exact search
-                            c.execute("SELECT * FROM crews WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                        case 12: # crew id search
-                            c.execute("SELECT * FROM crews WHERE id = {}".format(terms))
-                        case 13: # crew ranking search
-                            c.execute("SELECT * FROM crews WHERE ranking = {}".format(terms))
-                        case 0: # player name search
-                            c.execute("SELECT * FROM players WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                        case 1: # player exact name search
-                            c.execute("SELECT * FROM players WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                        case 2: # player id search
-                            c.execute("SELECT * FROM players WHERE id = {}".format(terms))
-                        case 3: # player ranking search
-                            c.execute("SELECT * FROM players WHERE ranking = {}".format(terms))
+                    if mode == 10: # crew name search
+                        c.execute("SELECT * FROM crews WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
+                    elif mode == 11: # crew name exact search
+                        c.execute("SELECT * FROM crews WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
+                    elif mode == 12: # crew id search
+                        c.execute("SELECT * FROM crews WHERE id = {}".format(terms))
+                    elif mode == 13: # crew ranking search
+                        c.execute("SELECT * FROM crews WHERE ranking = {}".format(terms))
+                    elif mode == 0: # player name search
+                        c.execute("SELECT * FROM players WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
+                    elif mode == 1: # player exact name search
+                        c.execute("SELECT * FROM players WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
+                    elif mode == 2: # player id search
+                        c.execute("SELECT * FROM players WHERE id = {}".format(terms))
+                    elif mode == 3: # player ranking search
+                        c.execute("SELECT * FROM players WHERE ranking = {}".format(terms))
                     results = c.fetchall() # fetch the result
                     
                     for r in results:

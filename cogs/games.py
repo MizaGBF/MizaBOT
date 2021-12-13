@@ -1,11 +1,14 @@
-﻿from discord.ext import commands
+﻿from disnake.ext import commands
 import asyncio
 import random
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 from views.roll_tap import Tap
 from views.scratcher import Scratcher
 from views.chest_rush import ChestRush
+from collections import defaultdict
+from views.join_game import JoinGame
+from views.tictactoe import TicTacToe
 
 # ----------------------------------------------------------------------------------------------------------------
 # Games Cog
@@ -192,13 +195,14 @@ class Games(commands.Cog):
     
     Parameters
     ----------
-    ctx: The command context
+    inter: The command interaction
     titles: The titles used in the message. Second string is for the final message
     rmode: Display type = 0 for the single roll mode, 1 for the memeroll mode, 2 for the ten roll mode and 3 or more for anything else (spark, gachapin, ...)
     message: The message to process
     """
-    async def _roll(self, ctx, titles:tuple=("{}", "{}"), rmode:int=-1, **rollOptions):
-        if rmode < 0: return # invalid mode
+    async def _roll(self, inter, titles:tuple=("{}", "{}"), rmode:int=-1, **rollOptions):
+        if rmode < 0: raise Exception('Invalid _roll() rmode {}'.format(rmode)) # invalid mode
+        await inter.response.defer()
         result = await self.bot.do(self.gachaRoll, **rollOptions) # do the rolling
         footer = "{}% SSR rate".format(result['rate']) # message footer
         if rollOptions.get('mode', '') == 'memerollB': footer += " ▫️ until rate up"
@@ -209,23 +213,23 @@ class Games(commands.Cog):
         else: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969231323070494/0_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761976275706445844/1_s.png'])
 
         # startup msg
-        view = Tap(self.bot, owner_id=ctx.author.id)
-        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':titles[0].format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, image=crystal, color=self.color, footer=footer), view=view)
+        view = Tap(bot, owner_id=inter.author.id)
+        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[0].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, image=crystal, color=self.color, footer=footer), view=view)
         await view.wait()
 
         # display result
         if rmode == 0: # single roll mode
             r = result['list'][0]
             if result['extended']:
-                await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description="{} {}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1]), color=self.color, footer=footer), view=None)
+                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="{} {}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1]), color=self.color, footer=footer), view=None)
             else:
-                await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description="{}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0]))), color=self.color, footer=footer), view=None)
+                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="{}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0]))), color=self.color, footer=footer), view=None)
         elif rmode == 1: # memeroll mode
             counter = [0, 0, 0]
             text = ""
             for i in range(0, len(result['list'])):
                 if i > 0 and i % 3 == 0:
-                    await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[0].format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
+                    await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[0].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
                     await asyncio.sleep(1)
                     text = ""
                 if result['extended']:
@@ -233,8 +237,8 @@ class Games(commands.Cog):
                 else:
                     text += "{} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(result['list'][i][0])))
                 counter[result['list'][i][0]] += 1
-            title = titles[1].format(ctx.author.display_name, len(result['list'])) if (len(result['list']) < 300) else "{} sparked".format(ctx.author.display_name)
-            await final_msg.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.display_avatar}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
+            title = titles[1].format(inter.author.display_name, len(result['list'])) if (len(result['list']) < 300) else "{} sparked".format(inter.author.display_name)
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':inter.author.display_avatar}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
         elif rmode == 2: # ten roll mode
             if result['extended']:
                 for i in range(0, 11):
@@ -247,17 +251,17 @@ class Games(commands.Cog):
                         msg += '{}'.format(self.bot.emote.get('crystal{}'.format(result['list'][j][0])))
                         if j % 2 == 1: msg += "\n"
                     await asyncio.sleep(0.75)
-                    await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
+                    await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
             else:
                 msg = ""
                 i = 0
-                for i in len(result['list']):
+                for i in range(len(result['list'])):
                     r = result['list'][i][0]
                     if i == 5: msg += '\n'
                     if r == 2: msg += '{}'.format(self.bot.emote.get('SSR'))
                     elif r == 1: msg += '{}'.format(self.bot.emote.get('SR'))
                     else: msg += '{}'.format(self.bot.emote.get('R'))
-                await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
+                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
         else: # others
             count = len(result['list'])
             rate = (100*result['detail'][2]/count)
@@ -269,7 +273,7 @@ class Games(commands.Cog):
                     for item in rolls:
                         msg += item
                         if rolls[item] > 1: msg += " x{}".format(rolls[item])
-                        await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name, count), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
+                        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name, count), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
                         await asyncio.sleep(0.75)
                         msg += ", "
                     msg = msg[:-2]
@@ -277,111 +281,41 @@ class Games(commands.Cog):
             elif rollOptions.get('mode', '') == 'mukku': amsg = "Mukku stopped after **{}** rolls\n".format(len(result['list']))
             else: amsg = ""
             msg = "{}{:} {:} ▫️ {:} {:} ▫️ {:} {:}\n{:}\n**{:.2f}%** SSR rate".format(amsg, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), msg, rate)
-            await final_msg.edit(embed=self.bot.util.embed(author={'name':titles[1].format(ctx.author.display_name, count), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
-        await self.bot.util.clean(ctx, final_msg, 25)
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name, count), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
+        await self.bot.util.clean(inter, 25)
 
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 60, commands.BucketType.user)
+    @commands.max_concurrency(5, commands.BucketType.default)
+    async def memeroll(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default=""), rateup : str = commands.Param(description='Put `r` or `R` to roll until a rate up SSR', autocomplete=["r", "R"], default="")):
+        """Do single rolls until a SSR"""
+        rateup = (rateup.lower() == "r")
+        await self._roll(inter, ("{} is memerolling...", "{} memerolled {} times"), 1, mode='memerollB' if rateup else 'memerollA', legfest=self.checkLegfest(double))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(1, 10, commands.BucketType.user)
-    async def single(self, ctx, double : str = ""):
-        """Do a single roll
-        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
-        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
-        await self._roll(ctx, ("{} did a single roll...", "{} did a single roll"), 0, count=1, mode='single', legfest=self.checkLegfest(double))
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 20, commands.BucketType.user)
+    @commands.max_concurrency(10, commands.BucketType.default)
+    async def roll(self, inter, count : int = commands.Param(description='Number of rolls', autocomplete=[1, 10, 50, 100, 120, 300, 600], default=10, ge=1, le=600), double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
+        """Do an user-specified number gacha rolls"""
+        match count:
+            case 1:
+                await self._roll(inter, ("{} did a single roll...", "{} did a single roll"), 0, count=1, mode='single', legfest=self.checkLegfest(double))
+            case 10:
+                await self._roll(inter, ("{} did ten rolls...", "{} did ten rolls"), 2, count=10, mode='ten', legfest=self.checkLegfest(double))
+            case 300:
+                await self._roll(inter, ("{} is sparking...", "{} sparked"), 3, count=300, mode='ten', legfest=self.checkLegfest(double))
+            case _:
+                await self._roll(inter, ("{}" + " is rolling {} times...".format(count), "{} " + "rolled {} times".format(count)), 3, count=count, mode='ten', legfest=self.checkLegfest(double))
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(1, 10, commands.BucketType.user)
-    async def srssr(self, ctx, double : str = ""):
-        """Do a single SR/SSR ticket roll
-        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
-        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
-        await self._roll(ctx, ("{} is using a SR/SSR ticket...", "{} used a SR/SSR ticket"), 0, count=1, mode='srssr', legfest=self.checkLegfest(double))
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['memerolls'])
-    @commands.cooldown(1, 30, commands.BucketType.user)
-    async def memeroll(self, ctx, double : str = ""):
-        """Do single rolls until a SSR
-        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
-        3% keywords: "normal", "x1", "3%", "gacha", "1".
-        Add R at the end of the keyword to target rate up SSRs (example: doubleR, it's not compatible with the legacy mode)."""
-        if len(double) > 0 and double[-1] in ['r', 'R']:
-            rateup = True
-            double = double[:-1].replace(' ', '')
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 60, commands.BucketType.user)
+    @commands.max_concurrency(5, commands.BucketType.default)
+    async def gachapin(self, inter, double : str = commands.Param(description='Force 3%, 6%, Mukku or Super Mukku rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1", "mukku", "supermukku"], default="")):
+        """Do ten rolls until you get a ssr"""
+        if double.lower() in ['mukku', 'supermukku']:
+             await self._roll(inter, ("{} is rolling the Mukku...", "{} rolled the Mukku"), 3, count=300, mode=('supermukku' if (super.lower() == "super") else 'mukku'))
         else:
-            rateup = False
-        await self._roll(ctx, ("{} is memerolling...", "{} memerolled {} times"), 1, mode='memerollB' if rateup else 'memerollA', legfest=self.checkLegfest(double))
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(1, 15, commands.BucketType.user)
-    async def ten(self, ctx, double : str = ""):
-        """Do ten gacha rolls
-        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
-        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
-        await self._roll(ctx, ("{} did ten rolls...", "{} did ten rolls"), 2, count=10, mode='ten', legfest=self.checkLegfest(double))
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(1, 15, commands.BucketType.user)
-    async def roll(self, ctx, count : str = "0", double : str = ""):
-        """Do an user-specified number gacha rolls
-        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
-        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
-        try:
-            count = int(count)
-            if count <= 0 or count > 600: raise Exception()
-        except:
-            msg = await ctx.reply(embed=self.bot.util.embed(title="Roll Error", description="Please specify a valid number of rolls (between **1** and **600** included)", color=self.color))
-            await self.bot.util.clean(ctx, msg, 20)
-            return
-        await self._roll(ctx, ("{}" + " is rolling {} times...".format(count), "{} " + "rolled {} times".format(count)), 3, count=count, mode='ten', legfest=self.checkLegfest(double))
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rollcalc'])
-    @commands.cooldown(2, 30, commands.BucketType.user)
-    async def rollchance(self, ctx, count : str = ""):
-        """Calculate your chance of rolling the rate up for a given amount of rolls.
-        Leave empty and it will use your roll count from the setRoll command"""
-        try:
-            if count == '':
-                if str(ctx.message.author.id) in self.bot.data.save['spark']:
-                    s = self.bot.data.save['spark'][str(ctx.message.author.id)]
-                    count = (s[0] // 300) + s[1] + s[2] * 10
-                else:
-                    raise Exception("Please specify a valid number of rolls")
-            elif int(count) <= 0:
-                raise Exception("Please specify a valid number of rolls")
-            else:
-                count = int(count)
-            msg = "Your chances of getting at least one of the following rate ups with {} rolls:\n".format(count)
-            rateups = self.gachaRateUp()[1]
-            if rateups is None: raise Exception("Unavailable")
-            for r in rateups:
-                msg += "{:} **{:}%** ▫️ {:.2f}%\n".format(self.bot.emote.get('SSR'), r, 100*(1-math.pow(1-float(r)*0.01, count)))
-            msg = await ctx.reply(embed=self.bot.util.embed(title="Roll Chance Calculator", description=msg, color=self.color))
-        except Exception as e:
-            msg = await ctx.reply(embed=self.bot.util.embed(title="Roll Chance Calculator Error", description=str(e), color=self.color))
-        await self.bot.util.clean(ctx, msg, 45)
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(15, 30, commands.BucketType.guild)
-    async def spark(self, ctx, double : str = ""):
-        """Do thirty times ten gacha rolls
-        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
-        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
-        await self._roll(ctx, ("{} is sparking...", "{} sparked"), 3, count=300, mode='ten', legfest=self.checkLegfest(double))
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['frenzy'])
-    @commands.cooldown(15, 30, commands.BucketType.guild)
-    async def gachapin(self, ctx, double : str = ""):
-        """Do ten rolls until you get a ssr
-        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
-        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
-        await self._roll(ctx, ("{} is rolling the Gachapin...", "{} rolled the Gachapin"), 3, count=300, mode='gachapin', legfest=self.checkLegfest(double))
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['mook'])
-    @commands.cooldown(15, 30, commands.BucketType.guild)
-    async def mukku(self, ctx, super : str = ""):
-        """Do ten rolls until you get a ssr, 9% ssr rate
-        You can add "super" for a 9% rate and 5 ssr mukku"""
-        await self._roll(ctx, ("{} is rolling the Mukku...", "{} rolled the Mukku"), 3, count=300, mode=('supermukku' if (super.lower() == "super") else 'mukku'))
+            await self._roll(inter, ("{} is rolling the Gachapin...", "{} rolled the Gachapin"), 3, count=300, mode='gachapin', legfest=self.checkLegfest(double))
 
     def getRoulette(self, count, mode, double):
         result = self.gachaRoll(count=count, mode=mode, legfest=self.checkLegfest(double))
@@ -400,12 +334,12 @@ class Games(commands.Cog):
                 tmp = tmp[:-2]
         return result, rate, tmp, count
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(1, 180, commands.BucketType.user)
-    async def roulette(self, ctx, double : str = ""):
-        """Imitate the GBF roulette
-        6% keywords: "double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2".
-        3% keywords: "normal", "x1", "3%", "gacha", "1"."""
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 100, commands.BucketType.user)
+    @commands.max_concurrency(5, commands.BucketType.default)
+    async def roulette(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
+        """Imitate the GBF roulette"""
+        await inter.response.defer()
         footer = ""
         roll = 0
         rps = ['rock', 'paper', 'scissor']
@@ -454,7 +388,7 @@ class Games(commands.Cog):
             else:
                 msg = "**10** rolls :pensive:\n"
                 roll = 10
-        final_msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is spinning the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color, footer=footer))
+        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} is spinning the Roulette".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer))
         if not enableJanken and state < 2: state = 1
         running = True
         while running:
@@ -507,34 +441,15 @@ class Games(commands.Cog):
                     result, rate, tmp, count = await self.bot.do(self.getRoulette, 300, 'supermukku', double)
                     msg += ":confetti_ball: **Super Mukku** ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
                     running = False
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color, footer=footer))
+        await self.bot.util.clean(inter, 45)
 
-            await final_msg.edit(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color, footer=footer))
-
-        await self.bot.util.clean(ctx, final_msg, 45)
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['scamgacha', 'stargacha', 'starlegendgacha', 'starlegend'])
-    @commands.cooldown(1, 20, commands.BucketType.user)
-    async def scam(self, ctx, mode : str = ""):
-        """Star gacha item simulation"""
-        roll = random.randint(1, self.scam_rate)
-        loot = None
-        n = 0
-        for r in self.scam:
-            n += r[0]
-            if roll < n:
-                loot = r
-                break
-        if loot is None: loot = self.scam[-1]
-        msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{} is getting scammed...".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=":question: :question: :question:", color=self.color))
-        await asyncio.sleep(2)
-        await msg.edit(embed=self.bot.util.embed(author={'name':"{} got scammed".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description="{}".format(loot[1]), thumbnail='http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/item/{}'.format(loot[2]), color=self.color))
-        await self.bot.util.clean(ctx, msg, 45)
-        
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['scratcher'])
-    @commands.cooldown(1, 300, commands.BucketType.user)
-    async def scratch(self, ctx, mode : str = ""):
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 100, commands.BucketType.user)
+    @commands.max_concurrency(5, commands.BucketType.default)
+    async def scratch(self, inter):
         """Imitate the GBF scratch game from Anniversary 2020"""
+        await inter.response.defer()
         ct = self.bot.util.JST()
         # settings
         fixedS = ct.replace(year=2021, month=3, day=29, hour=19, minute=0, second=0, microsecond=0) # beginning of good scratcher
@@ -545,17 +460,6 @@ class Games(commands.Cog):
         footer = ""
         if enableBetterDuringPeriod and ct >= fixedS and ct < fixedE:
             betterScratcher = True
-
-        # debug options
-        if mode == "debug" and ctx.author.id == self.bot.data.config['ids']['owner']:
-            msg = "`$scratch` Debug Values\nTotal: {} (100%)\n".format(self.scratcher_total)
-            for r in self.scratcher_loot:
-                msg += "{} Tier: {} ({}%)\n".format(self.scratcher_loot[r][0], r * len(self.scratcher_loot[r]), ((10000 * r * len(self.scratcher_loot[r])) // self.scratcher_total) / 100)
-            debug_msg = await ctx.reply(embed=self.bot.util.embed(title="Scratcher Debug", description=msg, color=self.color))
-            await self.bot.util.clean(ctx, debug_msg, 30)
-        elif mode == "rigged" and ctx.author.id == self.bot.data.config['ids']['owner']:
-            betterScratcher = True
-            footer = "Debug mode"
 
         # scratcher generation
         if random.randint(1, 100) <= 10:
@@ -616,14 +520,15 @@ class Games(commands.Cog):
                 break
             await asyncio.sleep(0.001)
 
-        # call the view
-        view = Scratcher(self.bot, ctx.author.id, grid, self.scratcher_thumb, self.color, footer)
-        await ctx.send(embed=self.bot.util.embed(author={'name':"{} is scratching...".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description="Click to play the game", footer=footer, color=self.color), view=view)
+        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} is scratching...".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="Click to play the game", footer=footer, color=self.color), view=Scratcher(bot, inter.author.id, grid, self.scratcher_thumb, self.color, footer))
+        await self.bot.util.clean(inter, 45)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['chests', 'rush'])
-    @commands.cooldown(1, 300, commands.BucketType.user)
-    async def chest(self, ctx):
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 100, commands.BucketType.user)
+    @commands.max_concurrency(5, commands.BucketType.default)
+    async def chest(self, inter):
         """Imitate the GBF treasure game from Summer 2020"""
+        await inter.response.defer()
         message = None
         loot = {
             'Murgleis':150, 'Benedia':150, 'Gambanteinn':150, 'Love Eternal':150, 'AK-4A':150, 'Reunion':150, 'Ichigo-Hitofuri':150, 'Taisai Spirit Bow':150, 'Unheil':150, 'Sky Ace':150, 'Ivory Ark':150, 'Blutgang':150, 'Eden':150, 'Parazonium':150, 'Ixaba':150, 'Blue Sphere':150, 'Certificus':150, 'Fallen Sword':150, 'Mirror-Blade Shard':150, 'Galilei\'s Insight':150, 'Purifying Thunderbolt':150, 'Vortex of the Void':150, 'Sacred Standard':150, 'Bab-el-Mandeb':150, 'Cute Ribbon':150, 'Kerak':150, 'Sunya':150, 'Fist of Destruction':150, 'Yahata\'s Naginata':150,
@@ -662,11 +567,9 @@ class Games(commands.Cog):
                 elif n < rm: results.append("$$$" + check) # rare loot
                 else: results.append(check) # normal loot
         results.reverse()
-        
-        # call the view
-        view = ChestRush(self.bot, ctx.author.id, results, self.color)
-        message = await ctx.reply(embed=self.bot.util.embed(author={'name':'{} is opening...'.format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, color=self.color), view=view)
 
+        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':'{} is opening...'.format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, color=self.color), view=ChestRush(bot, inter.author.id, results, self.color))
+        await self.bot.util.clean(inter, 45)
 
     """genLoto()
     Generate cards and winning numbers for the summer fortune minigame
@@ -782,13 +685,13 @@ class Games(commands.Cog):
                 return i + 1
         return 0
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['loto', 'lotto'])
-    @commands.cooldown(1, 200, commands.BucketType.user)
-    async def fortune(self, ctx, *, usercards : str = ""):
-        """Imitate the GBF summer fortune game from Summer 2021
-        You can specify your own cards with this command"""
-        title = '{} is tempting fate...'.format(ctx.author.display_name)
-        message = await ctx.reply(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.display_avatar}, description="The winning numbers are...", color=self.color))
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 100, commands.BucketType.user)
+    @commands.max_concurrency(5, commands.BucketType.default)
+    async def fortune(self, inter, usercards : str = commands.Param(description='List your cards here', default="")):
+        """Imitate the GBF summer fortune game from Summer 2021"""
+        title = '{} is tempting fate...'.format(inter.author.display_name)
+        await inter.response.send_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':inter.author.display_avatar}, description="The winning numbers are...", color=self.color))
         cards, winning = await self.bot.do(self.genLoto)
         cvt = []
         usercards = usercards.split(" ")
@@ -805,8 +708,8 @@ class Games(commands.Cog):
         await asyncio.sleep(2)
         prize = [0, 0, 0, 0]
         desc, thumb = await self.bot.do(self.printLoto, [], winning, prize)
-        await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.display_avatar}, description=desc, thumbnail=thumb, color=self.color))
-        title = "{}'s fortune is".format(ctx.author.display_name)
+        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':inter.author.display_avatar}, description=desc, thumbnail=thumb, color=self.color))
+        title = "{}'s fortune is".format(inter.author.display_name)
         for i in range(0, len(cards)):
             tier = self.checkLotoWin(cards[:i+1][-1], winning)
             if tier != 0:
@@ -814,63 +717,36 @@ class Games(commands.Cog):
                 cards[i] = '**'+cards[i]+'**'
             desc, thumb = await self.bot.do(self.printLoto, cards[:i+1], winning, prize, (i == len(cards)-1))
             await asyncio.sleep(0.5)
-            await message.edit(embed=self.bot.util.embed(author={'name':title, 'icon_url':ctx.author.display_avatar}, description=desc, thumbnail=thumb, color=self.color))
-        await self.bot.util.clean(ctx, message, 45)
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':inter.author.display_avatar}, description=desc, thumbnail=thumb, color=self.color))
+        await self.bot.util.clean(inter, 45)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['lotochance', 'lottochance', 'fortunecalc', 'lotocalc', 'lottocalc'])
-    @commands.cooldown(2, 40, commands.BucketType.user)
-    async def fortunechance(self, ctx, *, cards : str):
-        """Calculate your chance at the GBF summer fortune game from Summer 2021
-        Input your card numbers separated by spaces"""
-        cards = cards.split(" ")
-        tier3 = []
-        tier2 = []
-        tier1 = []
-        for c in cards:
-            try:
-                if c == "": continue
-                if len(c) > 3 or int(c) < 0: raise Exception()
-            except:
-                message = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid card number `{}`".format(c), color=self.color))
-                await self.bot.util.clean(ctx, message, 45)
-                return
-            sc = c.zfill(3)
-            if sc[:2] not in tier3: tier3.append(sc[:2])
-            if sc[1:] not in tier2: tier2.append(sc[1:])
-            if sc not in tier1: tier1.append(sc)
-        message = await ctx.reply(embed=self.bot.util.embed(title="Summer Fortune Calculator", description="Your chances of winning at least one\n**Tier 3** ▫️ {:.2f}%\n**Tier 2** ▫️ {:.2f}%\n**Tier 1** ▫️ {:.2f}%".format(100*(1-math.pow(1-0.03, len(tier3))), 100*(1-math.pow(1-0.02, len(tier2))), 100*(1-math.pow(1-0.002, len(tier1)))), color=self.color))
-        await self.bot.util.clean(ctx, message, 45)
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(1, 600, commands.BucketType.user)
-    async def quota(self, ctx):
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 300, commands.BucketType.user)
+    @commands.max_concurrency(5, commands.BucketType.default)
+    async def quota(self, inter):
         """Give you your GW quota for the day"""
-        if ctx.author.id in self.bot.data.config['ids'].get('branded', []):
-            await ctx.reply(embed=self.bot.util.embed(title="{} {} is a bad boy".format(self.bot.emote.get('gw'), ctx.author.display_name), description="Your account is **restricted.**", thumbnail=ctx.author.display_avatar, color=self.color))
-            return
-
         h = random.randint(800, 4000)
         m = random.randint(70, 180)
         c = random.randint(1, 100)
 
-        if ctx.author.id == self.bot.data.config['ids'].get('wawi', -1):
+        if inter.author.id == self.bot.data.config['ids'].get('wawi', -1): # joke
             c = 12
 
         if c <= 3:
             c = random.randint(1, 110)
             if c <= 2:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got the **Eternal Battlefield Pass** 🤖\nCongratulations!!!\nYou will now relive GW over and ovḛ̸̛̠͕̑̋͌̄̎̍͆̆͑̿͌̇̇̕r̸̛̗̥͆͂̒̀̈́͑̑̊͐̉̎̚̚͝ ̵̨̛͔͎͍̞̰̠́͛̒̊̊̀̃͘ư̷͎̤̥̜̘͈̪̬̅̑͂̂̀̃̀̃̅̊̏̎̚͜͝ͅņ̴̢̛̛̥̮͖͉̻̩͍̱̓̽̂̂͌́̃t̵̞̦̿͐̌͗͑̀͛̇̚͝͝ỉ̵͉͕̙͔̯̯͓̘̬̫͚̬̮̪͋̉͆̎̈́́͛̕͘̚͠ͅļ̸̧̨̛͖̹͕̭̝͉̣̜͉̘͙̪͙͔͔̫̟̹̞̪̦̼̻̘͙̮͕̜̼͉̦̜̰̙̬͎͚̝̩̥̪̖͇̖̲̣͎̖̤̥͖͇̟͎̿̊͗̿̈̊͗̆̈́͋͊̔͂̏̍̔̒̐͋̄̐̄̅̇͐̊̈́̐͛͑̌͛̔͗̈́͌̀͑̌̅̉́̔̇́̆̉͆̄̂͂̃̿̏̈͛̇̒͆͗̈́̀̃̕̕͘̚̚͘͘͠͠͠͝͝͠͝͝ͅͅ ̴̢̛̛̛̯̫̯͕̙͙͇͕͕̪̩̗̤̗̺̩̬̞̞͉̱̊̽̇̉̏̃̑̋̋̌̎̾́̉́͌̿̐̆̒̾̆͒͛͌́͒̄͗͊͑̈́̑̐̂̿̋̊͊̈́̃̋̀̀̈̏̅̍̈͆̊̋͋̀̽͑̉̈́͘͘̕̕͝y̷̧̧̨̢̧̮̭̝̦͙͈͉̜͈̳̰̯͔͓̘͚̳̭͎̳̯͈͓̣͕͙̳̭̱͍͎͖̋͊̀͋͘͘ơ̸̢̗̖̹̹͖̣̫̝̞̦̘̙̭̮͕̘̱̆͋̓͗̾͐̉̏̀͂̄̎̂̈́͌͑̅̆̉̈̒͆̈̈̊͐̔̓̀̿̓̈́͝͝͝͠͝u̶̡̧̡̧̨̧̡̡̢̢̢̪̯͙͍̱̦̠̗̹̼̠̳̣͉̞̩̹͕̫͔͚̬̭̗̳̗̫̥̞̰̘̖̞̤͖̳̮̙͎͎̗̙̳͙͖͓̪̱̞͖̠̣̮̘͍̱̥̹͎͎̦̬̹̼̜͕͙͖̫̝̰̯̜̹̬̯͚͕̰̪̼͓̞̫̖̘͙̞͖̺̩͓̹̘̙̫̩̲̻̪̠̞̺͚̫̰̠̼̖̬͔̗̮͙̱̬̩̮̟͓̫̭̲̘̤͎̱̓̊̇́̀̏̏̾̀̄̆̒̂͐̌͂̈̂̓͋̌̓͘̕̕̚͜͜͜͝ͅͅͅͅŗ̷̡̧̨̢̢̢̧̡̡̧̡̢̧̨̨̡̧̛̛̛̬͚̮̜̟̣̤͕̼̫̪̗̙͚͉̦̭̣͓̩̫̞͚̤͇̗̲̪͕̝͍͍̫̞̬̣̯̤̮͉̹̫̬͕̫̥̱̹̲͔͔̪̖̱͔̹͈͔̳͖̩͕͚͓̤̤̪̤̩̰̬͙̞͙̘̯̮̫͕͚̙̜̼̩̰̻̞̺͈̝̝̖͎̻̹̞̥̰̮̥̙̠͔͎̤̲͎͍̟̥̞̗̰͓͍̞̹͍̬͎̲̬̞͈͉̼̥̝͈̼̠̫̙͖̪̼̲̯̲̫̼̺̘̗̘͚̤͓̯̦̣̬͒̑̒́͑͊̍̿̉̇̓̒̅̎͌̈́̐̽͋̏̒͂̈̒̃̿̓̇̈̿̊̎̈́͐̒͂͊̿̈́̿̅̏̀͐͛̎̍͑͂̈́̃̇̀̈͋̾̔̈́̽͌̿̍̇̅̏̋̑̈́̾̊͐̉̊̅͑̀͊̽̂̈́̽̓͗́̄͆̄͑͒̈́́͋̏͊͋̒͗̆̋̌̈̀͑͗̽͂̄̌̕͘͘̚͘̕̕͜͜͜͜͜͜͜͠͝͝͝͝͝͝ͅͅͅ ̷̧̡̧̨̢̧̨̡̨̧̛̛̛̛̮̭͇̣͓̙̺͍̟̜̞̫̪̘̼̞̜̠͇̗̮͕̬̥͓͔͈̟̦͇̥̖̭̝̱̗̠̘̝̹̖͓̝͇̖̫̯̩̞̞̯̲̤̱̻̤͇̲͍͈͓͖̹̗̟̲̪̪̟̩͙̪̝̮̘̽̋̍́̔̊̍̈́͂̌̽͒̆͐͊̏̐͑͛̓̆̈́͌̂͒͆̔̅̓̽͊̅́̾̽̓̏̆̀̀͌̾̀͒̓̇̊̀̐͛̌̋̈͑̇́̂̆̽̈̕̕̚̚͜͠ͅͅͅͅḑ̶̛̛̯͓̠̖͎̭̞̫͑̋̄̄̈̽̎̊͛̽͌̾̋̔̽̔̀̀͐̿̈́̀̃͐͂͆̈̃͑̀̋̑͊̃̆̓̾̎̅̀̆̓̏͊̆̔̈̅͛̍̎̓̀͛͒́̐͆̂̋̋͛̆̈͐͂̏̊̏̏̓̿̔͆̓̽̂̅͆̔͑̔̈̾̈̽̂̃̋̈́̾̎̈́̂̓̃̒͐͆̌̍̀͗̈́̑̌̚̕̕̚͠͠͝ę̴̧̨̨̨̢̨̢̧̧̧̨̧̛̛̛̛̛̛̛̺̪̹̘͈̣͔̜͓̥̥̟͇̱͚͖̠͙͙̱̞̣̤͚̣̟̫̬̟͓̺͙̬͚̹͓̗̬̼͇͙̻͍̖̙̥̩͔̜͕̖͕͔͚̳͙̩͇͙̺͔̲̱̙͉̝̠̤̝̭̮̩̦͇̖̳̞̞̖͎̙͙̲̮̠̣͍̪͙̰̣͉̘͉̦̖̳̫͖͖̘̖̮̲̱̪͕̳̫̫̞̪̜̞̬͙͖͍͖̦͉̯̟̖͇̩͚͙͔̳̫͗̈́̒̎͂̇̀͒̈́̃͐̉͛̾̑̆̃͐̈́̉͒̇̓̏̀͌̐͌̅̓͐́̿͒̅͑̍̓̈́̉̊́̉̀̔̊̍̽͛͛͆̓̈͋̉͋̿̉́̋̈̓̐̈́̔̃͆͗͛̏́̀̑͋̀̽̔̓̎̒̆̌̐̈́̓͂̐̋͊̌͑̓̈́̊̿͋̈́́̃̏̓̉͛͆̂͐͗͗̾̅̌̾͌̈́͊͘̕̚̕̚̚̕͘̕͜͜͜͜͜͜͜͠͝͝͠͝͝͠ͅͅa̸̡͔̯͎̟͙̖̗͔̺̰͇͚̭̲̭͕̫̜͉̯͕̅̈͋̒͋͂̐̕ͅţ̶̡̨̢̢̡̡̡̨̢̡̧̨̢̛̥̭̞͈̼̖͙͇̝̳͇̞̬͎̲̙̰̙̱̳̟̣̗̫̣͉͖̪̩͙̲͇͙̫̘͖̖̜̝̦̥̟̜̠͔̠͎̭͔̘͓͚̩͇͙͎͎̰̘̟̳̪͖̠̪̦̦̫̞̟̗̹̹̤͓͍̜̯͔̼̱̮̹͎͖͍̲͎̠͉̟͈̠̦̯̲̼̥̱̬̜͙̘͕̣̳͇̞͓̝͈̼̞̻͚̘̩̟̩̖̼͍̯̘͉͔̤̘̥̦͑̒͗̅̉̾͗̾̓̈́̍̉̈́͛̀͊̋̀͐̏̈́̀̀̍̇̀̀̈́̃̀̅͛̅̈́̇̽̆̌̈̄͆̄̂͂̔͗͌͊̽̿́͑̒̾̑̊̿͗́̇̋̊̄̀̍̓̆͂̆̔̏̍̑̔̊̾̎̆͛͑̓͒̈̎͌̓͗̀̿̓̃̔̈́͗̃̓̽̓̉̀͛͂̿́̀̌͊̆̋̀̓̇́̔̓͆̋̊̀̋͑́̔́̌̒̾̂̎̋̈́́̀͗̈́̈́́̾̈́͑͋̇͒̀͋͆͗̾͐̆̈́͂͐̈̐̓̍̈́̈̅̓͐̚̚̚̚̕͘̕͘̚̚̚͘͜͜͜͜͜͜͝͠͠͠͝͠ͅͅḥ̴̨̧̧̢̧̢̢̛̛̙̱͚̺̬̖̮̪͈̟͉̦̪̘̰̺̳̱̲͔̲̮̦̦̪̪̲̠͓͎͇͕̯̥͉͍̱̥͓̲̤̫̳̠̝͖̺̙͖͎͙̠͓̺̗̝̩͍͕͎̞͕̤̻̰̘͇͕̟̹̳͇͈͇̳̳̞̗̣͖̙͓̼̬̯͚͎̮͚̳̰͙̙̟̊͆͒͆͌̂̈́̀́̽̿͌̓́̐̑͌͋͆͊͑͛͑̀̋͐̏͌̑̀͛͗̀́̈̀̓̽̇̐̋͊̅͑̊͒̈́̀̀̔̀̇͗̆͑̅̌̑̈́͌̒̅̌̓͋͂̀̍̈́͐̈́̆̐̈́̍͛͂̔̐̎͂̎̇͑̈́̈́̎̉̈́́̒̒̆̌̃̓̈́͂̽̓̆̋̈̂̽̆̓̔͗̓̀̄̈́̂̏͗̐̔͘̕͘͘͜͜͜͜͠͠͝͠͠͝͝͝͠͠͝ͅͅ", thumbnail=ctx.author.display_avatar, color=self.color))
+                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got the **Eternal Battlefield Pass** 🤖\nCongratulations!!!\nYou will now relive GW over and ovḛ̸̛̠͕̑̋͌̄̎̍͆̆͑̿͌̇̇̕r̸̛̗̥͆͂̒̀̈́͑̑̊͐̉̎̚̚͝ ̵̨̛͔͎͍̞̰̠́͛̒̊̊̀̃͘ư̷͎̤̥̜̘͈̪̬̅̑͂̂̀̃̀̃̅̊̏̎̚͜͝ͅņ̴̢̛̛̥̮͖͉̻̩͍̱̓̽̂̂͌́̃t̵̞̦̿͐̌͗͑̀͛̇̚͝͝ỉ̵͉͕̙͔̯̯͓̘̬̫͚̬̮̪͋̉͆̎̈́́͛̕͘̚͠ͅļ̸̧̨̛͖̹͕̭̝͉̣̜͉̘͙̪͙͔͔̫̟̹̞̪̦̼̻̘͙̮͕̜̼͉̦̜̰̙̬͎͚̝̩̥̪̖͇̖̲̣͎̖̤̥͖͇̟͎̿̊͗̿̈̊͗̆̈́͋͊̔͂̏̍̔̒̐͋̄̐̄̅̇͐̊̈́̐͛͑̌͛̔͗̈́͌̀͑̌̅̉́̔̇́̆̉͆̄̂͂̃̿̏̈͛̇̒͆͗̈́̀̃̕̕͘̚̚͘͘͠͠͠͝͝͠͝͝ͅͅ ̴̢̛̛̛̯̫̯͕̙͙͇͕͕̪̩̗̤̗̺̩̬̞̞͉̱̊̽̇̉̏̃̑̋̋̌̎̾́̉́͌̿̐̆̒̾̆͒͛͌́͒̄͗͊͑̈́̑̐̂̿̋̊͊̈́̃̋̀̀̈̏̅̍̈͆̊̋͋̀̽͑̉̈́͘͘̕̕͝y̷̧̧̨̢̧̮̭̝̦͙͈͉̜͈̳̰̯͔͓̘͚̳̭͎̳̯͈͓̣͕͙̳̭̱͍͎͖̋͊̀͋͘͘ơ̸̢̗̖̹̹͖̣̫̝̞̦̘̙̭̮͕̘̱̆͋̓͗̾͐̉̏̀͂̄̎̂̈́͌͑̅̆̉̈̒͆̈̈̊͐̔̓̀̿̓̈́͝͝͝͠͝u̶̡̧̡̧̨̧̡̡̢̢̢̪̯͙͍̱̦̠̗̹̼̠̳̣͉̞̩̹͕̫͔͚̬̭̗̳̗̫̥̞̰̘̖̞̤͖̳̮̙͎͎̗̙̳͙͖͓̪̱̞͖̠̣̮̘͍̱̥̹͎͎̦̬̹̼̜͕͙͖̫̝̰̯̜̹̬̯͚͕̰̪̼͓̞̫̖̘͙̞͖̺̩͓̹̘̙̫̩̲̻̪̠̞̺͚̫̰̠̼̖̬͔̗̮͙̱̬̩̮̟͓̫̭̲̘̤͎̱̓̊̇́̀̏̏̾̀̄̆̒̂͐̌͂̈̂̓͋̌̓͘̕̕̚͜͜͜͝ͅͅͅͅŗ̷̡̧̨̢̢̢̧̡̡̧̡̢̧̨̨̡̧̛̛̛̬͚̮̜̟̣̤͕̼̫̪̗̙͚͉̦̭̣͓̩̫̞͚̤͇̗̲̪͕̝͍͍̫̞̬̣̯̤̮͉̹̫̬͕̫̥̱̹̲͔͔̪̖̱͔̹͈͔̳͖̩͕͚͓̤̤̪̤̩̰̬͙̞͙̘̯̮̫͕͚̙̜̼̩̰̻̞̺͈̝̝̖͎̻̹̞̥̰̮̥̙̠͔͎̤̲͎͍̟̥̞̗̰͓͍̞̹͍̬͎̲̬̞͈͉̼̥̝͈̼̠̫̙͖̪̼̲̯̲̫̼̺̘̗̘͚̤͓̯̦̣̬͒̑̒́͑͊̍̿̉̇̓̒̅̎͌̈́̐̽͋̏̒͂̈̒̃̿̓̇̈̿̊̎̈́͐̒͂͊̿̈́̿̅̏̀͐͛̎̍͑͂̈́̃̇̀̈͋̾̔̈́̽͌̿̍̇̅̏̋̑̈́̾̊͐̉̊̅͑̀͊̽̂̈́̽̓͗́̄͆̄͑͒̈́́͋̏͊͋̒͗̆̋̌̈̀͑͗̽͂̄̌̕͘͘̚͘̕̕͜͜͜͜͜͜͜͠͝͝͝͝͝͝ͅͅͅ ̷̧̡̧̨̢̧̨̡̨̧̛̛̛̛̮̭͇̣͓̙̺͍̟̜̞̫̪̘̼̞̜̠͇̗̮͕̬̥͓͔͈̟̦͇̥̖̭̝̱̗̠̘̝̹̖͓̝͇̖̫̯̩̞̞̯̲̤̱̻̤͇̲͍͈͓͖̹̗̟̲̪̪̟̩͙̪̝̮̘̽̋̍́̔̊̍̈́͂̌̽͒̆͐͊̏̐͑͛̓̆̈́͌̂͒͆̔̅̓̽͊̅́̾̽̓̏̆̀̀͌̾̀͒̓̇̊̀̐͛̌̋̈͑̇́̂̆̽̈̕̕̚̚͜͠ͅͅͅͅḑ̶̛̛̯͓̠̖͎̭̞̫͑̋̄̄̈̽̎̊͛̽͌̾̋̔̽̔̀̀͐̿̈́̀̃͐͂͆̈̃͑̀̋̑͊̃̆̓̾̎̅̀̆̓̏͊̆̔̈̅͛̍̎̓̀͛͒́̐͆̂̋̋͛̆̈͐͂̏̊̏̏̓̿̔͆̓̽̂̅͆̔͑̔̈̾̈̽̂̃̋̈́̾̎̈́̂̓̃̒͐͆̌̍̀͗̈́̑̌̚̕̕̚͠͠͝ę̴̧̨̨̨̢̨̢̧̧̧̨̧̛̛̛̛̛̛̛̺̪̹̘͈̣͔̜͓̥̥̟͇̱͚͖̠͙͙̱̞̣̤͚̣̟̫̬̟͓̺͙̬͚̹͓̗̬̼͇͙̻͍̖̙̥̩͔̜͕̖͕͔͚̳͙̩͇͙̺͔̲̱̙͉̝̠̤̝̭̮̩̦͇̖̳̞̞̖͎̙͙̲̮̠̣͍̪͙̰̣͉̘͉̦̖̳̫͖͖̘̖̮̲̱̪͕̳̫̫̞̪̜̞̬͙͖͍͖̦͉̯̟̖͇̩͚͙͔̳̫͗̈́̒̎͂̇̀͒̈́̃͐̉͛̾̑̆̃͐̈́̉͒̇̓̏̀͌̐͌̅̓͐́̿͒̅͑̍̓̈́̉̊́̉̀̔̊̍̽͛͛͆̓̈͋̉͋̿̉́̋̈̓̐̈́̔̃͆͗͛̏́̀̑͋̀̽̔̓̎̒̆̌̐̈́̓͂̐̋͊̌͑̓̈́̊̿͋̈́́̃̏̓̉͛͆̂͐͗͗̾̅̌̾͌̈́͊͘̕̚̕̚̚̕͘̕͜͜͜͜͜͜͜͠͝͝͠͝͝͠ͅͅa̸̡͔̯͎̟͙̖̗͔̺̰͇͚̭̲̭͕̫̜͉̯͕̅̈͋̒͋͂̐̕ͅţ̶̡̨̢̢̡̡̡̨̢̡̧̨̢̛̥̭̞͈̼̖͙͇̝̳͇̞̬͎̲̙̰̙̱̳̟̣̗̫̣͉͖̪̩͙̲͇͙̫̘͖̖̜̝̦̥̟̜̠͔̠͎̭͔̘͓͚̩͇͙͎͎̰̘̟̳̪͖̠̪̦̦̫̞̟̗̹̹̤͓͍̜̯͔̼̱̮̹͎͖͍̲͎̠͉̟͈̠̦̯̲̼̥̱̬̜͙̘͕̣̳͇̞͓̝͈̼̞̻͚̘̩̟̩̖̼͍̯̘͉͔̤̘̥̦͑̒͗̅̉̾͗̾̓̈́̍̉̈́͛̀͊̋̀͐̏̈́̀̀̍̇̀̀̈́̃̀̅͛̅̈́̇̽̆̌̈̄͆̄̂͂̔͗͌͊̽̿́͑̒̾̑̊̿͗́̇̋̊̄̀̍̓̆͂̆̔̏̍̑̔̊̾̎̆͛͑̓͒̈̎͌̓͗̀̿̓̃̔̈́͗̃̓̽̓̉̀͛͂̿́̀̌͊̆̋̀̓̇́̔̓͆̋̊̀̋͑́̔́̌̒̾̂̎̋̈́́̀͗̈́̈́́̾̈́͑͋̇͒̀͋͆͗̾͐̆̈́͂͐̈̐̓̍̈́̈̅̓͐̚̚̚̚̕͘̕͘̚̚̚͘͜͜͜͜͜͜͝͠͠͠͝͠ͅͅḥ̴̨̧̧̢̧̢̢̛̛̙̱͚̺̬̖̮̪͈̟͉̦̪̘̰̺̳̱̲͔̲̮̦̦̪̪̲̠͓͎͇͕̯̥͉͍̱̥͓̲̤̫̳̠̝͖̺̙͖͎͙̠͓̺̗̝̩͍͕͎̞͕̤̻̰̘͇͕̟̹̳͇͈͇̳̳̞̗̣͖̙͓̼̬̯͚͎̮͚̳̰͙̙̟̊͆͒͆͌̂̈́̀́̽̿͌̓́̐̑͌͋͆͊͑͛͑̀̋͐̏͌̑̀͛͗̀́̈̀̓̽̇̐̋͊̅͑̊͒̈́̀̀̔̀̇͗̆͑̅̌̑̈́͌̒̅̌̓͋͂̀̍̈́͐̈́̆̐̈́̍͛͂̔̐̎͂̎̇͑̈́̈́̎̉̈́́̒̒̆̌̃̓̈́͂̽̓̆̋̈̂̽̆̓̔͗̓̀̄̈́̂̏͗̐̔͘̕͘͘͜͜͜͜͠͠͝͠͠͝͝͝͠͠͝ͅͅ", thumbnail=inter.author.display_avatar, color=self.color))
             elif c <= 6:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Slave Pass** 🤖\nCongratulations!!!\nCall your boss and take a day off now!", footer="Full Auto and Botting are forbidden", thumbnail=ctx.author.display_avatar, color=self.color))
+                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got a **Slave Pass** 🤖\nCongratulations!!!\nCall your boss and take a day off now!", footer="Full Auto and Botting are forbidden", thumbnail=inter.author.display_avatar, color=self.color))
             elif c <= 16:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Chen Pass** 😈\nCongratulations!!!\nYour daily honor or meat count must be composed only of the digit 6.", thumbnail=ctx.author.display_avatar, color=self.color))
+                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got a **Chen Pass** 😈\nCongratulations!!!\nYour daily honor or meat count must be composed only of the digit 6.", thumbnail=inter.author.display_avatar, color=self.color))
             elif c <= 21:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Carry Pass** 😈\nDon't stop grinding, continue until your Crew gets the max rewards!", thumbnail=ctx.author.display_avatar, color=self.color))
+                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got a **Carry Pass** 😈\nDon't stop grinding, continue until your Crew gets the max rewards!", thumbnail=inter.author.display_avatar, color=self.color))
             elif c <= 26:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Relief Ace Pass** 😈\nPrepare to relieve carries of their 'stress' after the day!!!", footer="wuv wuv", thumbnail=ctx.author.display_avatar, color=self.color))
+                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got a **Relief Ace Pass** 😈\nPrepare to relieve carries of their 'stress' after the day!!!", footer="wuv wuv", thumbnail=inter.author.display_avatar, color=self.color))
             else:
-                final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="You got a **Free Leech Pass** 👍\nCongratulations!!!", thumbnail=ctx.author.display_avatar, color=self.color))
-            await self.bot.util.clean(ctx, final_msg, 40)
+                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got a **Free Leech Pass** 👍\nCongratulations!!!", thumbnail=inter.author.display_avatar, color=self.color))
+            await self.bot.util.clean(inter, 40)
             return
         elif c == 3:
             h = h * random.randint(50, 80)
@@ -893,7 +769,7 @@ class Games(commands.Cog):
         h = h * 100000
         m = m * 10
 
-        if ctx.author.id == self.bot.data.config['ids'].get('chen', -1):
+        if inter.author.id == self.bot.data.config['ids'].get('chen', -1): # joke
             match random.randint(3, 8):
                 case 3: h = 666
                 case 4: h = 6666
@@ -907,8 +783,8 @@ class Games(commands.Cog):
                 case 3: m = 666
                 case 4: m = 6666
 
-        final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), ctx.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=ctx.author.display_avatar, color=self.color))
-        await self.bot.util.clean(ctx, final_msg, 40)
+        await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=inter.author.display_avatar, color=self.color))
+        await self.bot.util.clean(inter, 40)
 
     """randint()
     Generate a simple pseudo random number based on the seed value
@@ -924,11 +800,11 @@ class Games(commands.Cog):
     def randint(self, seed):
         return ((seed * 1103515245) % 4294967296) + 12345
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(2, 7, commands.BucketType.user)
-    async def character(self, ctx):
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 600, commands.BucketType.user)
+    async def character(self, inter):
         """Generate a random GBF character"""
-        seed = (ctx.author.id + int(datetime.utcnow().timestamp()) // 86400) # based on user id + day
+        seed = (inter.author.id + int(datetime.utcnow().timestamp()) // 86400) # based on user id + day
         values = {
             'Rarity' : [['SSR', 'SR', 'R'], 3, True, None], # random strings, modulo to use, bool to use emote.get, seed needed to enable
             'Race' : [['Human', 'Erun', 'Draph', 'Harvin', 'Primal', 'Other'], 6, False, None],
@@ -948,45 +824,349 @@ class Games(commands.Cog):
             seed = self.randint(seed)
         msg += "**Rating** ▫️ {:.1f}".format(rarity_mod + (seed % 31) / 10)
 
-        msg = await ctx.reply(embed=self.bot.util.embed(author={'name':"{}'s daily character".format(ctx.author.display_name), 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color))
-        await self.bot.util.clean(ctx, msg, 30)
+        await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{}'s daily character".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color))
+        await self.bot.util.clean(inter, 30)
 
-    @commands.command(no_pm=True, hidden=True, cooldown_after_parsing=True)
+    """value2head()
+    Convert a card value to a string.
+    Heads are converted to the equivalent (J, Q, K, A)
+    
+    Parameters
+    ----------
+    value: Integer or string card value
+    
+    Returns
+    --------
+    str: Card string
+    """
+    def value2head(self, value):
+        return str(value).replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
+
+    """valueNsuit2head()
+    Convert a card value and suit to a string.
+    Heads are converted to the equivalent (J, Q, K, A).
+    Suits are converted to ♦, ♠️, ♥️ and ♣️
+    
+    Parameters
+    ----------
+    value: String card value
+    
+    Returns
+    --------
+    str: Card string
+    """
+    def valueNsuit2head(self, value):
+        return value.replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
+
+    """checkPokerHand()
+    Check a poker hand strength
+    
+    Parameters
+    ----------
+    hand: List of card to check
+    
+    Returns
+    --------
+    str: Strength string
+    """
+    def checkPokerHand(self, hand):
+        flush = False
+        # flush detection
+        suits = [h[-1] for h in hand]
+        if len(set(suits)) == 1: flush = True
+        # other checks
+        values = [i[:-1] for i in hand] # get card values
+        value_counts = defaultdict(lambda:0)
+        for v in values:
+            value_counts[v] += 1 # count each match
+        rank_values = [int(i) for i in values] # rank them
+        value_range = max(rank_values) - min(rank_values) # and get the difference
+        # determinate hand from their
+        if flush and set(values) == set(["10", "11", "12", "13", "14"]): return "**Royal Straight Flush**"
+        elif flush and ((len(set(value_counts.values())) == 1 and (value_range==4)) or set(values) == set(["14", "2", "3", "4", "5"])): return "**Straight Flush, high {}**".format(self.value2head(self.highestCardStripped(list(value_counts.keys()))))
+        elif sorted(value_counts.values()) == [1,4]: return "**Four of a Kind of {}**".format(self.value2head(list(value_counts.keys())[list(value_counts.values()).index(4)]))
+        elif sorted(value_counts.values()) == [2,3]: return "**Full House, high {}**".format(self.value2head(list(value_counts.keys())[list(value_counts.values()).index(3)]))
+        elif flush: return "**Flush**"
+        elif (len(set(value_counts.values())) == 1 and (value_range==4)) or set(values) == set(["14", "2", "3", "4", "5"]): return "**Straight, high {}**".format(self.value2head(self.highestCardStripped(list(value_counts.keys()))))
+        elif set(value_counts.values()) == set([3,1]): return "**Three of a Kind of {}**".format(self.value2head(list(value_counts.keys())[list(value_counts.values()).index(3)]))
+        elif sorted(value_counts.values())==[1,2,2]:
+            k = list(value_counts.keys())
+            k.pop(list(value_counts.values()).index(1))
+            return "**Two Pairs, high {}**".format(self.value2head(self.highestCardStripped(k)))
+        elif 2 in value_counts.values(): return "**Pair of {}**".format(self.value2head(list(value_counts.keys())[list(value_counts.values()).index(2)]))
+        else: return "**Highest card is {}**".format(self.value2head(self.highestCard(hand).replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️")))
+
+    """highestCardStripped()
+    Return the highest card in the selection, without the suit
+    
+    Parameters
+    ----------
+    selection: List of card to check
+    
+    Returns
+    --------
+    str: Highest card
+    """
+    def highestCardStripped(self, selection):
+        ic = [int(i) for i in selection] # convert to int
+        return str(sorted(ic)[-1]) # sort and then convert back to str
+
+    """highestCard()
+    Return the highest card in the selection
+    
+    Parameters
+    ----------
+    selection: List of card to check
+    
+    Returns
+    --------
+    str: Highest card
+    """
+    def highestCard(self, selection):
+        for i in range(0, len(selection)): selection[i] = '0'+selection[i] if len(selection[i]) == 2 else selection[i]
+        last = sorted(selection)[-1]
+        if last[0] == '0': last = last[1:]
+        return last
+
+    """pokerNameStrip()
+    Shorten the discord user name
+    
+    Parameters
+    ----------
+    name: User name
+    
+    Returns
+    --------
+    str: Shortened name
+    """
+    def pokerNameStrip(self, name):
+        if len(name) > 10:
+            if len(name.split(" ")[0]) < 10: return name.split(" ")[0]
+            else: return name[:9] + "…"
+        return name
+
+    """gameIsMember()
+    Check if member is in the game
+    
+    Parameters
+    ----------
+    m:  disnake.Member to check
+    m_listm List of participating disnake.Member
+    
+    Returns
+    --------
+    bool: True if present, False if not
+    """
+    def gameIsMember(self, m, m_list):
+        for mb in m_list:
+            if m.id == mb.id:
+                return True
+        return False
+
+    @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 30, commands.BucketType.guild)
-    async def xil(self, ctx):
-        """Generate a random element for Xil"""
-        g = random.Random()
-        elems = ['fire', 'water', 'earth', 'wind', 'light', 'dark']
-        g.seed(int((int(datetime.utcnow().timestamp()) // 86400) * (1.0 + 1.0/4.2)))
-        e = g.choice(elems)
+    @commands.max_concurrency(10, commands.BucketType.default)
+    async def poker(self, inter):
+        """Play a poker mini-game with other people"""
+        await inter.response.defer()
+        players = [inter.author]
+        view = JoinGame(self.bot, players, 6)
+        desc = "Starting in {}s\n{}/6 players"
+        embed = self.bot.util.embed(title="♠️ Multiplayer Poker ♥️", description=desc.format(30, 1), color=self.color)
+        msg = await inter.channel.send(embed=embed, view=view)
+        self.bot.doAsync(view.updateTimer(msg, embed, desc, 30))
+        await view.wait()
+        if len(players) > 6: players = players[:6]
+        await self.bot.util.clean(inter, 0, True)
+        # game start
+        draws = []
+        while len(draws) < 3 + 2 * len(players):
+            card = str(random.randint(2, 14)) + random.choice(["D", "S", "H", "C"])
+            if card not in draws:
+                draws.append(card)
+        for s in range(-1, 5):
+            msg = ":spy: Dealer \▫️ "
+            n = s - 2
+            for j in range(0, 3):
+                if j > n: msg += "🎴"
+                else: msg += self.valueNsuit2head(draws[j])
+                if j < 2: msg += ", "
+                else: msg += "\n"
+            n = max(1, s)
+            for x in range(0, len(players)):
+                msg += "{} {} \▫️ ".format(self.bot.emote.get(str(x+1)), self.pokerNameStrip(players[x].display_name))
+                if s == 4:
+                    highest = self.highestCard(draws[3+2*x:5+2*x])
+                for j in range(0, 2):
+                    if j > s: msg += "🎴"
+                    elif s == 4 and draws[3+j+2*x] == highest: msg += "__" + self.valueNsuit2head(draws[3+j+2*x]) + "__"
+                    else: msg += self.valueNsuit2head(draws[3+j+2*x])
+                    if j == 0: msg += ", "
+                    else:
+                        if s == 4:
+                            msg += " \▫️ "
+                            hand = draws[0:3] + draws[3+2*x:5+2*x]
+                            hstr = await self.bot.do(self.checkPokerHand, hand)
+                            if hstr.startswith("**Highest"):
+                                msg += "**Highest card is {}**".format(self.valueNsuit2head(self.highestCard(draws[3+2*x:5+2*x])))
+                            else:
+                                msg += hstr
+                        msg += "\n"
+            await inter.edit_original_message(embed=self.bot.util.embed(title="♠️ Multiplayer Poker ♥️", description=msg, color=self.color))
+            await asyncio.sleep(2)
+        await self.bot.util.clean(inter, 45)
 
-        final_msg = await ctx.send(embed=self.bot.util.embed(title="Today, Xil's main element is", description="{} **{}**".format(self.bot.emote.get(e), e.capitalize()), color=self.color))
-        await self.bot.util.clean(ctx, final_msg, 30)
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 30, commands.BucketType.guild)
+    @commands.max_concurrency(10, commands.BucketType.default)
+    async def blackjack(self, inter):
+        """Play a blackjack mini-game with other people"""
+        await inter.response.defer()
+        players = [inter.author]
+        view = JoinGame(self.bot, players, 6)
+        desc = "Starting in {}s\n{}/6 players"
+        embed = self.bot.util.embed(title="♠️ Multiplayer Blackjack ♥️", description=desc.format(30, 1), color=self.color)
+        msg = await inter.channel.send(embed=embed, view=view)
+        self.bot.doAsync(view.updateTimer(msg, embed, desc, 30))
+        await view.wait()
+        if len(players) > 6: players = players[:6]
+        await self.bot.util.clean(inter, 0, True)
+        # game start
+        # state: 0 = playing card down, 1 = playing card up, 2 = lost, 3 = won, 4 = blackjack
+        status = [{'name':'Dealer', 'score':0, 'cards':[], 'state':0}]
+        for p in players:
+            status.append({'name':p.display_name, 'score':0, 'cards':[], 'state':0})
+        deck = []
+        kind = ["D", "S", "H", "C"]
+        for i in range(51):
+            deck.append('{}{}'.format((i % 13) + 1, kind[i // 13]))
+        
+        done = 0
+        while done < len(status):
+            msg = ""
+            for p in range(len(status)):
+                if status[p]['state'] == 1:
+                    c = deck[0]
+                    deck = deck[1:]
+                    value = int(c[:-1])
+                    if value >= 10: value = 10
+                    elif value == 1 and status[p]['score'] <= 10: value = 11
+                    if status[p]['score'] + value > 21:
+                        status[p]['state'] = 2
+                        done += 1
+                    elif status[p]['score'] + value == 21:
+                        if len(status[p]['cards']) == 1: status[p]['state'] = 4
+                        else: status[p]['state'] = 3
+                        status[p]['score'] += value
+                        done += 1
+                    else:
+                        status[p]['score'] += value
+                    status[p]['cards'].append(c)
+                if p == 0: msg += ":spy: "
+                else: msg += "{} ".format(self.bot.emote.get(str(p)))
+                msg += self.pokerNameStrip(status[p]['name'])
+                msg += " \▫️ "
+                for i in range(len(status[p]['cards'])):
+                    msg += "{}".format(status[p]['cards'][i].replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("10", "tmp").replace("1", "A").replace("tmp", "10"))
+                    if i == len(status[p]['cards']) - 1 and status[p]['state'] == 0: msg += ", 🎴"
+                    elif i < len(status[p]['cards']) - 1: msg += ", "
+                if len(status[p]['cards']) == 0: msg += "🎴"
+                if status[p]['state'] == 0: status[p]['state'] = 1
+                elif status[p]['state'] == 1: status[p]['state'] = 0
+                msg += " \▫️ "
+                match status[p]['state']:
+                    case 4: msg += "**Blackjack**\n"
+                    case 3: msg += "**21**\n"
+                    case 2: msg += "Best {}\n".format(status[p]['score'])
+                    case _: msg += "{}\n".format(status[p]['score'])
+            await inter.edit_original_message(embed=self.bot.util.embed(title="♠️ Multiplayer Blackjack ♥️", description=msg, color=self.color))
+            await asyncio.sleep(2)
+        await self.bot.util.clean(inter, 45)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['math'])
-    @commands.cooldown(2, 10, commands.BucketType.guild)
-    async def calc(self, ctx, *terms : str):
-        """Process a mathematical expression
-        You can define a variable by separating using a comma.
-        Some functions are also available.
-        Example: cos(a + b) / c, a = 1, b=2,c = 3"""
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 40, commands.BucketType.guild)
+    @commands.max_concurrency(10, commands.BucketType.default)
+    async def tictactoe(self, inter):
+        """Play a game of Tic Tac Toe"""
+        await inter.response.defer()
+        players = [inter.author]
+        view = JoinGame(self.bot, players, 2)
+        desc = "Starting in {}s\n{}/2 players"
+        embed = self.bot.util.embed(title=":x: Multiplayer Tic Tac Toe :o:", description=desc.format(30, 1), color=self.color)
+        msg = await inter.channel.send(embed=embed, view=view)
+        self.bot.doAsync(view.updateTimer(msg, embed, desc, 30))
+        await view.wait()
+        await msg.delete()
+        if len(players) == 1:
+            players.append(self.bot.user)
+            bot_game = True
+        else:
+            bot_game = False
+        random.shuffle(players)
+        embed = self.bot.util.embed(title=":x: Multiplayer Tic Tac Toe :o:", description=":x: {} :o: {}\nTurn of **{}**".format(view.players[0].display_name, (self.bot.user.display_name if len(view.players) < 2 else view.players[1].display_name), view.players[0].display_name), color=self.color)
+        view = TicTacToe(self.bot, bot_game, players, embed)
+        await inter.edit_original_message(embed=embed, view=view)
+
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 45, commands.BucketType.user)
+    @commands.max_concurrency(5, commands.BucketType.default)
+    async def dice(self, inter, dice_string : str = commands.Param(description="Format is NdN. Minimum is 1d6, Maximum is 10d100", autocomplete=['1d6', '4d10'])):
+        """Roll some dies"""
         try:
-            m = " ".join(terms).split(",")
-            d = {}
-            for i in range(1, len(m)): # process the variables if any
-                x = m[i].replace(" ", "").split("=")
-                if len(x) == 2: d[x[0]] = float(x[1])
-                else: raise Exception('')
-            msg = "`{}` = **{}**".format(m[0], self.bot.calc.evaluate(m[0], d))
-            if len(d) > 0:
-                msg += "\nwith:\n"
-                for k in d:
-                    msg += "{} = {}\n".format(k, d[k])
-            await ctx.reply(embed=self.bot.util.embed(title="Calculator", description=msg, color=self.color))
-        except Exception as e:
-            await ctx.reply(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color))
+            await inter.response.defer()
+            tmp = dice_string.lower().split('d')
+            n = int(tmp[0])
+            d = int(tmp[1])
+            if n <= 0 or n> 10 or d < 6 or d > 100: raise Exception()
+            rolls = []
+            for i in range(n):
+                rolls.append(random.randint(1, d))
+                msg = ""
+                for j in range(len(rolls)):
+                    msg += "{}, ".format(rolls[j])
+                    if j == (len(rolls) - 1): msg = msg[:-2]
+                if len(rolls) == n:
+                    msg += "\n**Total**: {:}, **Average**: {:}, **Percentile**: {:.1f}%".format(sum(rolls), round(sum(rolls)/len(rolls)), sum(rolls) * 100 / (n * d)).replace('.0%', '%')
+                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"🎲 {} rolled {}...".format(inter.author.display_name, dice_string), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color))
+                await asyncio.sleep(1)
+            await self.bot.util.clean(inter, 45)
+        except:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Invalid string `{}`\nFormat must be `NdN` (minimum is `1d6`, maximum is `10d100`)".format(dice_string), color=self.color), ephemeral=True)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['leek', 'leaks', 'leeks'])
-    async def leak(self, ctx):
-        """Do nothing"""
-        await self.bot.util.react(ctx.message, '✅') # white check mark
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 45, commands.BucketType.user)
+    @commands.max_concurrency(5, commands.BucketType.default)
+    async def coin(self, inter):
+        """Flip a coin"""
+        coin = random.randint(0, 1)
+        await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{} flipped a coin...".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=(":coin: It landed on **Head**" if (coin == 0) else ":coin: It landed on **Tail**"), color=self.color))
+        await self.bot.util.clean(inter, 45)
+
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 45, commands.BucketType.user)
+    @commands.max_concurrency(5, commands.BucketType.default)
+    async def choose(self, inter, choices : str = commands.Param(description="Format is Choice 1;Choice 2;...;Choice N", autocomplete=["Do it;Don't", 'Yes;No'])):
+        """Select a random string from the user's choices"""
+        try:
+            possible = choices.split(";")
+            if len(possible) < 2: raise Exception()
+            await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{}'s choice".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=random.choice(possible), color=self.color))
+            await self.bot.util.clean(inter, 45)
+        except:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Give me a list of something to choose from, separated by `;`", color=self.color), ephemeral=True)
+
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 45, commands.BucketType.user)
+    @commands.max_concurrency(5, commands.BucketType.default)
+    async def ask(self, inter, question : str = commands.Param()):
+        """Ask me a question"""
+        await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{} asked".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="`{}`\n{}".format(question, random.choice(["It is Certain.","It is decidedly so.","Without a doubt.","Yes definitely.","You may rely on it.","As I see it, yes.","Most likely.","Outlook good.","Yes.","Signs point to yes.","Reply hazy, try again.","Ask again later.","Better not tell you now.","Cannot predict now.","Concentrate and ask again.","Don't count on it.","My reply is no.","My sources say no.","Outlook not so good.","Very doubtful."])), color=self.color))
+        await self.bot.util.clean(inter, 45)
+
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 45, commands.BucketType.user)
+    @commands.max_concurrency(5, commands.BucketType.default)
+    async def when(self, inter, question : str = commands.Param()):
+        """Ask me when will something happen"""
+        await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{} asked".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="`When {}`\n{}".format(question, random.choice(["Never", "Soon:tm:", "Ask again tomorrow", "Can't compute", "42", "One day, my friend", "Next year", "It's a secret to everybody", "Soon enough", "When it's ready", "Five minutes", "This week, surely", "My sources say next month", "NOW!", "I'm not so sure", "In three days"])), color=self.color))
+        await self.bot.util.clean(inter, 45)

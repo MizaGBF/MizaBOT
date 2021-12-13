@@ -1,4 +1,4 @@
-﻿from discord.ext import commands
+﻿from disnake.ext import commands
 from datetime import datetime, timedelta
 import math
 
@@ -16,30 +16,6 @@ class DreadBarrage(commands.Cog):
 
     def startTasks(self):
         pass
-
-    """isOwner()
-    Command decorator, to check if the command is used by the bot owner
-    
-    Returns
-    --------
-    command check
-    """
-    def isOwner():
-        async def predicate(ctx):
-            return ctx.bot.isOwner(ctx)
-        return commands.check(predicate)
-
-    """isYouModOrOwner()
-    Command decorator, to check if the command is used by the bot owner or a member of the (You) discord
-    
-    Returns
-    --------
-    command check
-    """
-    def isYouModOrOwner():
-        async def predicate(ctx):
-            return (ctx.bot.isServer(ctx, 'debug_server') or (ctx.bot.isServer(ctx, 'you_server') and ctx.bot.isMod(ctx)))
-        return commands.check(predicate)
 
     """getBarrageState()
     Return the state of the Dread Barrage event
@@ -75,15 +51,13 @@ class DreadBarrage(commands.Cog):
         else:
             return ""
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['march', 'valiant', 'dread', 'db', 'dreadbarrage'])
-    @commands.cooldown(1, 10, commands.BucketType.guild)
-    async def Barrage(self, ctx, gmt : str = '9'):
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 40, commands.BucketType.user)
+    @commands.max_concurrency(1, commands.BucketType.default)
+    async def dreadbarrage(self, inter, gmt : int = commands.Param(description='Your timezone from GMT', ge=-12, le=14, default=9, autocomplete=[-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])):
         """Post the Dread Barrage schedule"""
-        try: gmt = int(gmt)
-        except: gmt = 9
         if self.bot.data.save['valiant']['state'] == True:
             try:
-                if gmt < -12 or gmt > 14: gmt = 9
                 current_time = self.bot.util.JST()
                 em = self.bot.util.formatElement(self.bot.data.save['valiant']['element'])
                 title = "{} **Dread Barrage {}** {} **{:%a. %m/%d %H:%M} TZ**\n".format(self.bot.emote.get('crew'), self.bot.data.save['valiant']['id'], em, current_time + timedelta(seconds=3600*(gmt-9)))
@@ -98,155 +72,80 @@ class DreadBarrage(commands.Cog):
                         description += "▫️ New Foes: **{:%a. %m/%d %H:%M}**\n".format(self.bot.data.save['valiant']['dates']['New Foes'] + timedelta(seconds=3600*(gmt-9)))
                     description += "▫️ Last day: **{:%a. %m/%d %H:%M}**\n".format(self.bot.data.save['valiant']['dates']['Day 8'] + timedelta(seconds=3600*(gmt-9)))
                 else:
-                    await ctx.send(embed=self.bot.util.embed(title="{} **Dread Barrage**".format(self.bot.emote.get('crew')), description="Not available", color=self.color))
+                    await inter.response.send_message(embed=self.bot.util.embed(title="{} **Dread Barrage**".format(self.bot.emote.get('crew')), description="Not available", color=self.color))
                     with self.bot.data.lock:
                         self.bot.data.save['valiant']['state'] = False
                         self.bot.data.save['valiant']['dates'] = {}
                         self.bot.data.pending = True
+                    await self.bot.util.clean(inter, 40)
                     return
                 try:
                     description += self.getBarrageState()
                 except Exception as e:
                     await self.bot.sendError("getBarrageState", e)
 
-                await ctx.send(embed=self.bot.util.embed(title=title, description=description, color=self.color))
+                await inter.response.send_message(embed=self.bot.util.embed(title=title, description=description, color=self.color))
             except Exception as e:
                 await self.bot.sendError("valiant", e)
+                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color), ephemeral=True)
         else:
-            await ctx.send(embed=self.bot.util.embed(title="{} **Dread Barrage**".format(self.bot.emote.get('crew')), description="Not available", color=self.color))
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} **Dread Barrage**".format(self.bot.emote.get('crew')), description="Not available", color=self.color))
+            await self.bot.util.clean(inter, 40)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['fugdiddreadstart', 'fugdidvaliantstart', 'fugdiddbstart', 'valianttime', 'dreadtime', 'barragetime'])
-    @commands.cooldown(10, 10, commands.BucketType.guild)
-    async def fugdidbarragestart(self, ctx):
-        """Check if Dread Barrage started"""
-        try:
-            d = self.getBarrageState()
-            if d != "":
-                em = self.bot.util.formatElement(self.bot.data.save['valiant']['element'])
-                await ctx.reply(embed=self.bot.util.embed(title="{} **Dread Barrage {}** {} status".format(self.bot.emote.get('crew'), self.bot.data.save['valiant']['id'], em), description=d, color=self.color))
-        except Exception as e:
-            await ctx.reply(embed=self.bot.util.embed(title="Error", description="I have no idea what the fuck happened", footer=str(e), color=self.color))
-            await self.bot.sendError("fugdidbarragestart", e)
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setDread', 'setDreadBarrage', 'setBarrage'])
-    @isYouModOrOwner()
-    async def setValiant(self, ctx, id : int, advElement : str, day : int, month : int, year : int):
-        """Set the Valiant date ((You) Mod Only)"""
-        try:
-            # stop the task
-            with self.bot.data.lock:
-                self.bot.data.save['valiant']['state'] = False
-                self.bot.data.save['valiant']['id'] = id
-                self.bot.data.save['valiant']['element'] = advElement.lower()
-                # build the calendar
-                self.bot.data.save['valiant']['dates'] = {}
-                self.bot.data.save['valiant']['dates']["Day 1"] = datetime.utcnow().replace(year=year, month=month, day=day, hour=19, minute=0, second=0, microsecond=0)
-                self.bot.data.save['valiant']['dates']["Day 2"] = self.bot.data.save['valiant']['dates']["Day 1"] + timedelta(seconds=36000)
-                self.bot.data.save['valiant']['dates']["Day 3"] = self.bot.data.save['valiant']['dates']["Day 2"] + timedelta(days=1)
-                self.bot.data.save['valiant']['dates']["New Foes"] = self.bot.data.save['valiant']['dates']["Day 3"] + timedelta(seconds=50400)
-                self.bot.data.save['valiant']['dates']["Day 4"] = self.bot.data.save['valiant']['dates']["Day 3"] + timedelta(days=1)
-                self.bot.data.save['valiant']['dates']["Day 5"] = self.bot.data.save['valiant']['dates']["Day 4"] + timedelta(days=1)
-                self.bot.data.save['valiant']['dates']["Day 6"] = self.bot.data.save['valiant']['dates']["Day 5"] + timedelta(days=1)
-                self.bot.data.save['valiant']['dates']["Day 7"] = self.bot.data.save['valiant']['dates']["Day 6"] + timedelta(days=1)
-                self.bot.data.save['valiant']['dates']["Day 8"] = self.bot.data.save['valiant']['dates']["Day 7"] + timedelta(days=1)
-                self.bot.data.save['valiant']['dates']["End"] = self.bot.data.save['valiant']['dates']["Day 8"] + timedelta(seconds=50400)
-                # set the valiant state to true
-                self.bot.data.save['valiant']['state'] = True
-                self.bot.data.pending = True
-            await ctx.send(embed=self.bot.util.embed(title="{} Dread Barrage Mode".format(self.bot.emote.get('gw')), description="Set to : **{:%m/%d %H:%M}**".format(self.bot.data.save['valiant']['dates']["Day 1"]), color=self.color))
-        except Exception as e:
-            with self.bot.data.lock:
-                self.bot.data.save['valiant']['dates'] = {}
-                self.bot.data.save['valiant']['buffs'] = []
-                self.bot.data.save['valiant']['state'] = False
-                self.bot.data.pending = True
-            await ctx.send(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", footer=str(e), color=self.color))
-            await self.bot.sendError('setgw', e)
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['disableDread', 'disableBarrage', 'disableDreadBarrage'])
-    @isYouModOrOwner()
-    async def disableValiant(self, ctx):
-        """Disable the Valiant mode ((You) Mod Only)
-        It doesn't delete the Valiant settings"""
-        with self.bot.data.lock:
-            self.bot.data.save['valiant']['state'] = False
-            self.bot.data.pending = True
-        await self.bot.util.react(ctx.message, '✅') # white check mark
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['enableDread', 'enableBarrage', 'enableDreadBarrage'])
-    @isYouModOrOwner()
-    async def enableValiant(self, ctx):
-        """Enable the Valiant mode ((You) Mod Only)"""
-        if self.bot.data.save['valiant']['state'] == True:
-            await ctx.send(embed=self.bot.util.embed(title="{} Dread Barrage Mode".format(self.bot.emote.get('gw')), description="Already enabled", color=self.color))
-        elif len(self.bot.data.save['valiant']['dates']) == 8:
-            with self.bot.data.lock:
-                self.bot.data.save['valiant']['state'] = True
-                self.bot.data.pending = True
-            await self.bot.util.react(ctx.message, '✅') # white check mark
-        else:
-            await ctx.send(embed=self.bot.util.embed(title="Error", description="No Dread Barrage available in my memory", color=self.color))
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['dreadtokens', 'dbtoken', 'dreadbarragetoken', 'dbtokens', 'dreadbarragetokens'])
+    @commands.slash_command(default_permission=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
-    async def dreadtoken(self, ctx, tok : str):
-        """Calculate how many Dread Barrage boxes you get from X tokens"""
-        try:
-            tok = self.bot.util.strToInt(tok)
-            if tok < 1 or tok > 9999999999: raise Exception()
-            b = 0
-            t = tok
-            if tok >= 1600:
-                tok -= 1600
-                b += 1
-            while b < 4 and tok >= 2400:
-                tok -= 2400
-                b += 1
-            while b < 20 and tok >= 2000:
-                tok -= 2000
-                b += 1
-            while b < 40 and tok >= 10000:
-                tok -= 10000
-                b += 1
-            while tok >= 15000:
-                tok -= 15000
-                b += 1
-            s1 = math.ceil(t / 52.0)
-            s2 = math.ceil(t / 70.0)
-            s3 = math.ceil(t / 97.0)
-            s4 = math.ceil(t / 146.0)
-            s5 = math.ceil(t / 243.0)
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} Dread Barrage Token Calculator ▫️ {} tokens".format(self.bot.emote.get('crew'), t), description="**{:,}** box(s) and **{:,}** leftover tokens\n**{:,}** \⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐\⭐ (**{:,}** pots)".format(b, tok, s1, math.ceil(s1*30/75), s2, math.ceil(s2*30/75), s3, math.ceil(s3*40/75), s4, math.ceil(s4*50/75), s5, math.ceil(s5*50/75)), color=self.color))
-        except:
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid token number", color=self.color))
-        await self.bot.util.clean(ctx, final_msg, 60)
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['dbbox', 'dreadbarragebox'])
-    @commands.cooldown(2, 10, commands.BucketType.guild)
-    async def dreadbox(self, ctx, box : int):
-        """Calculate how many Dread Barrage tokens you need"""
-        try:
-            if box < 1 or box > 999: raise Exception()
-            t = 0
-            b = box
-            if box >= 1: t += 1600
-            if box >= 2: t += 2400
-            if box >= 3: t += 2400
-            if box >= 4: t += 2400
-            if box > 40:
-                t += (box - 40) * 15000
-                box = 40
-            if box > 20:
-                t += (box - 20) * 10000
-                box = 20
-            if box > 4:
-                t += (box - 4) * 2000
-            s1 = math.ceil(t / 52.0)
-            s2 = math.ceil(t / 70.0)
-            s3 = math.ceil(t / 97.0)
-            s4 = math.ceil(t / 146.0)
-            s5 = math.ceil(t / 243.0)
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} Dread Barrage Token Calculator ▫️ {} box".format(self.bot.emote.get('crew'), b), description="**{:,}** tokens needed\n\n**{:,}** \⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐\⭐ (**{:,}** pots)".format(t, s1, math.ceil(s1*30/75), s2, math.ceil(s2*30/75), s3, math.ceil(s3*40/75), s4, math.ceil(s4*50/75), s5, math.ceil(s5*50/75)), color=self.color))
-        except:
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Error", description="Invalid box number", color=self.color))
-        await self.bot.util.clean(ctx, final_msg, 60)
+    async def dreadhelp(self, inter, what : str = commands.Param(description="Type of Value", autcomplete=['box', 'token']), value : str = commands.Param(description="Value to convert (support B, M and K)")):
+        """Convert Dread Barrage boxes or tokens"""
+        match what.lower():
+            case 'token':
+                try:
+                    tok = self.bot.util.strToInt(tok)
+                    if tok < 1 or tok > 9999999999: raise Exception()
+                    b = 0
+                    t = tok
+                    if tok >= 1600:
+                        tok -= 1600
+                        b += 1
+                    while b < 4 and tok >= 2400:
+                        tok -= 2400
+                        b += 1
+                    while b < 20 and tok >= 2000:
+                        tok -= 2000
+                        b += 1
+                    while b < 40 and tok >= 10000:
+                        tok -= 10000
+                        b += 1
+                    while tok >= 15000:
+                        tok -= 15000
+                        b += 1
+                    s1 = math.ceil(t / 52.0)
+                    s2 = math.ceil(t / 70.0)
+                    s3 = math.ceil(t / 97.0)
+                    s4 = math.ceil(t / 146.0)
+                    s5 = math.ceil(t / 243.0)
+                    await inter.response.send_message(embed=self.bot.util.embed(title="{} Dread Barrage Token Calculator ▫️ {} tokens".format(self.bot.emote.get('crew'), t), description="**{:,}** box(s) and **{:,}** leftover tokens\n**{:,}** \⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐\⭐ (**{:,}** pots)".format(b, tok, s1, math.ceil(s1*30/75), s2, math.ceil(s2*30/75), s3, math.ceil(s3*40/75), s4, math.ceil(s4*50/75), s5, math.ceil(s5*50/75)), color=self.color), ephemeral=True)
+                except:
+                    await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid token number", color=self.color), ephemeral=True)
+            case 'box':
+                t = 0
+                b = box
+                if box >= 1: t += 1600
+                if box >= 2: t += 2400
+                if box >= 3: t += 2400
+                if box >= 4: t += 2400
+                if box > 40:
+                    t += (box - 40) * 15000
+                    box = 40
+                if box > 20:
+                    t += (box - 20) * 10000
+                    box = 20
+                if box > 4:
+                    t += (box - 4) * 2000
+                s1 = math.ceil(t / 52.0)
+                s2 = math.ceil(t / 70.0)
+                s3 = math.ceil(t / 97.0)
+                s4 = math.ceil(t / 146.0)
+                s5 = math.ceil(t / 243.0)
+                await inter.response.send_message(embed=self.bot.util.embed(title="{} Dread Barrage Token Calculator ▫️ {} box".format(self.bot.emote.get('crew'), b), description="**{:,}** tokens needed\n\n**{:,}** \⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐\⭐ (**{:,}** pots)".format(t, s1, math.ceil(s1*30/75), s2, math.ceil(s2*30/75), s3, math.ceil(s3*40/75), s4, math.ceil(s4*50/75), s5, math.ceil(s5*50/75)), color=self.color), ephemeral=True)
+            case _:
+                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid value type `{}`".format(what), color=self.color), ephemeral=True)

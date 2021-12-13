@@ -1,5 +1,5 @@
 from . import BaseView
-import discord
+import disnake
 import asyncio
 from datetime import datetime, timedelta
 
@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 # View class used to make polls
 # ----------------------------------------------------------------------------------------------------------------
 
-class PollDropdown(discord.ui.Select):
+class PollDropdown(disnake.ui.Select):
     """__init__()
     Constructor
     
@@ -21,7 +21,7 @@ class PollDropdown(discord.ui.Select):
     def __init__(self, title : str = "", choices : list = []):
         options = []
         for c in choices:
-            options.append(discord.SelectOption(label=c))
+            options.append(disnake.SelectOption(label=c))
         if len(options) < 2: raise Exception('Please specify what to poll for\nFormat: `duration title;choice1;choice2;...;choiceN`')
         super().__init__(placeholder=title, min_values=1, max_values=1, options=options)
 
@@ -32,7 +32,7 @@ class PollDropdown(discord.ui.Select):
     ----------
     interaction: a Discord interaction
     """
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         self.view.update_last(interaction)
         self.view.votes[interaction.user.id] = self.values[0]
         await interaction.response.send_message(f'Vote updated to `{self.values[0]}`', ephemeral=True)
@@ -74,7 +74,7 @@ class Poll(BaseView):
     message: original message to update
     channel: where to post the results
     """
-    async def run_poll(self, duration : int, message : discord.Message, channel : discord.TextChannel):
+    async def run_poll(self, duration : int, message : disnake.Message, channel : disnake.TextChannel):
         timer = self.bot.util.JST() + timedelta(seconds=duration)
         author={'name':'{} started a poll'.format(self.author.display_name), 'icon_url':self.author.display_avatar}
         while True:

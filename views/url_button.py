@@ -1,5 +1,5 @@
 from . import BaseView
-import discord
+import disnake
 
 # ----------------------------------------------------------------------------------------------------------------
 # Url Button View
@@ -20,4 +20,4 @@ class UrlButton(BaseView):
         super().__init__(bot)
         if len(urls) == 0: raise Exception("Empty url list")
         for u in urls:
-            self.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label=u[0], url=u[1]))
+            self.add_item(disnake.ui.Button(style=disnake.ButtonStyle.link, label=u[0], url=u[1]))

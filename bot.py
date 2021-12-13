@@ -13,8 +13,8 @@ from components.ranking import Ranking
 from components.ban import Ban
 import cogs
 
-import discord
-from discord.ext import commands
+import disnake
+from disnake.ext import commands
 import asyncio
 import time
 import concurrent.futures
@@ -22,7 +22,7 @@ import functools
 from signal import SIGTERM, SIGINT
 # conditional import
 try:
-    import uvloop
+    import uvloop # unix only
     uvloop.install()
 except:
     pass
@@ -30,11 +30,10 @@ except:
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "8.14" # bot version
+        self.version = "9.0" # bot version
         self.changelog = [ # changelog lines
             "Please use `$bug_report` if you see anything wrong",
-            "Online command list added [here](https://mizagbf.github.io/MizaBOT/)",
-            "**DEVELOPMENT IS ON HOLD FOR AN UNDETERMINED AMOUNT OF TIME FOLLOWING [DISCORD.PY DEATH](https://gist.github.com/Rapptz/4a2f62751b9600a31a0d3c78100287f1)**"
+            "Online command list added [here](https://mizagbf.github.io/MizaBOT/)"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
@@ -60,9 +59,9 @@ class MizaBot(commands.Bot):
         
         # loading data
         self.data.loadConfig()
-        for i in range(0, 100): # try multiple times in case google drive is unresponsive
+        for i in range(0, 50): # try multiple times in case google drive is unresponsive
             if self.drive.load(): break # attempt to download the save file
-            elif i == 99:
+            elif i == 49:
                 print("Google Drive might be unavailable")
                 exit(3)
             time.sleep(20) # wait 20 sec
@@ -83,13 +82,9 @@ class MizaBot(commands.Bot):
         self.ranking.init()
         self.ban.init()
 
-        # intents (for guilds and stuff)
-        intents = discord.Intents.default()
-        intents.members = True
-        
         # init base class
-        super().__init__(command_prefix=self.prefix, case_insensitive=True, description="MizaBOT version {}\n[Source code](https://github.com/MizaGBF/MizaBOT)▫️[Online Command List](https://mizagbf.github.io/MizaBOT/)\nDefault command prefix is `$`, use `$setPrefix` to change it on your server.".format(self.version), help_command=None, owner=self.data.config['ids']['owner'], max_messages=None, intents=intents)
-        self.add_check(self.global_check)
+        super().__init__(case_insensitive=True, description="MizaBOT version {}\n[Source code](https://github.com/MizaGBF/MizaBOT)▫️[Online Command List](https://mizagbf.github.io/MizaBOT/)".format(self.version), help_command=None, owner=self.data.config['ids']['owner'], max_messages=None, intents=disnake.Intents.default(), sync_commands_debug=True, reload=True)
+        self.add_app_command_check(self.global_check, slash_commands=True, user_commands=True, message_commands=True)
 
     """go()
     Main Bot Loop
@@ -127,7 +122,7 @@ class MizaBot(commands.Bot):
     async def exit_gracefully(self): # graceful exit (when SIGTERM is received)
         try:
             while self.running: # we wait until we receive the signal
-                await asyncio.sleep(3600)
+                await asyncio.sleep(10000)
         except asyncio.CancelledError:
             self.running = False
             if self.data.pending:
@@ -139,30 +134,12 @@ class MizaBot(commands.Bot):
             await self.close()
             exit(0)
 
-    """prefix()
-    Return the prefix of the server the command is invoked in (default: $)
-    
-    Parameters
-    ----------
-    client: Client instance (unused, it should be equal to self)
-    message: The message to process
-    
-    Returns
-    --------
-    str: Server prefix
-    """
-    def prefix(self, client, message): # command prefix check
-        try:
-            return self.data.save['prefixes'][str(message.guild.id)] # get the guild prefix if set
-        except:
-            return '$' # else, return the default prefix $
-
     """isAuthorized()
     Check if the command is authorized to be invoked in this channel
     
     Parameters
     ----------
-    ctx: Command context or interaction
+    ctx: Command context, message or interaction
     
     Returns
     --------
@@ -189,7 +166,7 @@ class MizaBot(commands.Bot):
     bool: True if matched, False if not
     """
     def isServer(self, ctx, id_string : str): # check if the context is in the targeted guild (guild id must be in config.json)
-        if ctx.message.author.guild.id == self.data.config['ids'].get(id_string, -1):
+        if ctx.guild.id == self.data.config['ids'].get(id_string, -1):
             return True
         return False
 
@@ -222,7 +199,7 @@ class MizaBot(commands.Bot):
     bool: True if it does, False if not
     """
     def isMod(self, ctx): # check if the member has the manage_message permission
-        if ctx.author.guild_permissions.manage_messages or ctx.author.id == self.data.config['ids'].get('owner', -1):
+        if ctx.author.guild_permissions.manage_messages or ctx.author.id == self.owner.id:
             return True
         return False
 
@@ -238,7 +215,7 @@ class MizaBot(commands.Bot):
     bool: True if it does, False if not
     """
     def isOwner(self, ctx): # check if the member is the bot owner
-        if ctx.message.author.id == self.data.config['ids'].get('owner', -1): # must be defined in config.json
+        if ctx.author.id == self.owner.id: # must be defined in config.json
             return True
         return False
 
@@ -277,9 +254,9 @@ class MizaBot(commands.Bot):
     
     Returns
     --------
-    discord.Message: The sent message or None if error
+    disnake.Message: The sent message or None if error
     """
-    async def send(self, channel_name : str, msg : str = "", embed : discord.Embed = None, file : discord.File = None, view : discord.ui.View = None): # send something to a registered channel
+    async def send(self, channel_name : str, msg : str = "", embed : disnake.Embed = None, file : disnake.File = None, view : disnake.ui.View = None): # send something to a registered channel
         try:
             return await self.channel.get(channel_name).send(msg, embed=embed, file=file, view=view)
         except Exception as e:
@@ -301,7 +278,7 @@ class MizaBot(commands.Bot):
     --------
     list: A list of the successfully sent messages
     """
-    async def sendMulti(self, channel_names : list, msg : str = "", embed : discord.Embed = None, file : discord.File = None): # send to multiple registered channel at the same time
+    async def sendMulti(self, channel_names : list, msg : str = "", embed : disnake.Embed = None, file : disnake.File = None): # send to multiple registered channel at the same time
         r = []
         for c in channel_names:
             try:
@@ -337,8 +314,8 @@ class MizaBot(commands.Bot):
             self.channel.setMultiple([['debug', 'debug_channel'], ['image', 'image_upload'], ['debug_update', 'debug_update'], ['you_pinned', 'you_pinned'], ['gbfg_pinned', 'gbfg_pinned'], ['gbfglog', 'gbfg_log'], ['youlog', 'you_log']])
             await self.send('debug', embed=self.util.embed(title="{} is Ready".format(self.user.display_name), description=self.util.statusString(), thumbnail=self.user.display_avatar, timestamp=self.util.timestamp()))
             # start the task
-            await self.startTasks()
             self.booted = True
+            await self.startTasks()
 
     """do()
     Run a non awaitable function in the bot event loop
@@ -395,7 +372,7 @@ class MizaBot(commands.Bot):
     name: Task identifier
     coro: The coroutine to be called
     """
-    def runTask(self, name, func): # start a task (cancel a previous one with the same name)
+    def runTask(self, name, func):
         self.cancelTask(name)
         self.tasks[name] = self.loop.create_task(func())
 
@@ -406,14 +383,15 @@ class MizaBot(commands.Bot):
     ----------
     name: Task identifier
     """
-    def cancelTask(self, name): # cancel a task
+    def cancelTask(self, name):
         if name in self.tasks:
-            self.tasks[name].cancel()
+            try: self.tasks[name].cancel()
+            except: pass
 
     """startTasks()
     Start all tasks from each cogs (if any)
     """
-    async def startTasks(self): # start all our tasks
+    async def startTasks(self):
         for c in self.cogs:
             try: self.get_cog(c).startTasks()
             except: pass
@@ -441,37 +419,32 @@ class MizaBot(commands.Bot):
     ----------
     guild: Discord Guild
     """
-    async def on_guild_join(self, guild): # when the bot joins a new guild
-        id = str(guild.id)
-        if id == str(self.data.config['ids']['debug_server']):
-            return
-        elif id in self.data.save['guilds']['banned'] or self.ban.check(guild.owner.id, self.ban.OWNER): # leave if the server is blacklisted
-            try:
-                await self.send('debug', embed=self.util.embed(title="Banned guild request", description="{} ▫️ {}".format(guild.name, id), thumbnail=guild.icon.url, footer="Owner: {} ▫️ {}".format(guild.owner.name, guild.owner.id)))
-            except Exception as e:
-                await self.sendError("on_guild_join", e)
-            await guild.leave()
-        elif 'invite' not in self.data.save or self.data.save['invite']['state'] == False or (len(self.guilds) - len(self.data.save['guilds']['pending'])) >= self.data.save['invite']['limit']:
-            try: await guild.owner.send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon.url))
-            except: pass
-            await guild.leave()
-        elif len(guild.members) < 30:
-            try: await guild.owner.send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=guild.icon.url))
-            except: pass
-            await guild.leave()
-        else: # notify me and add to the pending servers
-            self.data.save['guilds']['pending'][id] = guild.name
-            self.data.pending = True
-            try: await guild.owner.send(embed=self.util.embed(title="Pending guild request", description="Please wait for your server to be accepted.", thumbnail=guild.icon.url))
-            except: pass
-            await self.send('debug', msg="{} Please review this new server".format(self.get_user(self.data.config['ids']['owner']).mention), embed=self.util.embed(title="Pending guild request for " + guild.name, description="**ID** ▫️ `{}`\n**Owner** ▫️ {} ▫️ `{}`\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}\n\nUse `$accept` or `$refuse`".format(guild.id, guild.owner, guild.owner.id, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at))
+    async def on_guild_join(self, guild):
+        try:
+            id = str(guild.id)
+            if id == str(self.data.config['ids']['debug_server']):
+                return
+            elif id in self.data.save['banned_guilds'] or self.ban.check(guild.owner_id, self.ban.OWNER): # ban check
+                await guild.leave()
+            elif 'invite' not in self.data.save or self.data.save['invite']['state'] == False or len(self.guilds) >= self.data.save['invite']['limit']: # invite state check
+                try: await guild.get_or_fetch_member(guild.owner_id).send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon.url))
+                except: pass
+                await guild.leave()
+            elif guild.member_count <= 30: # member count check
+                try: await guild.get_or_fetch_member(guild.owner_id).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=guild.icon.url))
+                except: pass
+                await guild.leave()
+            else: # notify
+                await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}\n\nUse `$accept` or `$refuse`".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at))
+        except Exception as e:
+            self.sendError('on_guild_join', e)
 
     """global_check()
     Check if the command is authorized to run
     
     Parameters
     ----------
-    ctx: Command context
+    ctx: Command context or interaction
     
     Returns
     --------
@@ -484,13 +457,14 @@ class MizaBot(commands.Bot):
             id = str(ctx.guild.id)
             if self.ban.check(ctx.author.id, self.ban.USE_BOT):
                 return False
-            elif id in self.data.save['guilds']['banned'] or self.ban.check(ctx.guild.owner.id, self.ban.OWNER): # ban check
+            elif id in self.data.save['banned_guilds'] or self.ban.check(ctx.guild.owner_id, self.ban.OWNER): # ban check
                 await ctx.guild.leave() # leave the server if banned
                 return False
-            elif id in self.data.save['guilds']['pending']: # pending check
-                await self.util.react(ctx.message, 'cooldown')
+            elif ctx.guild.owner_id in self.data.config['banned']: # banned owner defined in config.json
                 return False
-            elif ctx.guild.owner.id in self.data.config['banned']:
+            elif not ctx.channel.permissions_for(ctx.author).send_messages:
+                return False
+            elif not ctx.channel.permissions_for(ctx.me).send_messages:
                 return False
             return True
         except Exception as e:
@@ -519,7 +493,69 @@ class MizaBot(commands.Bot):
         else:
             await self.util.react(ctx.message, '❎')
             self.errn += 1
-            await self.send('debug', embed=self.util.embed(title="⚠ Error caused by {}".format(ctx.message.author), description=self.util.pexc(error), thumbnail=ctx.author.display_avatar, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=self.util.timestamp()))
+            await self.send('debug', embed=self.util.embed(title="⚠ Error caused by {}".format(ctx.message.author), description=self.util.pexc(error).replace('*', '\*'), thumbnail=ctx.author.display_avatar, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=self.util.timestamp()))
+
+    """application_error_handling()
+    Common function for on_error events.
+    
+    Parameters
+    ----------
+    inter: Command interaction
+    error: Exception
+    """
+    async def application_error_handling(self, inter, error):
+        msg = str(error)
+        if msg.startswith('You are on cooldown.'):
+            await inter.response.send_message(msg.replace('You are on cooldown.', 'This command is on cooldown.'), ephemeral=True)
+        elif msg.startswith('Too many people are using this command.'):
+            await inter.response.send_message(msg.replace('Too many people are using this command, try again later'), ephemeral=True)
+        elif msg.find('check functions for command') != -1:
+            return
+        elif msg.find('required argument that is missing') != -1 or msg.startswith('Converting to "int" failed for parameter'):
+            await inter.response.send_message("A required parameter is missing.", ephemeral=True)
+            return
+        elif msg.find('Member "') == 0 or msg.find('Command "') == 0 or msg.startswith('Command raised an exception: Forbidden: 403'):
+            try: await inter.response.send_message("it seems you can't use this command here.", ephemeral=True)
+            except: pass
+            return
+        else:
+            try: await inter.response.send_message("An unexpected error occured. My owner has been notified.", ephemeral=True)
+            except: pass
+            self.errn += 1
+            await self.send('debug', embed=self.util.embed(title="⚠ Error caused by {}".format(inter.author), description=self.util.pexc(error).replace('*', '\*'), thumbnail=inter.author.display_avatar, fields=[{"name":"Options", "value":'`{}`'.format(inter.options)}, {"name":"Server", "value":inter.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(inter.author.id), timestamp=self.util.timestamp()))
+
+    """on_slash_command_error()
+    Event. Called when a slash command raise an uncaught error
+    
+    Parameters
+    ----------
+    inter: Command interaction
+    error: Exception
+    """
+    async def on_slash_command_error(self, inter, error):
+        await self.application_error_handling(inter, error)
+
+    """on_user_command_error()
+    Event. Called when an user command raise an uncaught error
+    
+    Parameters
+    ----------
+    inter: Command interaction
+    error: Exception
+    """
+    async def on_user_command_error(self, inter, error):
+        await self.application_error_handling(inter, error)
+
+    """on_message_command_error()
+    Event. Called when a message command raise an uncaught error
+    
+    Parameters
+    ----------
+    inter: Command interaction
+    error: Exception
+    """
+    async def on_message_command_error(self, inter, error):
+        await self.application_error_handling(inter, error)
 
     """on_raw_reaction_add()
     Event. Called when a new reaction is added by an user
@@ -530,196 +566,6 @@ class MizaBot(commands.Bot):
     """
     async def on_raw_reaction_add(self, payload):
         await self.pinboard.check(payload)
-
-    # under is the log system used by my crew and another server, remove if you don't need those
-    # it's a sort of live audit log
-
-    """on_member_update()
-    Event. Called when a guild member status is updated
-    
-    Parameters
-    ----------
-    before: Previous Member status
-    after: New Member status
-    """
-    async def on_member_update(self, before, after):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if before.guild.id in guilds:
-            channel = guilds[before.guild.id]
-            if before.display_name != after.display_name:
-                    await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Name change".format(after.display_name), 'icon_url':after.display_avatar}, description="{}\n**Before** ▫️ {}\n**After** ▫️ {}".format(after.mention, before.display_name, after.display_name), footer="User ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
-            elif len(before.roles) < len(after.roles):
-                for r in after.roles:
-                    if r not in before.roles:
-                        await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Role added".format(after.name), 'icon_url':after.display_avatar}, description="{} was given the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x1b55b3, timestamp=self.util.timestamp()))
-                        break
-            elif len(before.roles) > len(after.roles):
-                for r in before.roles:
-                    if r not in after.roles:
-                        await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Role removed".format(after.name), 'icon_url':after.display_avatar}, description="{} was removed from the `{}` role".format(after.mention, r.name), footer="User ID: {}".format(after.id), color=0x0b234a, timestamp=self.util.timestamp()))
-                        break
-
-    """on_member_remove()
-    Event. Called when a guild member leaves
-    
-    Parameters
-    ----------
-    member: Member status
-    """
-    async def on_member_remove(self, member):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if member.guild.id in guilds:
-            await self.send(guilds[member.guild.id], embed=self.util.embed(author={'name':"{} ▫️ Left the server".format(member.name), 'icon_url':member.display_avatar}, footer="User ID: {}".format(member.id), timestamp=self.util.timestamp(), color=0xff0000))
-
-    """on_member_join()
-    Event. Called when a guild member joins
-    
-    Parameters
-    ----------
-    member: Member status
-    """
-    async def on_member_join(self, member):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if member.guild.id in guilds:
-            channel = guilds[member.guild.id]
-            await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Joined the server".format(member.name), 'icon_url':member.display_avatar}, footer="User ID: {}".format(member.id), timestamp=self.util.timestamp(), color=0x00ff3c))
-
-    """on_member_ban()
-    Event. Called when an user is banned from a guild
-    
-    Parameters
-    ----------
-    guild: Guild where it happened
-    user: Banned user
-    """
-    async def on_member_ban(self, guild, user):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if guild.id in guilds:
-            await self.send(guilds[guild.id], embed=self.util.embed(author={'name':"{} ▫️ Banned from the server".format(user.name), 'icon_url':user.display_avatar}, footer="User ID: {}".format(user.id), timestamp=self.util.timestamp(), color=0xff0000))
-
-    """on_member_unban()
-    Event. Called when an user is unbanned from a guild
-    
-    Parameters
-    ----------
-    guild: Guild where it happened
-    user: Unbanned user
-    """
-    async def on_member_unban(self, guild, user):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if guild.id in guilds:
-            await self.send(guilds[guild.id], embed=self.util.embed(author={'name':"{} ▫️ Unbanned from the server".format(user.name), 'icon_url':user.display_avatar}, footer="User ID: {}".format(user.id), timestamp=self.util.timestamp(), color=0x00ff3c))
-
-    """on_guild_emojis_update()
-    Event. Called when a guild emoji status is updated
-    
-    Parameters
-    ----------
-    before: Previous Emoji status
-    after: New Emoji status
-    """
-    async def on_guild_emojis_update(self, guild, before, after):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if guild.id in guilds:
-            channel = guilds[guild.id]
-            if len(before) < len(after):
-                for e in after:
-                    if e not in before:
-                        await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Emoji added".format(e.name), 'icon_url':e.url}, footer="Emoji ID: {}".format(e.id), timestamp=self.util.timestamp(), color=0x00ff3c))
-                        break
-            else:
-                for e in before:
-                    if e not in after:
-                        await self.send(channel, embed=self.util.embed(author={'name':"{} ▫️ Emoji removed".format(e.name), 'icon_url':e.url}, footer="Emoji ID: {}".format(e.id), timestamp=self.util.timestamp(), color=0xff0000))
-                        break
-
-    """on_guild_role_create()
-    Event. Called when a new role is created
-    
-    Parameters
-    ----------
-    role: New Role
-    """
-    async def on_guild_role_create(self, role):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if role.guild.id in guilds:
-            channel = guilds[role.guild.id]
-            await self.send(channel, embed=self.util.embed(title="Role created ▫️ `{}`".format(role.name), footer="Role ID: {}".format(role.id), timestamp=self.util.timestamp(), color=0x00ff3c))
-
-    """on_guild_role_delete()
-    Event. Called when a guild role is deleted
-    
-    Parameters
-    ----------
-    role: Deleted Role
-    """
-    async def on_guild_role_delete(self, role):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if role.guild.id in guilds:
-            channel = guilds[role.guild.id]
-            await self.send(channel, embed=self.util.embed(title="Role deleted ▫️ `{}`".format(role.name), footer="Role ID: {}".format(role.id), timestamp=self.util.timestamp(), color=0xff0000))
-
-    """on_guild_role_update()
-    Event. Called when a guild role is updated
-    
-    Parameters
-    ----------
-    before: Previous Role state
-    after: New Role state
-    """
-    async def on_guild_role_update(self, before, after):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if before.guild.id in guilds:
-            channel = guilds[before.guild.id]
-            if before.name != after.name:
-                await self.send(channel, embed=self.util.embed(title="Role name updated", fields=[{'name':"Before", 'value':before.name}, {'name':"After", 'value':after.name}], footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
-            elif before.colour != after.colour:
-                await self.send(channel, embed=self.util.embed(title="Role updated ▫️ `" + after.name + "`", description="Color changed", footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
-            elif before.hoist != after.hoist:
-                if after.hoist:
-                    await self.send(channel, embed=self.util.embed(title="Role updated ▫️ `{}`".format(after.name), description="Role is displayed separately from other members", footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
-                else:
-                    await self.send(channel, embed=self.util.embed(title="Role updated ▫️ `{}`".format(after.name), description="Role is displayed as the other members", footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
-            elif before.mentionable != after.mentionable:
-                if after.mentionable:
-                    await self.send(channel, embed=self.util.embed(title="Role updated ▫️ `{}`".format(after.name), description="Role is mentionable", footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
-                else:
-                    await self.send(channel, embed=self.util.embed(title="Role updated ▫️ `{}`".format(after.name), description="Role isn't mentionable", footer="Role ID: {}".format(after.id), timestamp=self.util.timestamp(), color=0x1ba6b3))
-
-    """on_guild_channel_create()
-    Event. Called when a new channel is created
-    
-    Parameters
-    ----------
-    channel: New Channel
-    """
-    async def on_guild_channel_create(self, channel):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if channel.guild.id in guilds:
-            await self.send(guilds[channel.guild.id], embed=self.util.embed(title="Channel created ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=self.util.timestamp(), color=0xebe007))
-
-    """on_guild_channel_delete()
-    Event. Called when a guild channel is deleted
-    
-    Parameters
-    ----------
-    channel: Deleted Channel
-    """
-    async def on_guild_channel_delete(self, channel):
-        if 'you_server' not in self.data.config['ids'] or 'gbfg' not in self.data.config['ids']: return
-        guilds = {self.data.config['ids']['you_server'] : 'youlog', self.data.config['ids']['gbfg'] : 'gbfglog'}
-        if channel.guild.id in guilds:
-            await self.send(guilds[channel.guild.id], embed=self.util.embed(title="Channel deleted ▫️ `{}`".format(channel.name), footer="Channel ID: {}".format(channel.id), timestamp=self.util.timestamp(), color=0x8a8306))
 
 
 if __name__ == "__main__":

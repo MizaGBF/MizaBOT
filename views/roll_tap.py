@@ -1,5 +1,5 @@
 from . import BaseView
-import discord
+import disnake
 
 # ----------------------------------------------------------------------------------------------------------------
 # Tap View
@@ -30,8 +30,8 @@ class Tap(BaseView):
     button: the Discord button
     button: a Discord interaction
     """
-    @discord.ui.button(label='TAP', style=discord.ButtonStyle.blurple)
-    async def tap(self, button: discord.ui.Button, interaction: discord.Interaction):
+    @disnake.ui.button(label='TAP', style=disnake.ButtonStyle.blurple)
+    async def tap(self, button: disnake.ui.Button, interaction: disnake.Interaction):
         self.update_last(interaction)
         if not button.disabled and self.ownership_check(interaction):
             self.stopall()

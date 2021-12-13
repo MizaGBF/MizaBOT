@@ -1,9 +1,7 @@
-git+git://github.com/Rapptz/discord.py@master
+git+git://github.com/DisnakeDev/disnake@999887017c59d954beb40eb5fadd565412cc7dfa
 pydrive2==1.10.0
 psutil==5.8.0
 beautifulsoup4==4.10.0
-tweepy==4.2.0
+tweepy==4.4.0
 pillow==8.4.0
-leather==0.3.4
-cairosvg==2.5.2
 uvloop==0.16.0; sys_platform == 'linux'
