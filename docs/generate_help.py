@@ -3,25 +3,30 @@ import re
 
 func_index = {}
 
-def get_version():
+def get_version(): # retrieve the bot version from bot.py
     with open("../bot.py", "r", encoding="utf-8") as f:
         data = f.read()
     return search_interval(data, 0, len(data)-1, 'self.version = "', '"')
 
-def make_parameters(params):
+def make_parameters(params): # parse the raw parameter list (the list of string) and convert into html
     msg = ""
+    # possible parameter formats
+    # var_name
+    # var_name : var_type
+    # var_name : var_type = default_value
+    # var_name : var_type = commands.Param(...)
     for p in params:
         pname = None
         ptype = None
         pextra = None
         cmsg = ""
         sp = p.split(':')
-        if len(sp) <= 1:
+        if len(sp) <= 1: # var_name
             pname = sp[0].replace(' ', '')
             sp = p.split('=')
             if len(sp) >= 2:
                 pextra = '='.join(sp[1:])
-        else:
+        else: # var_name : var_type and others...
             pname = sp[0].replace(' ', '')
             sp = ':'.join(sp[1:]).split('=')
             if len(sp) == 1:
@@ -30,9 +35,9 @@ def make_parameters(params):
                 ptype = sp[0].replace(' ', '')
                 pextra = '='.join(sp[1:])
         cmsg += pname
-        if ptype is not None:
+        if ptype is not None: # converting types into more readable stuff for normal people
             cmsg += " ({})".format(ptype.replace('int', 'Integer').replace('str', 'String').replace('disnake.', ''))
-        if pextra is not None:
+        if pextra is not None: ;# parsing commands.Param(...)
             pos = pextra.find("description")
             if pos != -1:
                 a = pextra.find('"', pos)
@@ -53,41 +58,48 @@ def make_parameters(params):
         msg = msg[:-4]
     return msg
 
-def generate_html(command_list):
+def generate_html(command_list): # main function to generate the html
+    # various "blocks" of the page
     ver = get_version()
     metadata = '<!--This page is automatically generated, please excuse the poor formatting--><head><title>MizaBOT Online Help v{}</title><meta name="title" content=" MizaBOT Online Help v{}"><meta name="description" content="Online Help and Command List for the Granblue Fantasy Discord bot MizaBOT."><meta property="og:type" content="website"><meta property="og:url" content="https://mizagbf.github.io/MizaBOT/"><meta property="og:title" content=" MizaBOT Online Help v{}"><meta property="og:description" content="Online Help and Command List for the Granblue Fantasy Discord bot MizaBOT."><meta property="og:image" content="https://mizagbf.github.io/MizaBOT/img/card.png"><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://mizagbf.github.io/MizaBOT/"><meta property="twitter:title" content=" MizaBOT Online Help v{}"><meta property="twitter:description" content="Online Help and Command List for the Granblue Fantasy Discord bot MizaBOT."><meta property="twitter:image" content="https://mizagbf.github.io/MizaBOT/img/card.png"><link rel="icon" type="image/png" href="img/icon.png" /></head>\n'.format(ver, ver, ver, ver)
     header = '<h1 style="width:630px;margin-left: auto; margin-right: auto;"><img src="img/icon.png" style="vertical-align:middle;border-radius: 50%;box-shadow: 0 0 0 2pt #981cd6">&nbsp;MizaBOT Online Help<br>&nbsp;<small>v{}</small></h1>\n'.format(ver)
     tabs = '''<div class="tab"><button class="tablinks" onclick="openTab(event, 'Commands')">Commands</button><button class="tablinks" onclick="openTab(event, 'Guide')">Guide</button><button class="tablinks" onclick="openTab(event, 'FAQ')">FAQ</button></div>'''
     filters = '<div id="buttons"><button class="btn active" onclick="filterSelection(\'all\')" style="background: #050505;">All</button>\n'
     containers = '<ul id="commandList">\n'
+    # used for command type blocks
     cmd_color_type = ['92b3e8', '92e8a3', 'e892c8', 'ffcf8c']
     cmd_type = ['Slash Command', 'User Command', 'Message Command', 'Sub Command']
+    # for debugging
     cmd_count = 0
     other_count = 0
     prev_count = 0
     cmd_cache = set()
+    # loop over the cogs
     for cog in command_list:
         commands = command_list[cog]
         if len(commands) == 0: continue
+        # add a block
         filters += '<button class="btn" onclick="filterSelection(\'{}\')" style="background: #{};">{}</button>\n'.format(cog.lower(), commands[0].get('color', '615d5d'), cog)
+        # loop over those commands
         for c in commands:
-            cn = ""
-            if c['type'] == 0: cn = "/"
-            elif c['type'] == 3: cn = "/{} ".format(func_index.get(c['parent'], c['parent']))
+            cn = "" # command name
+            if c['type'] == 0: cn = "/" # slash command, we add / before
+            elif c['type'] == 3: cn = "/{} ".format(func_index.get(c['parent'], c['parent'])) # sub command, we add / and parent(s) before
             cn += c['name']
             if cn in cmd_cache:
                 print("Warning: Command", cn, "is present twice or more")
             else:
                 cmd_cache.add(cn)
         
+            # command container
             containers += '<li class="command {}"><div class="command-name"><span style="display: inline-block;background: #{};padding: 5px;text-shadow: 2px 2px 2px rgba(0,0,0,0.5);">{}</span>&nbsp;<span style="display: inline-block;background: #{};padding: 3px;text-shadow: 2px 2px 2px rgba(0,0,0,0.5); font-size: 14px;">{}</span>&nbsp;&nbsp;{}'.format(cog.lower(), c.get('color', '615d5d'), cog, cmd_color_type[c['type']], cmd_type[c['type']], cn)
-            if c.get('comment', '') != '':
+            if c.get('comment', '') != '': # add description
                 containers += '</div><div class="command-description"><b>Description :</b>&nbsp;{}'.format(c['comment'].replace('(Mod Only)', '<b>(Mod Only)</b>').replace('((You) Mod Only)', '<b>((You) Mod Only)</b>').replace('(NSFW channels Only)', '<b>(NSFW channels Only)</b>'))
                 if len(c['comment']) >= 100:
                     print("Warning: Command", c['name'], "description is too long")
             else:
                 print("Warning:", c['name'], "has no description")
-            if c['type'] == 0 or c['type'] == 3:
+            if c['type'] == 0 or c['type'] == 3: # add command type
                 out = make_parameters(c['args'])
                 if out != '':
                     containers += '</div><div class="command-use"><b>Parameters :</b><br>{}'.format(out)
@@ -406,10 +418,11 @@ function openTab(evt, tabName) {
 
 filterSelection("all")
 </script>"""
+    # write the result
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(metadata + '<body>' + header + tabs + commandList + other_tabs + css + js + '</body>')
 
-def breakdown_parameters(raw_args):
+def breakdown_parameters(raw_args): # breakdown the command definitions and retrieve the parameters
     args = []
     lvl = 0
     buf = ""
@@ -422,114 +435,122 @@ def breakdown_parameters(raw_args):
         else:
             buf += c
     if buf != "": args.append(buf)
-    return args
+    return args # result is a list of string, each string being the full parameter declaration
 
-def search_interval(data, pos, max_pos, start, end):
+def search_interval(data, pos, max_pos, start, end): # search a string between specific positions and strings
     s = data.find(start, pos, max_pos)
     if s == -1: return None
     e = data.find(end, s+len(start), max_pos)
     if e == -1: return None
     return data[s+len(start):e]
 
-def retrieve_command_list(data, pos_list):
+def retrieve_command_list(data, pos_list): # use the position list to retrieve the command datas
     cl = []
-    i = data.find('self.color = 0x')
+    i = data.find('self.color = 0x') # retrieve the cog color
     if i != -1:
         color = data[i+len('self.color = 0x'):i+len('self.color = 0x')+6]
     else:
         color = None
+    # iterate over the cog file
     for i in range(len(pos_list)):
         pos = pos_list[i][0]
-        if i == len(pos_list) - 1:
+        if i == len(pos_list) - 1: # if it's the last command in the list
             fp = data.find('async def ', pos)
-            max_pos = len(data) - 1
-        else:
-            fp = data.find('async def ', pos, pos_list[i+1][0])
-            max_pos = pos_list[i+1][0]
-        if fp != -1:
+            max_pos = len(data) - 1 # search range end
+        else: # if not
+            fp = data.find('async def ', pos, pos_list[i+1][0]) # we search between current position and next one
+            max_pos = pos_list[i+1][0] # search range end
+        if fp != -1: # if found
             c = {}
-            tmp = search_interval(data, pos, fp, 'name=', ')')
+            # before anything else
+            tmp = search_interval(data, pos, fp, 'name=', ')') # check if the name parameter is in the command decorator
             if tmp is not None:
-                c['name'] = tmp.replace('"', '').replace("'", "")
-                alias = c['name']
+                c['name'] = tmp.replace('"', '').replace("'", "") # and store it
+                alias = c['name'] # take note we found a renaming
             else:
                 alias = None
+            # now we check the command definition
             fp += len('async def ')
-            tmp = search_interval(data, pos, max_pos, ' def ', '(') # add search for name
-            if tmp is None: continue
-            if alias is None:
-                c['name'] = tmp
-                if c['name'] is None: continue
+            tmp = search_interval(data, pos, max_pos, ' def ', '(') # search the function name
+            if tmp is None: continue # not found? (it shouldn't happen) skip to next one
+            if alias is None: # if no renaming
+                c['name'] = tmp # just store it as it is
                 if c['name'].startswith('_'): c['name'] = c['name'][1:]
-            else:
+            else: # if it's a renamed command, store the relation in the index
                 func_index[tmp] = alias
+            # now parse the command parameters
             args = breakdown_parameters(search_interval(data, fp, max_pos, '(', '):'))
+            # remove the first two (self, inter)
             args.pop(0)
             args.pop(0)
-            c['args'] = args
+            c['args'] = args # and store
+            # retrieve the doc string (the command description)
             tmp = search_interval(data, fp, max_pos, '"""', '"""')
             if tmp is not None:
                 c['comment'] = tmp.replace("        ", "").replace('\n', '<br>')
             else:
                 c['comment'] = ""
+            # IF AND ONLY IF the word "owner" is present in the description, we actually don't store the command
+            # for that reason, the word owner shouldn't be used in command descriptions
             if 'owner' not in c['comment'].lower():
-                c['color'] = color
-                c['type'] = pos_list[i][1]
+                c['color'] = color # color
+                c['type'] = pos_list[i][1] # function type
                 if pos_list[i][1] == 3:
-                    c['parent'] = pos_list[i][2]
-                cl.append(c)
+                    c['parent'] = pos_list[i][2] # the parent if it's a sub command
+                cl.append(c) # add to list
     return cl
 
-def find_command_pos(data):
-    pos_list = []
-    cur = 0
+def find_command_pos(data): # loop over a file and note the position of all commands
+    pos_list = [] # will contain the resulting list
+    cur = 0 # cursor
     while True:
-        poss = [data.find('@commands.slash_command', cur), data.find('@commands.user_command', cur), data.find('@commands.message_command', cur), data.find('.sub_command', cur), data.find('.sub_command_group', cur)]
+        poss = [data.find('@commands.slash_command', cur), data.find('@commands.user_command', cur), data.find('@commands.message_command', cur), data.find('.sub_command', cur), data.find('.sub_command_group', cur)] # different command types we are searching for
         idx = -1
-        while True:
+        while True: # messy loop used to find the lowest position in the list
             idx += 1
             if idx == 5: break
             if poss[idx] == -1: continue
+            # compare other in the list with current one, continue if they are better (aka lower)
             if poss[(idx+1)%5] != -1 and poss[(idx+1)%5] <= poss[idx]: continue
             if poss[(idx+2)%5] != -1 and poss[(idx+2)%5] <= poss[idx]: continue
             if poss[(idx+3)%5] != -1 and poss[(idx+3)%5] <= poss[idx]: continue
             if poss[(idx+4)%5] != -1 and poss[(idx+4)%5] <= poss[idx]: continue
             break
-        if idx == 4: continue
-        if idx == 5: break
-        if idx == 3: # sub command
-            x = data.find('@', poss[idx]-15)
-            pos_list.append((poss[idx], idx, data[x+1:poss[idx]]))
+        if idx == 4: continue # if it's a sub_command_group, we ignore, we won't list those
+        if idx == 5: break # no more command found, we stop
+        if idx == 3: # we found a sub command
+            x = data.find('@', poss[idx]-15) # we retrieve the name of the parent
+            pos_list.append((poss[idx], idx, data[x+1:poss[idx]])) # and add it in the tuple
         else:
-            pos_list.append((poss[idx], idx))
-        cur = poss[idx] + 10
+            pos_list.append((poss[idx], idx)) # position and command type (0 = slash, 1 = user, 2 = message, 3 = sub_command, 4 is always ignored)
+        cur = poss[idx] + 10 # update the cursor
     return pos_list
 
-def generate_help():
-    global func_index
+def generate_help(): # main function
+    global func_index # dictionnary for translating command groups to their names (IF renamed)
     print("Generating index.html...")
     func_index = {}
-    r = re.compile("^class ([a-zA-Z0-9_]*)\\(commands\\.Cog\\):", re.MULTILINE)
+    r = re.compile("^class ([a-zA-Z0-9_]*)\\(commands\\.Cog\\):", re.MULTILINE) # regex to find Cog
     command_list = {}
-    for f in os.listdir('../cogs/'): # list all files
-        p = os.path.join('../cogs/', f)
-        if f not in ['__init__.py'] and f.endswith('.py') and os.path.isfile(p): # search for valid python file
+    for f in os.listdir('../cogs/'): # list all files (note: we don't parse the bot, debuf and test files)
+        p = os.path.join('../cogs/', f) # path of the current file
+        if f not in ['__init__.py'] and f.endswith('.py') and os.path.isfile(p): # search for valid python file (ignore init and other files)
             try:
-                with open(p, mode='r', encoding='utf-8') as py:
+                with open(p, mode='r', encoding='utf-8') as py: # open it
                     data = str(py.read())
-                    all = r.findall(data) 
-                    for group in all:
+                    all = r.findall(data) # apply the regex
+                    for group in all: # for all valid results
                         try:
                             class_name = group # the cog Class name
-                            cl = retrieve_command_list(data, find_command_pos(data))
-                            if len(cl) > 0:
-                                command_list[class_name] = cl
+                            cl = retrieve_command_list(data, find_command_pos(data)) # parse the content
+                            if len(cl) > 0: # if at least one public command found
+                                command_list[class_name] = cl # store it
                                 print("Cog", class_name, "found in", p)
                         except Exception as e:
                             print(e)
             except:
                 pass
-    generate_html(command_list)
+    generate_html(command_list) # generate the html using the stored data on found commands
 
-if __name__ == "__main__":
+if __name__ == "__main__": # entry point
     generate_help()
