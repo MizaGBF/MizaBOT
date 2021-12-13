@@ -17,7 +17,7 @@
 ### Informations  
 MizaBOT is a Discord Bot themed around the game [Granblue Fantasy](http://game.granbluefantasy.jp).  
 It features a lot of useful utility commands, including some advanced features, for a total of **over 90 commands**.  
-Check the [Command List](https://mizagbf.github.io/MizaBOT/) for details.  
+Check the [Online Help](https://mizagbf.github.io/MizaBOT/) for details.  
   
 It's designed to be used on [Heroku](https://www.heroku.com) and isn't intended to be setup and used by anyone. Still, if you are interested, details are available on the [Wiki](https://github.com/MizaGBF/MizaBOT/wiki) and in this [issue](https://github.com/MizaGBF/MizaBOT/issues/1).  
 
