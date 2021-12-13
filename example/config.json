@@ -56,20 +56,10 @@
         "Add more if you want to, don't forget the ,"
     ],
     "strings" : {
-        "leechlist()" : "contains texts or urls. mostly used in the gbf_utility cog. ignore or put your own.",
-        "gdrive()" : "",
-        "dps()" : "",
-        "motocal()" : "",
+        "sheetfolder()" : "contains texts or urls. mostly used in the gbf_utility cog. ignore or put your own.",
+        "leechlist()" : "",
         "pyfinder()" : "",
-        "invite()" : "",
-        "arcanum()": "",
-        "rolltracker()": "",
-        "datamining()": "",
-        "pastebin()": "",
-        "stayblue()": "",
-        "leak()": "",
-        "lucilius()": "",
-        "bullet()": ""
+        "invite()" : ""
     },
     "emotes" : {
         "fire" : <custom emote id used by the bot. all ids are numbers, so no quotes>,
