@@ -181,7 +181,7 @@ class Sparking(commands.Cog):
         for key, value in sorted(ranking.items(), key = itemgetter(1), reverse = True):
             if i < top:
                 fr = math.floor(value)
-                msg += "**#{:<2}{} {}** with {} roll".format(i+1, emotes.pop(i, "▫️"), await guild.get_or_fetch_member(int(key)).display_name, fr)
+                msg += "**#{:<2}{} {}** with {} roll".format(i+1, emotes.pop(i, "▫️"), (await guild.get_or_fetch_member(int(key))).display_name, fr)
                 if fr != 1: msg += "s"
                 msg += "\n"
             if key == str(inter.author.id):

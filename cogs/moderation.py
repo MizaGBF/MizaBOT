@@ -68,7 +68,6 @@ class Moderation(commands.Cog):
 
     @mod.sub_command_group()
     async def strike(self, inter):
-        """hidden"""
         pass
 
     @strike.sub_command(name="del")
@@ -94,7 +93,6 @@ class Moderation(commands.Cog):
 
     @mod.sub_command_group()
     async def ban(self, inter):
-        """hidden"""
         pass
 
     @ban.sub_command(name="roll")
@@ -106,7 +104,6 @@ class Moderation(commands.Cog):
 
     @mod.sub_command_group()
     async def cleanup(self, inter):
-        """hidden"""
         pass
 
     """_seeCleanupSetting()
@@ -168,7 +165,6 @@ class Moderation(commands.Cog):
 
     @mod.sub_command_group()
     async def pinboard(self, inter):
-        """hidden"""
         pass
 
     @pinboard.sub_command(name="enable")
