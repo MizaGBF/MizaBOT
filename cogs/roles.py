@@ -1,4 +1,4 @@
-﻿from discord.ext import commands
+﻿from disnake.ext import commands
 
 # ----------------------------------------------------------------------------------------------------------------
 # Roles Cog
@@ -24,64 +24,19 @@ class Roles(commands.Cog):
             return ctx.bot.isMod(ctx)
         return commands.check(predicate)
 
-    """_roleStats()
-    Return the stat of a server role
-    
-    Parameters
-    ----------
-    ctx: Command context
-    name: List of strings (to match for roles)
-        - Note: check for the word "exact" at the end. If it's here, an exact search will be performed.
-    
-    Returns
-    --------
-    tuple: Containing:
-        - i : number of users with a role matching the name string
-        - exact: If True, name is an exact match
-        - g: context guild
-        - name: the name parameter in one string (without exact)
-    """
-    def _roleStats(self, ctx, name):
-        g = ctx.author.guild
-        i = 0
-        if len(name) > 0 and name[-1] == "exact":
-            exact = True
-            name = name[:-1]
-        else:
-            exact = False
-        name = ' '.join(name)
-        for member in g.members:
-            for r in member.roles:
-                if r.name == name or (exact == False and r.name.lower().find(name.lower()) != -1):
-                    i += 1
-        return i, exact, g, name
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['inrole', 'rolestat'])
-    @commands.cooldown(1, 5, commands.BucketType.guild)
-    async def roleStats(self, ctx, *name : str):
-        """Search how many users have a matching role
-        use quotes if your match contain spaces
-        add 'exact' at the end to force an exact match"""
-        i, exact, g, name = await self.bot.do(self._roleStats, ctx, name)
-        if exact != "exact":
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Roles containing: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon.url, footer="on server {}".format(g.name), color=self.color))
-        else:
-            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Roles matching: {}".format(name), description="{} user(s)".format(i), thumbnail=g.icon.url, footer="on server {}".format(g.name), color=self.color))
-        await self.bot.util.clean(ctx, final_msg, 20)
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(1, 1, commands.BucketType.user)
-    async def iam(self, ctx, *, role_name : str):
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 2, commands.BucketType.user)
+    async def iam(self, inter, role_name : str = commands.Param(description="A role name")):
         """Add a role to you that you choose. Role must be on a list of self-assignable roles."""
-        g = str(ctx.guild.id)
+        g = str(inter.guild.id)
         roles = self.bot.data.save['assignablerole'].get(g, {})
         if role_name.lower() not in roles:
-            await self.bot.util.react(ctx.message, '❎') # negative check mark
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Name `{}` not found in the self-assignable role list".format(role_name), color=self.color), ephemeral=True)
         else:
             id = roles[role_name.lower()]
-            r = ctx.guild.get_role(id)
-            if r is None: # role doesn't exist anymore
-                await self.bot.util.react(ctx.message, '❎') # negative check mark
+            r = inter.guild.get_role(id)
+            if r is None:
+                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Role `{}` not found".format(role_name), color=self.color), ephemeral=True)
                 with self.bot.data.lock:
                     self.bot.data.save['assignablerole'][g].pop(role_name.lower())
                     if len(self.bot.data.save['assignablerole'][g]) == 0:
@@ -89,24 +44,24 @@ class Roles(commands.Cog):
                     self.bot.data.pending = True
             else:
                 try:
-                    await ctx.author.add_roles(r)
+                    await inter.author.add_roles(r)
+                    await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
                 except:
-                    pass
-                await self.bot.util.react(ctx.message, '✅') # white check mark
+                    await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Failed to assign the role.\nCheck if you have the role or contact a moderator.", color=self.color), ephemeral=True)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['iamn'])
-    @commands.cooldown(1, 1, commands.BucketType.user)
-    async def iamnot(self, ctx, *, role_name : str):
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 2, commands.BucketType.user)
+    async def iamnot(self, inter, role_name : str = commands.Param(description="A role name")):
         """Remove a role to you that you choose. Role must be on a list of self-assignable roles."""
-        g = str(ctx.guild.id)
+        g = str(inter.guild.id)
         roles = self.bot.data.save['assignablerole'].get(g, {})
         if role_name.lower() not in roles:
-            await self.bot.util.react(ctx.message, '❎') # negative check mark
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Name `{}` not found in the self-assignable role list".format(role_name), color=self.color), ephemeral=True)
         else:
             id = roles[role_name.lower()]
-            r = ctx.guild.get_role(id)
-            if r is None: # role doesn't exist anymore
-                await self.bot.util.react(ctx.message, '❎') # negative check mark
+            r = inter.guild.get_role(id)
+            if r is None:
+                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Role `{}` not found".format(role_name), color=self.color), ephemeral=True)
                 with self.bot.data.lock:
                     self.bot.data.save['assignablerole'][g].pop(role_name.lower())
                     if len(self.bot.data.save['assignablerole'][g]) == 0:
@@ -114,20 +69,20 @@ class Roles(commands.Cog):
                     self.bot.data.pending = True
             else:
                 try:
-                    await ctx.author.remove_roles(r)
+                    await inter.author.remove_roles(r)
+                    await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
                 except:
-                    pass
-                await self.bot.util.react(ctx.message, '✅') # white check mark
+                    await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Failed to remove the role.\nCheck if you have the role or contact a moderator.", color=self.color), ephemeral=True)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 5, commands.BucketType.guild)
-    async def lsar(self, ctx, page : int = 1):
+    async def lsar(self, inter, page : int = commands.Param(description="List Page", ge=1, default=1)):
         """List the self-assignable roles available in this server"""
-        g = str(ctx.guild.id)
+        g = str(inter.guild.id)
         if page < 1: page = 1
         roles = self.bot.data.save['assignablerole'].get(g, {})
         if len(roles) == 0:
-            await ctx.reply(embed=self.bot.util.embed(title="Error", description="No self assignable roles available on this server", color=self.color))
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="No self assignable roles available on this server", color=self.color), ephemeral=True)
             return
         if (page -1) >= len(roles) // 20:
             page = ((len(roles) - 1) // 20) + 1
@@ -141,7 +96,7 @@ class Roles(commands.Cog):
                 break
             if count % 10 == 0:
                 fields.append({'name':'{} '.format(self.bot.emote.get(str(len(fields)+1))), 'value':'', 'inline':True})
-            r = ctx.guild.get_role(roles[k])
+            r = inter.guild.get_role(roles[k])
             if r is not None:
                 fields[-1]['value'] += '{}\n'.format(k)
             else:
@@ -150,57 +105,51 @@ class Roles(commands.Cog):
                     self.bot.data.pending = True
             count += 1
 
-        final_msg = await ctx.reply(embed=self.bot.util.embed(title="Self Assignable Roles", fields=fields, footer="Page {}/{}".format(page, 1+len(roles)//20), color=self.color))
-        await self.bot.util.clean(ctx, final_msg, 30)
+        await inter.response.send_message(embed=self.bot.util.embed(title="Self Assignable Roles", fields=fields, footer="Page {}/{}".format(page, 1+len(roles)//20), color=self.color))
+        await self.bot.util.clean(inter, 30)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.slash_command(default_permission=True)
     @isMod()
-    async def asar(self, ctx, *, role_name : str = ""):
+    async def asar(self, inter, role_name : str = commands.Param(description="A role name")):
         """Add a role to the list of self-assignable roles (Mod Only)"""
-        if role_name == "":
-            await self.bot.util.react(ctx.message, '❎') # negative check mark
-            return
         role = None
-        for r in ctx.guild.roles:
+        for r in inter.guild.roles:
             if role_name.lower() == r.name.lower():
                 role = r
                 break
         if role is None:
-            await self.bot.util.react(ctx.message, '❎') # negative check mark
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Role `{}` not found".format(role_name), color=self.color), ephemeral=True)
             return
-        id = str(ctx.guild.id)
+        id = str(inter.guild.id)
         with self.bot.data.lock:
             if id not in self.bot.data.save['assignablerole']:
                 self.bot.data.save['assignablerole'][id] = {}
             if role.name.lower() in self.bot.data.save['assignablerole'][id]:
-                await self.bot.util.react(ctx.message, '❎') # negative check mark
+                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Role `{}` is already a self-assignable role.\nDid you mean `/rsar` ?".format(role_name), color=self.color), ephemeral=True)
                 return
             self.bot.data.save['assignablerole'][id][role.name.lower()] = role.id
             self.bot.data.pending = True
-        await self.bot.util.react(ctx.message, '✅') # white check mark
+        await inter.response.send_message(embed=self.bot.util.embed(title="Role `{}` added to the self-assignable role list".format(role_name), color=self.color), ephemeral=True)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.slash_command(default_permission=True)
     @isMod()
-    async def rsar(self, ctx, *, role_name : str = ""):
+    async def rsar(self, inter, role_name : str = commands.Param(description="A role name")):
         """Remove a role from the list of self-assignable roles (Mod Only)"""
-        if role_name == "":
-            await self.bot.util.react(ctx.message, '❎') # negative check mark
-            return
         role = None
-        for r in ctx.guild.roles:
+        for r in inter.guild.roles:
             if role_name.lower() == r.name.lower():
                 role = r
                 break
         if role is None:
-            await self.bot.util.react(ctx.message, '❎') # negative check mark
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Role `{}` not found".format(role_name), color=self.color), ephemeral=True)
             return
-        id = str(ctx.guild.id)
+        id = str(inter.guild.id)
         with self.bot.data.lock:
             if id not in self.bot.data.save['assignablerole']:
                 self.bot.data.save['assignablerole'][id] = {}
             if role.name.lower() not in self.bot.data.save['assignablerole'][id]:
-                await self.bot.util.react(ctx.message, '❎') # negative check mark
+                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Role `{}` isn't a self-assignable role.\nDid you mean `/asar` ?".format(role_name), color=self.color), ephemeral=True)
                 return
             self.bot.data.save['assignablerole'][id].pop(role.name.lower())
             self.bot.data.pending = True
-        await self.bot.util.react(ctx.message, '✅') # white check mark
+        await inter.response.send_message(embed=self.bot.util.embed(title="Role `{}` removed from the self-assignable role list".format(role_name), color=self.color), ephemeral=True)

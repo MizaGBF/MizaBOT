@@ -1,4 +1,4 @@
-import discord
+import disnake
 
 # ----------------------------------------------------------------------------------------------------------------
 # Pinboard Component
@@ -53,7 +53,7 @@ class Pinboard():
                 if me in users: return False
                 for u in users:
                     if self.bot.data.save['pinboard'][idx]['mod_bypass']: # mod check
-                        m = guild.get_member(u.id)
+                        m = await guild.get_or_fetch_member(u.id)
                         if m.guild_permissions.manage_messages: 
                             isMod = True
                             break
@@ -103,12 +103,14 @@ class Pinboard():
                     # check embed
                     if len(message.embeds) > 0:
                         if len(message.embeds[0].description) > 0: embed_dict['fields'] = [{'inline': True, 'name':'Content', 'value':message.embeds[0].description}] + embed_dict['fields']
-                        if 'image' not in embed_dict and message.embeds[0].image != message.embeds[0].Empty: embed_dict['image'] = {'url':message.embeds[0].image.url}
+                        if 'image' not in embed_dict and message.embeds[0].image.url != message.embeds[0].Empty: embed_dict['image'] = {'url':message.embeds[0].image.url}
                         if len(message.embeds[0].title) > 0: embed_dict['title'] += " :white_small_square: " + message.embeds[0].title
-                        elif message.embeds[0].author.name != discord.Embed.Empty: embed_dict['title'] += " :white_small_square: " + message.embeds[0].author.name
+                        elif message.embeds[0].author.name != disnake.Embed.Empty: embed_dict['title'] += " :white_small_square: " + message.embeds[0].author.name
                     # add link to description
                     embed_dict['description'] += ":earth_asia: [**Link**](https://discordapp.com/channels/{}/{}/{})\n".format(message.guild.id, message.channel.id, message.id)
-                    embed = discord.Embed.from_dict(embed_dict)
+                    if 'image' in embed_dict and embed_dict['image'] == disnake.Embed.Empty:
+                        embed_dict.pop('image')
+                    embed = disnake.Embed.from_dict(embed_dict)
                     embed.timestamp=message.created_at
                     ch = self.bot.get_channel(self.bot.data.save['pinboard'][idx]['output'])
                     await ch.send(embed=embed)
@@ -146,3 +148,17 @@ class Pinboard():
             with self.bot.data.lock:
                 self.bot.data.save['pinboard'].pop(server_id)
                 self.bot.data.pending = True
+
+    """get()
+    Retrieve the settings for a guild
+    
+    Parameters
+    ----------
+    server_id: Guild ID, in string format
+    
+    Returns
+    ----------
+    dict: Stored settings, None if unavailable
+    """
+    def get(self, server_id):
+        return self.bot.data.save['pinboard'].get(server_id, None)

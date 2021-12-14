@@ -1,4 +1,4 @@
-﻿import discord
+﻿import disnake
 import asyncio
 import threading
 import json
@@ -19,12 +19,10 @@ class Data():
         self.bot.drive = None
         self.config = {}
         self.save = {}
-        self.saveversion = 2
+        self.saveversion = 3
         self.pending = False
         self.autosaving = False
         self.lock = threading.Lock()
-        
-        self.errn = 0 # to change
 
     def init(self):
         pass
@@ -64,25 +62,28 @@ class Data():
                 elif ver < self.saveversion:
                     if ver == 0:
                         if 'newserver' in data:
-                            newserver = data.pop('newserver')
+                            newserver = data.pop('newserver', None)
                             if 'guilds' not in data:
                                 data['guilds'] = {"owners": newserver.get('owners', []), "pending": newserver.get('pending', {}), "banned": newserver.get('servers', [])}
                         for id in data['reminders']:
                             for r in data['reminders'][id]:
                                 if len(r) == 2:
                                     r.append("")
-                        try: data['gbfdata'].pop('new_ticket')
+                        try: data['gbfdata'].pop('new_ticket', None)
                         except: pass
-                        try: data['gbfdata'].pop('count')
+                        try: data['gbfdata'].pop('count', None)
                         except: pass
-                    if ver == 1:
+                    if ver <= 1:
                         data['ban'] = {}
                         for i in data['guilds']['owners']:
                             data['ban'][str(i)] = 0b1
-                        data['guilds'].pop('owners')
+                        data['guilds'].pop('owners', None)
                         for i in data['spark'][1]:
                             data['ban'][str(i)] = 0b10 | data['ban'].get(str(i), 0)
                         data['spark'] = data['spark'][0]
+                    if ver <= 2:
+                        data['banned_guilds'] = data['guilds']['banned']
+                        data.pop('guilds', None)
                     data['version'] = self.saveversion
                 elif ver > self.saveversion:
                     raise Exception("Save file version higher than the expected version")
@@ -91,7 +92,6 @@ class Data():
                     self.pending = False
                 return True
         except Exception as e:
-            self.errn += 1
             print('load(): {}'.format(self.bot.util.pexc(e)))
             return False
 
@@ -110,7 +110,6 @@ class Data():
                     raise Exception("Couldn't save to google drive")
             return True
         except Exception as e:
-            self.errn += 1
             print('save(): {}'.format(self.bot.util.pexc(e)))
             return False
 
@@ -128,8 +127,7 @@ class Data():
     def checkData(self, data): # used to initialize missing data or remove useless data from the save file
         expected = {
             'version':self.saveversion,
-            'guilds': {'banned':[], 'pending':{}},
-            'prefixes': {},
+            'banned_guilds': [],
             'gbfaccounts': [],
             'gbfcurrent': 0,
             'gbfversion': None,
@@ -186,7 +184,7 @@ class Data():
         if discordDump:
             try:
                 with open('save.json', 'r') as infile:
-                    df = discord.File(infile)
+                    df = disnake.File(infile)
                     await self.bot.send('debug', 'save.json', file=df)
                     df.close()
             except:
@@ -219,19 +217,19 @@ class Data():
         return count
 
     """clean_profile()
-    Clean user gbf profiles from the save data
+    Coroutine to clean user gbf profiles from the save data
     
     Parameters
     --------
     int: Number of cleaned profiles
     """
-    def clean_profile(self): # clean up profiles
+    async def clean_profile(self): # clean up profiles
         count = 0
         keys = list(self.bot.data.save['gbfids'].keys())
         for uid in keys:
             found = False
             for g in self.bot.guilds:
-                 if g.get_member(int(uid)) is not None:
+                 if await g.get_or_fetch_member(int(uid)) is not None:
                     found = True
                     break
             if not found:

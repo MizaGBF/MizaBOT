@@ -1,4 +1,4 @@
-﻿import discord
+﻿import disnake
 import asyncio
 import random
 from datetime import datetime, timedelta
@@ -211,7 +211,6 @@ class Util():
             "Errors": ("**{}**".format(self.bot.errn) if self.bot.errn > 0 else str(self.bot.errn)),
             "Task Count": str(len(asyncio.all_tasks())),
             "Server Count": str(len(self.bot.guilds)),
-            "Pending Servers": ("**{}**".format(len(self.bot.data.save['guilds']['pending'])) if len(self.bot.data.save['guilds']['pending']) > 0 else str(len(self.bot.data.save['guilds']['pending']))),
             "Cogs Loaded": "{}/{}".format(len(self.bot.cogs), self.bot.cogn) if (len(self.bot.cogs) == self.bot.cogn) else "**{}**/{}".format(len(self.bot.cogs), self.bot.cogn),
             "Twitter": ("Disabled" if (self.bot.twitter.client is None) else "Online")
         }
@@ -235,7 +234,7 @@ class Util():
     
     Parameters
     ----------
-    msg: discord.Message object
+    msg: disnake.Message object
     key: Either the emoji key set in config.json or the emoji in string format
 
     Returns
@@ -256,7 +255,7 @@ class Util():
     
     Parameters
     ----------
-    msg: discord.Message object
+    msg: disnake.Message object
     key: Either the emoji key set in config.json or the emoji in string format
 
     Returns
@@ -278,50 +277,35 @@ class Util():
     
     Parameters
     ----------
-    ctx: Command context
-    msg: Message to delete
-    timeout: Time in second before deletion
+    target: Tuple of a Disnake Context and Message OR a Disnake Interaction
+    delay: Time in second before deletion
     all: if True, the message will be deleted, if False, the message is deleted it it was posted in an unauthorized channel
     """
-    async def clean(self, ctx, msg, timeout, all=False): # delete a message after X amount of time if posted in an unauthorized channel (all = False) or everywhere (all = True)
+    async def clean(self, target, delay=None, all=False):
         try:
-            if all or not self.bot.isAuthorized(ctx):
-                if timeout is None or timeout > 0: await asyncio.sleep(timeout)
-                await msg.delete()
-                await self.react(ctx.message, '✅') # white check mark
-        except:
-            pass
-
-    """cleanInter()
-    Interaction version of clean
-    
-    Parameters
-    ----------
-    inter: Interaction
-    timeout: Time in second before deletion
-    all: if True, the message will be deleted, if False, the message is deleted it it was posted in an unauthorized channel
-    """
-    async def cleanInter(self, inter, timeout, all=False): # delete a message after X amount of time if posted in an unauthorized channel (all = False) or everywhere (all = True)
-        try:
-            if all or not self.bot.isAuthorized(inter):
-                if timeout is None or timeout > 0: await asyncio.sleep(timeout)
-                await inter.edit_original_message(content='\u200b✅', embed=None, view=None)
-        except:
-            pass
+            if isinstance(target, tuple):
+                if all or not self.bot.isAuthorized(target[0]):
+                    await target[1].delete(delay=delay)
+                    await self.react(target[0].message, '✅') # white check mark
+            elif isinstance(target, disnake.interactions.application_command.ApplicationCommandInteraction):
+                if all or not self.bot.isAuthorized(target):
+                    await target.delete_original_message(delay=delay)
+        except Exception as e:
+            await self.bot.sendError("clean", e)
 
     """embed()
-    Create a discord.Embed object
+    Create a disnake.Embed object
     
     Parameters
     ----------
-    **options: discord.Embed options
+    **options: disnake.Embed options
 
     Returns
     --------
-    discord.Embed: The created embed
+    disnake.Embed: The created embed
     """
     def embed(self, **options): # make a full embed
-        embed = discord.Embed(title=options.get('title', ""), description=options.pop('description', ""), url=options.pop('url', ""), color=options.pop('color', random.randint(0, 16777216)))
+        embed = disnake.Embed(title=options.get('title', ""), description=options.pop('description', ""), url=options.pop('url', ""), color=options.pop('color', random.randint(0, 16777216)))
         fields = options.pop('fields', [])
         inline = options.pop('inline', False)
         for f in fields:
@@ -384,7 +368,7 @@ class Util():
     
     Parameters
     ----------
-    ctx: The command context or the channel to put the message in
+    inter: The command interaction
     target: String, which can be:
         - Empty (the author GBF ID will be used if set, doesn't work if you set ctx to a channel)
         - Positive integer, representing a GBF ID
@@ -392,40 +376,30 @@ class Util():
     
     Returns
     --------
-    int: The GBF ID or None if an error happened
+    int or str: The GBF ID or an error string if an error happened
     """
-    async def str2gbfid(self, ctx, target, color):
+    async def str2gbfid(self, inter, target, color):
         if target == "":
-            if str(ctx.author.id) not in self.bot.data.save['gbfids']:
-                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(ctx.author.display_name), footer="setProfile <id>", color=color))
-                return None
-            id = self.bot.data.save['gbfids'][str(ctx.author.id)]
+            if str(inter.author.id) not in self.bot.data.save['gbfids']:
+                return "{} didn't set its profile ID\nUse `findplayer` to search the GW Database"
+            id = self.bot.data.save['gbfids'][str(inter.author.id)]
         elif target.startswith('<@') and target.endswith('>'):
             try:
                 if target[2] == "!": target = int(target[3:-1])
                 else: target = int(target[2:-1])
-                member = ctx.guild.get_member(target)
-                if str(member.id) not in self.bot.data.save['gbfids']:
-                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(member.display_name), footer="setProfile <id>", color=color))
-                    return None
+                if target not in self.bot.data.save['gbfids']:
+                    return "This member didn't set its profile ID\nUse `findplayer` to search the GW Database"
                 id = self.bot.data.save['gbfids'][str(member.id)]
             except:
-                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Invalid parameter {} -> {}".format(target, type(target)), color=color))
-                return None
+                return "Invalid parameter {} -> {}".format(target, type(target))
         else:
             try: id = int(target)
-            except:
-                member = ctx.guild.get_member_named(target)
-                if member is None:
-                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Member not found", color=color))
-                    return None
-                elif str(member.id) not in self.bot.data.save['gbfids']:
-                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(member.display_name), footer="setProfile <id>", color=color))
-                    return None
-                id = self.bot.data.save['gbfids'][str(member.id)]
+            except: return "`{}` isn't a valid target".format(target)
         if id < 0 or id >= 100000000:
-            await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Invalid ID range", color=color))
-            return None
+            try: id = self.bot.data.save['gbfids'][str(id)]
+            except: return "Invalid ID range"
+        if id < 0 or id >= 100000000:
+            return "Invalid ID range"
         return id
 
     """formatElement()

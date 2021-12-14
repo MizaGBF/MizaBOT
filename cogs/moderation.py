@@ -1,5 +1,5 @@
-﻿import discord
-from discord.ext import commands
+﻿import disnake
+from disnake.ext import commands
 
 # ----------------------------------------------------------------------------------------------------------------
 # Moderation Cog
@@ -25,91 +25,32 @@ class Moderation(commands.Cog):
             return ctx.bot.isMod(ctx)
         return commands.check(predicate)
 
-    """isOwner()
-    Command decorator, to check if the command is used by the bot owner or a member of the (You) server
-    
-    Returns
-    --------
-    command check
-    """
-    def isYouModOrOwner(): # for decorators
-        async def predicate(ctx):
-            return (ctx.bot.isServer(ctx, 'debug_server') or (ctx.bot.isServer(ctx, 'you_server') and ctx.bot.isMod(ctx)))
-        return commands.check(predicate)
+    @commands.user_command(default_permission=True, name="Profile Picture")
+    async def avatar(self, inter: disnake.UserCommandInteraction, user: disnake.User):
+        """Retrieve the profile picture of an user"""
+        await inter.response.send_message(user.display_avatar.url, ephemeral=True)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(1, 5, commands.BucketType.guild)
-    async def joined(self, ctx, member : discord.Member):
-        """Says when a member joined."""
-        final_msg = await ctx.reply(embed=self.bot.util.embed(title=ctx.guild.name, description="Joined at {0.joined_at}".format(member), thumbnail=member.display_avatar, color=self.color))
-        await self.bot.util.clean(ctx, final_msg, 25)
+    @commands.user_command(default_permission=True, name="Server Join Date")
+    async def joined(self, inter: disnake.UserCommandInteraction, member: disnake.Member):
+        """Retrieve the date at which a member joined this server"""
+        await inter.response.send_message(embed=self.bot.util.embed(author={'name':inter.author.display_name, 'icon_url':inter.author.display_avatar}, description="Joined at `{0.joined_at}`".format(member, member), color=self.color), ephemeral=True)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @commands.cooldown(1, 5, commands.BucketType.guild)
-    async def here(self, ctx):
+    @commands.message_command(default_permission=True, name="Channel Info")
+    @commands.cooldown(1, 30, commands.BucketType.user)
+    async def channelinfo(self, inter: disnake.MessageCommandInteraction):
         """Give informations on the current channel"""
-        final_msg = await ctx.reply(embed=self.bot.util.embed(title=ctx.guild.name, description="Channel: `{}`\nID: `{}`".format(ctx.channel.name, ctx.channel.id), footer="Guild ID {}".format(ctx.guild.id), color=self.color))
-        await self.bot.util.clean(ctx, final_msg, 25)
+        final_msg = await inter.response.send_message(embed=self.bot.util.embed(title=inter.guild.name, description="Channel: `{}`\nID: `{}`".format(inter.channel.name, inter.channel.id), footer="Guild ID {}".format(inter.guild.id), color=self.color), ephemeral=True)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['nitro'])
-    @commands.cooldown(1, 30, commands.BucketType.guild)
-    async def serverinfo(self, ctx, id : int = 0):
+    @commands.message_command(default_permission=True, name="Server Info")
+    @commands.cooldown(1, 30, commands.BucketType.user)
+    async def serverinfo(self, inter: disnake.MessageCommandInteraction):
         """Get informations on the current guild"""
-        try:
-            if id == 0: guild = ctx.guild
-            else: guild = self.bot.get_guild(id)
-            msg = await ctx.send(embed=self.bot.util.embed(title=guild.name + " status", description="**ID** ▫️ `{}`\n**Owner** ▫️ {}\n**Region** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner, guild.region, len(guild.text_channels), len(guild.voice_channels), len(guild.members), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at, color=self.color))
-        except:
-            msg = await ctx.send(embed=self.bot.util.embed(title="Error", description="Can't find guild `{}`".format(id), color=self.color))
-        await self.bot.util.clean(ctx, msg, 60)
+        guild = inter.guild
+        msg = await inter.response.send_message(embed=self.bot.util.embed(title=guild.name + " status", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Members** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, guild.member_count, len(guild.text_channels), len(guild.voice_channels), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at, color=self.color), ephemeral=True)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.user_command(default_permission=True, name="Check for Bans")
     @isMod()
-    @commands.cooldown(1, 3, commands.BucketType.guild)
-    async def setPrefix(self, ctx, prefix_string : str):
-        """Set the prefix used on your server (Mod Only)"""
-        if len(prefix_string) == 0: return
-        id = str(ctx.guild.id)
-        if prefix_string == '$':
-            if id in self.bot.data.save['prefixes']:
-                with self.bot.data.lock:
-                    self.bot.data.save['prefixes'].pop(id)
-                    self.bot.data.pending = True
-        else:
-            with self.bot.data.lock:
-                self.bot.data.save['prefixes'][id] = prefix_string
-                self.bot.data.pending = True
-        await ctx.reply(embed=self.bot.util.embed(title=ctx.guild.name, description="Server Prefix changed to `{}`".format(prefix_string), color=self.color))
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isMod()
-    async def delST(self, ctx):
-        """Delete the ST setting of this server (Mod Only)"""
-        id = str(ctx.guild.id)
-        if id in self.bot.data.save['st']:
-            with self.bot.data.lock:
-                self.bot.data.save['st'].pop(id)
-                self.bot.data.pending = True
-            await self.bot.util.react(ctx.message, '✅') # white check mark
-        else:
-            await ctx.send(embed=self.bot.util.embed(title=ctx.guild.name, description="No ST set on this server\nI can't delete.", thumbnail=ctx.guild.icon.url, color=self.color))
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isMod()
-    async def setST(self, ctx, st1 : int, st2 : int):
-        """Set the two ST of this server, JST Time (Mod Only)
-        Example: setST 7 23 for 7am and 11pm JST"""
-        if st1 < 0 or st1 >= 24 or st2 < 0 or st2 >= 24:
-            await ctx.send(embed=self.bot.util.embed(title="Error", description="Values must be between 0 and 23 included", color=self.color))
-            return
-        with self.bot.data.lock:
-            self.bot.data.save['st'][str(ctx.message.author.guild.id)] = [st1, st2]
-            self.bot.data.pending = True
-        await self.bot.util.react(ctx.message, '✅') # white check mark
-
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['isBanned'])
-    @isMod()
-    async def banCheck(self, ctx, member : discord.Member):
+    async def bancheck(self, inter: disnake.UserCommandInteraction, member: disnake.Member):
         """Check if an user has a ban registered in the bot (Mod Only)"""
         msg = ""
         if self.bot.ban.check(member.id, self.bot.ban.OWNER): msg += "Banned from having the bot in its own servers\n"
@@ -117,30 +58,83 @@ class Moderation(commands.Cog):
         if self.bot.ban.check(member.id, self.bot.ban.PROFILE): msg += "Banned from using `setProfile`\n"
         if self.bot.ban.check(member.id, self.bot.ban.OWNER): msg += "Banned from using the bot\n"
         if msg == "": msg = "No Bans set for this user"
-        msg = await ctx.send(embed=self.bot.util.embed(author={'name':ctx.author.display_name, 'icon_url':ctx.author.display_avatar}, description=msg, color=self.color))
-        await self.bot.util.clean(ctx, msg, 50)
+        msg = await inter.response.send_message(embed=self.bot.util.embed(author={'name':member.display_name, 'icon_url':member.display_avatar}, description=msg, color=self.color), ephemeral=True)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['banspark'])
+    @commands.slash_command(default_permission=True)
     @isMod()
-    async def banRoll(self, ctx, member : discord.Member):
-        """Ban an user from the roll ranking (Mod Only)
-        To avoid idiots with fake numbers
-        The ban is across all servers and can only be lifted by the owner
-        Measures might be taken against mods abusing it"""
-        if str(member.id) in self.bot.data.save['spark']:
-            self.bot.ban.set(member.id, self.bot.ban.SPARK)
-            await self.bot.util.react(ctx.message, '✅') # white check mark
-            await self.bot.send('debug', embed=self.bot.util.embed(title="{} ▫️ {}".format(member.display_name, id), description="Banned from all roll rankings by {}\nValues: `{}`".format(ctx.author.display_name, self.bot.data.save['spark'][str(member.id)]), thumbnail=member.display_avatar, color=self.color, footer=ctx.guild.name))
+    async def mod(self, inter):
+        """Command Group"""
+        pass
+
+    @mod.sub_command_group()
+    async def strike(self, inter):
+        """hidden"""
+        pass
+
+    @strike.sub_command(name="del")
+    async def delst(self, inter):
+        """Delete the ST setting of this server (Mod Only)"""
+        id = str(inter.guild.id)
+        if id in self.bot.data.save['st']:
+            with self.bot.data.lock:
+                self.bot.data.save['st'].pop(id)
+                self.bot.data.pending = True
+            await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
         else:
-            await self.util.react(ctx.message, '❎')
+            await inter.response.send_message(embed=self.bot.util.embed(title=inter.guild.name, description="No ST set on this server\nI can't delete.", thumbnail=inter.guild.icon.url, color=self.color), ephemeral=True)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isMod()
-    async def toggleFullBot(self, ctx):
-        """Allow or not this channel to use all commands (Mod Only)
-        It cleans game/obnoxious commands outside of the whitelisted channels"""
-        gid = str(ctx.guild.id)
-        cid = ctx.channel.id
+    @strike.sub_command(name="set")
+    async def setst(self, inter, st1 : int = commands.Param(description="First Strike Time (JST)", ge=0, le=23), st2 : int = commands.Param(description="Second Strike Time (JST)", ge=0, le=23)):
+        """Set the two ST of this server, JST Time (Mod Only)"""
+        with self.bot.data.lock:
+            self.bot.data.save['st'][str(inter.guild.id)] = [st1, st2]
+            self.bot.data.pending = True
+        await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
+
+
+    @mod.sub_command_group()
+    async def ban(self, inter):
+        """hidden"""
+        pass
+
+    @ban.sub_command(name="roll")
+    async def banroll(self, inter, member: disnake.Member):
+        """Ban an user from the roll ranking (Mod Only)"""
+        self.bot.ban.set(member.id, self.bot.ban.SPARK)
+        await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success.\nMy owner has been notified.", color=self.color), ephemeral=True)
+        await self.bot.send('debug', embed=self.bot.util.embed(title="{} ▫️ {}".format(member.display_name, id), description="Banned from all roll rankings by {}\nValues: `{}`".format(inter.author.display_name, self.bot.data.save['spark'][str(member.id)]), thumbnail=member.display_avatar, color=self.color, footer=inter.guild.name))
+
+    @mod.sub_command_group()
+    async def cleanup(self, inter):
+        """hidden"""
+        pass
+
+    """_seeCleanupSetting()
+    Output the server cleanup settings
+    
+    Parameters
+    --------
+    inter: A command interaction
+    """
+    async def _seeCleanupSetting(self, inter):
+        gid = str(inter.guild.id)
+        if gid in self.bot.data.save['permitted']:
+            msg = ""
+            for c in inter.guild.channels:
+                if c.id in self.bot.data.save['permitted'][gid]:
+                    try:
+                        msg += c.name + "\n"
+                    except:
+                        pass
+            await inter.response.send_message(embed=self.bot.util.embed(title="Auto Cleanup is enable in all channels but the following ones:", description=msg, thumbnail=inter.guild.icon.url, footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
+        else:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Auto Cleanup is disabled in all channels", thumbnail=inter.guild.icon.url, footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
+
+    @cleanup.sub_command(name="toggle")
+    async def toggleautocleanup(self, inter):
+        """Toggle the auto-cleanup in this channel (Mod Only)"""
+        gid = str(inter.guild.id)
+        cid = inter.channel.id
         with self.bot.data.lock:
             if gid not in self.bot.data.save['permitted']:
                 self.bot.data.save['permitted'][gid] = []
@@ -148,101 +142,70 @@ class Moderation(commands.Cog):
                 if self.bot.data.save['permitted'][gid][i] == cid:
                     self.bot.data.save['permitted'][gid].pop(i)
                     self.bot.data.pending = True
-                    try:
-                        await self.bot.callCommand(ctx, 'seeBotPermission')
-                    except:
-                        pass
-                    await self.bot.util.react(ctx.message, '➖')
+                    await self._seeCleanupSetting(inter)
                     return
             self.bot.data.save['permitted'][gid].append(cid)
             self.bot.data.pending = True
-            await self.bot.util.react(ctx.message, '➕')
-            try:
-                await self.bot.callCommand(ctx, 'seeBotPermission')
-            except:
-                pass
+            await self._seeCleanupSetting(inter)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isMod()
-    async def allowBotEverywhere(self, ctx):
-        """Allow full bot access in every channel (Mod Only)"""
-        gid = str(ctx.guild.id)
+    @cleanup.sub_command(name="reset")
+    async def resetautocleanup(self, inter):
+        """Reset the auto-cleanup settings (Mod Only)"""
+        gid = str(inter.guild.id)
         if gid in self.bot.data.save['permitted']:
             with self.bot.data.lock:
                 self.bot.data.save['permitted'].pop(gid)
                 self.bot.data.pending = True
-            await ctx.send(embed=self.bot.util.embed(title="Commands are now sauthorized everywhere", thumbnail=ctx.guild.icon.url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
+            await inter.response.send_message(embed=self.bot.util.embed(title="Auto Cleanup is disabled in all channels", thumbnail=inter.guild.icon.url, footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
         else:
-            await ctx.send(embed=self.bot.util.embed(title="Commands are already sauthorized everywhere", thumbnail=ctx.guild.icon.url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
+            await inter.response.send_message(embed=self.bot.util.embed(title="Auto Cleanup is already disabled in all channels", thumbnail=inter.guild.icon.url, footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isMod()
-    async def seeBotPermission(self, ctx):
-        """See all channels permitted to use all commands (Mod Only)"""
-        gid = str(ctx.guild.id)
-        if gid in self.bot.data.save['permitted']:
-            msg = ""
-            for c in ctx.guild.channels:
-                if c.id in self.bot.data.save['permitted'][gid]:
-                    try:
-                        msg += c.name + "\n"
-                    except:
-                        pass
-            await ctx.send(embed=self.bot.util.embed(title="Channels permitted to use all commands", description=msg, thumbnail=ctx.guild.icon.url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
-        else:
-            await ctx.send(embed=self.bot.util.embed(title="Commands are sauthorized everywhere", thumbnail=ctx.guild.icon.url, footer=ctx.guild.name + " ▫️ " + str(ctx.guild.id), color=self.color))
+    @cleanup.sub_command(name="see")
+    async def seecleanupsetting(self, inter):
+        """See all channels where no clean up is performed (Mod Only)"""
+        await self._seeCleanupSetting(inter)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isMod()
-    async def enablePinboard(self, ctx, *, expression : str = ""):
-        """Enable the pinboard on your server (Mod Only)
-        Use the command alone for a detailed help"""
-        if expression == "":
-            msg = await ctx.send(embed=self.bot.util.embed(title="How to setup the pinboard", description="Usage:\n`{}enablePinboard tracked_channel_ids reaction_emote mod_bypass threshold output_channel_id`\n\n`tracked_channel_ids`: List of channel IDs to track, separated by semicolons (example: `339155308767215618;406013959049707521`)\n`reaction_emote`: The emote used in reaction to trigger the pin\n`mod_bypass`: It must be True or False. If True, a moderator reacting will automatically trigger the pin\n`threshold`: Number of reactions needed to trigger the pin\n`output_channel_id`: The channel ID where the pins will be displayed (example: `593488798365646882`)".format(ctx.message.content[0]), color=self.color))
-        else:
-            args = expression.replace('  ', ' ').replace('  ', ' ').replace('  ', ' ').split(' ')
-            if len(args) > 5:
-                msg = await ctx.send(embed=self.bot.util.embed(title="Pinboard Error", description="**Too many parameters**\nWhat I see:\n`tracked_channel_ids={}`\n`reaction_emote={}`\n`mod_bypass={}`\n`threshold={}`\n`output_channel_id={}`".format(args[0], args[1], args[2], args[3], args[4]), footer="Did you put one extra space somewhere?", color=self.color))
-            elif len(args) < 5:
-                msg = await ctx.send(embed=self.bot.util.embed(title="Pinboard Error", description="**Missing parameters**", footer="Try the command without parameters to see the detailed instructions", color=self.color))
-            else:
+
+    @mod.sub_command_group()
+    async def pinboard(self, inter):
+        """hidden"""
+        pass
+
+    @pinboard.sub_command(name="enable")
+    async def enablepinboard(self, inter, tracked_channels : str = commands.Param(description="List of Channel IDs to track (separated by ;)"), emoji : str = commands.Param(description="The emoji used as a pin trigger"), threshold : int = commands.Param(description="Number of reactions needed to trigger the pin", ge=1), mod_bypass : int = commands.Param(description="If 1, a moderator can force the pin with a single reaction", ge=0, le=1, autocomplete=[0, 1]), pinning_channel : str = commands.Param(description="ID of the channel where pin will be displayed")):
+        """Enable the pinboard on your server (Mod Only)"""
+        try:
+            tracked = tracked_channels.replace(' ', '').split(';')
+            for cid in tracked:
                 try:
-                    tracked = args[0].split(";")
-                    for cid in tracked:
-                        try:
-                            if ctx.guild.get_channel(int(cid)) is None:
-                                raise Exception()
-                        except:
-                            raise Exception("`{}` isn't a valid channel id".format(cid))
-                    tracked = [int(cid) for cid in tracked]
-                    emoji = args[1]
-                    if args[2].lower() in  ['true', '1']:
-                        mod = True
-                    elif args[2].lower() in  ['false', '0']:
-                        mod = False
-                    else:
-                        raise Exception("`mod_bypass={}` isn't a boolean, it should be True or False".format(args[2]))
-                    try:
-                        threshold = int(args[3])
-                        if threshold < 1:
-                            raise Exception()
-                    except:
-                        raise Exception("`threshold={}` is invalid, it should be a positive non null number".format(args[3]))
-                    try:
-                        if ctx.guild.get_channel(int(args[4])) is None:
-                            raise Exception()
-                        output = int(args[4])
-                    except:
-                        raise Exception("`output_channel_id={}` isn't a valid channel id".format(args[4]))
-                    self.bot.pinboard.add(str(ctx.guild.id), tracked, emoji, mod, threshold, output)
-                    msg = await ctx.send(embed=self.bot.util.embed(title="Pinboard enabled on {}".format(ctx.guild.name), description="{} tracked channels\n{} {} emotes are needed to trigger a pin\n[Output channel](https://discord.com/channels/{}/{})".format(len(tracked), threshold, emoji, ctx.guild.id, output), footer="Use the command again to change the settings", color=self.color))
-                except Exception as e:
-                    msg = await ctx.send(embed=self.bot.util.embed(title="Pinboard Error", description="{}".format(e), footer="Try the command without parameters to see the detailed instructions", color=self.color))
-        await self.bot.util.clean(ctx, msg, 60)
+                    if inter.guild.get_channel(int(cid)) is None:
+                        raise Exception()
+                except:
+                    raise Exception("`{}` isn't a valid channel id".format(cid))
+            tracked = [int(cid) for cid in tracked] # convert to int
+            
+            mod = (False if mod_bypass == 0 else True)
 
-    @commands.command(no_pm=True, cooldown_after_parsing=True)
-    @isMod()
-    async def disablePinboard(self, ctx):
+            if inter.guild.get_channel(pinning_channel) is None:
+                raise Exception("`{}` isn't a valid channel id".format(pinning_channel))
+                
+            self.bot.pinboard.add(str(inter.guild.id), tracked, emoji, mod, threshold, pinning_channel)
+            await inter.response.send_message(embed=self.bot.util.embed(title="Pinboard enabled on {}".format(inter.guild.name), description="{} tracked channels (`{}`)\n{} {} emotes are needed to trigger a pin\n[Output channel](https://discord.com/channels/{}/{})".format(len(tracked), tracked, threshold, emoji, inter.guild.id, pinning_channel), footer="Use the command again to change those settings", color=self.color), ephemeral=True)
+        except Exception as e:
+            await self.bot.sendError('enablepinboard', e)
+            await inter.response.send_message(embed=self.bot.util.embed(title="Pinboard Error", description="{}".format(e), footer="Try the command without parameters to see the detailed instructions", color=self.color), ephemeral=True)
+
+    @pinboard.sub_command(name="disable")
+    async def disablepinboard(self, inter):
         """Disable the pinboard on your server (Mod Only)"""
-        self.bot.pinboard.remove(str(ctx.guild.id))
-        await self.bot.util.react(ctx.message, '✅') # white check mark
+        self.bot.pinboard.remove(str(inter.guild.id))
+        await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
+
+    @pinboard.sub_command(name="see")
+    async def seepinboard(self, inter):
+        """See the pinboard settings on your server"""
+        settings = self.bot.pinboard.get(str(inter.guild.id))
+        if settings is None:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="The pinboard isn't set on this server", color=self.color), ephemeral=True)
+        else:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Pinboard settings on {}".format(inter.guild.name), description="{} tracked channels (`{}`)\n{} {} emotes are needed to trigger a pin\n[Output channel](https://discord.com/channels/{}/{})".format(len(settings['tracked']), settings['tracked'], settings['threshold'], settings['emoji'], inter.guild.id, settings['output']), footer="Use /mod pinboard enable again to change those settings", color=self.color), ephemeral=True)
