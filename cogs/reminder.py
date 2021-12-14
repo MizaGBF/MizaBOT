@@ -59,7 +59,7 @@ class Reminder(commands.Cog):
             try:
                 messages = await self.bot.do(self.checkReminders)
                 for id in messages:
-                    u = self.bot.get_user(int(id))
+                    u = self.bot.get_or_fetch_user(int(id))
                     for m in messages[id]:
                         try:
                             await u.send(embed=self.bot.util.embed(title="Reminder", description=m))

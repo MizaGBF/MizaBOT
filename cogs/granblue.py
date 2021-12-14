@@ -71,7 +71,7 @@ class GranblueFantasy(commands.Cog):
         return msg
 
     @commands.slash_command(default_permission=True)
-    @commands.cooldown(2, 40, commands.BucketType.user)
+    @commands.cooldown(2, 20, commands.BucketType.user)
     async def gbf(self, inter):
         """Command Group"""
         pass
@@ -1537,7 +1537,7 @@ class GranblueFantasy(commands.Cog):
         await self.bot.util.clean(inter, 60)
 
     @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 60, commands.BucketType.user)
+    @commands.cooldown(1, 10, commands.BucketType.user)
     async def guide(self, inter):
         """Command Group"""
         pass

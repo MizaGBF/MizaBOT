@@ -990,7 +990,7 @@ class Games(commands.Cog):
         return False
 
     @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 30, commands.BucketType.user)
+    @commands.cooldown(1, 50, commands.BucketType.user)
     @commands.max_concurrency(10, commands.BucketType.default)
     async def minigame(self, inter):
         """Command Group"""

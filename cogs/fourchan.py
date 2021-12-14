@@ -59,7 +59,7 @@ class FourChan(commands.Cog):
             return []
 
     @commands.slash_command(default_permission=True, name="4chan")
-    @commands.cooldown(1, 10, commands.BucketType.default)
+    @commands.cooldown(1, 2, commands.BucketType.default)
     async def fourchan(self, inter):
         """Command Group"""
         pass

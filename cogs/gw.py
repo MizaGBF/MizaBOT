@@ -285,7 +285,7 @@ class GuildWar(commands.Cog):
         return ""
 
     @commands.slash_command(default_permission=True)
-    @commands.cooldown(2, 10, commands.BucketType.guild)
+    @commands.cooldown(1, 10, commands.BucketType.user)
     async def gw(self, inter):
         """Command Group"""
         pass
@@ -1217,7 +1217,7 @@ class GuildWar(commands.Cog):
         await self.bot.util.clean(inter, 90)
 
     @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 60, commands.BucketType.guild)
+    @commands.cooldown(2, 30, commands.BucketType.guild)
     @commands.max_concurrency(2, commands.BucketType.default)
     async def gbfg(self, inter):
         """Command Group"""

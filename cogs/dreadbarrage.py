@@ -52,7 +52,7 @@ class DreadBarrage(commands.Cog):
             return ""
 
     @commands.slash_command(default_permission=True)
-    @commands.cooldown(2, 10, commands.BucketType.guild)
+    @commands.cooldown(1, 10, commands.BucketType.user)
     async def db(self, inter):
         """Command Group"""
         pass
