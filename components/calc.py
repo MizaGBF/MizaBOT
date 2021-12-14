@@ -111,26 +111,27 @@ class Calc():
         values = [self.parenthesis()]
         while True:
             c = self.peek()
-            if c in ['*', 'x']:
-                self.index += 1
-                values.append(self.parenthesis())
-            elif c in ['/', '%']:
-                div_index = self.index
-                self.index += 1
-                denominator = self.parenthesis()
-                if denominator == 0:
-                    raise Exception("Division by 0 occured at index {}".format(div_index))
-                if c == '/': values.append(1.0 / denominator)
-                else: values.append(1.0 % denominator)
-            elif c == '^':
-                self.index += 1
-                exponent = self.parenthesis()
-                values[-1] = values[-1] ** exponent
-            elif c == '!':
-                self.index += 1
-                values[-1] = math.factorial(values[-1])
-            else:
-                break
+            match c:
+                case '*' | 'x':
+                    self.index += 1
+                    values.append(self.parenthesis())
+                case '/' | '%':
+                    div_index = self.index
+                    self.index += 1
+                    denominator = self.parenthesis()
+                    if denominator == 0:
+                        raise Exception("Division by 0 occured at index {}".format(div_index))
+                    if c == '/': values.append(1.0 / denominator)
+                    else: values.append(1.0 % denominator)
+                case '^':
+                    self.index += 1
+                    exponent = self.parenthesis()
+                    values[-1] = values[-1] ** exponent
+                case '!':
+                    self.index += 1
+                    values[-1] = math.factorial(values[-1])
+                case _:
+                    break
         value = 1.0
         for factor in values: value *= factor
         return value
@@ -209,38 +210,39 @@ class Calc():
             if var not in self.funcs: raise Exception("Unrecognized variable '{}'".format(var))
             else:
                 param = self.parenthesis()
-                if var == 'cos': value = math.cos(param)
-                elif var == 'sin': value = math.sin(param)
-                elif var == 'tan': value = math.tan(param)
-                elif var == 'acos': value = math.acos(param)
-                elif var == 'asin': value = math.asin(param)
-                elif var == 'atan': value = math.atan(param)
-                elif var == 'cosh': value = math.cosh(param)
-                elif var == 'sinh': value = math.sinh(param)
-                elif var == 'tanh': value = math.tanh(param)
-                elif var == 'acosh': value = math.acosh(param)
-                elif var == 'asinh': value = math.asinh(param)
-                elif var == 'atanh': value = math.atanh(param)
-                elif var == 'exp': value = math.exp(param)
-                elif var == 'ceil': value = math.ceil(param)
-                elif var == 'floor': value = math.floor(param)
-                elif var == 'round': value = math.floor(param)
-                elif var == 'factorial': value = math.factorial(param)
-                elif var == 'abs': value = math.fabs(param)
-                elif var == 'trunc': value = math.trunc(param)
-                elif var == 'log':
-                    if param <= 0: raise Exception("Can't evaluate the logarithm of '{}'".format(param))
-                    value = math.log(param)
-                elif var == 'log2':
-                    if param <= 0: raise Exception("Can't evaluate the logarithm of '{}'".format(param))
-                    value = math.log2(param)
-                elif var == 'log10':
-                    if param <= 0: raise Exception("Can't evaluate the logarithm of '{}'".format(param))
-                    value = math.log10(param)
-                elif var == 'sqrt': value = math.sqrt(param)
-                elif var == 'rad': value = math.radians(param)
-                elif var == 'deg': value = math.degrees(param)
-                else: raise Exception("Unrecognized function '{}'".format(var))
+                match var:
+                    case 'cos': value = math.cos(param)
+                    case 'sin': value = math.sin(param)
+                    case 'tan': value = math.tan(param)
+                    case 'acos': value = math.acos(param)
+                    case 'asin': value = math.asin(param)
+                    case 'atan': value = math.atan(param)
+                    case 'cosh': value = math.cosh(param)
+                    case 'sinh': value = math.sinh(param)
+                    case 'tanh': value = math.tanh(param)
+                    case 'acosh': value = math.acosh(param)
+                    case 'asinh': value = math.asinh(param)
+                    case 'atanh': value = math.atanh(param)
+                    case 'exp': value = math.exp(param)
+                    case 'ceil': value = math.ceil(param)
+                    case 'floor': value = math.floor(param)
+                    case 'round': value = math.floor(param)
+                    case 'factorial': value = math.factorial(param)
+                    case 'abs': value = math.fabs(param)
+                    case 'trunc': value = math.trunc(param)
+                    case 'log':
+                        if param <= 0: raise Exception("Can't evaluate the logarithm of '{}'".format(param))
+                        value = math.log(param)
+                    case 'log2':
+                        if param <= 0: raise Exception("Can't evaluate the logarithm of '{}'".format(param))
+                        value = math.log2(param)
+                    case 'log10':
+                        if param <= 0: raise Exception("Can't evaluate the logarithm of '{}'".format(param))
+                        value = math.log10(param)
+                    case 'sqrt': value = math.sqrt(param)
+                    case 'rad': value = math.radians(param)
+                    case 'deg': value = math.degrees(param)
+                    case _: raise Exception("Unrecognized function '{}'".format(var))
         return float(value)
 
     """number()

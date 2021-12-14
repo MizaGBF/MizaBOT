@@ -1,5 +1,5 @@
-﻿import disnake
-from disnake.ext import commands
+﻿import discord
+from discord.ext import commands
 import asyncio
 from datetime import datetime, timedelta
 
@@ -37,7 +37,7 @@ class Reminder(commands.Cog):
                     if c > self.bot.data.save['reminders'][r][di][0]:
                         if r not in send: send[r] = []
                         with self.bot.data.lock:
-                            send[r].append(self.bot.data.save['reminders'][r][di][1][:1900])
+                            send[r].append("{}\n\n:earth_asia: [Link](https://discordapp.com/channels/{})".format(self.bot.data.save['reminders'][r][di][1][:1900], self.bot.data.save['reminders'][r][di][2]))
                             self.bot.data.save['reminders'][r].pop(di)
                             self.bot.data.pending = True
                     else:
@@ -59,7 +59,7 @@ class Reminder(commands.Cog):
             try:
                 messages = await self.bot.do(self.checkReminders)
                 for id in messages:
-                    u = await self.bot.get_or_fetch_user(int(id))
+                    u = self.bot.get_user(int(id))
                     for m in messages[id]:
                         try:
                             await u.send(embed=self.bot.util.embed(title="Reminder", description=m))
@@ -74,64 +74,65 @@ class Reminder(commands.Cog):
                 await asyncio.sleep(200)
             await asyncio.sleep(40)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 10, commands.BucketType.user)
-    async def remind(self, inter, duration : str = commands.Param(description="Format: XdXhXmXs"), msg : str = commands.Param(description="Content of the reminder")):
-        """Remind you of something at the specified time (±30 seconds precision)"""
-        id = str(inter.author.id)
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['reminder'])
+    @commands.cooldown(1, 3, commands.BucketType.user)
+    async def remind(self, ctx, duration : str, *, msg : str):
+        """Remind you of something at the specified time (±30 seconds precision)
+        <duration> format: XdXhXmXs for day, hour, minute, second, each are optionals"""
+        id = str(ctx.author.id)
         if id not in self.bot.data.save['reminders']:
             self.bot.data.save['reminders'][id] = []
-        if len(self.bot.data.save['reminders'][id]) >= 5 and inter.author.id != self.bot.owner.id:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Reminder Error", description="Sorry, I'm limited to 5 reminders per user 🙇", color=self.color), ephemeral=True)
+        if len(self.bot.data.save['reminders'][id]) >= 5 and ctx.author.id != self.bot.data.config['ids'].get('owner', -1):
+            await ctx.reply(embed=self.bot.util.embed(title="Reminder Error", description="Sorry, I'm limited to 5 reminders per user 🙇", color=self.color))
             return
         try:
             d = self.bot.util.str2delta(duration)
             if d is None: raise Exception()
         except:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Reminder Error", description="Invalid duration string `{}`, format is `NdNhNm`".format(duration), color=self.color), ephemeral=True)
+            await ctx.reply(embed=self.bot.util.embed(title="Reminder Error", description="Invalid duration string `{}`, format is `NdNhNm`".format(duration), color=self.color))
             return
         if msg == "":
-            await inter.response.send_message(embed=self.bot.util.embed(title="Reminder Error", description="Tell me what I'm supposed to remind you 🤔", color=self.color), ephemeral=True)
+            await ctx.reply(embed=self.bot.util.embed(title="Reminder Error", description="Tell me what I'm supposed to remind you 🤔", color=self.color))
             return
         if len(msg) > 200:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Reminder Error", description="Reminders are limited to 200 characters", color=self.color), ephemeral=True)
+            await ctx.reply(embed=self.bot.util.embed(title="Reminder Error", description="Reminders are limited to 200 characters", color=self.color))
             return
         try:
             with self.bot.data.lock:
-                self.bot.data.save['reminders'][id].append([datetime.utcnow().replace(microsecond=0) + timedelta(seconds=32400) + d, msg]) # keep JST
+                self.bot.data.save['reminders'][id].append([datetime.utcnow().replace(microsecond=0) + timedelta(seconds=32400) + d, msg, "{}/{}/{}".format(ctx.guild.id, ctx.channel.id, ctx.message.id)]) # keep JST
                 self.bot.data.pending = True
-            await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
+            await self.bot.util.react(ctx.message, '✅') # white check mark
         except:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Reminder Error", footer="I have no clues about what went wrong", color=self.color), ephemeral=True)
+            await ctx.reply(embed=self.bot.util.embed(title="Reminder Error", footer="I have no clues about what went wrong", color=self.color))
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 10, commands.BucketType.user)
-    async def remindlist(self, inter):
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rl', 'reminderlist'])
+    @commands.cooldown(1, 6, commands.BucketType.user)
+    async def remindlist(self, ctx):
         """Post your current list of reminders"""
-        id = str(inter.author.id)
+        id = str(ctx.author.id)
         if id not in self.bot.data.save['reminders'] or len(self.bot.data.save['reminders'][id]) == 0:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Reminder Error", description="You don't have any reminders", color=self.color), ephemeral=True)
+            await ctx.reply(embed=self.bot.util.embed(title="Reminder Error", description="You don't have any reminders", color=self.color))
         else:
-            embed = disnake.Embed(title="{}'s Reminder List".format(inter.author.display_name), color=self.color)
-            embed.set_thumbnail(url=inter.author.display_avatar)
+            embed = discord.Embed(title="{}'s Reminder List".format(ctx.author.display_name), color=self.color)
+            embed.set_thumbnail(url=ctx.author.display_avatar)
             for i in range(0, len(self.bot.data.save['reminders'][id])):
-                embed.add_field(name="#{} ▫️ {:%Y/%m/%d %H:%M} JST".format(i, self.bot.data.save['reminders'][id][i][0]), value=self.bot.data.save['reminders'][id][i][1], inline=False)
-            await inter.response.send_message(embed=embed, ephemeral=True)
+                embed.add_field(name="#{} ▫️ {:%Y/%m/%d %H:%M} JST".format(i, self.bot.data.save['reminders'][id][i][0]), value="[{}](https://discordapp.com/channels/{})".format(self.bot.data.save['reminders'][id][i][1], self.bot.data.save['reminders'][id][i][2]), inline=False)
+            await ctx.reply(embed=embed)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 10, commands.BucketType.user)
-    async def reminddel(self, inter, rid : int = commands.Param(description="Number of the reminder to delete")):
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rd', 'reminderdel'])
+    @commands.cooldown(2, 3, commands.BucketType.user)
+    async def reminddel(self, ctx, rid : int):
         """Delete one of your reminders"""
-        id = str(inter.author.id)
+        id = str(ctx.author.id)
         if id not in self.bot.data.save['reminders'] or len(self.bot.data.save['reminders'][id]) == 0:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Reminder Error", description="You don't have any reminders", color=self.color), ephemeral=True)
+            await ctx.reply(embed=self.bot.util.embed(title="Reminder Error", description="You don't have any reminders", color=self.color))
         else:
             if rid < 0 or rid >= len(self.bot.data.save['reminders'][id]):
-                await inter.response.send_message(embed=self.bot.util.embed(title="Reminder Error", description="Invalid id `{}`".format(rid), color=self.color), ephemeral=True)
+                await ctx.reply(embed=self.bot.util.embed(title="Reminder Error", description="Invalid id `{}`".format(rid), color=self.color))
             else:
                 with self.bot.data.lock:
                     self.bot.data.save['reminders'][id].pop(rid)
                     if len(self.bot.data.save['reminders'][id]) == 0:
                         self.bot.data.save['reminders'].pop(id)
                     self.bot.data.pending = True
-                await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
+                await self.bot.util.react(ctx.message, '✅') # white check mark

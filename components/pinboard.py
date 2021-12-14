@@ -1,4 +1,4 @@
-import disnake
+import discord
 
 # ----------------------------------------------------------------------------------------------------------------
 # Pinboard Component
@@ -105,10 +105,10 @@ class Pinboard():
                         if len(message.embeds[0].description) > 0: embed_dict['fields'] = [{'inline': True, 'name':'Content', 'value':message.embeds[0].description}] + embed_dict['fields']
                         if 'image' not in embed_dict and message.embeds[0].image != message.embeds[0].Empty: embed_dict['image'] = {'url':message.embeds[0].image.url}
                         if len(message.embeds[0].title) > 0: embed_dict['title'] += " :white_small_square: " + message.embeds[0].title
-                        elif message.embeds[0].author.name != disnake.Embed.Empty: embed_dict['title'] += " :white_small_square: " + message.embeds[0].author.name
+                        elif message.embeds[0].author.name != discord.Embed.Empty: embed_dict['title'] += " :white_small_square: " + message.embeds[0].author.name
                     # add link to description
                     embed_dict['description'] += ":earth_asia: [**Link**](https://discordapp.com/channels/{}/{}/{})\n".format(message.guild.id, message.channel.id, message.id)
-                    embed = disnake.Embed.from_dict(embed_dict)
+                    embed = discord.Embed.from_dict(embed_dict)
                     embed.timestamp=message.created_at
                     ch = self.bot.get_channel(self.bot.data.save['pinboard'][idx]['output'])
                     await ch.send(embed=embed)
@@ -146,17 +146,3 @@ class Pinboard():
             with self.bot.data.lock:
                 self.bot.data.save['pinboard'].pop(server_id)
                 self.bot.data.pending = True
-
-    """get()
-    Retrieve the settings for a guild
-    
-    Parameters
-    ----------
-    server_id: Guild ID, in string format
-    
-    Returns
-    ----------
-    dict: Stored settings, None if unavailable
-    """
-    def get(self, server_id):
-        return self.bot.data.save['pinboard'].get(server_id, None)

@@ -1,4 +1,4 @@
-﻿import disnake
+﻿import discord
 import asyncio
 import random
 from datetime import datetime, timedelta
@@ -211,6 +211,7 @@ class Util():
             "Errors": ("**{}**".format(self.bot.errn) if self.bot.errn > 0 else str(self.bot.errn)),
             "Task Count": str(len(asyncio.all_tasks())),
             "Server Count": str(len(self.bot.guilds)),
+            "Pending Servers": ("**{}**".format(len(self.bot.data.save['guilds']['pending'])) if len(self.bot.data.save['guilds']['pending']) > 0 else str(len(self.bot.data.save['guilds']['pending']))),
             "Cogs Loaded": "{}/{}".format(len(self.bot.cogs), self.bot.cogn) if (len(self.bot.cogs) == self.bot.cogn) else "**{}**/{}".format(len(self.bot.cogs), self.bot.cogn),
             "Twitter": ("Disabled" if (self.bot.twitter.client is None) else "Online")
         }
@@ -234,7 +235,7 @@ class Util():
     
     Parameters
     ----------
-    msg: disnake.Message object
+    msg: discord.Message object
     key: Either the emoji key set in config.json or the emoji in string format
 
     Returns
@@ -255,7 +256,7 @@ class Util():
     
     Parameters
     ----------
-    msg: disnake.Message object
+    msg: discord.Message object
     key: Either the emoji key set in config.json or the emoji in string format
 
     Returns
@@ -277,35 +278,50 @@ class Util():
     
     Parameters
     ----------
-    target: Tuple of a Disnake Context and Message OR a Disnake Interaction
-    delay: Time in second before deletion
+    ctx: Command context
+    msg: Message to delete
+    timeout: Time in second before deletion
     all: if True, the message will be deleted, if False, the message is deleted it it was posted in an unauthorized channel
     """
-    async def clean(self, target, delay=None, all=False):
+    async def clean(self, ctx, msg, timeout, all=False): # delete a message after X amount of time if posted in an unauthorized channel (all = False) or everywhere (all = True)
         try:
-            if isinstance(target, tuple):
-                if all or not self.bot.isAuthorized(target[0]):
-                    await target[1].delete(delay=delay)
-                    await self.react(target[0].message, '✅') # white check mark
-            elif isinstance(target, disnake.interactions.application_command.ApplicationCommandInteraction):
-                if all or not self.bot.isAuthorized(target):
-                    await target.delete_original_message(delay=delay)
-        except Exception as e:
-            await self.bot.sendError("clean", e)
+            if all or not self.bot.isAuthorized(ctx):
+                if timeout is None or timeout > 0: await asyncio.sleep(timeout)
+                await msg.delete()
+                await self.react(ctx.message, '✅') # white check mark
+        except:
+            pass
 
-    """embed()
-    Create a disnake.Embed object
+    """cleanInter()
+    Interaction version of clean
     
     Parameters
     ----------
-    **options: disnake.Embed options
+    inter: Interaction
+    timeout: Time in second before deletion
+    all: if True, the message will be deleted, if False, the message is deleted it it was posted in an unauthorized channel
+    """
+    async def cleanInter(self, inter, timeout, all=False): # delete a message after X amount of time if posted in an unauthorized channel (all = False) or everywhere (all = True)
+        try:
+            if all or not self.bot.isAuthorized(inter):
+                if timeout is None or timeout > 0: await asyncio.sleep(timeout)
+                await inter.edit_original_message(content='\u200b✅', embed=None, view=None)
+        except:
+            pass
+
+    """embed()
+    Create a discord.Embed object
+    
+    Parameters
+    ----------
+    **options: discord.Embed options
 
     Returns
     --------
-    disnake.Embed: The created embed
+    discord.Embed: The created embed
     """
     def embed(self, **options): # make a full embed
-        embed = disnake.Embed(title=options.get('title', ""), description=options.pop('description', ""), url=options.pop('url', ""), color=options.pop('color', random.randint(0, 16777216)))
+        embed = discord.Embed(title=options.get('title', ""), description=options.pop('description', ""), url=options.pop('url', ""), color=options.pop('color', random.randint(0, 16777216)))
         fields = options.pop('fields', [])
         inline = options.pop('inline', False)
         for f in fields:
@@ -368,7 +384,7 @@ class Util():
     
     Parameters
     ----------
-    inter: The command interaction
+    ctx: The command context or the channel to put the message in
     target: String, which can be:
         - Empty (the author GBF ID will be used if set, doesn't work if you set ctx to a channel)
         - Positive integer, representing a GBF ID
@@ -376,30 +392,40 @@ class Util():
     
     Returns
     --------
-    int or str: The GBF ID or an error string if an error happened
+    int: The GBF ID or None if an error happened
     """
-    async def str2gbfid(self, inter, target, color):
+    async def str2gbfid(self, ctx, target, color):
         if target == "":
-            if str(inter.author.id) not in self.bot.data.save['gbfids']:
-                return "{} didn't set its profile ID\nUse `findplayer` to search the GW Database"
-            id = self.bot.data.save['gbfids'][str(inter.author.id)]
+            if str(ctx.author.id) not in self.bot.data.save['gbfids']:
+                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(ctx.author.display_name), footer="setProfile <id>", color=color))
+                return None
+            id = self.bot.data.save['gbfids'][str(ctx.author.id)]
         elif target.startswith('<@') and target.endswith('>'):
             try:
                 if target[2] == "!": target = int(target[3:-1])
                 else: target = int(target[2:-1])
-                if target not in self.bot.data.save['gbfids']:
-                    return "This member didn't set its profile ID\nUse `findplayer` to search the GW Database"
+                member = ctx.guild.get_member(target)
+                if str(member.id) not in self.bot.data.save['gbfids']:
+                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(member.display_name), footer="setProfile <id>", color=color))
+                    return None
                 id = self.bot.data.save['gbfids'][str(member.id)]
             except:
-                return "Invalid parameter {} -> {}".format(target, type(target))
+                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Invalid parameter {} -> {}".format(target, type(target)), color=color))
+                return None
         else:
             try: id = int(target)
-            except: return "`{}` isn't a valid target".format(target)
+            except:
+                member = ctx.guild.get_member_named(target)
+                if member is None:
+                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Member not found", color=color))
+                    return None
+                elif str(member.id) not in self.bot.data.save['gbfids']:
+                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="{} didn't set its profile ID\nUse `findplayer` to search the GW Database".format(member.display_name), footer="setProfile <id>", color=color))
+                    return None
+                id = self.bot.data.save['gbfids'][str(member.id)]
         if id < 0 or id >= 100000000:
-            try: id = self.bot.data.save['gbfids'][str(id)]
-            except: return "Invalid ID range"
-        if id < 0 or id >= 100000000:
-            return "Invalid ID range"
+            await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Invalid ID range", color=color))
+            return None
         return id
 
     """formatElement()

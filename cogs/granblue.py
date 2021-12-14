@@ -1,5 +1,5 @@
-﻿import disnake
-from disnake.ext import commands
+﻿import discord
+from discord.ext import commands
 import aiohttp
 from datetime import datetime, timedelta
 import random
@@ -37,6 +37,30 @@ class GranblueFantasy(commands.Cog):
         self.imgcache = {}
         self.imglock = threading.Lock()
 
+    """isOwner()
+    Command decorator, to check if the command is used by the bot owner
+    
+    Returns
+    --------
+    command check
+    """
+    def isOwner():
+        async def predicate(ctx):
+            return ctx.bot.isOwner(ctx)
+        return commands.check(predicate)
+
+    """isYou()
+    Command decorator, to check if the command is used by member of the (You) server
+    
+    Returns
+    --------
+    command check
+    """
+    def isYou():
+        async def predicate(ctx):
+            return ctx.bot.isServer(ctx, 'you_server')
+        return commands.check(predicate)
+
     """getMaintenanceStatus()
     Check if GBF is in maintenance and return a string.
     Save data is updated if it doesn't match the current state.
@@ -69,12 +93,6 @@ class GranblueFantasy(commands.Cog):
                         d = e - current_time
                         msg = "{} Maintenance ends in **{}**".format(self.bot.emote.get('cog'), self.bot.util.delta2str(d, 2))
         return msg
-
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(2, 20, commands.BucketType.user)
-    async def gbf(self, inter):
-        """Command Group"""
-        pass
 
     """fixCase()
     Fix the case of individual element of our wiki search terms
@@ -331,11 +349,11 @@ class GranblueFantasy(commands.Cog):
     
     Parameters
     ----------
-    inter: Command interaction
+    ctx: Command context
     url: Wiki url to request (url MUST be for gbf.wiki)
     search_mode: Boolean, if True it expects a search result page
     """
-    async def requestWiki(self, inter, url, search_mode = False):
+    async def requestWiki(self, ctx, url, search_mode = False):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 if r.status != 200:
@@ -363,20 +381,20 @@ class GranblueFantasy(commands.Cog):
                         if len(matches) == 0: # no results check
                             raise Exception("No results")
                         elif len(matches) == 1: # single result, request it directly
-                            await self.requestWiki(inter, "https://gbf.wiki/{}".format(matches[0]))
+                            await self.requestWiki(ctx, "https://gbf.wiki/{}".format(matches[0]))
                             return
                         desc = ""
                         for m in matches: # build the message with the results
                             desc += "[{}](https://gbf.wiki/{})\n".format(m, m.replace(" ", "_"))
                         desc = "First five results\n{}".format(desc)
-                        await inter.edit_original_message(embed=self.bot.util.embed(title="Not Found, click here to refine", description=desc, url=url, color=self.color))
+                        final_msg = await ctx.reply(embed=self.bot.util.embed(title="Not Found, click here to refine", description=desc, url=url, color=self.color))
                     else: # direct access to the page (assume a match)
                         data, tables = await self.bot.do(self.processWikiMatch, soup)
 
                         x = data.get('object', None)
                         match x:
                             case None: # if no match
-                                await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=data.get('description', ''), image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
+                                final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=data.get('description', ''), image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
                             case 0: # character
                                 if 'title' in data: title = title + ", " + data['title']
                                 if 'rarity' in data: title = "{} {}".format(self.bot.emote.get(data['rarity']), title)
@@ -391,9 +409,9 @@ class GranblueFantasy(commands.Cog):
                                     desc = "This character has other versions\n"
                                     for e in elems:
                                         desc += "[{}](https://gbf.wiki/{})\n".format(e, e.replace(" ", "_"))
-                                    await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=desc, image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
+                                    final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=desc, image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
                                 except: # if none, just send the link
-                                    await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=data.get('description', ''), image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
+                                    final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=data.get('description', ''), image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
                             case _: # summon and weapon
                                 data = await self.bot.do(self.processWikiItem, data, tables)
                                 # final message
@@ -422,38 +440,57 @@ class GranblueFantasy(commands.Cog):
                                 if 'aura' in data: desc += "{} **Aura**▫️{}\n".format(self.bot.emote.get('skill2'), data['aura'])
                                 if 'subaura' in data: desc += "{} **Sub Aura**▫️{}\n".format(self.bot.emote.get('skill2'), data['subaura'])
 
-                                final_msg = await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=desc, thumbnail=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
-        await self.bot.util.clean(inter, 80)
+                                final_msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=desc, thumbnail=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 80)
 
-    @gbf.sub_command()
-    async def wiki(self, inter, terms : str = commands.Param(description="Search expression")):
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gbfwiki'])
+    @commands.cooldown(3, 4, commands.BucketType.guild)
+    async def wiki(self, ctx, *, terms : str = ""):
         """Search the GBF wiki"""
-        await inter.response.defer()
-        # build the url (the wiki is case sensitive)
-        arr = []
-        for s in terms.split(" "):
-            arr.append(self.fixCase(s))
-        sch = "_".join(arr)
-        url = "https://gbf.wiki/{}".format(sch)
-        try:
-            await self.requestWiki(inter, url) # try to request
-        except Exception as e:
-            url = "https://gbf.wiki/index.php?title=Special:Search&search={}".format(parse.quote_plus(terms))
-            if str(e) != "HTTP Error 404: Not Found": # unknown error, we stop here
-                await self.bot.sendError("wiki", e)
-                await inter.edit_original_message(embed=self.bot.util.embed(title="Unexpected error, click here to search", url=url, footer=str(e), color=self.color))
-            else: # failed, we try the search function
-                try:
-                    await self.requestWiki(inter, url, True) # try
-                except Exception as f:
-                    if str(f) == "No results":
-                        await inter.edit_original_message(embed=self.bot.util.embed(title="No matches found", color=self.color)) # no results
-                    else:
-                        await inter.edit_original_message(embed=self.bot.util.embed(title="Not Found, click here to refine", url=url, color=self.color)) # no results
-        await self.bot.util.clean(inter, 45)
+        final_msg = None
+        if terms == "":
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Tell me what to search on the wiki", footer="wiki [search terms]", color=self.color))
+        else:
+            # build the url (the wiki is case sensitive)
+            arr = []
+            for s in terms.split(" "):
+                arr.append(self.fixCase(s))
+            sch = "_".join(arr)
+            url = "https://gbf.wiki/{}".format(sch)
+            try:
+                await self.requestWiki(ctx, url) # try to request
+            except Exception as e:
+                url = "https://gbf.wiki/index.php?title=Special:Search&search={}".format(parse.quote_plus(terms))
+                if str(e) != "HTTP Error 404: Not Found": # unknown error, we stop here
+                    await self.bot.sendError("wiki", e)
+                    final_msg = await ctx.reply(embed=self.bot.util.embed(title="Unexpected error, click here to search", url=url, footer=str(e), color=self.color))
+                else: # failed, we try the search function
+                    try:
+                        await self.requestWiki(ctx, url, True) # try
+                    except Exception as f:
+                        if str(f) == "No results":
+                            final_msg = await ctx.reply(embed=self.bot.util.embed(title="No matches found", color=self.color)) # no results
+                        else:
+                            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Not Found, click here to refine", url=url, color=self.color)) # no results
+        await self.bot.util.clean(ctx, final_msg, 45)
 
-    @gbf.sub_command()
-    async def leechlist(self, inter):
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def jst(self, ctx):
+        """Post the current time, JST timezone"""
+        await ctx.send(embed=self.bot.util.embed(title="{} {:%Y/%m/%d %H:%M} JST".format(self.bot.emote.get('clock'), self.bot.util.JST()), color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    async def reddit(self, ctx):
+        """Post a link to /r/Granblue_en
+        You wouldn't dare, do you?"""
+        view = UrlButton(self.bot, [('/r/Granblue_en/', 'https://www.reddit.com/r/Granblue_en/')])
+        msg = await ctx.reply('\u200b', view=view)
+        await self.bot.util.clean(ctx, msg, 60)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['leech'])
+    async def leechlist(self, ctx):
         """Post a link to /gbfg/ leechlist collection"""
         ls = self.bot.data.config['strings']["leechlist()"].split(";")
         # note: string is in the following format:
@@ -463,20 +500,13 @@ class GranblueFantasy(commands.Cog):
             if l == "": continue
             urls.append(l.split("###"))
         view = UrlButton(self.bot, urls)
-        await inter.response.send_message('\u200b', view=view)
+        msg = await ctx.reply('\u200b', view=view)
         view.stopall()
-        await self.bot.util.clean(inter, 60)
+        await self.bot.util.clean(ctx, msg, 60)
 
-    @gbf.sub_command()
-    async def spreadsheet(self, inter):
-        """Post a link to my SpreadSheet Folder"""
-        view = UrlButton(self.bot, [('SpreadSheet Folder', self.bot.data.config['strings']["sheetfolder()"])])
-        await inter.response.send_message('\u200b', view=view)
-        view.stopall()
-        await self.bot.util.clean(inter, 60)
-
-    @gbf.sub_command()
-    async def info(self, inter):
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['time', 'st', 'reset', 'gbf'])
+    @commands.cooldown(2, 2, commands.BucketType.guild)
+    async def granblue(self, ctx):
         """Post various Granblue Fantasy informations"""
         current_time = self.bot.util.JST()
         description = "{:} Current Time is **{:02d}:{:02d} JST**".format(self.bot.emote.get('clock'), current_time.hour, current_time.minute)
@@ -490,7 +520,7 @@ class GranblueFantasy(commands.Cog):
         d = reset - current_time
         description += "\n{} Reset in **{}**".format(self.bot.emote.get('mark'), self.bot.util.delta2str(d))
 
-        id = str(inter.author.guild.id)
+        id = str(ctx.message.author.guild.id)
         if id in self.bot.data.save['st']:
             st1 = current_time.replace(hour=self.bot.data.save['st'][id][0], minute=0, second=0, microsecond=0)
             st2 = st1.replace(hour=self.bot.data.save['st'][id][1])
@@ -541,27 +571,94 @@ class GranblueFantasy(commands.Cog):
             await self.bot.sendError("getBarrageState", e)
 
         try:
-            buf = self.bot.get_cog('GuildWar').getNextBuff(inter)
+            buf = self.bot.get_cog('GuildWar').getNextBuff(ctx)
             if len(buf) > 0: description += "\n" + buf
         except Exception as e:
             await self.bot.sendError("getnextbuff", e)
 
-        await inter.response.send_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
+        await ctx.send(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
 
-    @gbf.sub_command()
-    async def maintenance(self, inter):
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['maint'])
+    @commands.cooldown(2, 2, commands.BucketType.guild)
+    async def maintenance(self, ctx):
         """Post GBF maintenance status"""
         try:
             description = self.getMaintenanceStatus()
             if len(description) > 0:
-                await inter.response.send_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
+                await ctx.send(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
             else:
-                await inter.response.send_message(embed=self.bot.util.embed(title="Granblue Fantasy", description="No maintenance in my memory", color=self.color))
+                await ctx.send(embed=self.bot.util.embed(title="Granblue Fantasy", description="No maintenance in my memory", color=self.color))
         except Exception as e:
             await self.bot.sendError("getMaintenanceStatus", e)
 
-    @gbf.sub_command()
-    async def raidfinder(self, inter):
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['drive'])
+    @isYou()
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def gdrive(self, ctx):
+        """Post the (You) google drive
+        (You) server only"""
+        view = UrlButton(self.bot, [('(You) Google Drive', self.bot.data.config['strings']["gdrive()"])])
+        msg = await ctx.reply('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(ctx, msg, 60)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['arcarum', 'arca', 'oracle', 'evoker', 'astra', 'sandbox', 'veritas', 'newworld', 'luster'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def arcanum(self, ctx):
+        """Post a link to my Arcanum Sheet"""
+        view = UrlButton(self.bot, [('Arcanum Tracking Sheet', self.bot.data.config['strings']["arcanum()"])])
+        msg = await ctx.reply('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(ctx, msg, 60)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['eternals', 'transcendence', 'transc'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def eternal(self, ctx):
+        """Post a link to my Eternal Sheet"""
+        view = UrlButton(self.bot, [('Eternal Transcendance Sheet', self.bot.data.config['strings']["eternal()"])])
+        msg = await ctx.reply('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(ctx, msg, 60)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gwskin', 'blueskin'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def stayBlue(self, ctx):
+        """Post a link to my blue eternal outfit grinding Sheet"""
+        view = UrlButton(self.bot, [('Blue Skin Sheet', self.bot.data.config['strings']["stayblue()"])])
+        msg = await ctx.reply('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(ctx, msg, 60)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['soldier'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def bullet(self, ctx):
+        """Post a link to my bullet grind Sheet"""
+        view = UrlButton(self.bot, [('Bullet Grind Sheet', self.bot.data.config['strings']["bullet()"])])
+        msg = await ctx.reply('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(ctx, msg, 60)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['gbfgcrew', 'gbfgpastebin'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def pastebin(self, ctx):
+        """Post a link to the /gbfg/ crew pastebin"""
+        view = UrlButton(self.bot, [('Leechers inside', self.bot.data.config['strings']["pastebin()"])])
+        msg = await ctx.reply('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(ctx, msg, 60)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tracker'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def dps(self, ctx):
+        """Post the custom Combat tracker"""
+        view = UrlButton(self.bot, [('GBF Combat Tracker', self.bot.data.config['strings']["dps()"])])
+        msg = await ctx.reply('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(ctx, msg, 60)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['raidfinder', 'python_raidfinder'])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def pyfinder(self, ctx):
         """Post the (You) python raidfinder"""
         ls = self.bot.data.config['strings']["pyfinder()"].split(";")
         # note: string is in the following format:
@@ -571,25 +668,83 @@ class GranblueFantasy(commands.Cog):
             if l == "": continue
             urls.append(l.split("###"))
         view = UrlButton(self.bot, urls)
-        await inter.response.send_message('\u200b', view=view)
+        msg = await ctx.reply('\u200b', view=view)
         view.stopall()
-        await self.bot.util.clean(inter, 60)
+        await self.bot.util.clean(ctx, msg, 60)
 
-    @gbf.sub_command()
-    async def stream(self, inter, op : str = commands.Param(default="")):
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 20, commands.BucketType.guild)
+    async def mizatube(self, ctx):
+        """Post the owner youtube channel"""
+        if 'mizatube()' in self.bot.data.config['strings']:
+            view = UrlButton(self.bot, [('Subscribe ;)', self.bot.data.config['strings']["mizatube()"])])
+            msg = await ctx.reply('\u200b', view=view)
+            view.stopall()
+            await self.bot.util.clean(ctx, msg, 60)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['ubhl', 'ubahahl'])
+    @commands.cooldown(1, 15, commands.BucketType.guild)
+    async def ubaha(self, ctx):
+        """Post the Ultimate Bahamut HL Triggers"""
+        await ctx.reply(embed=self.bot.util.embed(title="Empyreal Ascension (Impossible)", url="https://gbf.wiki/Ultimate_Bahamut_(Raid)#impossible", description="**95%**{} Daedalus Wing (uplift)\n**85%**{} Deadly Flare (dispel)\n**80%**♦️ charge diamonds\n**75%**{} Virtuous Verse (swap)\n**70%**{} The Rage (local debuffs)\n**70-50%**♦️ charge diamonds in OD\n**55%**{} Deadly Flare (stone)\n**50 & 40**%{} Sirius (4x30% plain)\n**45 & 35**%▫️ Sirius\n**28%**♦️ charge diamonds\n**22%**{} Ultima Blast (dispel)\n**15%**{} Skyfall Ultimus\n**10% & 1%**▫️ Cosmic Collision\n**5%**{} Deadly Flare".format(self.bot.emote.get('wind'), self.bot.emote.get('fire'), self.bot.emote.get('earth'), self.bot.emote.get('light'), self.bot.emote.get('fire'), self.bot.emote.get('misc'), self.bot.emote.get('water'), self.bot.emote.get('dark'), self.bot.emote.get('dark')), footer="Stay blue", color=self.color, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/303141.png"))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['superubaha', 'superbaha', 'subahahl'])
+    @commands.cooldown(1, 15, commands.BucketType.guild)
+    async def subaha(self, ctx):
+        """Post the Super Ultimate Bahamut HL Triggers"""
+        await ctx.reply(embed=self.bot.util.embed(title="Rage of Super Ultimate Bahamut", url="https://gbf.wiki/Super_Ultimate_Bahamut_(Raid)", description="{} Each element must cancel omens to reduces the Tenet stacks\n**75-51%**▫️Immune to delay\n{} **Special Attacks**\n**100-76%**▫️Termination Flare (23 hits, Burn/Fear/Cut to buff duration) [15M]\n**75-51%**▫️Verse Ruler (Single DMG. & Swap lowest HP chara.) [20M]\n**50-11**%▫️Crisis Crunch (100% Plain to highest HP chara., can't be revived) [20M]\n**10-0%**▫️Genesis Nova (Party Wipe)\n{} **Cycle Every 6 Turns**\n**100-51%**\nArcadia Foteinos (AOE DMG., Purging Light buff) [10 debuffs]\nArcadia Gnosis (AOE DMG., Godsight buff) [60 hits]\nArcadia Skliros (AOE DMG., DMG Cuts nullified) [20M CA]\nArcadia Laimargos (AOE DMG., Superio Element buff) [20M Skill]\n**50-11%**\nArcadia Tromos (AOE DMG., No guard debuff) [6 Chain]\nArcadia Eclipse (AOE DMG., Max HP capped to 20k) [3.33M Plain]\nArcadia Apocryphos (AOE DMG., Can't summon debuff) [12 skill casts]\n{} **Triggers**\n**75%**▫️Daedalus Drive (AOE 40K Plain)\n**50%**▫️Omnipotent Cocoon (Doesn't attack, Generate Tenets, 5T) [50M]\n**After Cocoon**▫️Double Strike/All Foe Attack, Gain Local Echo of elements at stack 5+, Apply the debuffs from missed 6T Triggers\n**10%**▫️Sirius Origin (4x99k plain, Drain/2->8\\♦️, Apply the debuffs from missed 6T Triggers)".format(self.bot.emote.get('mark'), self.bot.emote.get('skill1'), self.bot.emote.get('mark'), self.bot.emote.get('skill2')), footer="and Knuckles", color=self.color, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/305311.png"))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['darkrapture', 'rapture', 'faa', 'luci', 'lucihl', 'luciliushl'])
+    @commands.cooldown(1, 30, commands.BucketType.guild)
+    async def lucilius(self, ctx):
+        """Post the Lucilius HL Triggers"""
+        await ctx.reply(embed=self.bot.util.embed(title="Dark Rapture (Hard)", url="https://gbf.wiki/Lucilius_(Raid)#Impossible_.28Hard.29", fields = [{'name': "{} Black Wings".format(self.bot.emote.get('1')), 'value':'**N **{} Phosphosrus (single)\n**OD**{} Iblis (multi, debuffs)\n**OD, both**▫️ Paradise Lost (party)\n**Join**{} Paradise Lost (30K)\n**70%**▫️ Sephiroth (debuff wipe)\n**50%**{} Seven Trumpets (**12 Labors**)\n**1-6**{} increase damage [10M]\n**7**{} use superior element [2M plain]\n**8**{} nullify phalanx [OverChain]\n**9**{} heal [30 hits]\n**10**{} random debuff [10 debuffs]\n**11**{} dispel 2 buffs [trigger PL]\n**12**{} deal plain damage [all labors]'.format(self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('misc'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'))}, {'name': "{} Lucilius".format(self.bot.emote.get('2')), 'value':'**95%**{} Phosphosrus (single)\n**85%**{} Axion (multi)\n**70%**♦️ charge diamonds\n**60%**{} Axion (**party**)\n**55%**♦️ charge diamonds\n**25%**{} Gopherwood Ark (racial check)\n**20 & 15%**{} Axion Apocalypse (multi)\n**10 & 3%**{} Paradise Lost (999k)\n\n*Click the title for more details*'.format(self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'))}], inline=True, footer="Your fate is over", color=self.color, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/303281.png"))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['beelzebub', 'bubz'])
+    @commands.cooldown(1, 15, commands.BucketType.guild)
+    async def bubs(self, ctx):
+        """Post the Beelzebub HL Triggers"""
+        await ctx.reply(embed=self.bot.util.embed(title="Long Live the King", url="https://gbf.wiki/Beelzebub_(Raid)", description="**100% & OD**▫️ Chaoscaliber (party, stun) [30 hits]\n**N **▫️ Unisonic (multi, counter) [10M]\n**75, 60% & OD**▫️ Karma (summonless) [FC]\n**N **▫️ Black Flies (multi, slashed) [10M]\n**50%**{} Langelaan Field (4T, reflect 2K, doesn't attack) [5M+20M/death]\n**OD**▫️ Chaoscaliber (party x2, stun) [FC]\n**N **▫️ Just Execution (24 hits, -1T to buff/hit) [FC]\n**30 & 15%**▫️ Black Spear (party, defenless) [FC]\n**25 & 10%**▫️ Chaos Legion (party, 10k guarded) [FC]\n**King's Religion**{} Total turns reached 30xPlayer Count".format(self.bot.emote.get('misc'), self.bot.emote.get('misc')), footer="Qilin Fantasy", color=self.color, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/305181.png"))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['lust'])
+    @commands.cooldown(1, 15, commands.BucketType.guild)
+    async def belial(self, ctx):
+        """Post the Belial HL Triggers"""
+        await ctx.reply(embed=self.bot.util.embed(title="The Fallen Angel of Cunning", url="https://gbf.wiki/Belial_(Raid)", description="**On Join**{}️ Lemegeton (20K Plain)\n**75, 50, 25%**▫️ Debuff Wipe\n**65%** ▫️ Asmodeus (multi, debuff, omega fruit) [Dispel]\n**50% Form** ▫️ Triple elemental absorption\nGroups: {}{} / {}{} / {}{}\n**50%** ▫️ Anagenesis (dark dmg based on stack)\n**30%** ▫️ Goetia (multi, slashed/supp debuff) [FC]\n**5%** ▫️ Lemegeton (Let you continue, Full diamond)\n**Before 50%**\n**N & OD**▫️ Amadeus (party, perma debuffs)\n**Turn 3**▫️ Goetia (multi, slashed/supp debuff) [15M]\n**Turn 6**▫️ Lemegeton (party, dispel x2, diamond+1) [35 hits]\n**After 50%**\n**N & OD**{} Amadeus (**Raid Wipe**)\n**Turn 3**▫️ Goetia (multi, atk up, stack up) [FC]\n**Turn 6**▫️ Lemegeton (30K, skill & CA seal) [Dispel]\nTurn Triggers above **repeat every 6 turns**\n**Every 3T**▫️ Random fruit applied to party".format(self.bot.emote.get('misc'), self.bot.emote.get('fire'), self.bot.emote.get('wind'), self.bot.emote.get('water'), self.bot.emote.get('earth'), self.bot.emote.get('light'), self.bot.emote.get('dark'), self.bot.emote.get('misc')), footer="Delay to win", color=self.color, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/305281.png"))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["christmas", "anniversary", "anniv", "summer"])
+    @commands.cooldown(3, 30, commands.BucketType.guild)
+    async def stream(self, ctx, op : str = ""):
         """Post the stream text"""
         if len(self.bot.data.save['stream']['content']) == 0:
-            await inter.response.send_message(embed=self.bot.util.embed(title="No event or stream available", color=self.color))
+            await ctx.send(embed=self.bot.util.embed(title="No event or stream available", color=self.color))
         elif op == "raw":
             msg = ""
             for c in self.bot.data.save['stream']['content']:
                 msg += c + '\n'
-            await inter.response.send_message(embed=self.bot.util.embed(title="Raw Stream Data", description='`' + msg + '`', color=self.color), ephemeral=True)
+            await ctx.send('`' + msg + '`')
         else:
             title = self.bot.data.save['stream']['content'][0]
             msg = ""
             current_time = self.bot.util.JST()
-            if self.bot.data.save['stream']['time'] is not None:
+            times = [,
+                current_time.replace(day=12, month=11, year=2021, hour=21, minute=0, second=0, microsecond=0),
+                current_time.replace(day=12, month=12, year=2021, hour=13, minute=0, second=0, microsecond=0),
+                current_time.replace(day=12, month=12, year=2021, hour=17, minute=0, second=0, microsecond=0),
+                current_time.replace(day=12, month=12, year=2021, hour=17, minute=40, second=0, microsecond=0)
+            ]
+            for i in range(len(times)):
+                if current_time >= times[i]:
+                    times[i] = " :warning: **ON GOING**"
+                    for j in range(0, i):
+                        times[j] = ""
+                else:
+                    times[i] = " (starts in **{}**)".format(self.bot.util.delta2str(times[i] - current_time, 2))
+            title = "**🎄 Granblue FES 2021 🎄**"
+            msg = "[Day 1 Night Party](https://www.youtube.com/watch?v=DPQApXC_v0s){}\n[Day 2 Stream](https://youtu.be/14-OxByFQvk){}\n[GBVS / Relink Latest NEWS](https://youtu.be/14-OxByFQvk){}\n[Christmas Special](https://youtu.be/14-OxByFQvk){}\n\n[@Granblue_EN Restream](https://www.twitch.tv/vibratingsheep)".format(times[0], times[1], times[2], times[3])
+            
+            
+            """if self.bot.data.save['stream']['time'] is not None:
                 if current_time < self.bot.data.save['stream']['time']:
                     d = self.bot.data.save['stream']['time'] - current_time
                     cd = "{}".format(self.bot.util.delta2str(d, 2))
@@ -605,14 +760,16 @@ class GranblueFantasy(commands.Cog):
             
             if cd != "" and title.find('{}') != -1:
                 title = title.format(cd) + "\n"
+            """
 
-            await inter.response.send_message(embed=self.bot.util.embed(title=title, description=msg, color=self.color))
+            await ctx.send(embed=self.bot.util.embed(title=title, description=msg, color=self.color))
 
-    @gbf.sub_command()
-    async def schedule(self, inter, raw : str = commands.Param(default="")):
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["event"])
+    @commands.cooldown(3, 30, commands.BucketType.guild)
+    async def schedule(self, ctx, raw : str = ""):
         """Post the GBF schedule"""
         if len(self.bot.data.save['schedule']) == 0:
-            await inter.response.send_message(embed=self.bot.util.embed(title="No schedule available", color=self.color))
+            await ctx.send(embed=self.bot.util.embed(title="No schedule available", color=self.color))
         else:
             l = len(self.bot.data.save['schedule'])
             if raw != 'raw': l = l - (l%2) # need an even amount, skipping the last one if odd
@@ -674,10 +831,42 @@ class GranblueFantasy(commands.Cog):
                         msg += "{} Stream starts in **{}**".format(self.bot.emote.get('crystal'), self.bot.util.delta2str(self.bot.data.save['stream']['time'] - current_time, 2))
                 except:
                     pass
-            await inter.response.send_message(embed=self.bot.util.embed(title="🗓 Event Schedule {} {:%Y/%m/%d %H:%M} JST".format(self.bot.emote.get('clock'), self.bot.util.JST()), url="https://twitter.com/granblue_en", color=self.color, description=msg))
+            await ctx.send(embed=self.bot.util.embed(title="🗓 Event Schedule {} {:%Y/%m/%d %H:%M} JST".format(self.bot.emote.get('clock'), self.bot.util.JST()), url="https://twitter.com/granblue_en", color=self.color, description=msg))
 
-    @gbf.sub_command()
-    async def koregra(self, inter):
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['friday'])
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def premium(self, ctx):
+        """Post the time to the next Premium Friday"""
+        c = self.bot.util.JST()
+        d = c
+        last = None
+        searching = True
+        thumbnail = "https://cdn.discordapp.com/attachments/354370895575515138/584025273079562240/unknown.png"
+        while searching:
+            if d.weekday() == 4:
+                last = d
+            d = d + timedelta(seconds=86400)
+            if last is not None and d.month != last.month:
+                if c == last:
+                    beg = last.replace(hour=15, minute=00, second=00)
+                    end = c.replace(hour=23, minute=59, second=59) + timedelta(days=2, seconds=1)
+                    if c >= beg and c < end:
+                        end = end - c
+                        await ctx.send(embed=self.bot.util.embed(title="{} Premium Friday".format(self.bot.emote.get('clock')), description="Premium Friday ends in **{}**".format(self.bot.util.delta2str(end, 2)), url="http://game.granbluefantasy.jp", thumbnail=thumbnail, color=self.color))
+                        return
+                    elif c >= end:
+                        pass
+                    elif c < beg:
+                        last = beg
+                        searching = False
+                else:
+                    searching = False
+        last = last.replace(hour=15, minute=00, second=00) - c
+        await ctx.send(embed=self.bot.util.embed(title="{} Premium Friday".format(self.bot.emote.get('clock')), description="Premium Friday starts in **{}**".format(self.bot.util.delta2str(last, 2)),  url="http://game.granbluefantasy.jp", thumbnail=thumbnail, color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['koregura', 'koregra'])
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def korekara(self, ctx):
         """Post the time to the next monthly dev post"""
         c = self.bot.util.JST()
         try:
@@ -696,11 +885,14 @@ class GranblueFantasy(commands.Cog):
                 if c.month == 12: target = datetime(year=c.year+1, month=1, day=1, hour=12, minute=0, second=0, microsecond=0)
                 else: target = datetime(year=c.year, month=c.month+1, day=1, hour=12, minute=0, second=0, microsecond=0)
         delta = target - c
-        await inter.response.send_message(embed=self.bot.util.embed(title="{} Kore Kara".format(self.bot.emote.get('clock')), description="Release approximately in **{}**".format(self.bot.util.delta2str(delta, 2)),  url="https://granbluefantasy.jp/news/index.php", thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
+        await ctx.send(embed=self.bot.util.embed(title="{} Kore Kara".format(self.bot.emote.get('clock')), description="Release approximately in **{}**".format(self.bot.util.delta2str(delta, 2)),  url="https://granbluefantasy.jp/news/index.php", thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
 
-    @gbf.sub_command()
-    async def critical(self, inter, weapons : str = commands.Param(description='List of weapon modifiers. Put nothing to get the list.', default='')):
-        """Calculate critical rate"""
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['crits', 'critical', 'criticals'])
+    @commands.cooldown(2, 5, commands.BucketType.user)
+    async def crit(self, ctx, *, weapons : str = ""):
+        """Calculate critical rate
+        Do the command without parameters for the full modifier list
+        Add `u` before a modifier to make it unboosted by the aura"""
         values = {'small10':2, 'small15':3, 'small20':4, 'medium10':5, 'medium15':6.5, 'medium20':7.5, 'big10':8, 'big15':10, 'big20':11, 'bigii15':12, 'wamdus':20, 'hercules':11.5, 'sephira':30}
         ts = {'small':'small15', 'med':'medium15', 'medium':'medium15', 'big':'big15', 'big2':'bigii15', 's10':'small10', 's15':'small15', 's20':'small20', 'm10':'medium10', 'm15':'medium15', 'm20':'medium20', 'med10':'medium10', 'med15':'medium15', 'med20':'medium20', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'bii10':'bigii10', 'bii15':'bigii15', 'b210':'bigii10', 'b215':'bigii15', 'big210':'bigii10', 'big215':'bigii15', 'ameno':'medium20', 'gaebulg':'medium20', 'bulg':'medium20', 'bulge':'medium20', 'gae':'medium20', 'mjolnir':'small20', 'herc':'hercules', 'ecke':'medium15', 'eckesachs':'medium15', 'sachs':'medium15', 'blut':'small15', 'blutgang':'small15', 'indra':'medium15', 'ivory':'bigii15', 'ivoryark':'bigii15', 'ark':'bigii15', 'auberon':'medium15', 'aub':'medium15', 'taisai':'big15', 'pholia':'big15', 'galilei':'medium15', 'europa':'medium15', 'benedia':'medium15', 'thunderbolt':'big15', 'shibow':'big15', 'rein':'bigii15', 'babel':'bigii15', 'mandeb':'bigii15', 'bab-el-mandeb':'bigii15', 'arca':'sephira', 'arcarum':'sephira', 'spoon':'medium15', 'coruscant':'medium15', 'crozier':'medium15', 'eva':'bigii15', 'evanescence':'bigii15', 'opus':'medium20'}
         flats = ['wamdus', 'sephira']
@@ -732,8 +924,7 @@ class GranblueFantasy(commands.Cog):
             msg += "160% ▫️ {:.1f}% ▫️▫️ 310% ▫️ {:.1f}%\n".format(min(base*2.6 + flat, 100), min(base*4.1 + flat, 100))
             msg += "170% ▫️ {:.1f}% ▫️▫️ 320% ▫️ {:.1f}%\n".format(min(base*2.7 + flat, 100), min(base*4.2 + flat, 100))
             msg += "280% ▫️ {:.1f}%\n".format(min(base*3.8 + flat, 100))
-            await inter.response.send_message(embed=self.bot.util.embed(title="Critical Calculator", description=msg.replace('.0%', '%').replace('100%', '**100%**'), footer=s1, color=self.color))
-            await self.bot.util.clean(inter, 60)
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Critical Calculator", description=msg.replace('.0%', '%').replace('100%', '**100%**'), footer=s1, color=self.color))
         except Exception as e:
             if str(e) == "Empty Parameter":
                 modstr = ""
@@ -741,13 +932,17 @@ class GranblueFantasy(commands.Cog):
                     modstr += "`{}`, ".format(m)
                 for m in ts:
                     modstr += "`{}`, ".format(m)
-                await inter.response.send_message(embed=self.bot.util.embed(title="Critical Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `u` before a modifier to make it unboosted" , color=self.color), ephemeral=True)
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="Critical Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `u` before a modifier to make it unboosted" , color=self.color))
             else:
-                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="Critical Calculator", description="Error", footer=str(e), color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 40)
 
-    @gbf.sub_command()
-    async def enmity(self, inter, hp : int = commands.Param(description="HP%", ge=1, le=100, default=60), weapons : str = commands.Param(description='List of weapon modifiers. Put nothing to get the list.', default='')):
-        """Calculate enmity strength at a specific hp value"""
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['backwater'])
+    @commands.cooldown(2, 5, commands.BucketType.user)
+    async def enmity(self, ctx, hp : int = 60, *, weapons : str = ""):
+        """Calculate enmity strength at a specific hp value
+        Do the command without parameters for the full modifier list
+        Add `u` before a modifier to make it unboosted by the aura"""
         values = {'small10':6, 'small15':7, 'small20':7.5, 'medium10':8, 'medium15':10, 'big10':10, 'big15':12.5, 'big20':13.5}
         ts = {'small':'small15', 'med':'medium15', 'medium':'medium15', 'big':'big15', 's10':'small10', 's15':'small15', 's20':'small20', 'm10':'medium10', 'm15':'medium15', 'med10':'medium10', 'med15':'medium15', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'opus':'big20'}
         flats = []
@@ -784,8 +979,7 @@ class GranblueFantasy(commands.Cog):
             msg += "160% ▫️ {:.1f}% ▫️▫️ 310% ▫️ {:.1f}%\n".format(base_val*2.6 + flat_val, base_val*4.1 + flat_val)
             msg += "170% ▫️ {:.1f}% ▫️▫️ 320% ▫️ {:.1f}%\n".format(base_val*2.7 + flat_val, base_val*4.2 + flat_val)
             msg += "280% ▫️ {:.1f}%\n".format(base_val*3.8 + flat_val)
-            await inter.response.send_message(embed=self.bot.util.embed(title="Enmity Calculator ▫️ {}% HP".format(hp), description=msg.replace('.0%', '%'), footer=s1, color=self.color))
-            await self.bot.util.clean(inter, 60)
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Enmity Calculator ▫️ {}% HP".format(hp), description=msg.replace('.0%', '%'), footer=s1, color=self.color))
         except Exception as e:
             if str(e) == "Empty Parameter":
                 modstr = ""
@@ -793,13 +987,17 @@ class GranblueFantasy(commands.Cog):
                     modstr += "`{}`, ".format(m)
                 for m in ts:
                     modstr += "`{}`, ".format(m)
-                await inter.response.send_message(embed=self.bot.util.embed(title="Enmity Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `u` before a modifier to make it unboosted" , color=self.color), ephemeral=True)
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="Enmity Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `u` before a modifier to make it unboosted" , color=self.color))
             else:
-                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="Enmity Calculator", description="Error", footer=str(e), color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 40)
 
-    @gbf.sub_command()
-    async def stamina(self, inter, hp : int = commands.Param(description="HP%", ge=1, le=100, default=100), weapons : str = commands.Param(description='List of weapon modifiers. Put nothing to get the list.', default='')):
-        """Calculate stamina strength at a specific hp value"""
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['frontwater', 'stam'])
+    @commands.cooldown(2, 5, commands.BucketType.user)
+    async def stamina(self, ctx, hp : int = 100, *, weapons : str = ""):
+        """Calculate stamina strength at a specific hp value
+        Do the command without parameters for the full modifier list
+        Add `u` before a modifier to make it unboosted by the aura"""
         values = {'medium10':(10, 65), 'medium15':(15, 65), 'medium20':(20, 65), 'big10':(10, 56.4), 'big15':(15, 56.4), 'big20':(20, 56.4), 'bigii10':(10, 53.7), 'bigii15':(15, 53.7), 'ancestral':(15, 50.4), 'omegamedium10':(10, 60.4), 'omegamedium15':(15, 60.4), 'omegabig10':(10, 56.4), 'omegabig15':(15, 56.4)}
         ts = {'med':'medium15', 'medium':'medium15', 'big':'big15', 'big2':'bigii15', 'omed':'omegamedium15', 'omedium':'omegamedium15', 'obig':'omegabig15', 'm10':'medium10', 'm15':'medium15', 'm20':'medium20', 'med10':'medium10', 'med15':'medium15', 'med20':'medium20', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'bii10':'bigii10', 'bii15':'bigii15', 'b210':'bigii10', 'b215':'bigii15', 'big210':'bigii10', 'big215':'bigii15', 'dragon':'ancestral', 'opus':'big20', 'om10':'omegamedium10', 'om15':'omegamedium15', 'omed10':'omegamedium10', 'omed15':'omegamedium15', 'ob10':'omegabig10', 'ob15':'omegabig15'}
         flats = ['ancestral']
@@ -850,8 +1048,7 @@ class GranblueFantasy(commands.Cog):
             msg += "160% ▫️ {:.1f}% ▫️▫️ 310% ▫️ {:.1f}%\n".format(base_val*2.6 + flat_val, base_val*4.1 + flat_val)
             msg += "170% ▫️ {:.1f}% ▫️▫️ 320% ▫️ {:.1f}%\n".format(base_val*2.7 + flat_val, base_val*4.2 + flat_val)
             msg += "280% ▫️ {:.1f}%\n".format(base_val*3.8 + flat_val)
-            await inter.response.send_message(embed=self.bot.util.embed(title="Stamina Calculator ▫️ {}% HP".format(hp), description=msg.replace('.0%', '%'), footer=s1.replace('.0', ''), color=self.color))
-            await self.bot.util.clean(inter, 60)
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Stamina Calculator ▫️ {}% HP".format(hp), description=msg.replace('.0%', '%'), footer=s1.replace('.0', ''), color=self.color))
         except Exception as e:
             if str(e) == "Empty Parameter":
                 modstr = ""
@@ -859,13 +1056,16 @@ class GranblueFantasy(commands.Cog):
                     modstr += "`{}`, ".format(m)
                 for m in ts:
                     modstr += "`{}`, ".format(m)
-                await inter.response.send_message(embed=self.bot.util.embed(title="Stamina Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `u` before a modifier to make it unboosted" , color=self.color))
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="Stamina Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `u` before a modifier to make it unboosted" , color=self.color))
             else:
-                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
+                final_msg = await ctx.reply(embed=self.bot.util.embed(title="Stamina Calculator", description="Error", footer=str(e), color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 40)
 
-    @gbf.sub_command()
-    async def xp(self, inter, start_level : int = commands.Param(description="Starting Point of the calcul", ge=1, le=149, default=1), end_level : int = commands.Param(description="Final Point of the calcul", ge=1, le=150, default=1)):
-        """Character experience calculator"""
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['exp', 'experience'])
+    @commands.cooldown(2, 15, commands.BucketType.user)
+    async def xp(self, ctx, start_level : int = 1, end_level : int = -1):
+        """Character experience calculator
+        You can specify the start level (1 to 149) and the end level (2 to 150)"""
         xptable = [None, 30, 70, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 550, 600, 650, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 3600, 3800, 4000, 4200, 4400, 4600, 4800, 5000, 5250, 5500, 5750, 6000, 6250, 6500, 6750, 7000, 7250, 7500, 7800, 8100, 8400, 8700, 9000, 9500, 10000, 10500, 11000, 11500, 12000, 12500, 13000, 13500, 14000, 14500, 15000, 15500, 16000, 50000, 20000, 21000, 22000, 23000, 24000, 25000, 26000, 27000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000, 500000, 1000000, 1000000, 1200000, 1200000, 1200000, 1200000, 1200000, 1250000, 1250000, 1250000, 1250000, 1250000, 1300000, 1300000, 1300000, 1300000, 1300000, 1350000, 1350000, 1350000, 1350000, 1350000, 1400000, 1400000, 1400000, 1400000, 1400000, 1450000, 1450000, 1450000, 1450000, 1450000, 1500000, 1500000, 1500000, 1500000, 1500000, 1550000, 1550000, 1550000, 1550000, 1550000, 1600000, 1600000, 1600000, 1600000, 1600000, 1650000, 1650000, 1650000, 1650000, 0]
         if start_level < 1: start_level = 1
         elif start_level >= 150: start_level = 149
@@ -876,8 +1076,8 @@ class GranblueFantasy(commands.Cog):
                 msg += "**{:,} XP** for lvl **{:}** ({:} books or {:,} candies)\n".format(xpcount, lvl, math.ceil(xpcount / 300000), math.ceil(xpcount / 745))
                 if lvl == end_level: break
             xpcount += xptable[lvl]
-        await inter.response.send_message(embed=self.bot.util.embed(title="Experience Calculator", description=msg, color=self.color))
-        await self.bot.util.clean(inter, 40)
+        msg = await ctx.reply(embed=self.bot.util.embed(title="Experience Calculator", description=msg, color=self.color))
+        await self.bot.util.clean(ctx, msg, 40)
 
     """getGrandList()
     Request the grand character list from the wiki page and return the list of latest released ones
@@ -936,8 +1136,9 @@ class GranblueFantasy(commands.Cog):
                                 grand_list[grand['element']] = grand
                     return grand_list
 
-    @gbf.sub_command()
-    async def doom(self, inter):
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=["doom", "doompost", "magnafest", "magnafes", "campaign", "brick", "bar", "sunlight", "stone", "suptix", "surprise", "evolite", "fugdidmagnafeststart", "alivegame", "alive"])
+    @commands.cooldown(1, 60, commands.BucketType.guild)
+    async def deadgame(self, ctx):
         """Give the time elapsed of various GBF related releases"""
         msg = ""
         wiki_checks = ["Category:Campaign", "Surprise_Special_Draw_Set", "Damascus_Ingot", "Gold_Brick", "Sunlight_Stone", "Sephira_Evolite"]
@@ -966,10 +1167,133 @@ class GranblueFantasy(commands.Cog):
             pass
 
         if msg != "":
-            await inter.response.send_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))
+            final_msg = await ctx.send(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))
         else:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
-        await self.bot.util.clean(inter, 40)
+            final_msg = await ctx.send(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 30)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isOwner()
+    async def account(self, ctx, id : int = -1):
+        """List GBF accounts used by the bot (Owner Only)
+        Specify one to test it"""
+        if len(self.bot.data.save['gbfaccounts']) == 0:
+            await ctx.send(embed=self.bot.util.embed(title="GBF Account status", description="No accounts set", color=self.color))
+            return
+
+        if id == -1:
+            msg = ""
+            for i in range(0, len(self.bot.data.save['gbfaccounts'])):
+                acc = self.bot.data.save['gbfaccounts'][i]
+                if i == self.bot.data.save['gbfcurrent']: msg += "👉 "
+                else: msg += "{} ".format(i)
+                msg += "**{}** ".format(acc[0])
+                match acc[3]:
+                    case 0: msg += "❔"
+                    case 1: msg += "✅"
+                    case 2: msg += "❎"
+                msg += "\n"
+            await self.bot.send('debug', embed=self.bot.util.embed(title="GBF Account status", description=msg, color=self.color))
+            await self.bot.util.react(ctx.message, '✅') # white check mark
+        else:
+            acc = self.bot.gbf.get(id)
+            if acc is None:
+                await ctx.send(embed=self.bot.util.embed(title="GBF Account status", description="No accounts set in slot {}".format(id), color=self.color))
+                return
+            r = await self.bot.do(self.bot.gbf.request, self.bot.data.config['gbfwatch']['test'], account=id, decompress=True, load_json=True, check=True, force_down=True)
+            if r is None or r.get('user_id', None) != acc[0]:
+                await self.bot.send('debug', embed=self.bot.util.embed(title="GBF Account status", description="Account #{} is down\nck: `{}`\nuid: `{}`\nua: `{}`\n".format(id, acc[0], acc[1], acc[2]) , color=self.color))
+                with self.bot.data.lock:
+                    self.bot.data.save['gbfaccounts'][id][3] = 2
+                    self.bot.data.pending = True
+            elif r == "Maintenance":
+                await self.bot.send('debug', embed=self.bot.util.embed(title="GBF Account status", description="Game is in maintenance", color=self.color))
+            else:
+                await self.bot.send('debug', embed=self.bot.util.embed(title="GBF Account status", description="Account #{} is up\nck: `{}`\nuid: `{}`\nua: `{}`\n".format(id, acc[0], acc[1], acc[2]), color=self.color))
+                with self.bot.data.lock:
+                    self.bot.data.save['gbfaccounts'][id][3] = 1
+                    self.bot.data.save['gbfaccounts'][id][5] = self.bot.util.JST()
+                    self.bot.data.pending = True
+            await self.bot.util.react(ctx.message, '✅') # white check mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isOwner()
+    async def switch(self, ctx, id : int):
+        """Select the current GBF account to use (Owner Only)"""
+        if self.bot.gbf.get(id) is not None:
+            with self.bot.data.lock:
+                self.bot.data.save['gbfcurrent'] = id
+                self.bot.data.pending = True
+            await self.bot.util.react(ctx.message, '✅') # white check mark
+        else:
+            await self.bot.util.react(ctx.message, '❌')
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isOwner()
+    async def addAccount(self, ctx, uid : int, ck : str, ua : str):
+        """Add a GBF account to the bot (Owner Only)"""
+        if uid < 1:
+            await ctx.send(embed=self.bot.util.embed(title="Error", description="Invalid parameter {}".format(uid), color=self.color))
+            return
+        if ck == "":
+            await ctx.send(embed=self.bot.util.embed(title="Error", description="Invalid parameter {}".format(ck), color=self.color))
+            return
+        if ua == "":
+            await ctx.send(embed=self.bot.util.embed(title="Error", description="Invalid parameter {}".format(ua), color=self.color))
+            return
+        self.bot.gbf.add(uid, ck, str)
+        await self.bot.util.react(ctx.message, '✅') # white check mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isOwner()
+    async def delAccount(self, ctx, num : int):
+        """Add a GBF account to the bot (Owner Only)"""
+        if self.bot.gbf.remove(num):
+            await self.bot.util.react(ctx.message, '✅') # white check mark
+        else:
+            await ctx.send(embed=self.bot.util.embed(title="Error", description="No account in slot {}".format(num), color=self.color))
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isOwner()
+    async def sauid(self, ctx, num : int, uid : int = -1):
+        """Modify a GBF account (Owner Only)"""
+        if uid < 0:
+            acc = self.bot.gbf.get(num)
+            if acc is None:
+                await ctx.send(embed=self.bot.util.embed(title="Error", description="No account in slot {}".format(num), color=self.color))
+            else:
+                await self.bot.send('debug', embed=self.bot.util.embed(title="Account #{} current UID".format(num), description="`{}`".format(acc[0]), color=self.color))
+        elif not self.bot.gbf.update(num, uid=uid):
+            await ctx.send(embed=self.bot.util.embed(title="Error", description="Invalid parameter {}".format(uid), color=self.color))
+        await self.bot.util.react(ctx.message, '✅') # white check mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isOwner()
+    async def sack(self, ctx, num : int, *, ck : str = ""):
+        """Modify a GBF account (Owner Only)"""
+        if ck == "":
+            acc = self.bot.gbf.get(num)
+            if acc is None:
+                await ctx.send(embed=self.bot.util.embed(title="Error", description="No account in slot {}".format(num), color=self.color))
+            else:
+                await self.bot.send('debug', embed=self.bot.util.embed(title="Account #{} current CK".format(num), description="`{}`".format(acc[1]), color=self.color))
+        elif not self.bot.gbf.update(num, ck=ck):
+            await ctx.send(embed=self.bot.util.embed(title="Error", description="Invalid parameter {}".format(ck), color=self.color))
+        await self.bot.util.react(ctx.message, '✅') # white check mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @isOwner()
+    async def saua(self, ctx, num : int, *, ua : str = ""):
+        """Modify a GBF account (Owner Only)"""
+        if ua == "":
+            acc = self.bot.gbf.get(num)
+            if acc is None:
+                await ctx.send(embed=self.bot.util.embed(title="Error", description="No account in slot {}".format(num), color=self.color))
+            else:
+                await self.bot.send('debug', embed=self.bot.util.embed(title="Account #{} current UA".format(num), description="`{}`".format(acc[2]), color=self.color))
+        elif not self.bot.gbf.update(num, ua=ua):
+            await ctx.send(embed=self.bot.util.embed(title="Error", description="Invalid parameter {}".format(ua), color=self.color))
+        await self.bot.util.react(ctx.message, '✅') # white check mark
 
     """getCurrentGacha()
     Get the current GBF gacha banner data.
@@ -1103,8 +1427,9 @@ class GranblueFantasy(commands.Cog):
                 self.bot.data.pending = True # save anyway
             return False
 
-    @gbf.sub_command()
-    async def gacha(self, inter):
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['rateup', 'banner'])
+    @commands.cooldown(1, 60, commands.BucketType.guild)
+    async def gacha(self, ctx):
         """Post the current gacha informations"""
         try:
             content = await self.bot.do(self.getCurrentGacha)
@@ -1113,10 +1438,10 @@ class GranblueFantasy(commands.Cog):
                 if content[0] != content[1]:
                     description += "\n{} Spark period ends in **{}**".format(self.bot.emote.get('mark'), self.bot.util.delta2str(content[1], 2))
                 description += "\n" + content[2]
-                await inter.response.send_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, thumbnail=content[3], color=self.color))
+                await ctx.send(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, thumbnail=content[3], color=self.color))
         except Exception as e:
             await self.bot.sendError("getcurrentgacha", e)
-            await inter.response.send_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Unavailable", color=self.color), ephemeral=True)
+            await ctx.send(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Unavailable", color=self.color))
 
     """getProfileData()
     Request a GBF profile
@@ -1136,7 +1461,7 @@ class GranblueFantasy(commands.Cog):
         if res is not None: return unquote(res['data'])
         else: return res
 
-    """searchprofile()
+    """searchProfile()
     Search a set profile in the save data
     
     Parameters
@@ -1147,59 +1472,77 @@ class GranblueFantasy(commands.Cog):
     --------
     int: matching discord ID, None if error
     """
-    def searchprofile(self, gbf_id):
+    def searchProfile(self, gbf_id):
         user_ids = list(self.bot.data.save['gbfids'].keys())
         for uid in user_ids:
             if self.bot.data.save['gbfids'].get(uid, None) == gbf_id:
                 return uid
         return None
 
-    @gbf.sub_command()
-    async def unsetprofile(self, inter):
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['clearid'])
+    @isOwner()
+    async def clearProfile(self, ctx, gbf_id : int):
+        """Unlink a GBF id (Owner Only)"""
+        user_id = await self.bot.do(self.searchProfile, gbf_id)
+        if user_id is None:
+            await ctx.send(embed=self.bot.util.embed(title="Clear Profile Error", description="ID not found", color=self.color))
+        else:
+            try:
+                with self.bot.data.lock:
+                    del self.bot.data.save['gbfids'][user_id]
+                    self.bot.data.pending = True
+            except:
+                pass
+            await self.bot.send('debug', embed=self.bot.util.embed(title="Clear Profile", description='User `{}` has been removed'.format(user_id), color=self.color))
+            await self.bot.util.react(ctx.message, '✅') # white check mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['unsetid'])
+    @commands.cooldown(1, 60, commands.BucketType.user)
+    async def unsetProfile(self, ctx):
         """Unlink your GBF id"""
-        if str(inter.author.id) not in self.bot.data.save['gbfids']:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="You didn't set your GBF profile ID", color=self.color), ephemeral=True)
+        if str(ctx.author.id) not in self.bot.data.save['gbfids']:
+            await ctx.reply(embed=self.bot.util.embed(title="Unset Profile Error", description="You didn't set your GBF profile ID", color=self.color))
             return
         with self.bot.data.lock:
             try:
-                del self.bot.data.save['gbfids'][str(inter.author.id)]
+                del self.bot.data.save['gbfids'][str(ctx.author.id)]
                 self.bot.data.pending = True
             except:
                 pass
-        await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
+        await self.bot.util.react(ctx.message, '✅') # white check mark
 
-    @gbf.sub_command()
-    async def setprofile(self, inter, id : int = commands.Param(description="A valid GBF Profile ID. Usurpation will result in ban.", ge=0)):
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['setid'])
+    @commands.cooldown(1, 60, commands.BucketType.user)
+    async def setProfile(self, ctx, id : int):
         """Link your GBF id to your Discord ID"""
         try:
-            if self.bot.ban.check(inter.author.id, self.bot.ban.PROFILE):
-                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="You are banned to use this feature", color=self.color), ephemeral=True)
+            if self.bot.ban.check(ctx.author.id, self.bot.ban.PROFILE):
+                await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="You are banned to use this feature", color=self.color))
                 return
             if id < 0 or id >= 100000000:
-                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid ID", color=self.color), ephemeral=True)
+                await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="Invalid ID", color=self.color))
                 return
             data = await self.bot.do(self.getProfileData, id)
             match data:
                 case "Maintenance":
-                    await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Game is in maintenance, try again later.", color=self.color), ephemeral=True)
+                    await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="Game is in maintenance, try again later.", color=self.color))
                     return
                 case "Down":
                     return
                 case None:
-                    await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Profile not found", color=self.color), ephemeral=True)
+                    await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="Profile not found", color=self.color))
                     return
                 case _:
-                    if (await self.bot.do(self.searchprofile, id)) is not None:
-                        await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="This id is already in use, use the bug_report command if it's a case of griefing", color=self.color), ephemeral=True)
+                    if (await self.bot.do(self.searchProfile, id)) is not None:
+                        await ctx.reply(embed=self.bot.util.embed(title="Set Profile Error", description="This id is already in use", footer="use the bugreport command if it's a case of griefing", color=self.color))
                         return
             # register
             with self.bot.data.lock:
-                self.bot.data.save['gbfids'][str(inter.author.id)] = id
+                self.bot.data.save['gbfids'][str(ctx.author.id)] = id
                 self.bot.data.pending = True
-            await inter.response.send_message(embed=self.bot.util.embed(title="Success", description="Your ID `{}` is now linked to your Discord ID `{}`".format(id, inter.author.id), color=self.color), ephemeral=True)
+            await self.bot.util.react(ctx.message, '✅') # white check mark
         except Exception as e:
             await self.bot.sendError("setprofile", e)
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color), ephemeral=True)
 
     """pasteImage()
     Paste an image onto another
@@ -1462,102 +1805,192 @@ class GranblueFantasy(commands.Cog):
         else: title = "\u202d{} **{}**▫️{}".format(self.bot.emote.get(rarity), name, trophy)
         return title, "{}{}\n{} Crew ▫️ {}\n{}{}\n\n[:earth_asia: Preview]({})".format(rank, comment, self.bot.emote.get('gw'), crew, scores, star, thumbnail), thumbnail
 
-    """_profile()
-    Retrieve a GBF profile and post it
-    
-    Parameters
-    ----------
-    inter: Command interaction
-    id: GBF id
-    """
-    async def _profile(self, inter, id):
-        data = await self.bot.do(self.getProfileData, id)
-        match data:
-            case "Maintenance":
-                await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Game is in maintenance", color=self.color))
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['id'])
+    @commands.cooldown(5, 30, commands.BucketType.guild)
+    async def profile(self, ctx, *, target : str = ""):
+        """Retrieve a GBF profile"""
+        try:
+            id = await self.bot.util.str2gbfid(ctx, target, self.color)
+            if id is None:
                 return
-            case "Down":
-                await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
+            await self.bot.util.react(ctx.message, 'time')
+            data = await self.bot.do(self.getProfileData, id)
+            match data:
+                case "Maintenance":
+                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Game is in maintenance", color=self.color))
+                    await self.bot.util.unreact(ctx.message, 'time')
+                    return
+                case "Down":
+                    await self.bot.util.unreact(ctx.message, 'time')
+                    return
+                case None:
+                    await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Profile not found", color=self.color))
+                    await self.bot.util.unreact(ctx.message, 'time')
+                    return
+            soup = BeautifulSoup(data, 'html.parser')
+            try: name = soup.find_all("span", class_="txt-other-name")[0].string
+            except: name = None
+            if name is None:
+                msg = await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Profile is private", url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+            else:
+                x = ""
+                title, description, thumbnail = await self.bot.do(self.processProfile, id, data)
+                try:
+                    with open(thumbnail, 'rb') as infile:
+                        df = discord.File(infile)
+                        message = await self.bot.send('image', file=df)
+                        df.close()
+                    self.bot.file.rm(thumbnail)
+                    description = description.replace(thumbnail, message.attachments[0].url)
+                    thumbnail = message.attachments[0].url
+                except:
+                    description = description.replace("\n[:earth_asia: Preview]({})".format(thumbnail), "")
+                    thumbnail = ""
+                msg = await ctx.reply(embed=self.bot.util.embed(title=title, description=description, image=thumbnail, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+            await self.bot.util.unreact(ctx.message, 'time')
+            await self.bot.util.clean(ctx, msg, 45)
+        except Exception as e:
+            await self.bot.util.unreact(ctx.message, 'time')
+            await self.bot.sendError("profile", e)
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 60, commands.BucketType.guild)
+    async def coop(self, ctx):
+        """Retrieve the current coop daily missions"""
+        try:
+            data = await self.bot.do(self.bot.gbf.request, 'http://game.granbluefantasy.jp/coopraid/daily_mission?PARAMS', account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True)['daily_mission']
+            msg = ""
+            for i in range(len(data)):
+                if data[i]['category'] == '2':
+                    items = {20011:'fire', 20012:'fire', 20111:'fire', 20021:'water', 20022:'water', 20121:'water', 20031:'earth', 20032:'earth', 20131:'earth', 20041:'wind', 20042:'wind', 20141:'wind'}
+                    id = int(data[i]['image'].split('/')[-1])
+                    msg += '{} {}\n'.format(self.bot.emote.get(items.get(id, 'misc')), data[i]['description'])
+                elif data[i]['category'] == '1':
+                    quests = {'s00101':'wind', 's00104':'wind', 's00204':'wind', 's00206':'wind', 's00301':'fire', 's00303':'fire', 's00405':'fire', 's00406':'fire', 's00601':'water', 's00602':'water', 's00604':'water', 's00606':'water', 's00802':'earth', 's00704':'earth', 's00705':'earth', 's00806':'earth', 's01005':'wind', 's00905':'wind', 's00906':'wind', 's01006':'wind', 's01105':'fire', 's01403':'fire', 's01106':'fire', 's01206':'fire', 's01001':'water', 's01502':'water', 's01306':'water', 's01406':'water', 's01601':'earth', 's01405':'earth', 's01506':'earth', 's01606':'earth'}
+                    id = data[i]['image'].split('/')[-1]
+                    msg += '{} {}\n'.format(self.bot.emote.get(quests.get(id, 'misc')), data[i]['description'])
+                else:
+                    msg += '{} {}\n'.format(self.bot.emote.get(str(i+1)), data[i]['description'])
+            await ctx.send(embed=self.bot.util.embed(author={'name':"Daily Coop Missions", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))
+        except:
+            await self.bot.util.react(ctx.message, '❎') # white negative mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['badboi', 'branded', 'restricted'])
+    @commands.cooldown(5, 30, commands.BucketType.guild)
+    async def brand(self, ctx, *, target : str = ""):
+        """Check if a GBF profile is restricted"""
+        try:
+            id = await self.bot.util.str2gbfid(ctx, target, self.color)
+            if id is None: return
+            data = await self.bot.do(self.bot.gbf.request, "http://game.granbluefantasy.jp/forum/search_users_id?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"user_id":id})
+            if data == "Maintenance":
+                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="Game is in maintenance", color=self.color))
                 return
-            case None:
-                await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Profile not found", color=self.color))
+            elif data == "Down":
                 return
-        soup = BeautifulSoup(data, 'html.parser')
-        try: name = soup.find_all("span", class_="txt-other-name")[0].string
-        except: name = None
-        if name is None:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Profile is Private", color=self.color))
-        else:
-            x = ""
-            title, description, thumbnail = await self.bot.do(self.processProfile, id, data)
+            elif len(data['user']) == 0:
+                await ctx.reply(embed=self.bot.util.embed(title="Profile Error", description="In game message:\n`{}`".format(data['no_member_msg'].replace("<br>", " ")), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                return
             try:
-                with open(thumbnail, 'rb') as infile:
-                    df = disnake.File(infile)
-                    message = await self.bot.send('image', file=df)
-                    df.close()
-                self.bot.file.rm(thumbnail)
-                description = description.replace(thumbnail, message.attachments[0].url)
-                thumbnail = message.attachments[0].url
+                if data['user']["restriction_flag_list"]["event_point_deny_flag"]:
+                    status = "Account is restricted"
+                else:
+                    status = "Account isn't restricted"
             except:
-                description = description.replace("\n[:earth_asia: Preview]({})".format(thumbnail), "")
-                thumbnail = ""
-            await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=description, image=thumbnail, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
-        await self.bot.util.clean(inter, 45)
-
-    @gbf.sub_command()
-    async def profile(self, inter, target : str = commands.Param(description="Either a valid GBF ID, discord ID or mention", default="")):
-        """Retrieve a GBF profile"""
-        try:
-            await inter.response.defer()
-            id = await self.bot.util.str2gbfid(inter, target, self.color)
-            if isinstance(id, str):
-                await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description=id, color=self.color))
-            else:
-                await self._profile(inter, id)
+                status = "Account isn't restricted"
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="{} {}".format(self.bot.emote.get('gw'), self.bot.util.shortenName(data['user']['nickname'])), description=status, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/leader/talk/{}.png".format(data['user']['image']), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+            await self.bot.util.clean(ctx, final_msg, 45)
         except Exception as e:
-            await self.bot.sendError("profile", e)
-            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color))
-        await self.bot.util.clean(inter, 60)
+            await self.bot.sendError("brand", e)
 
-    @commands.user_command(default_permission=True, name="GBF Profile")
-    @commands.cooldown(1, 30, commands.BucketType.user)
-    @commands.max_concurrency(4, commands.BucketType.default)
-    async def gbfprofile(self, inter: disnake.UserCommandInteraction, member: disnake.Member):
-        """Retrieve a GBF profile"""
+    @commands.command(no_pm=True, cooldown_after_parsing=True)
+    @commands.cooldown(1, 30, commands.BucketType.guild)
+    async def news(self, ctx):
+        """Post the latest new posts"""
+        if 'news_url' not in self.bot.data.save['gbfdata']:
+            self.bot.data.save['gbfdata']['news_url'] = []
+            self.bot.data.pending = True
+        msg = ""
+        for i in range(len(self.bot.data.save['gbfdata']['news_url'])):
+            msg += "{} [{}]({})\n".format(self.bot.emote.get(str(i+1)), self.bot.data.save['gbfdata']['news_url'][i][1], self.bot.data.save['gbfdata']['news_url'][i][0])
         try:
-            await inter.response.defer()
-            id = await self.bot.util.str2gbfid(inter, str(member.id), self.color)
-            if isinstance(id, str):
-                await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description=id, color=self.color))
+            thumb = self.bot.data.save['gbfdata']['news_url'][0][2]
+            if not thumb.startswith('http://granbluefantasy.jp') and not thumb.startswith('https://granbluefantasy.jp'):
+                if thumb.startswith('/'): thumb = 'https://granbluefantasy.jp' + thumb
+                else: thumb = 'https://granbluefantasy.jp/' + thumb
+        except: thumb = None
+        if msg == "":
+            final_msg = await ctx.send(embed=self.bot.util.embed(title="Unavailable", color=self.color))
+        else:
+            final_msg = await ctx.send(embed=self.bot.util.embed(author={'name':"Latest Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, image=thumb, color=self.color))
+        await self.bot.util.clean(ctx, final_msg, 45)
+
+    @commands.command(no_pm=True, name='4koma', cooldown_after_parsing=True, aliases=['granblues'])
+    @commands.cooldown(2, 40, commands.BucketType.guild)
+    async def _4koma(self, ctx, id : int = -123456789):
+        """Post a Granblues Episode"""
+        try:
+            if id == -123456789: id = int(self.bot.data.save['gbfdata']['4koma'])
+            if id < 0 or id > int(self.bot.data.save['gbfdata']['4koma']): raise Exception()
+            final_msg = await ctx.reply(embed=self.bot.util.embed(title="Granblue Episode {}".format(id), url="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/comic/episode/episode_{}.jpg".format(id), image="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/comic/thumbnail/thum_{}.png".format(str(id).zfill(5)), color=self.color))
+            await self.bot.util.clean(ctx, final_msg, 45)
+        except:
+            await self.bot.util.react(ctx.message, '❎') # white negative mark
+
+    @commands.command(no_pm=True, cooldown_after_parsing=True, aliases=['tweet'])
+    @commands.cooldown(1, 2, commands.BucketType.default)
+    async def twitter(self, ctx, term : str = ""):
+        """Post a twitter account (Tweepy enhanced)
+        If none is found and twitter is enabled, try to get the corresponding user.
+        options: granblue_en, en, noel, channel, tv wawi, raidpic, pic, kmr, fkhr,
+        kakage, hag, jk, hecate, hecate_mk2, gbfverification, gw, gamewith, anime,
+        gbf, granblue"""
+        registered = {
+            'granblue_en' : ["granblue_en", "Welcome EOP"],
+            'en' : ["granblue_en", "Welcome EOP"],
+            'noel' : ["noel_gbf", "Japanese Granblue news"],
+            'tv' : ["noel_gbf", "Japanese Granblue news"],
+            'channel' : ["noel_gbf", "Japanese Granblue news"],
+            'wawi' : ["wawigbf", "Subscribe: https://twitter.com/Wawi3313"],
+            'raidpic' : ["twihelp_pic", "To grab Granblue raid artworks"],
+            'pic' : ["twihelp_pic", "To grab Granblue raid artworks"],
+            'kmr' : ["kimurayuito", "Give praise, for he has no equal"],
+            'fkhr' : ["hiyopi", "The second in charge"],
+            'kakage' : ["kakage0904", "Young JK inside"],
+            'hag' : ["kakage0904", "Young JK inside"],
+            'jk' : ["kakage0904", "Young JK inside"],
+            'hecate' : ["hecate_mk2", "For nerds :nerd:"],
+            'hecate_mk2' : ["hecate_mk2", "For nerds :nerd:"],
+            'gbfverification' : ["hecate_mk2", "For nerds :nerd:"],
+            'gw' : ["granblue_gw", ":nine: / :keycap_ten:"],
+            'gamewith' : ["granblue_gw", ":nine: / :keycap_ten:"],
+            'anime' : ["anime_gbf", ":u5408:"],
+            'gbf' : ["granbluefantasy", "Official account"],
+            'granblue' : ["granbluefantasy", "Official account"]
+        }
+
+        target = registered.get(term.lower(), None)
+        pic = None
+        user = None
+        accepted = (target is not None)
+
+        if target is None:
+            user = self.bot.twitter.user(term.lower())
+        else:
+            user = self.bot.twitter.user(target[0])
+        if user is not None:
+            pic = user.data.profile_image_url
+        else:
+            pic = None
+
+        if accepted:
+            if user is None:
+                await ctx.reply(embed=self.bot.util.embed(title=target[0], url="https://twitter.com/{}".format(target[0]), description=target[1], thumbnail=pic, color=self.color))
             else:
-                await self._profile(inter, id)
-        except Exception as e:
-            await self.bot.sendError("profile", e)
-            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color))
-        await self.bot.util.clean(inter, 60)
-
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 10, commands.BucketType.user)
-    async def guide(self, inter):
-        """Command Group"""
-        pass
-
-    @guide.sub_command()
-    async def lucilius(self, inter):
-        """Post the Lucilius HL Triggers"""
-        await inter.response.send_message(embed=self.bot.util.embed(title="Dark Rapture (Hard)", url="https://gbf.wiki/Lucilius_(Raid)#Impossible_.28Hard.29", fields = [{'name': "{} Black Wings".format(self.bot.emote.get('1')), 'value':'**N **{} Phosphosrus (single)\n**OD**{} Iblis (multi, debuffs)\n**OD, both**▫️ Paradise Lost (party)\n**Join**{} Paradise Lost (30K)\n**70%**▫️ Sephiroth (debuff wipe)\n**50%**{} Seven Trumpets (**12 Labors**)\n**1-6**{} increase damage [10M]\n**7**{} use superior element [2M plain]\n**8**{} nullify phalanx [OverChain]\n**9**{} heal [30 hits]\n**10**{} random debuff [10 debuffs]\n**11**{} dispel 2 buffs [trigger PL]\n**12**{} deal plain damage [all labors]'.format(self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('misc'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'))}, {'name': "{} Lucilius".format(self.bot.emote.get('2')), 'value':'**95%**{} Phosphosrus (single)\n**85%**{} Axion (multi)\n**70%**♦️ charge diamonds\n**60%**{} Axion (**party**)\n**55%**♦️ charge diamonds\n**25%**{} Gopherwood Ark (racial check)\n**20 & 15%**{} Axion Apocalypse (multi)\n**10 & 3%**{} Paradise Lost (999k)\n\n*Click the title for more details*'.format(self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'))}], inline=True, footer="Your fate is over", color=self.color, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/303281.png"), ephemeral=True)
-
-    @guide.sub_command()
-    async def beelzebub(self, inter):
-        """Post the Beelzebub HL Triggers"""
-        await inter.response.send_message(embed=self.bot.util.embed(title="Long Live the King", url="https://gbf.wiki/Beelzebub_(Raid)", description="**100% & OD**▫️ Chaoscaliber (party, stun) [30 hits]\n**N **▫️ Unisonic (multi, counter) [10M]\n**75, 60% & OD**▫️ Karma (summonless) [FC]\n**N **▫️ Black Flies (multi, slashed) [10M]\n**50%**{} Langelaan Field (4T, reflect 2K, doesn't attack) [5M+20M/death]\n**OD**▫️ Chaoscaliber (party x2, stun) [FC]\n**N **▫️ Just Execution (24 hits, -1T to buff/hit) [FC]\n**30 & 15%**▫️ Black Spear (party, defenless) [FC]\n**25 & 10%**▫️ Chaos Legion (party, 10k guarded) [FC]\n**King's Religion**{} Total turns reached 30xPlayer Count".format(self.bot.emote.get('misc'), self.bot.emote.get('misc')), footer="Qilin Fantasy", color=self.color, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/305181.png"), ephemeral=True)
-
-    @guide.sub_command()
-    async def belial(self, inter):
-        """Post the Belial HL Triggers"""
-        await inter.response.send_message(embed=self.bot.util.embed(title="The Fallen Angel of Cunning", url="https://gbf.wiki/Belial_(Raid)", description="**On Join**{}️ Lemegeton (20K Plain)\n**75, 50, 25%**▫️ Debuff Wipe\n**65%** ▫️ Asmodeus (multi, debuff, omega fruit) [Dispel]\n**50% Form** ▫️ Triple elemental absorption\nGroups: {}{} / {}{} / {}{}\n**50%** ▫️ Anagenesis (dark dmg based on stack)\n**30%** ▫️ Goetia (multi, slashed/supp debuff) [FC]\n**5%** ▫️ Lemegeton (Let you continue, Full diamond)\n**Before 50%**\n**N & OD**▫️ Amadeus (party, perma debuffs)\n**Turn 3**▫️ Goetia (multi, slashed/supp debuff) [15M]\n**Turn 6**▫️ Lemegeton (party, dispel x2, diamond+1) [35 hits]\n**After 50%**\n**N & OD**{} Amadeus (**Raid Wipe**)\n**Turn 3**▫️ Goetia (multi, atk up, stack up) [FC]\n**Turn 6**▫️ Lemegeton (30K, skill & CA seal) [Dispel]\nTurn Triggers above **repeat every 6 turns**\n**Every 3T**▫️ Random fruit applied to party".format(self.bot.emote.get('misc'), self.bot.emote.get('fire'), self.bot.emote.get('wind'), self.bot.emote.get('water'), self.bot.emote.get('earth'), self.bot.emote.get('light'), self.bot.emote.get('dark'), self.bot.emote.get('misc')), footer="Delay to win", color=self.color, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/305281.png"), ephemeral=True)
-
-    @guide.sub_command()
-    async def subaha(self, inter):
-        """Post the Super Ultimate Bahamut HL Triggers"""
-        await inter.response.send_message(embed=self.bot.util.embed(title="Rage of Super Ultimate Bahamut", url="https://gbf.wiki/Super_Ultimate_Bahamut_(Raid)", description="{} Each element must cancel omens to reduces the Tenet stacks\n**75-51%**▫️Immune to delay\n{} **Special Attacks**\n**100-76%**▫️Termination Flare (23 hits, Burn/Fear/Cut to buff duration) [15M]\n**75-51%**▫️Verse Ruler (Single DMG. & Swap lowest HP chara.) [20M]\n**51-11**%▫️Crisis Crunch (100% Plain to highest HP chara., can't be revived) [20M]\n**10-0%**▫️Genesis Nova (AOE 999k Plain)\n{} **Cycle Every 6 Turns**\n**100-51%**\nArcadia Foteinos (AOE DMG., Purging Light buff) [10 debuffs]\nArcadia Gnosis (AOE DMG., Godsight buff) [60 hits]\nArcadia Skliros (AOE DMG., DMG Cuts nullified) [20M CA]\nArcadia Laimargos (AOE DMG., Superio Element buff) [20M Skill]\n**50-11%**\nArcadia Tromos (AOE DMG., No guard debuff) [6 Chain]\nArcadia Eclipse (AOE DMG., Max HP capped to 20k) [3.33M Plain]\nArcadia Apocryphos (AOE DMG., Can't summon debuff) [12 skill casts]\n{} **Triggers**\n**75%**▫️Daedalus Drive (AOE 40K Plain)\n**51%**▫️Omnipotent Cocoon (Doesn't attack, Generate Tenets, 5T) [50M]\n**After Cocoon**▫️Double Strike/All Foe Attack, Gain Local Echo of elements at stack 5+, Apply the debuffs from missed 6T Triggers\n**10%**▫️Sirius Origin (4x99k plain, Drain/2->8\\♦️, Apply the debuffs from missed 6T Triggers)".format(self.bot.emote.get('mark'), self.bot.emote.get('skill1'), self.bot.emote.get('mark'), self.bot.emote.get('skill2')), footer="and Knuckles", color=self.color, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/305311.png"), ephemeral=True)
+                await ctx.reply(embed=self.bot.util.embed(title=user.data.name, url="https://twitter.com/{}".format(target[0]), description=target[1], thumbnail=pic, color=self.color))
+        elif user is None:
+            await ctx.reply(embed=self.bot.util.embed(title="Error", description="`{}` not found".format(term), color=self.color))
+        elif ctx.channel.is_nsfw():
+            await ctx.reply(embed=self.bot.util.embed(title=user.data.name, url="https://twitter.com/{}".format(user.data.username), thumbnail=pic, color=self.color))
+        else:
+            await ctx.reply(embed=self.bot.util.embed(title="NSFW protection", description="Check at your own risk\n[{}](https://twitter.com/{})".format(user.data.name, user.data.username), color=self.color))

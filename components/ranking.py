@@ -1,4 +1,4 @@
-import disnake
+import discord
 import threading
 import concurrent.futures
 import asyncio
@@ -86,6 +86,7 @@ class Ranking():
                 res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/guild/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
             case 2: # player
                 res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?=TS1&t=TS2&uid=ID".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
+        return res
 
     """updateRankingThread()
     Thread to update the cutoff data
@@ -636,13 +637,13 @@ class Ranking():
             try:
                 imgfile = self.drawChart(newtracker['plot'])
                 with open(imgfile, "rb") as f:
-                    df = disnake.File(f)
+                    df = discord.File(f)
                     message = await self.bot.send('image', file=df)
                     df.close()
                     self.bot.file.rm(imgfile)
                     newtracker['chart'] = message.attachments[0].url
-            except Exception as e:
-                await self.bot.sendError('updatetracker', e)
+            except:
+                pass
         with self.bot.data.lock:
             self.bot.data.save['matchtracker'] = newtracker
             self.bot.data.pending = True
@@ -744,22 +745,23 @@ class Ranking():
                     data[n] = []
                     c = cs[n]
                     # search according to the mode
-                    if mode == 10: # crew name search
-                        c.execute("SELECT * FROM crews WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                    elif mode == 11: # crew name exact search
-                        c.execute("SELECT * FROM crews WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                    elif mode == 12: # crew id search
-                        c.execute("SELECT * FROM crews WHERE id = {}".format(terms))
-                    elif mode == 13: # crew ranking search
-                        c.execute("SELECT * FROM crews WHERE ranking = {}".format(terms))
-                    elif mode == 0: # player name search
-                        c.execute("SELECT * FROM players WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                    elif mode == 1: # player exact name search
-                        c.execute("SELECT * FROM players WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
-                    elif mode == 2: # player id search
-                        c.execute("SELECT * FROM players WHERE id = {}".format(terms))
-                    elif mode == 3: # player ranking search
-                        c.execute("SELECT * FROM players WHERE ranking = {}".format(terms))
+                    match mode:
+                        case 10: # crew name search
+                            c.execute("SELECT * FROM crews WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
+                        case 11: # crew name exact search
+                            c.execute("SELECT * FROM crews WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
+                        case 12: # crew id search
+                            c.execute("SELECT * FROM crews WHERE id = {}".format(terms))
+                        case 13: # crew ranking search
+                            c.execute("SELECT * FROM crews WHERE ranking = {}".format(terms))
+                        case 0: # player name search
+                            c.execute("SELECT * FROM players WHERE lower(name) LIKE '%{}%'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
+                        case 1: # player exact name search
+                            c.execute("SELECT * FROM players WHERE lower(name) LIKE '{}'".format(terms.lower().replace("'", "''").replace("%", "\\%")))
+                        case 2: # player id search
+                            c.execute("SELECT * FROM players WHERE id = {}".format(terms))
+                        case 3: # player ranking search
+                            c.execute("SELECT * FROM players WHERE ranking = {}".format(terms))
                     results = c.fetchall() # fetch the result
                     
                     for r in results:
