@@ -48,7 +48,7 @@ class Admin(commands.Cog):
             except Exception as e:
                 await self.bot.sendError('statustask', e)
 
-    """status()
+    """clean()
     Bot Task managing the autocleanup of the save data
     """
     async def clean(self): # background task cleaning the save file from useless data
@@ -443,8 +443,8 @@ class Admin(commands.Cog):
                 return
         await inter.response.send_message("I couldn't retrieve the schedule from Twitter", ephemeral=True)
 
-    @schedule.sub_command()
-    async def clean(self, inter):
+    @schedule.sub_command(name="clean")
+    async def _clean(self, inter):
         """Remove expired entries from the schedule (Owner Only)"""
         c = self.bot.util.JST()
         new_schedule = []
