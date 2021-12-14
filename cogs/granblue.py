@@ -1136,7 +1136,7 @@ class GranblueFantasy(commands.Cog):
         if res is not None: return unquote(res['data'])
         else: return res
 
-    """searchProfile()
+    """searchprofile()
     Search a set profile in the save data
     
     Parameters
@@ -1189,7 +1189,7 @@ class GranblueFantasy(commands.Cog):
                     await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Profile not found", color=self.color), ephemeral=True)
                     return
                 case _:
-                    if (await self.bot.do(self.searchProfile, id)) is not None:
+                    if (await self.bot.do(self.searchprofile, id)) is not None:
                         await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="This id is already in use, use the bug_report command if it's a case of griefing", color=self.color), ephemeral=True)
                         return
             # register
