@@ -206,7 +206,7 @@ class Sparking(commands.Cog):
             elif ar == -1: footer = "You aren't ranked ▫️ You need at least one roll to be ranked"
             else: footer = ""
             await inter.edit_original_message(embed=self.bot.util.embed(title="{} Spark ranking of {}".format(self.bot.emote.get('crown'), guild.name), color=self.color, description=msg, footer=footer, thumbnail=guild.icon.url))
-            await self.bot.util.clean(ctx, final_msg, 30)
+            await self.bot.util.clean(inter, 30)
         except Exception as e:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Sorry, something went wrong :bow:", footer=str(e)))
             await self.bot.sendError("rollRanking", e)
