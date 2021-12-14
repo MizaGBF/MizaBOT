@@ -182,7 +182,7 @@ class Moderation(commands.Cog):
             
             mod = (False if mod_bypass == 0 else True)
 
-            if inter.guild.get_channel(pinning_channel) is None:
+            if inter.guild.get_channel(int(pinning_channel)) is None:
                 raise Exception("`{}` isn't a valid channel id".format(pinning_channel))
                 
             self.bot.pinboard.add(str(inter.guild.id), tracked, emoji, mod, threshold, pinning_channel)

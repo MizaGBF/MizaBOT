@@ -133,7 +133,7 @@ class Pinboard():
     """
     def add(self, server_id, tracked, emoji, mod, threshold, output): # parameters validity should be checked before the call
         with self.bot.data.lock:
-            self.bot.data.save['pinboard'][server_id] = {'tracked' : tracked, 'emoji': emoji, 'mod_bypass':mod, 'threshold':threshold, 'output': output}
+            self.bot.data.save['pinboard'][server_id] = {'tracked' : tracked, 'emoji': emoji, 'mod_bypass':mod, 'threshold':threshold, 'output': int(output)}
             self.bot.data.pending = True
 
     """remove()
