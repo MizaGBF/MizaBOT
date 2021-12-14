@@ -576,7 +576,7 @@ class GranblueFantasy(commands.Cog):
         await self.bot.util.clean(inter, 60)
 
     @gbf.sub_command()
-    async def stream(self, inter, op : str = commands.Param()):
+    async def stream(self, inter, op : str = commands.Param(default="")):
         """Post the stream text"""
         if len(self.bot.data.save['stream']['content']) == 0:
             await inter.response.send_message(embed=self.bot.util.embed(title="No event or stream available", color=self.color))
@@ -609,7 +609,7 @@ class GranblueFantasy(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title=title, description=msg, color=self.color))
 
     @gbf.sub_command()
-    async def schedule(self, inter, raw : str = commands.Param()):
+    async def schedule(self, inter, raw : str = commands.Param(default="")):
         """Post the GBF schedule"""
         if len(self.bot.data.save['schedule']) == 0:
             await inter.response.send_message(embed=self.bot.util.embed(title="No schedule available", color=self.color))
@@ -1512,8 +1512,8 @@ class GranblueFantasy(commands.Cog):
             id = await self.bot.util.str2gbfid(inter, target, self.color)
             if isinstance(id, str):
                 await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description=id, color=self.color))
-                return
-            await self._profile(inter, id)
+            else:
+                await self._profile(inter, id)
         except Exception as e:
             await self.bot.sendError("profile", e)
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color))
@@ -1529,8 +1529,8 @@ class GranblueFantasy(commands.Cog):
             id = await self.bot.util.str2gbfid(inter, str(member.id), self.color)
             if isinstance(id, str):
                 await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description=id, color=self.color))
-                return
-            await self._profile(inter, id)
+            else:
+                await self._profile(inter, id)
         except Exception as e:
             await self.bot.sendError("profile", e)
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color))

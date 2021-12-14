@@ -44,7 +44,6 @@ class JoinGame(BaseView):
             embed.description = desc.format((timer - c).seconds, len(self.players))
             await msg.edit(embed=embed)
         self.stopall()
-        button.disabled = True
 
     """isParticipating()
     Check if the given id is from a participating user

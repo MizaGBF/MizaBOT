@@ -522,7 +522,7 @@ class Admin(commands.Cog):
             await inter.response.send_message("Invalid id", ephemeral=True)
 
     @account.sub_command()
-    async def add(self, inter, uid : int, ck : str = commands.Param(), ua : str = commands.Param()):
+    async def add(self, inter, uid : int = commands.Param(default=0), ck : str = commands.Param(default=""), ua : str = commands.Param(default="")):
         """(Owner Only)"""
         if uid < 1:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid parameter {}".format(uid), color=self.color), ephemeral=True)

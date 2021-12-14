@@ -68,7 +68,7 @@ class Sparking(commands.Cog):
     @spark.sub_command()
     async def set(self, inter, crystal : int = commands.Param(description="Your amount of Crystals", ge=0, le=900000, default=0), single : int = commands.Param(description="Your amount of Single Draw Tickets", ge=0, le=1000, default=0), ten : int = commands.Param(description="Your amount of Ten Draw Tickets", ge=0, le=100, default=0)):
         """Set your roll count"""
-        id = str(inter.message.author.id)
+        id = str(inter.author.id)
         try:
             if crystal < 0 or single < 0 or ten < 0:
                 raise Exception('Negative numbers')
@@ -184,7 +184,7 @@ class Sparking(commands.Cog):
                 msg += "**#{:<2}{} {}** with {} roll".format(i+1, emotes.pop(i, "▫️"), guild.get_member(int(key)).display_name, fr)
                 if fr != 1: msg += "s"
                 msg += "\n"
-            if key == str(inter.message.author.id):
+            if key == str(inter.author.id):
                 ar = i
                 if i >= top: break
             i += 1

@@ -213,7 +213,7 @@ class Games(commands.Cog):
         else: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969231323070494/0_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761976275706445844/1_s.png'])
 
         # startup msg
-        view = Tap(bot, owner_id=inter.author.id)
+        view = Tap(self.bot, owner_id=inter.author.id)
         await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[0].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, image=crystal, color=self.color, footer=footer), view=view)
         await view.wait()
 
@@ -1032,7 +1032,7 @@ class Games(commands.Cog):
         self.bot.doAsync(view.updateTimer(msg, embed, desc, 30))
         await view.wait()
         if len(players) > 6: players = players[:6]
-        await self.bot.util.clean(inter, 0, True)
+        await msg.delete()
         # game start
         draws = []
         while len(draws) < 3 + 2 * len(players):
@@ -1083,7 +1083,7 @@ class Games(commands.Cog):
         self.bot.doAsync(view.updateTimer(msg, embed, desc, 30))
         await view.wait()
         if len(players) > 6: players = players[:6]
-        await self.bot.util.clean(inter, 0, True)
+        await msg.delete()
         # game start
         # state: 0 = playing card down, 1 = playing card up, 2 = lost, 3 = won, 4 = blackjack
         status = [{'name':'Dealer', 'score':0, 'cards':[], 'state':0}]

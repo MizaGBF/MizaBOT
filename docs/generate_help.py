@@ -37,7 +37,7 @@ def make_parameters(params): # parse the raw parameter list (the list of string)
         cmsg += pname
         if ptype is not None: # converting types into more readable stuff for normal people
             cmsg += " ({})".format(ptype.replace('int', 'Integer').replace('str', 'String').replace('disnake.', ''))
-        if pextra is not None: ;# parsing commands.Param(...)
+        if pextra is not None: # parsing commands.Param(...)
             pos = pextra.find("description")
             if pos != -1:
                 a = pextra.find('"', pos)
@@ -137,31 +137,31 @@ Here's the invitation link:<br>
 <br>
 2A) Make a bot channel if you want. The bot is designed to not post in channels where it doesn't have the "send messages" permission, meaning you can confine it in one channel if you desire to.<br>
 <br>
-2B) If you still want to use it in other channels, there is an auto clean up system (meaning the command messages will be deleted after a while, to avoid spam). Check out the command /toggleautocleanup (and its helpers /resetautocleanup, /seecleanupsetting)<br>
+2B) If you still want to use it in other channels, there is an auto clean up system (meaning the command messages will be deleted after a while, to avoid spam). Check out the command /mod cleanup toggle (and its helpers /mod cleanup reset, /mod cleanup see)<br>
 <br>
 And you are mostly done after this.</p>
 
 <h2>What other features can I enable on my server?</h2>
-<p>1) If you are a server for a Granblue Fantasy Crew, you can set your Crew Strike Time with /setst.<br>
+<p>1) If you are a server for a Granblue Fantasy Crew, you can set your Crew Strike Time with /mod strike set.<br>
 Simply give it the hours (JST Timezone).<br>
-The command /delst allows you to delete them.<br>
-Your Strike Times will appear when using the /granblue command.</p>
+The command /mod strike del allows you to delete them.<br>
+Your Strike Times will appear when using the /gbf info command.</p>
 
-<p>2) You can setup a pinboard with the /enablepinboard command. It's not very complicated but here are detailed steps:<br>
+<p>2) You can setup a pinboard with the /mod pinboard enable command. It's not very complicated but here are detailed steps:<br>
 First, activate developer mode in your Discord Settings, it will come handy.<br>
 Second, go to every channels you want to be able to trigger the pinboard, and copy their ID (with a right click > Copy ID)<br>
 Third, put those IDs together in one string, separated by a semi colon (example: 4687977847;84786464;64768468)<br>
 Fourth, make a new channel dedicated to it, called pinboard or whatever. Right click on that channel and copy its ID too (Don't put it with the others).<br>
 <br>
-Now you can do /enablepinboard:<br>
+Now you can do /mod pinboard enable:<br>
 tracked_channels will be the string I made you do.<br>
 emoji is the emote people must react with to trigger the pin.<br>
 threshold is the number of reactions to be reached to trigger the pin.<br>
 mod_bypass allows a mod to force the pin just by reacting with that emote. Set it to 1 to enable. It's useful for small or slow servers.<br>
 pinning_channel is the ID of the pinboard channel you created.<br>
 <br>
-You can redo the /enablepinboard command to change those settings or use /disablepinboard to disable it.<br>
-Finally, /seepinboard lets you see your current server pinboard settings.</p>
+You can redo the /mod pinboard enable command to change those settings or use /mod pinboard disable to disable it.<br>
+Finally, /mod pinboard see lets you see your current server pinboard settings.</p>
 
 <h2>How do I host my own copy of the Bot?</h2>
 <p>First, I wouldn't recommend hosting your own copy. The bot is tailored around my needs and might be problematic to setup.<br>
@@ -490,9 +490,9 @@ def retrieve_command_list(data, pos_list): # use the position list to retrieve t
                 c['comment'] = tmp.replace("        ", "").replace('\n', '<br>')
             else:
                 c['comment'] = ""
-            # IF AND ONLY IF the word "owner" is present in the description, we actually don't store the command
-            # for that reason, the word owner shouldn't be used in command descriptions
-            if 'owner' not in c['comment'].lower():
+            # IF AND ONLY IF the word "owner" or "hidden" are present in the description, we actually don't store the command
+            # for that reason, the word owner shouldn't be used in regular command descriptions
+            if 'owner' not in c['comment'].lower() and 'hidden' not in c['comment'].lower():
                 c['color'] = color # color
                 c['type'] = pos_list[i][1] # function type
                 if pos_list[i][1] == 3:

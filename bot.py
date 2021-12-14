@@ -30,10 +30,11 @@ except:
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "9.1" # bot version
+        self.version = "9.2" # bot version
         self.changelog = [ # changelog lines
-            "Please use `$bug_report` if you see anything wrong",
-            "Online command list added [here](https://mizagbf.github.io/MizaBOT/)"
+            "Please use `/bug_report` if you see anything wrong",
+            "Check the [Online help](https://mizagbf.github.io/MizaBOT/) for the new command list (and more)",
+            "Mod commands have been regrouped into one group"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
@@ -83,7 +84,7 @@ class MizaBot(commands.Bot):
         self.ban.init()
 
         # init base class
-        super().__init__(case_insensitive=True, description="MizaBOT version {}\n[Source code](https://github.com/MizaGBF/MizaBOT)▫️[Online Command List](https://mizagbf.github.io/MizaBOT/)".format(self.version), help_command=None, owner=self.data.config['ids']['owner'], max_messages=None, intents=disnake.Intents.default(), sync_commands_debug=True, reload=True)
+        super().__init__(case_insensitive=True, description="MizaBOT version {}\n[Source code](https://github.com/MizaGBF/MizaBOT)▫️[Online Command List](https://mizagbf.github.io/MizaBOT/)".format(self.version), help_command=None, owner=self.data.config['ids']['owner'], max_messages=None, intents=disnake.Intents.default(), reload=True)
         self.add_app_command_check(self.global_check, slash_commands=True, user_commands=True, message_commands=True)
 
     """go()

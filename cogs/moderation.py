@@ -46,30 +46,7 @@ class Moderation(commands.Cog):
     async def serverinfo(self, inter: disnake.MessageCommandInteraction):
         """Get informations on the current guild"""
         guild = inter.guild
-        msg = await inter.response.send_message(embed=self.bot.util.embed(title=guild.name + " status", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}``\n**Members** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, guild.member_count, len(guild.text_channels), len(guild.voice_channels), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at, color=self.color), ephemeral=True)
-
-    @commands.slash_command(default_permission=True)
-    @isMod()
-    async def delst(self, inter):
-        """Delete the ST setting of this server (Mod Only)"""
-        id = str(inter.guild.id)
-        if id in self.bot.data.save['st']:
-            with self.bot.data.lock:
-                self.bot.data.save['st'].pop(id)
-                self.bot.data.pending = True
-            await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
-        else:
-            await inter.response.send_message(embed=self.bot.util.embed(title=inter.guild.name, description="No ST set on this server\nI can't delete.", thumbnail=inter.guild.icon.url, color=self.color), ephemeral=True)
-
-    @commands.slash_command(default_permission=True)
-    @isMod()
-    async def setst(self, inter, st1 : int = commands.Param(description="First Strike Time (JST)", ge=0, le=23), st2 : int = commands.Param(description="Second Strike Time (JST)", ge=0, le=23)):
-        """Set the two ST of this server, JST Time (Mod Only)
-        Example: setST 7 23 for 7am and 11pm JST"""
-        with self.bot.data.lock:
-            self.bot.data.save['st'][str(inter.guild.id)] = [st1, st2]
-            self.bot.data.pending = True
-        await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
+        msg = await inter.response.send_message(embed=self.bot.util.embed(title=guild.name + " status", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Members** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, guild.member_count, len(guild.text_channels), len(guild.voice_channels), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at, color=self.color), ephemeral=True)
 
     @commands.user_command(default_permission=True, name="Check for Bans")
     @isMod()
@@ -81,15 +58,56 @@ class Moderation(commands.Cog):
         if self.bot.ban.check(member.id, self.bot.ban.PROFILE): msg += "Banned from using `setProfile`\n"
         if self.bot.ban.check(member.id, self.bot.ban.OWNER): msg += "Banned from using the bot\n"
         if msg == "": msg = "No Bans set for this user"
-        msg = await inter.response.send_message(embed=self.bot.util.embed(author={'name':inter.author.display_name, 'icon_url':inter.author.display_avatar}, description=msg, color=self.color), ephemeral=True)
+        msg = await inter.response.send_message(embed=self.bot.util.embed(author={'name':member.display_name, 'icon_url':member.display_avatar}, description=msg, color=self.color), ephemeral=True)
 
-    @commands.user_command(default_permission=True, name="Ban Spark Ranking")
+    @commands.slash_command(default_permission=True)
     @isMod()
-    async def banroll(self, inter: disnake.UserCommandInteraction, member: disnake.Member):
+    async def mod(self, inter):
+        """Command Group"""
+        pass
+
+    @mod.sub_command_group()
+    async def strike(self, inter):
+        """hidden"""
+        pass
+
+    @strike.sub_command(name="del")
+    async def delst(self, inter):
+        """Delete the ST setting of this server (Mod Only)"""
+        id = str(inter.guild.id)
+        if id in self.bot.data.save['st']:
+            with self.bot.data.lock:
+                self.bot.data.save['st'].pop(id)
+                self.bot.data.pending = True
+            await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
+        else:
+            await inter.response.send_message(embed=self.bot.util.embed(title=inter.guild.name, description="No ST set on this server\nI can't delete.", thumbnail=inter.guild.icon.url, color=self.color), ephemeral=True)
+
+    @strike.sub_command(name="set")
+    async def setst(self, inter, st1 : int = commands.Param(description="First Strike Time (JST)", ge=0, le=23), st2 : int = commands.Param(description="Second Strike Time (JST)", ge=0, le=23)):
+        """Set the two ST of this server, JST Time (Mod Only)"""
+        with self.bot.data.lock:
+            self.bot.data.save['st'][str(inter.guild.id)] = [st1, st2]
+            self.bot.data.pending = True
+        await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
+
+
+    @mod.sub_command_group()
+    async def ban(self, inter):
+        """hidden"""
+        pass
+
+    @ban.sub_command(name="roll")
+    async def banroll(self, inter, member: disnake.Member):
         """Ban an user from the roll ranking (Mod Only)"""
         self.bot.ban.set(member.id, self.bot.ban.SPARK)
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success.\nMy owner has been notified.", color=self.color), ephemeral=True)
         await self.bot.send('debug', embed=self.bot.util.embed(title="{} ▫️ {}".format(member.display_name, id), description="Banned from all roll rankings by {}\nValues: `{}`".format(inter.author.display_name, self.bot.data.save['spark'][str(member.id)]), thumbnail=member.display_avatar, color=self.color, footer=inter.guild.name))
+
+    @mod.sub_command_group()
+    async def cleanup(self, inter):
+        """hidden"""
+        pass
 
     """_seeCleanupSetting()
     Output the server cleanup settings
@@ -112,8 +130,7 @@ class Moderation(commands.Cog):
         else:
             await inter.response.send_message(embed=self.bot.util.embed(title="Auto Cleanup is disabled in all channels", thumbnail=inter.guild.icon.url, footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
 
-    @commands.slash_command(default_permission=True)
-    @isMod()
+    @cleanup.sub_command(name="toggle")
     async def toggleautocleanup(self, inter):
         """Toggle the auto-cleanup in this channel (Mod Only)"""
         gid = str(inter.guild.id)
@@ -131,8 +148,7 @@ class Moderation(commands.Cog):
             self.bot.data.pending = True
             await self._seeCleanupSetting(inter)
 
-    @commands.slash_command(default_permission=True)
-    @isMod()
+    @cleanup.sub_command(name="reset")
     async def resetautocleanup(self, inter):
         """Reset the auto-cleanup settings (Mod Only)"""
         gid = str(inter.guild.id)
@@ -144,14 +160,18 @@ class Moderation(commands.Cog):
         else:
             await inter.response.send_message(embed=self.bot.util.embed(title="Auto Cleanup is already disabled in all channels", thumbnail=inter.guild.icon.url, footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
 
-    @commands.slash_command(default_permission=True)
-    @isMod()
+    @cleanup.sub_command(name="see")
     async def seecleanupsetting(self, inter):
         """See all channels where no clean up is performed (Mod Only)"""
         await self._seeCleanupSetting(inter)
 
-    @commands.slash_command(default_permission=True)
-    @isMod()
+
+    @mod.sub_command_group()
+    async def pinboard(self, inter):
+        """hidden"""
+        pass
+
+    @pinboard.sub_command(name="enable")
     async def enablepinboard(self, inter, tracked_channels : str = commands.Param(description="List of Channel IDs to track (separated by ;)"), emoji : str = commands.Param(description="The emoji used as a pin trigger"), threshold : int = commands.Param(description="Number of reactions needed to trigger the pin", ge=1), mod_bypass : int = commands.Param(description="If 1, a moderator can force the pin with a single reaction", ge=0, le=1, autocomplete=[0, 1]), pinning_channel : int = commands.Param(description="ID of the channel where pin will be displayed", ge=0)):
         """Enable the pinboard on your server (Mod Only)"""
         try:
@@ -175,15 +195,13 @@ class Moderation(commands.Cog):
             await self.bot.sendError('enablepinboard', e)
             await inter.response.send_message(embed=self.bot.util.embed(title="Pinboard Error", description="{}".format(e), footer="Try the command without parameters to see the detailed instructions", color=self.color), ephemeral=True)
 
-    @commands.slash_command(default_permission=True)
-    @isMod()
+    @pinboard.sub_command(name="disable")
     async def disablepinboard(self, inter):
         """Disable the pinboard on your server (Mod Only)"""
         self.bot.pinboard.remove(str(inter.guild.id))
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 20, commands.BucketType.user)
+    @pinboard.sub_command(name="see")
     async def seepinboard(self, inter):
         """See the pinboard settings on your server"""
         settings = self.bot.pinboard.get(str(inter.guild.id))
