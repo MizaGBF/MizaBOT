@@ -75,7 +75,7 @@ class General(commands.Cog):
         try:
             splitted = poll_data.split(';')
             if len(splitted) < 2: raise Exception('Specify at least a poll title and two choices\nFormat: `duration title;choice1;choice2;...;choiceN`')
-            view = Poll(bot, inter.author, self.color, splitted[0], splitted[1:])
+            view = Poll(self.bot, inter.author, self.color, splitted[0], splitted[1:])
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Your poll is starting", color=self.color), ephemeral=True)
             msg_to_edit = await inter.channel.send(embed=self.bot.util.embed(author={'name':'{} started a poll'.format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, title=splitted[0], description="{} seconds remaining to vote".format(duration), color=self.color))
             msg_view = await inter.channel.send('\u200b', view=view)

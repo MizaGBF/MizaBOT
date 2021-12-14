@@ -462,7 +462,7 @@ class GranblueFantasy(commands.Cog):
         for l in ls:
             if l == "": continue
             urls.append(l.split("###"))
-        view = UrlButton(bot, urls)
+        view = UrlButton(self.bot, urls)
         await inter.response.send_message('\u200b', view=view)
         view.stopall()
         await self.bot.util.clean(inter, 60)
@@ -470,7 +470,7 @@ class GranblueFantasy(commands.Cog):
     @gbf.sub_command()
     async def spreadsheet(self, inter):
         """Post a link to my SpreadSheet Folder"""
-        view = UrlButton(bot, [('SpreadSheet Folder', self.bot.data.config['strings']["sheetfolder()"])])
+        view = UrlButton(self.bot, [('SpreadSheet Folder', self.bot.data.config['strings']["sheetfolder()"])])
         await inter.response.send_message('\u200b', view=view)
         view.stopall()
         await self.bot.util.clean(inter, 60)
@@ -570,7 +570,7 @@ class GranblueFantasy(commands.Cog):
         for l in ls:
             if l == "": continue
             urls.append(l.split("###"))
-        view = UrlButton(bot, urls)
+        view = UrlButton(self.bot, urls)
         await inter.response.send_message('\u200b', view=view)
         view.stopall()
         await self.bot.util.clean(inter, 60)

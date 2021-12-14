@@ -538,7 +538,7 @@ class Games(commands.Cog):
                 break
             await asyncio.sleep(0.001)
 
-        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} is scratching...".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="Click to play the game", footer=footer, color=self.color), view=Scratcher(bot, inter.author.id, grid, self.scratcher_thumb, self.color, footer))
+        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} is scratching...".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="Click to play the game", footer=footer, color=self.color), view=Scratcher(self.bot, inter.author.id, grid, self.scratcher_thumb, self.color, footer))
         await self.bot.util.clean(inter, 45)
 
     @gbfgame.sub_command()
@@ -584,7 +584,7 @@ class Games(commands.Cog):
                 else: results.append(check) # normal loot
         results.reverse()
 
-        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':'{} is opening...'.format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, color=self.color), view=ChestRush(bot, inter.author.id, results, self.color))
+        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':'{} is opening...'.format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, color=self.color), view=ChestRush(self.bot, inter.author.id, results, self.color))
         await self.bot.util.clean(inter, 45)
 
     """genLoto()
