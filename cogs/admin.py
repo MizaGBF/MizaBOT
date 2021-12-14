@@ -78,7 +78,7 @@ class Admin(commands.Cog):
     """
     def isOwner():
         async def predicate(ctx):
-            return ctx.self.bot.isOwner(ctx)
+            return ctx.bot.isOwner(ctx)
         return commands.check(predicate)
 
     """guildList()
