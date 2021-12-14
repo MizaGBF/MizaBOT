@@ -469,10 +469,12 @@ def retrieve_command_list(data, pos_list): # use the position list to retrieve t
                 alias = c['name'] # take note we found a renaming
             else:
                 alias = None
+            base_namee = ""
             # now we check the command definition
             fp += len('async def ')
             tmp = search_interval(data, pos, max_pos, ' def ', '(') # search the function name
             if tmp is None: continue # not found? (it shouldn't happen) skip to next one
+            base_name = tmp
             if alias is None: # if no renaming
                 c['name'] = tmp # just store it as it is
                 if c['name'].startswith('_'): c['name'] = c['name'][1:]
@@ -490,6 +492,11 @@ def retrieve_command_list(data, pos_list): # use the position list to retrieve t
                 c['comment'] = tmp.replace("        ", "").replace('\n', '<br>')
             else:
                 c['comment'] = ""
+            if pos_list[i][1] == 4: # setting up sub_command_group name translation
+                if alias is not None:
+                    func_index[base_name] = pos_list[i][2] + " " + c['name']
+                else:
+                    func_index[c['name']] = pos_list[i][2] + " " + c['name']
             # IF AND ONLY IF the word "owner" or "hidden" are present in the description, we actually don't store the command
             # for that reason, the word owner shouldn't be used in regular command descriptions
             if 'owner' not in c['comment'].lower() and 'hidden' not in c['comment'].lower():
@@ -497,14 +504,15 @@ def retrieve_command_list(data, pos_list): # use the position list to retrieve t
                 c['type'] = pos_list[i][1] # function type
                 if pos_list[i][1] == 3:
                     c['parent'] = pos_list[i][2] # the parent if it's a sub command
-                cl.append(c) # add to list
+                if pos_list[i][1] != 4: # don't put sub_command_group
+                    cl.append(c) # add to list
     return cl
 
 def find_command_pos(data): # loop over a file and note the position of all commands
     pos_list = [] # will contain the resulting list
     cur = 0 # cursor
     while True:
-        poss = [data.find('@commands.slash_command', cur), data.find('@commands.user_command', cur), data.find('@commands.message_command', cur), data.find('.sub_command', cur), data.find('.sub_command_group', cur)] # different command types we are searching for
+        poss = [data.find('@commands.slash_command', cur), data.find('@commands.user_command', cur), data.find('@commands.message_command', cur), data.find('.sub_command(', cur), data.find('.sub_command_group(', cur)] # different command types we are searching for
         idx = -1
         while True: # messy loop used to find the lowest position in the list
             idx += 1
@@ -516,9 +524,8 @@ def find_command_pos(data): # loop over a file and note the position of all comm
             if poss[(idx+3)%5] != -1 and poss[(idx+3)%5] <= poss[idx]: continue
             if poss[(idx+4)%5] != -1 and poss[(idx+4)%5] <= poss[idx]: continue
             break
-        if idx == 4: continue # if it's a sub_command_group, we ignore, we won't list those
         if idx == 5: break # no more command found, we stop
-        if idx == 3: # we found a sub command
+        if idx >= 3: # we found a sub command
             x = data.find('@', poss[idx]-15) # we retrieve the name of the parent
             pos_list.append((poss[idx], idx, data[x+1:poss[idx]])) # and add it in the tuple
         else:
