@@ -939,6 +939,7 @@ class GranblueFantasy(commands.Cog):
     @gbf.sub_command()
     async def doom(self, inter):
         """Give the time elapsed of various GBF related releases"""
+        await inter.response.defer()
         msg = ""
         wiki_checks = ["Category:Campaign", "Surprise_Special_Draw_Set", "Damascus_Ingot", "Gold_Brick", "Sunlight_Stone", "Sephira_Evolite"]
         regexs = ["<td>(\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(-\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td style=\"text-align: left;\">Time since last ", "<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td>(\\d+ days)<\\/td>\\s*"]
@@ -966,9 +967,9 @@ class GranblueFantasy(commands.Cog):
             pass
 
         if msg != "":
-            await inter.response.send_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))
         else:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
         await self.bot.util.clean(inter, 40)
 
     """getCurrentGacha()

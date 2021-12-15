@@ -25,11 +25,13 @@ def loadCogFile(bot, p, f, r, relative="", package=None):
 def load(bot): # load all cogs in the 'cog' folder
     r = re.compile("^class ([a-zA-Z0-9_]*)\\(commands\\.Cog\\):", re.MULTILINE) # to search the name class
     count = 0 # number of attempt at loading cogs
+    failed = 0 # number of loading failed (ignore debug and test cogs)
     for f in os.listdir('cogs/'): # list all files
         p = os.path.join('cogs/', f)
         if f not in ['__init__.py'] and f.endswith('.py') and os.path.isfile(p): # search for valid python file
             if loadCogFile(bot, p, f, r, relative=".", package='cogs'): count += 1
+            else: failed += 1
     # optional dev files
     if loadCogFile(bot, "debug.py", "debug.py", r): count += 1
     if loadCogFile(bot, "test.py", "test.py", r): count += 1
-    return count # return attempts
+    return count, failed # return attempts

@@ -95,7 +95,10 @@ class MizaBot(commands.Bot):
     int: Exit value
     """
     def go(self):
-        self.cogn = cogs.load(self) # load cogs
+        self.cogn, failed = cogs.load(self) # load cogs
+        if failed > 0:
+            print(failed, "Main Cog(s) failed loading, please fix before continuing")
+            return
         # graceful exit setup
         graceful_exit = self.loop.create_task(self.exit_gracefully())
         for s in [SIGTERM, SIGINT]:

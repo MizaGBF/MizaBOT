@@ -317,9 +317,14 @@ class Games(commands.Cog):
         await self._roll(inter, ("{} is rolling the Gachapin...", "{} rolled the Gachapin"), 3, count=300, mode='gachapin', legfest=self.checkLegfest(double))
 
     @roll.sub_command()
-    async def mukku(self, inter, mode : str = commands.Param(description='Force a Super Mukku by putting "super".', autocomplete=["super"], default="")):
+    async def mukku(self, inter):
         """Simulate a Mukku Frenzy"""
-        await self._roll(inter, ("{} is rolling the Mukku...", "{} rolled the Mukku"), 3, count=300, mode=('supermukku' if (mode.lower() == "super") else 'mukku'))
+        await self._roll(inter, ("{} is rolling the Mukku...", "{} rolled the Mukku"), 3, count=300, mode='mukku')
+
+    @roll.sub_command()
+    async def supermukku(self, inter):
+        """Simulate a Super Mukku Frenzy"""
+        await self._roll(inter, ("{} is rolling the Supper Mukku...", "{} rolled the Super Mukku"), 3, count=300, mode='supermukku')
 
     @roll.sub_command()
     async def memeroll(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default=""), rateup : str = commands.Param(description='Put `r` or `R` to roll until a rate up SSR', autocomplete=["r", "R"], default="")):
@@ -350,7 +355,7 @@ class Games(commands.Cog):
         return result, rate, tmp, count
 
     @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 100, commands.BucketType.user)
+    @commands.cooldown(1, 80, commands.BucketType.user)
     @commands.max_concurrency(10, commands.BucketType.default)
     async def gbfgame(self, inter):
         """Command Group"""

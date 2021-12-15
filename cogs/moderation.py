@@ -63,7 +63,7 @@ class Moderation(commands.Cog):
     @commands.slash_command(default_permission=True)
     @isMod()
     async def mod(self, inter):
-        """Command Group"""
+        """Command Group (Mod Only)"""
         pass
 
     @mod.sub_command_group()
