@@ -282,7 +282,7 @@ class Games(commands.Cog):
             else: amsg = ""
             msg = "{}{:} {:} ▫️ {:} {:} ▫️ {:} {:}\n{:}\n**{:.2f}%** SSR rate".format(amsg, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), msg, rate)
             await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name, count), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
-        await self.bot.util.clean(inter, 25)
+        await self.bot.util.clean(inter, 40)
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 15, commands.BucketType.user)
