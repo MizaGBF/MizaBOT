@@ -314,8 +314,9 @@ class MizaBot(commands.Bot):
             # set our used channels for the send function
             self.channel.setMultiple([['debug', 'debug_channel'], ['image', 'image_upload'], ['debug_update', 'debug_update'], ['you_pinned', 'you_pinned'], ['gbfg_pinned', 'gbfg_pinned'], ['gbfglog', 'gbfg_log'], ['youlog', 'you_log']])
             await self.send('debug', embed=self.util.embed(title="{} is Ready".format(self.user.display_name), description=self.util.statusString(), thumbnail=self.user.display_avatar, timestamp=self.util.timestamp()))
-            # start the task
+            # check guilds and start the tasks
             self.booted = True
+            await self.checkGuildList()
             await self.startTasks()
 
     """do()
@@ -402,6 +403,68 @@ class MizaBot(commands.Bot):
         if msg != "":
             await self.send('debug', embed=self.util.embed(title="{} user tasks started".format(len(self.tasks)), description=msg, timestamp=self.util.timestamp()))
 
+    """checkGuild()
+    Verify if the guild validate our requirements
+    
+    Parameters
+    ----------
+    guild: Discord Guild to check
+    
+    Returns
+    ----------
+    int: 0 if it's our debug server, 1 if it's banned, 2 if invite check failed, 3 if not enough members, 4 if ok
+    """
+    def checkGuild(self, guild):
+        id = str(guild.id)
+        if id == str(self.data.config['ids']['debug_server']):
+            return 0
+        elif id in self.data.save['banned_guilds'] or self.ban.check(guild.owner_id, self.ban.OWNER): # ban check
+            return 1
+        elif 'invite' not in self.data.save or self.data.save['invite']['state'] == False or len(self.guilds) >= self.data.save['invite']['limit']: # invite state check
+            return 2
+        elif guild.member_count <= 30: # member count check
+            return 3
+        else: # notify
+            return 4
+
+    """checkGuildList()
+    Check the server list (on startup) for new servers.
+    This is just in case someone invites the bot while it's down.
+    """
+    async def checkGuildList(self):
+        # initialization (for the first time)
+        with self.data.lock:
+            if self.data.save['guilds'] is None:
+                self.data.save['guilds'] = []
+                for g in self.guilds:
+                    self.data.save['guilds'].append(g.id)
+                    self.data.pending = True
+        # list all the current guilds and check new ones
+        current_guilds = []
+        for g in self.guilds:
+            if g.id not in self.data.save['guilds']:
+                match self.checkGuild(g):
+                    case 1: # ban check
+                        await g.leave()
+                    case 2: # invite state check
+                        try: await g.get_or_fetch_member(g.owner_id).send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=g.icon.url))
+                        except: pass
+                        await g.leave()
+                    case 3: # member count check
+                        try: await g.get_or_fetch_member(g.owner_id).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=g.icon.url))
+                        except: pass
+                        await g.leave()
+                    case 4: # notify
+                        await self.send('debug', embed=self.util.embed(title=g.name + " added me", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}\n\nUse `$accept` or `$refuse`".format(g.id, g.owner_id, len(g.text_channels), len(g.voice_channels), g.member_count, len(g.roles), len(g.emojis), g.premium_subscription_count, g.premium_tier), thumbnail=g.icon.url, timestamp=g.created_at))
+                        current_guilds.append(g.id)
+                    case _:
+                        current_guilds.append(g.id)
+            else:
+                current_guilds.append(g.id)
+        with self.data.lock:
+            self.data.save['guilds'] = current_guilds
+            self.data.pending = True
+
     """on_message()
     Event. Called when a message is received
     
@@ -422,21 +485,21 @@ class MizaBot(commands.Bot):
     """
     async def on_guild_join(self, guild):
         try:
-            id = str(guild.id)
-            if id == str(self.data.config['ids']['debug_server']):
-                return
-            elif id in self.data.save['banned_guilds'] or self.ban.check(guild.owner_id, self.ban.OWNER): # ban check
-                await guild.leave()
-            elif 'invite' not in self.data.save or self.data.save['invite']['state'] == False or len(self.guilds) >= self.data.save['invite']['limit']: # invite state check
-                try: await guild.get_or_fetch_member(guild.owner_id).send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon.url))
-                except: pass
-                await guild.leave()
-            elif guild.member_count <= 30: # member count check
-                try: await guild.get_or_fetch_member(guild.owner_id).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=guild.icon.url))
-                except: pass
-                await guild.leave()
-            else: # notify
-                await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}\n\nUse `$accept` or `$refuse`".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at))
+            match self.checkGuild(guild):
+                case 1: # ban check
+                    await guild.leave()
+                case 2: # invite state check
+                    try: await guild.get_or_fetch_member(guild.owner_id).send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon.url))
+                    except: pass
+                    await guild.leave()
+                case 3: # member count check
+                    try: await guild.get_or_fetch_member(guild.owner_id).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=guild.icon.url))
+                    except: pass
+                    await guild.leave()
+                case 4: # notify
+                    await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}\n\nUse `$accept` or `$refuse`".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at))
+                case _:
+                    pass
         except Exception as e:
             self.sendError('on_guild_join', e)
 
@@ -520,7 +583,7 @@ class MizaBot(commands.Bot):
             except: pass
             return
         else:
-            try: await inter.response.send_message("An unexpected error occured. My owner has been notified.", ephemeral=True)
+            try: await inter.response.send_message("An unexpected error occured. My owner has been notified.\nUse /bug_report if you have additional informations to provide", ephemeral=True)
             except: pass
             self.errn += 1
             await self.send('debug', embed=self.util.embed(title="⚠ Error caused by {}".format(inter.author), description=self.util.pexc(error).replace('*', '\*'), thumbnail=inter.author.display_avatar, fields=[{"name":"Options", "value":'`{}`'.format(inter.options)}, {"name":"Server", "value":inter.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(inter.author.id), timestamp=self.util.timestamp()))

@@ -19,7 +19,7 @@ class Data():
         self.bot.drive = None
         self.config = {}
         self.save = {}
-        self.saveversion = 3
+        self.saveversion = 4
         self.pending = False
         self.autosaving = False
         self.lock = threading.Lock()
@@ -84,6 +84,8 @@ class Data():
                     if ver <= 2:
                         data['banned_guilds'] = data['guilds']['banned']
                         data.pop('guilds', None)
+                    if ver <= 3:
+                        data['guilds'] = None
                     data['version'] = self.saveversion
                 elif ver > self.saveversion:
                     raise Exception("Save file version higher than the expected version")
@@ -127,6 +129,7 @@ class Data():
     def checkData(self, data): # used to initialize missing data or remove useless data from the save file
         expected = {
             'version':self.saveversion,
+            'guilds': [],
             'banned_guilds': [],
             'gbfaccounts': [],
             'gbfcurrent': 0,

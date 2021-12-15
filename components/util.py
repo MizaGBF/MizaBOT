@@ -289,7 +289,8 @@ class Util():
                     await self.react(target[0].message, '✅') # white check mark
             elif isinstance(target, disnake.interactions.application_command.ApplicationCommandInteraction):
                 if all or not self.bot.isAuthorized(target):
-                    await target.delete_original_message(delay=delay)
+                    await asyncio.sleep(delay)
+                    await target.edit_original_message(content="{}".format(self.bot.emote.get('lyria')), embed=None, view=None, attachments=[])
         except Exception as e:
             await self.bot.sendError("clean", e)
 
