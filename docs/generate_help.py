@@ -84,7 +84,7 @@ def generate_html(command_list): # main function to generate the html
         for c in commands:
             cn = "" # command name
             if c['type'] == 0: cn = "/" # slash command, we add / before
-            elif c['type'] == 3: cn = "/{} ".format(func_index.get(c['parent'], c['parent'])) # sub command, we add / and parent(s) before
+            elif c['type'] == 3: cn = "/{} ".format(func_index.get(cog + "_" + c['parent'], c['parent'])) # sub command, we add / and parent(s) before
             cn += c['name']
             if cn in cmd_cache:
                 print("Warning: Command", cn, "is present twice or more")
@@ -444,7 +444,7 @@ def search_interval(data, pos, max_pos, start, end): # search a string between s
     if e == -1: return None
     return data[s+len(start):e]
 
-def retrieve_command_list(data, pos_list): # use the position list to retrieve the command datas
+def retrieve_command_list(cog, data, pos_list): # use the position list to retrieve the command datas
     cl = []
     i = data.find('self.color = 0x') # retrieve the cog color
     if i != -1:
@@ -479,7 +479,7 @@ def retrieve_command_list(data, pos_list): # use the position list to retrieve t
                 c['name'] = tmp # just store it as it is
                 if c['name'].startswith('_'): c['name'] = c['name'][1:]
             else: # if it's a renamed command, store the relation in the index
-                func_index[tmp] = alias
+                func_index[cog + "_" + tmp] = alias
             # now parse the command parameters
             args = breakdown_parameters(search_interval(data, fp, max_pos, '(', '):'))
             # remove the first two (self, inter)
@@ -494,9 +494,9 @@ def retrieve_command_list(data, pos_list): # use the position list to retrieve t
                 c['comment'] = ""
             if pos_list[i][1] == 4: # setting up sub_command_group name translation
                 if alias is not None:
-                    func_index[base_name] = pos_list[i][2] + " " + c['name']
+                    func_index[cog + "_" + base_name] = pos_list[i][2] + " " + c['name']
                 else:
-                    func_index[c['name']] = pos_list[i][2] + " " + c['name']
+                    func_index[cog + "_" + c['name']] = pos_list[i][2] + " " + c['name']
             # IF AND ONLY IF the word "owner" or "hidden" are present in the description, we actually don't store the command
             # for that reason, the word owner shouldn't be used in regular command descriptions
             if 'owner' not in c['comment'].lower() and 'hidden' not in c['comment'].lower():
@@ -549,7 +549,7 @@ def generate_help(): # main function
                     for group in all: # for all valid results
                         try:
                             class_name = group # the cog Class name
-                            cl = retrieve_command_list(data, find_command_pos(data)) # parse the content
+                            cl = retrieve_command_list(class_name, data, find_command_pos(data)) # parse the content
                             if len(cl) > 0: # if at least one public command found
                                 command_list[class_name] = cl # store it
                                 print("Cog", class_name, "found in", p)
