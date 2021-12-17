@@ -1,4 +1,5 @@
-﻿from disnake.ext import commands
+﻿import disnake
+from disnake.ext import commands
 
 # ----------------------------------------------------------------------------------------------------------------
 # Roles Cog
@@ -26,7 +27,7 @@ class Roles(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 2, commands.BucketType.user)
-    async def iam(self, inter, role_name : str = commands.Param(description="A role name")):
+    async def iam(self, inter: disnake.GuildCommandInteraction, role_name : str = commands.Param(description="A role name")):
         """Add a role to you that you choose. Role must be on a list of self-assignable roles."""
         g = str(inter.guild.id)
         roles = self.bot.data.save['assignablerole'].get(g, {})
@@ -51,7 +52,7 @@ class Roles(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 2, commands.BucketType.user)
-    async def iamnot(self, inter, role_name : str = commands.Param(description="A role name")):
+    async def iamnot(self, inter: disnake.GuildCommandInteraction, role_name : str = commands.Param(description="A role name")):
         """Remove a role to you that you choose. Role must be on a list of self-assignable roles."""
         g = str(inter.guild.id)
         roles = self.bot.data.save['assignablerole'].get(g, {})
@@ -76,7 +77,7 @@ class Roles(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 5, commands.BucketType.guild)
-    async def lsar(self, inter, page : int = commands.Param(description="List Page", ge=1, default=1)):
+    async def lsar(self, inter: disnake.GuildCommandInteraction, page : int = commands.Param(description="List Page", ge=1, default=1)):
         """List the self-assignable roles available in this server"""
         g = str(inter.guild.id)
         if page < 1: page = 1
@@ -110,7 +111,7 @@ class Roles(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @isMod()
-    async def asar(self, inter, role_name : str = commands.Param(description="A role name")):
+    async def asar(self, inter: disnake.GuildCommandInteraction, role_name : str = commands.Param(description="A role name")):
         """Add a role to the list of self-assignable roles (Mod Only)"""
         role = None
         for r in inter.guild.roles:
@@ -133,7 +134,7 @@ class Roles(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @isMod()
-    async def rsar(self, inter, role_name : str = commands.Param(description="A role name")):
+    async def rsar(self, inter: disnake.GuildCommandInteraction, role_name : str = commands.Param(description="A role name")):
         """Remove a role from the list of self-assignable roles (Mod Only)"""
         role = None
         for r in inter.guild.roles:

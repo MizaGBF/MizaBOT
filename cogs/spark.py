@@ -19,7 +19,7 @@ class Sparking(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(2, 10, commands.BucketType.user)
-    async def spark(self, inter):
+    async def spark(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
 
@@ -66,7 +66,7 @@ class Sparking(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Critical Error", description="I warned my owner", color=self.color, footer=str(e)), ephemeral=True)
 
     @spark.sub_command()
-    async def set(self, inter, crystal : int = commands.Param(description="Your amount of Crystals", ge=0, le=900000, default=0), single : int = commands.Param(description="Your amount of Single Draw Tickets", ge=0, le=1000, default=0), ten : int = commands.Param(description="Your amount of Ten Draw Tickets", ge=0, le=100, default=0)):
+    async def set(self, inter: disnake.GuildCommandInteraction, crystal : int = commands.Param(description="Your amount of Crystals", ge=0, le=900000, default=0), single : int = commands.Param(description="Your amount of Single Draw Tickets", ge=0, le=1000, default=0), ten : int = commands.Param(description="Your amount of Ten Draw Tickets", ge=0, le=100, default=0)):
         """Set your roll count"""
         id = str(inter.author.id)
         try:
@@ -127,12 +127,12 @@ class Sparking(commands.Cog):
         return t_min, t_max, expected, now
 
     @spark.sub_command()
-    async def see(self, inter, member : disnake.Member = None):
+    async def see(self, inter: disnake.GuildCommandInteraction, member : disnake.Member = None):
         """Post your (or the target) roll count"""
         await self._seeroll(inter, member, False)
 
     @spark.sub_command()
-    async def zero(self, inter, day_difference: int = commands.Param(description="Add a number of days to today date", ge=0, default=0)):
+    async def zero(self, inter: disnake.GuildCommandInteraction, day_difference: int = commands.Param(description="Add a number of days to today date", ge=0, default=0)):
         """Post a spark estimation based on today date"""
         try:
             t_min, t_max, expected, now = self._estimate(day_difference, None)
@@ -157,7 +157,7 @@ class Sparking(commands.Cog):
         - ar: Integer, Author ranking
         - top: Integer, Top limit
     """
-    async def _ranking(self, inter, guild):
+    async def _ranking(self, inter: disnake.GuildCommandInteraction, guild):
         ranking = {}
         for id in self.bot.data.save['spark']:
             if self.bot.ban.check(id, self.bot.ban.SPARK):
@@ -193,7 +193,7 @@ class Sparking(commands.Cog):
         return msg, ar, top
 
     @spark.sub_command()
-    async def ranking(self, inter):
+    async def ranking(self, inter: disnake.GuildCommandInteraction):
         """Show the ranking of everyone saving for a spark in the server"""
         try:
             await inter.response.defer()

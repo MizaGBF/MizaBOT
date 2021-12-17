@@ -17,7 +17,7 @@ class General(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 100, commands.BucketType.user)
-    async def invite(self, inter):
+    async def invite(self, inter: disnake.GuildCommandInteraction):
         """Get the MizaBOT invite link"""
         if 'invite' not in self.bot.data.save:
             await inter.response.send_message(embed=self.bot.util.embed(title="Invite Error", description="Invitation settings aren't set, hence the bot can't be invited.\nIf you are the server owner, check the `setInvite` command", timestamp=self.bot.util.timestamp(), color=self.color), ephemeral=True)
@@ -28,7 +28,7 @@ class General(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 30, commands.BucketType.user)
-    async def bug_report(self, inter, report : str = commands.Param()):
+    async def bug_report(self, inter: disnake.GuildCommandInteraction, report : str = commands.Param()):
         """Send a bug report (or your love confessions) to the author"""
         await self.bot.send('debug', embed=self.bot.util.embed(title="Bug Report", description=report, footer="{} ▫️ User ID: {}".format(inter.author.name, inter.author.id), thumbnail=inter.author.display_avatar, color=self.color))
         await inter.response.send_message(embed=self.bot.util.embed(title="Error", description='Thank you, your report has been sent with success.', color=self.color), ephemeral=True)
@@ -45,19 +45,19 @@ class General(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 30, commands.BucketType.user)
-    async def help(self, inter):
+    async def help(self, inter: disnake.GuildCommandInteraction):
         """Post a link to the online help"""
         await inter.response.send_message(embed=self.bot.util.embed(title=self.bot.description.splitlines()[0], description="Online Help [here](https://mizagbf.github.io/MizaBOT/)\nCode source [here](https://github.com/MizaGBF/MizaBOT)", thumbnail=inter.me.display_avatar, color=self.color), ephemeral=True)
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 30, commands.BucketType.user)
-    async def mizabot(self, inter):
+    async def mizabot(self, inter: disnake.GuildCommandInteraction):
         """Post the bot status"""
         await inter.response.send_message(embed=self.bot.util.embed(title="{} is Ready".format(self.bot.user.display_name), description=self.bot.util.statusString(), thumbnail=self.bot.user.display_avatar, timestamp=self.bot.util.timestamp(), color=self.color), ephemeral=True)
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 30, commands.BucketType.user)
-    async def changelog(self, inter):
+    async def changelog(self, inter: disnake.GuildCommandInteraction):
         """Post the bot changelog"""
         msg = ""
         for c in self.bot.changelog:
@@ -70,7 +70,7 @@ class General(commands.Cog):
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 100, commands.BucketType.guild)
     @commands.max_concurrency(5, commands.BucketType.default)
-    async def poll(self, inter, duration : int = commands.Param(description="In seconds", ge=60, le=500, autocomplete=[60, 120, 180, 240]), poll_data : str = commands.Param(description="Format is: `title;choice1;choice2;...;choiceN`", autocomplete=['Example title;Yes;No'])):
+    async def poll(self, inter: disnake.GuildCommandInteraction, duration : int = commands.Param(description="In seconds", ge=60, le=500), poll_data : str = commands.Param(description="Format is: `title;choice1;choice2;...;choiceN`")):
         """Make a poll"""
         try:
             splitted = poll_data.split(';')
@@ -87,7 +87,7 @@ class General(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(2, 10, commands.BucketType.guild)
-    async def calc(self, inter, expression : str = commands.Param(description='Mathematical Expression')):
+    async def calc(self, inter: disnake.GuildCommandInteraction, expression : str = commands.Param(description='Mathematical Expression')):
         """Process a mathematical expression. Support variables (Example: cos(a + b) / c, a = 1, b=2,c = 3)."""
         try:
             m = expression.split(",")
@@ -108,6 +108,6 @@ class General(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 20, commands.BucketType.user)
-    async def jst(self, inter):
+    async def jst(self, inter: disnake.GuildCommandInteraction):
         """Post the current time, JST timezone"""
         await inter.response.send_message(embed=self.bot.util.embed(title="{} {:%Y/%m/%d %H:%M} JST".format(self.bot.emote.get('clock'), self.bot.util.JST()), color=self.color), ephemeral=True)

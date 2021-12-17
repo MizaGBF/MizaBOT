@@ -1,3 +1,4 @@
+import disnake
 from disnake.ext import commands
 import asyncio
 from datetime import datetime, timedelta
@@ -266,7 +267,7 @@ class GuildWar(commands.Cog):
     --------
     str: Time left, empty if error
     """
-    def getNextBuff(self, inter): # for the (you) crew, get the next set of buffs to be called
+    def getNextBuff(self, inter: disnake.GuildCommandInteraction): # for the (you) crew, get the next set of buffs to be called
         if self.bot.data.save['gw']['state'] == True and inter.guild.id == self.bot.data.config['ids'].get('you_server', 0):
             current_time = self.bot.util.JST()
             if current_time < self.bot.data.save['gw']['dates']["Preliminaries"]:
@@ -286,12 +287,12 @@ class GuildWar(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
-    async def gw(self, inter):
+    async def gw(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
 
     @gw.sub_command()
-    async def time(self, inter, gmt : int = commands.Param(description='Your timezone from GMT', ge=-12, le=14, default=9, autocomplete=[-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])):
+    async def time(self, inter: disnake.GuildCommandInteraction, gmt : int = commands.Param(description='Your timezone from GMT', ge=-12, le=14, default=9, autocomplete=[-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])):
         """Post the GW schedule"""
         if self.bot.data.save['gw']['state'] == True:
             try:
@@ -342,7 +343,7 @@ class GuildWar(commands.Cog):
             await self.bot.util.clean(inter, 40)
 
     @gw.sub_command()
-    async def buff(self, inter):
+    async def buff(self, inter: disnake.GuildCommandInteraction):
         """Check when is the next GW buff ((You) Server Only)"""
         try:
             d = self.getNextBuff(inter)
@@ -355,7 +356,7 @@ class GuildWar(commands.Cog):
             await self.bot.sendError("gwbuff", e)
 
     @gw.sub_command()
-    async def ranking(self, inter):
+    async def ranking(self, inter: disnake.GuildCommandInteraction):
         """Retrieve the current GW ranking"""
         try:
             if self.bot.data.save['gw']['state'] == False or self.bot.util.JST() < self.bot.data.save['gw']['dates']["Preliminaries"] or self.bot.data.save['gw']['ranking'] is None:
@@ -383,7 +384,7 @@ class GuildWar(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color), ephemeral=True)
 
     @gw.sub_command()
-    async def estimation(self, inter):
+    async def estimation(self, inter: disnake.GuildCommandInteraction):
         """Estimate the GW ranking at the end of current day"""
         try:
             if self.bot.data.save['gw']['state'] == False or self.bot.util.JST() < self.bot.data.save['gw']['dates']["Preliminaries"] or self.bot.data.save['gw']['ranking'] is None:
@@ -455,7 +456,7 @@ class GuildWar(commands.Cog):
     type: Boolean, True for crews, False for players
     terms: Search string
     """
-    async def findranking(self, inter, type, terms):
+    async def findranking(self, inter: disnake.GuildCommandInteraction, type, terms):
         # set the search strings based on the search type
         if type: txt = "crew"
         else: txt = "player"
@@ -584,7 +585,7 @@ class GuildWar(commands.Cog):
         except: pass
 
     @gw.sub_command()
-    async def box(self, inter, value : str = commands.Param(description="Value to convert (support B, M and K)")):
+    async def box(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
         """Convert Guild War box values"""
         t = 0
         box = self.bot.util.strToInt(value)
@@ -611,7 +612,7 @@ class GuildWar(commands.Cog):
         await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War Token Calculator ▫️ {} boxes".format(self.bot.emote.get('gw'), b), description="**{:,}** tokens needed\n\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(t, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color), ephemeral=True)
 
     @gw.sub_command()
-    async def token(self, inter, value : str = commands.Param(description="Value to convert (support B, M and K)")):
+    async def token(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
         """Convert Guild War token values"""
         try:
             tok = self.bot.util.strToInt(value)
@@ -645,7 +646,7 @@ class GuildWar(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid token number", color=self.color), ephemeral=True)
 
     @gw.sub_command()
-    async def meat(self, inter, value : str = commands.Param(description="Value to convert (support B, M and K)")):
+    async def meat(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
         """Convert Guild War meat values"""
         try:
             meat = self.bot.util.strToInt(value)
@@ -659,7 +660,7 @@ class GuildWar(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid meat number", color=self.color), ephemeral=True)
 
     @gw.sub_command()
-    async def honor(self, inter, value : str = commands.Param(description="Value to convert (support B, M and K)")):
+    async def honor(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
         """Convert Guild War honor values"""
         try:
             target = self.bot.util.strToInt(value)
@@ -674,7 +675,7 @@ class GuildWar(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid honor number", color=self.color), ephemeral=True)
 
     @gw.sub_command()
-    async def honorplanning(self, inter, target : str = commands.Param(description="Number of honors (support B, M and K)")):
+    async def honorplanning(self, inter: disnake.GuildCommandInteraction, target : str = commands.Param(description="Number of honors (support B, M and K)")):
         """Calculate how many NM95 and 150 you need for your targeted honor"""
         try:
             target = self.bot.util.strToInt(target)
@@ -709,7 +710,7 @@ class GuildWar(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid honor number", color=self.color), ephemeral=True)
 
     @gw.sub_command()
-    async def speed(self, inter, params : str = commands.Param(description="Leave empty to see the guide", default="")):
+    async def speed(self, inter: disnake.GuildCommandInteraction, params : str = commands.Param(description="Leave empty to see the guide", default="")):
         """Compare multiple GW fights based on your speed"""
         try:
             if params == "": raise Exception()
@@ -992,7 +993,7 @@ class GuildWar(commands.Cog):
             raise Exception('Error in postCrewData()') from e
 
     @gw.sub_command(name="crew")
-    async def _crew(self, inter, id : str = commands.Param(description="Crew ID"), mode : int = commands.Param(description="Mode (0=Auto, 1=Rank, 2=Honor)", ge=0, le=2, default=0)):
+    async def _crew(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param(description="Crew ID"), mode : int = commands.Param(description="Mode (0=Auto, 1=Rank, 2=Honor)", ge=0, le=2, default=0)):
         """Get a crew profile"""
         await self.postCrewData(inter, id, mode)
 
@@ -1017,7 +1018,7 @@ class GuildWar(commands.Cog):
         return members
 
     @gw.sub_command()
-    async def supercrew(self, inter):
+    async def supercrew(self, inter: disnake.GuildCommandInteraction):
         """Sort and post the top 30 server members per contribution"""
         members = []
         gwid = None
@@ -1061,7 +1062,7 @@ class GuildWar(commands.Cog):
         else: return self.bot.gbf.request("http://game.granbluefantasy.jp/guild_other/member_list/{}/{}?PARAMS".format(page, id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
 
     @gw.sub_command()
-    async def lead(self, inter, id_crew_1 : str = commands.Param(description="A crew ID"), id_crew_2 : str = commands.Param(description="A crew ID")):
+    async def lead(self, inter: disnake.GuildCommandInteraction, id_crew_1 : str = commands.Param(description="A crew ID"), id_crew_2 : str = commands.Param(description="A crew ID")):
         """Search two crew current scores and compare them"""
         await inter.response.defer()
         day = self.bot.ranking.getCurrentGWDayID()
@@ -1105,7 +1106,7 @@ class GuildWar(commands.Cog):
         await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.emote.get('gw'), gwnum, day - 1), description=msg, timestamp=self.bot.util.timestamp(), color=self.color))
 
     @gw.sub_command()
-    async def youlead(self, inter, opponent : str = commands.Param(description="Opponent ID to set it", default="")):
+    async def youlead(self, inter: disnake.GuildCommandInteraction, opponent : str = commands.Param(description="Opponent ID to set it", default="")):
         """Show the current match of (You)
         (You) Server Only"""
         await inter.response.defer()
@@ -1196,7 +1197,7 @@ class GuildWar(commands.Cog):
                 await self.bot.util.clean(clean, 90)
 
     @gw.sub_command()
-    async def nm95(self, inter, hp_percent : int = commands.Param(description="HP% of NM95 you want to do", default=100, le=100, ge=1)):
+    async def nm95(self, inter: disnake.GuildCommandInteraction, hp_percent : int = commands.Param(description="HP% of NM95 you want to do", default=100, le=100, ge=1)):
         """Give the dragon solo equivalent of NM95"""
         todo = (131250000 * hp_percent) // 100
         drag = {
@@ -1219,7 +1220,7 @@ class GuildWar(commands.Cog):
     @commands.slash_command(default_permission=True)
     @commands.cooldown(2, 30, commands.BucketType.guild)
     @commands.max_concurrency(2, commands.BucketType.default)
-    async def gbfg(self, inter):
+    async def gbfg(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
 
@@ -1250,7 +1251,7 @@ class GuildWar(commands.Cog):
         return self.bot.data.save['gbfdata']['leader']
 
     @gbfg.sub_command()
-    async def danchoranking(self, inter):
+    async def danchoranking(self, inter: disnake.GuildCommandInteraction):
         """Sort and post all /gbfg/ captains per contribution"""
         crews = []
         await inter.response.defer()
@@ -1336,7 +1337,7 @@ class GuildWar(commands.Cog):
             return fields, gwid
 
     @gbfg.sub_command()
-    async def ranking(self, inter):
+    async def ranking(self, inter: disnake.GuildCommandInteraction):
         """Sort and post all /gbfg/ crew per contribution"""
         await inter.response.defer()
         fields, gwid = await self.bot.do(self._gbfgranking)
@@ -1375,7 +1376,7 @@ class GuildWar(commands.Cog):
         return sortedcrew
 
     @gbfg.sub_command()
-    async def recruit(self, inter):
+    async def recruit(self, inter: disnake.GuildCommandInteraction):
         """Post all recruiting /gbfg/ crews"""
         await inter.response.defer()
         if not await self.bot.do(self.bot.gbf.isAvailable):
@@ -1397,16 +1398,16 @@ class GuildWar(commands.Cog):
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
     @commands.max_concurrency(10, commands.BucketType.default)
-    async def find(self, inter):
+    async def find(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
 
     @find.sub_command()
-    async def crew(self, inter, terms : str = commands.Param(description="Search value. Add %past for past GW and %id for an ID search")):
+    async def crew(self, inter: disnake.GuildCommandInteraction, terms : str = commands.Param(description="Search value. Add %past for past GW and %id for an ID search")):
         """Search a crew or player GW score in the bot data"""
         await self.findranking(inter, True, terms)
 
     @find.sub_command()
-    async def player(self, inter, terms : str = commands.Param(description="Search value. Add %past for past GW and %id for an ID search")):
+    async def player(self, inter: disnake.GuildCommandInteraction, terms : str = commands.Param(description="Search value. Add %past for past GW and %id for an ID search")):
         """Search a crew or player GW score in the bot data"""
         await self.findranking(inter, False, terms)

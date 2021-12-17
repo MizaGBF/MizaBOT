@@ -1,4 +1,5 @@
-﻿from disnake.ext import commands
+﻿import disnake
+from disnake.ext import commands
 import re
 import html
 
@@ -60,12 +61,12 @@ class FourChan(commands.Cog):
 
     @commands.slash_command(default_permission=True, name="4chan")
     @commands.cooldown(1, 2, commands.BucketType.default)
-    async def fourchan(self, inter):
+    async def fourchan(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
 
     @fourchan.sub_command()
-    async def search(self, inter, board : str = commands.Param(description="The board to search on.", autocomplete=['/a/', '/v/', '/vg/']), search : str = commands.Param(description="Search string")):
+    async def search(self, inter: disnake.GuildCommandInteraction, board : str = commands.Param(description="The board to search on."), search : str = commands.Param(description="Search string")):
         """Search 4chan threads"""
         nsfw = ['b', 'r9k', 'pol', 'bant', 'soc', 's4s', 's', 'hc', 'hm', 'h', 'e', 'u', 'd', 'y', 't', 'hr', 'gif', 'aco', 'r']
         board = board.lower().replace('/', '')
@@ -88,7 +89,7 @@ class FourChan(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="4chan Search result", description="No matching threads found", color=self.color), ephemeral=True)
 
     @fourchan.sub_command()
-    async def gbfg(self, inter):
+    async def gbfg(self, inter: disnake.GuildCommandInteraction):
         """Post the latest /gbfg/ threads"""
         threads = await self.bot.do(self.get4chan, 'vg', '/gbfg/')
         if len(threads) > 0:
@@ -106,7 +107,7 @@ class FourChan(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="/gbfg/ Error", description="I couldn't find a single /gbfg/ thread 😔", color=self.color),ephemeral=True)
 
     @fourchan.sub_command()
-    async def hgg(self, inter):
+    async def hgg(self, inter: disnake.GuildCommandInteraction):
         """Post the latest /hgg2d/ threads (NSFW channels Only)"""
         if not inter.channel.is_nsfw():
             await inter.response.send_message(embed=self.bot.util.embed(title=':underage: NSFW channels only', color=self.color), ephemeral=True)

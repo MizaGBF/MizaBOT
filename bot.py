@@ -30,7 +30,7 @@ except:
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "9.2" # bot version
+        self.version = "9.3" # bot version
         self.changelog = [ # changelog lines
             "Please use `/bug_report` if you see anything wrong",
             "Check the [Online help](https://mizagbf.github.io/MizaBOT/) for the new command list (and more)",
@@ -84,7 +84,7 @@ class MizaBot(commands.Bot):
         self.ban.init()
 
         # init base class
-        super().__init__(case_insensitive=True, description="MizaBOT version {}\n[Source code](https://github.com/MizaGBF/MizaBOT)▫️[Online Command List](https://mizagbf.github.io/MizaBOT/)".format(self.version), help_command=None, owner=self.data.config['ids']['owner'], max_messages=None, intents=disnake.Intents.default(), reload=True)
+        super().__init__(case_insensitive=True, description="MizaBOT version {}\n[Source code](https://github.com/MizaGBF/MizaBOT)▫️[Online Command List](https://mizagbf.github.io/MizaBOT/)".format(self.version), help_command=None, owner=self.data.config['ids']['owner'], max_messages=None, intents=disnake.Intents.default())
         self.add_app_command_check(self.global_check, slash_commands=True, user_commands=True, message_commands=True)
 
     """go()
@@ -538,30 +538,6 @@ class MizaBot(commands.Bot):
             await self.sendError('global_check', e)
             return False
 
-    """on_command_error()
-    Event. Called when a command raise an uncaught error
-    
-    Parameters
-    ----------
-    ctx: Command context
-    error: Exception
-    """
-    async def on_command_error(self, ctx, error): # called when an uncatched exception happens in a command
-        msg = str(error)
-        if msg.startswith('You are on cooldown.'):
-            await self.util.react(ctx.message, 'cooldown')
-        elif msg.find('check functions for command') != -1:
-            return
-        elif msg.find('required argument that is missing') != -1 or msg.startswith('Converting to "int" failed for parameter'):
-            await self.util.react(ctx.message, '❎')
-            return
-        elif msg.find('Member "') == 0 or msg.find('Command "') == 0 or msg.startswith('Command raised an exception: Forbidden: 403'):
-            return
-        else:
-            await self.util.react(ctx.message, '❎')
-            self.errn += 1
-            await self.send('debug', embed=self.util.embed(title="⚠ Error caused by {}".format(ctx.message.author), description=self.util.pexc(error).replace('*', '\*'), thumbnail=ctx.author.display_avatar, fields=[{"name":"Command", "value":'`{}`'.format(ctx.message.content)}, {"name":"Server", "value":ctx.message.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(ctx.message.author.id), timestamp=self.util.timestamp()))
-
     """application_error_handling()
     Common function for on_error events.
     
@@ -573,20 +549,20 @@ class MizaBot(commands.Bot):
     async def application_error_handling(self, inter, error):
         msg = str(error)
         if msg.startswith('You are on cooldown.'):
-            await inter.response.send_message(msg.replace('You are on cooldown.', 'This command is on cooldown.'), ephemeral=True)
+            await inter.response.send_message(embed=self.util.embed(title="Command Cooldown Error", description=msg.replace('You are on cooldown.', 'This command is on cooldown.'), timestamp=self.util.timestamp()), ephemeral=True)
         elif msg.startswith('Too many people are using this command.'):
-            await inter.response.send_message(msg.replace('Too many people are using this command, try again later'), ephemeral=True)
+            await inter.response.send_message(embed=self.util.embed(title="Command Concurrency Error", description=msg.replace('Too many people are using this command, try again later'), timestamp=self.util.timestamp()), ephemeral=True)
         elif msg.find('check functions for command') != -1:
             return
         elif msg.find('required argument that is missing') != -1 or msg.startswith('Converting to "int" failed for parameter'):
-            await inter.response.send_message("A required parameter is missing.", ephemeral=True)
+            await inter.response.send_message(embed=self.util.embed(title="Command Argument Error", description="A required parameter is missing.", timestamp=self.util.timestamp()), ephemeral=True)
             return
         elif msg.find('Member "') == 0 or msg.find('Command "') == 0 or msg.startswith('Command raised an exception: Forbidden: 403'):
-            try: await inter.response.send_message("it seems you can't use this command here.", ephemeral=True)
+            try: await inter.response.send_message(embed=self.util.embed(title="Command Permission Error", description="It seems you can't use this command here", timestamp=self.util.timestamp()), ephemeral=True)
             except: pass
             return
         else:
-            try: await inter.response.send_message("An unexpected error occured. My owner has been notified.\nUse /bug_report if you have additional informations to provide", ephemeral=True)
+            try: await inter.response.send_message(embed=self.util.embed(title="Command Error", description="An unexpected error occured. My owner has been notified.\nUse /bug_report if you have additional informations to provide", timestamp=self.util.timestamp()), ephemeral=True)
             except: pass
             self.errn += 1
             await self.send('debug', embed=self.util.embed(title="⚠ Error caused by {}".format(inter.author), description=self.util.pexc(error).replace('*', '\*'), thumbnail=inter.author.display_avatar, fields=[{"name":"Options", "value":'`{}`'.format(inter.options)}, {"name":"Server", "value":inter.author.guild.name}, {"name":"Message", "value":msg}], footer='{}'.format(inter.author.id), timestamp=self.util.timestamp()))

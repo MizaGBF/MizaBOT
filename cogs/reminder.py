@@ -76,7 +76,7 @@ class Reminder(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
-    async def remind(self, inter, duration : str = commands.Param(description="Format: XdXhXmXs"), msg : str = commands.Param(description="Content of the reminder")):
+    async def remind(self, inter: disnake.GuildCommandInteraction, duration : str = commands.Param(description="Format: XdXhXmXs"), msg : str = commands.Param(description="Content of the reminder")):
         """Remind you of something at the specified time (±30 seconds precision)"""
         id = str(inter.author.id)
         if id not in self.bot.data.save['reminders']:
@@ -106,7 +106,7 @@ class Reminder(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
-    async def remindlist(self, inter):
+    async def remindlist(self, inter: disnake.GuildCommandInteraction):
         """Post your current list of reminders"""
         id = str(inter.author.id)
         if id not in self.bot.data.save['reminders'] or len(self.bot.data.save['reminders'][id]) == 0:
@@ -120,7 +120,7 @@ class Reminder(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
-    async def reminddel(self, inter, rid : int = commands.Param(description="Number of the reminder to delete")):
+    async def reminddel(self, inter: disnake.GuildCommandInteraction, rid : int = commands.Param(description="Number of the reminder to delete")):
         """Delete one of your reminders"""
         id = str(inter.author.id)
         if id not in self.bot.data.save['reminders'] or len(self.bot.data.save['reminders'][id]) == 0:

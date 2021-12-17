@@ -1,4 +1,5 @@
-﻿from disnake.ext import commands
+﻿import disnake
+from disnake.ext import commands
 import asyncio
 import random
 import math
@@ -287,53 +288,53 @@ class Games(commands.Cog):
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 15, commands.BucketType.user)
     @commands.max_concurrency(10, commands.BucketType.default)
-    async def roll(self, inter):
+    async def roll(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
 
     @roll.sub_command()
-    async def single(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
+    async def single(self, inter: disnake.GuildCommandInteraction, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
         """Simulate a single draw"""
         await self._roll(inter, ("{} did a single roll...", "{} did a single roll"), 0, count=1, mode='single', legfest=self.checkLegfest(double))
 
     @roll.sub_command()
-    async def ten(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
+    async def ten(self, inter: disnake.GuildCommandInteraction, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
         """Simulate a ten draw"""
         await self._roll(inter, ("{} did ten rolls...", "{} did ten rolls"), 2, count=10, mode='ten', legfest=self.checkLegfest(double))
 
     @roll.sub_command()
-    async def spark(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
+    async def spark(self, inter: disnake.GuildCommandInteraction, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
         """Simulate a spark"""
         await self._roll(inter, ("{} is sparking...", "{} sparked"), 3, count=300, mode='ten', legfest=self.checkLegfest(double))
 
     @roll.sub_command()
-    async def count(self, inter, count : int = commands.Param(description='Number of rolls', autocomplete=[1, 10, 50, 100, 120, 300, 600], default=10, ge=1, le=600), double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
+    async def count(self, inter: disnake.GuildCommandInteraction, count : int = commands.Param(description='Number of rolls', default=10, ge=1, le=600), double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
         """Simulate a specific amount of draw"""
         await self._roll(inter, ("{}" + " is rolling {} times...".format(count), "{} " + "rolled {} times".format(count)), 3, count=count, mode='ten', legfest=self.checkLegfest(double))
 
     @roll.sub_command()
-    async def gachapin(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
+    async def gachapin(self, inter: disnake.GuildCommandInteraction, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
         """Simulate a Gachapin Frenzy"""
         await self._roll(inter, ("{} is rolling the Gachapin...", "{} rolled the Gachapin"), 3, count=300, mode='gachapin', legfest=self.checkLegfest(double))
 
     @roll.sub_command()
-    async def mukku(self, inter):
+    async def mukku(self, inter: disnake.GuildCommandInteraction):
         """Simulate a Mukku Frenzy"""
         await self._roll(inter, ("{} is rolling the Mukku...", "{} rolled the Mukku"), 3, count=300, mode='mukku')
 
     @roll.sub_command()
-    async def supermukku(self, inter):
+    async def supermukku(self, inter: disnake.GuildCommandInteraction):
         """Simulate a Super Mukku Frenzy"""
         await self._roll(inter, ("{} is rolling the Supper Mukku...", "{} rolled the Super Mukku"), 3, count=300, mode='supermukku')
 
     @roll.sub_command()
-    async def memeroll(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default=""), rateup : str = commands.Param(description='Put `r` or `R` to roll until a rate up SSR', autocomplete=["r", "R"], default="")):
+    async def memeroll(self, inter: disnake.GuildCommandInteraction, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default=""), rateup : str = commands.Param(description='Put `r` or `R` to roll until a rate up SSR', autocomplete=["r", "R"], default="")):
         """Simulate rolls until a SSR"""
         rateup = (rateup.lower() == "r")
         await self._roll(inter, ("{} is memerolling...", "{} memerolled {} times"), 1, mode='memerollB' if rateup else 'memerollA', legfest=self.checkLegfest(double))
 
     @roll.sub_command()
-    async def srssr(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
+    async def srssr(self, inter: disnake.GuildCommandInteraction, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
         """Simulate a SR/SSR Ticket draw"""
         await self._roll(inter, ("{} is using a SR/SSR ticket...", "{} used a SR/SSR ticket"), 0, count=1, mode='srssr', legfest=self.checkLegfest(double))
 
@@ -357,12 +358,12 @@ class Games(commands.Cog):
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 80, commands.BucketType.user)
     @commands.max_concurrency(10, commands.BucketType.default)
-    async def gbfgame(self, inter):
+    async def gbfgame(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
 
     @gbfgame.sub_command()
-    async def roulette(self, inter, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
+    async def roulette(self, inter: disnake.GuildCommandInteraction, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
         """Imitate the GBF roulette"""
         await inter.response.defer()
         footer = ""
@@ -470,7 +471,7 @@ class Games(commands.Cog):
         await self.bot.util.clean(inter, 45)
 
     @gbfgame.sub_command()
-    async def scratch(self, inter):
+    async def scratch(self, inter: disnake.GuildCommandInteraction):
         """Imitate the GBF scratch game from Anniversary 2020"""
         await inter.response.defer()
         ct = self.bot.util.JST()
@@ -547,7 +548,7 @@ class Games(commands.Cog):
         await self.bot.util.clean(inter, 45)
 
     @gbfgame.sub_command()
-    async def chestrush(self, inter):
+    async def chestrush(self, inter: disnake.GuildCommandInteraction):
         """Imitate the GBF treasure game from Summer 2020"""
         await inter.response.defer()
         message = None
@@ -707,7 +708,7 @@ class Games(commands.Cog):
         return 0
 
     @gbfgame.sub_command()
-    async def fortune(self, inter, usercards : str = commands.Param(description='List your cards here', default="")):
+    async def fortune(self, inter: disnake.GuildCommandInteraction, usercards : str = commands.Param(description='List your cards here', default="")):
         """Imitate the GBF summer fortune game from Summer 2021"""
         title = '{} is tempting fate...'.format(inter.author.display_name)
         await inter.response.send_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':inter.author.display_avatar}, description="The winning numbers are...", color=self.color))
@@ -742,7 +743,7 @@ class Games(commands.Cog):
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 300, commands.BucketType.user)
     @commands.max_concurrency(5, commands.BucketType.default)
-    async def quota(self, inter):
+    async def quota(self, inter: disnake.GuildCommandInteraction):
         """Give you your GW quota for the day"""
         h = random.randint(800, 4000)
         m = random.randint(70, 180)
@@ -821,7 +822,7 @@ class Games(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 600, commands.BucketType.user)
-    async def character(self, inter):
+    async def character(self, inter: disnake.GuildCommandInteraction):
         """Generate a random GBF character"""
         seed = (inter.author.id + int(datetime.utcnow().timestamp()) // 86400) # based on user id + day
         values = {
@@ -848,7 +849,7 @@ class Games(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 100, commands.BucketType.guild)
-    async def xil(self, inter):
+    async def xil(self, inter: disnake.GuildCommandInteraction):
         """Generate a random element for Xil (Private Joke)"""
         g = random.Random()
         elems = ['fire', 'water', 'earth', 'wind', 'light', 'dark']
@@ -997,12 +998,12 @@ class Games(commands.Cog):
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 50, commands.BucketType.user)
     @commands.max_concurrency(10, commands.BucketType.default)
-    async def minigame(self, inter):
+    async def minigame(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
 
     @minigame.sub_command()
-    async def deal(self, inter):
+    async def deal(self, inter: disnake.GuildCommandInteraction):
         """Deal a random poker hand"""
         hand = []
         while len(hand) < 5:
@@ -1026,7 +1027,7 @@ class Games(commands.Cog):
         await self.bot.util.clean(inter, 45)
 
     @minigame.sub_command()
-    async def poker(self, inter):
+    async def poker(self, inter: disnake.GuildCommandInteraction):
         """Play a poker mini-game with other people"""
         await inter.response.defer()
         players = [inter.author]
@@ -1077,7 +1078,7 @@ class Games(commands.Cog):
         await self.bot.util.clean(inter, 45)
 
     @minigame.sub_command()
-    async def blackjack(self, inter):
+    async def blackjack(self, inter: disnake.GuildCommandInteraction):
         """Play a blackjack mini-game with other people"""
         await inter.response.defer()
         players = [inter.author]
@@ -1142,7 +1143,7 @@ class Games(commands.Cog):
         await self.bot.util.clean(inter, 45)
 
     @minigame.sub_command()
-    async def tictactoe(self, inter):
+    async def tictactoe(self, inter: disnake.GuildCommandInteraction):
         """Play a game of Tic Tac Toe"""
         await inter.response.defer()
         players = [inter.author]
@@ -1164,7 +1165,7 @@ class Games(commands.Cog):
         await inter.edit_original_message(embed=embed, view=view)
 
     @minigame.sub_command()
-    async def dice(self, inter, dice_string : str = commands.Param(description="Format is NdN. Minimum is 1d6, Maximum is 10d100", autocomplete=['1d6', '4d10'])):
+    async def dice(self, inter: disnake.GuildCommandInteraction, dice_string : str = commands.Param(description="Format is NdN. Minimum is 1d6, Maximum is 10d100")):
         """Roll some dies"""
         try:
             await inter.response.defer()
@@ -1188,7 +1189,7 @@ class Games(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Invalid string `{}`\nFormat must be `NdN` (minimum is `1d6`, maximum is `10d100`)".format(dice_string), color=self.color))
 
     @minigame.sub_command()
-    async def coin(self, inter):
+    async def coin(self, inter: disnake.GuildCommandInteraction):
         """Flip a coin"""
         coin = random.randint(0, 1)
         await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{} flipped a coin...".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=(":coin: It landed on **Head**" if (coin == 0) else ":coin: It landed on **Tail**"), color=self.color))
@@ -1197,7 +1198,7 @@ class Games(commands.Cog):
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 15, commands.BucketType.user)
     @commands.max_concurrency(5, commands.BucketType.default)
-    async def choose(self, inter, choices : str = commands.Param(description="Format is Choice 1;Choice 2;...;Choice N", autocomplete=["Do it;Don't", 'Yes;No'])):
+    async def choose(self, inter: disnake.GuildCommandInteraction, choices : str = commands.Param(description="Format is Choice 1;Choice 2;...;Choice N")):
         """Select a random string from the user's choices"""
         try:
             possible = choices.split(";")
@@ -1210,7 +1211,7 @@ class Games(commands.Cog):
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 15, commands.BucketType.user)
     @commands.max_concurrency(5, commands.BucketType.default)
-    async def ask(self, inter, question : str = commands.Param()):
+    async def ask(self, inter: disnake.GuildCommandInteraction, question : str = commands.Param()):
         """Ask me a question"""
         await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{} asked".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="`{}`\n{}".format(question, random.choice(["It is Certain.","It is decidedly so.","Without a doubt.","Yes definitely.","You may rely on it.","As I see it, yes.","Most likely.","Outlook good.","Yes.","Signs point to yes.","Reply hazy, try again.","Ask again later.","Better not tell you now.","Cannot predict now.","Concentrate and ask again.","Don't count on it.","My reply is no.","My sources say no.","Outlook not so good.","Very doubtful."])), color=self.color))
         await self.bot.util.clean(inter, 45)
@@ -1218,7 +1219,7 @@ class Games(commands.Cog):
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 15, commands.BucketType.user)
     @commands.max_concurrency(5, commands.BucketType.default)
-    async def when(self, inter, question : str = commands.Param()):
+    async def when(self, inter: disnake.GuildCommandInteraction, question : str = commands.Param()):
         """Ask me when will something happen"""
         await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{} asked".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="`When {}`\n{}".format(question, random.choice(["Never", "Soon:tm:", "Ask again tomorrow", "Can't compute", "42", "One day, my friend", "Next year", "It's a secret to everybody", "Soon enough", "When it's ready", "Five minutes", "This week, surely", "My sources say next month", "NOW!", "I'm not so sure", "In three days"])), color=self.color))
         await self.bot.util.clean(inter, 45)

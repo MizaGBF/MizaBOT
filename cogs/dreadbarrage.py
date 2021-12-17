@@ -1,4 +1,5 @@
-﻿from disnake.ext import commands
+﻿import disnake
+from disnake.ext import commands
 from datetime import datetime, timedelta
 import math
 
@@ -53,12 +54,12 @@ class DreadBarrage(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
-    async def db(self, inter):
+    async def db(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
 
     @db.sub_command()
-    async def time(self, inter, gmt : int = commands.Param(description='Your timezone from GMT', ge=-12, le=14, default=9, autocomplete=[-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])):
+    async def time(self, inter: disnake.GuildCommandInteraction, gmt : int = commands.Param(description='Your timezone from GMT', ge=-12, le=14, default=9, autocomplete=[-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])):
         """Post the Dread Barrage schedule"""
         if self.bot.data.save['valiant']['state'] == True:
             try:
@@ -97,7 +98,7 @@ class DreadBarrage(commands.Cog):
             await self.bot.util.clean(inter, 40)
 
     @db.sub_command()
-    async def token(self, inter, value : str = commands.Param(description="Value to convert (support B, M and K)")):
+    async def token(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
         """Convert Dread Barrage token values"""
         try:
             tok = self.bot.util.strToInt(tok)
@@ -129,7 +130,7 @@ class DreadBarrage(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid token number", color=self.color), ephemeral=True)
 
     @db.sub_command()
-    async def box(self, inter, value : str = commands.Param(description="Value to convert (support B, M and K)")):
+    async def box(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
         """Convert Dread Barrage box values"""
         t = 0
         b = box

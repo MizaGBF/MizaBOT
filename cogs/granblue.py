@@ -72,7 +72,7 @@ class GranblueFantasy(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(2, 20, commands.BucketType.user)
-    async def gbf(self, inter):
+    async def gbf(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
 
@@ -335,7 +335,7 @@ class GranblueFantasy(commands.Cog):
     url: Wiki url to request (url MUST be for gbf.wiki)
     search_mode: Boolean, if True it expects a search result page
     """
-    async def requestWiki(self, inter, url, search_mode = False):
+    async def requestWiki(self, inter: disnake.GuildCommandInteraction, url, search_mode = False):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 if r.status != 200:
@@ -426,7 +426,7 @@ class GranblueFantasy(commands.Cog):
         await self.bot.util.clean(inter, 80)
 
     @gbf.sub_command()
-    async def wiki(self, inter, terms : str = commands.Param(description="Search expression")):
+    async def wiki(self, inter: disnake.GuildCommandInteraction, terms : str = commands.Param(description="Search expression")):
         """Search the GBF wiki"""
         await inter.response.defer()
         # build the url (the wiki is case sensitive)
@@ -453,7 +453,7 @@ class GranblueFantasy(commands.Cog):
         await self.bot.util.clean(inter, 45)
 
     @gbf.sub_command()
-    async def leechlist(self, inter):
+    async def leechlist(self, inter: disnake.GuildCommandInteraction):
         """Post a link to /gbfg/ leechlist collection"""
         ls = self.bot.data.config['strings']["leechlist()"].split(";")
         # note: string is in the following format:
@@ -468,7 +468,7 @@ class GranblueFantasy(commands.Cog):
         await self.bot.util.clean(inter, 60)
 
     @gbf.sub_command()
-    async def spreadsheet(self, inter):
+    async def spreadsheet(self, inter: disnake.GuildCommandInteraction):
         """Post a link to my SpreadSheet Folder"""
         view = UrlButton(self.bot, [('SpreadSheet Folder', self.bot.data.config['strings']["sheetfolder()"])])
         await inter.response.send_message('\u200b', view=view)
@@ -476,7 +476,7 @@ class GranblueFantasy(commands.Cog):
         await self.bot.util.clean(inter, 60)
 
     @gbf.sub_command()
-    async def info(self, inter):
+    async def info(self, inter: disnake.GuildCommandInteraction):
         """Post various Granblue Fantasy informations"""
         current_time = self.bot.util.JST()
         description = "{:} Current Time is **{:02d}:{:02d} JST**".format(self.bot.emote.get('clock'), current_time.hour, current_time.minute)
@@ -549,7 +549,7 @@ class GranblueFantasy(commands.Cog):
         await inter.response.send_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
 
     @gbf.sub_command()
-    async def maintenance(self, inter):
+    async def maintenance(self, inter: disnake.GuildCommandInteraction):
         """Post GBF maintenance status"""
         try:
             description = self.getMaintenanceStatus()
@@ -561,7 +561,7 @@ class GranblueFantasy(commands.Cog):
             await self.bot.sendError("getMaintenanceStatus", e)
 
     @gbf.sub_command()
-    async def raidfinder(self, inter):
+    async def raidfinder(self, inter: disnake.GuildCommandInteraction):
         """Post the (You) python raidfinder"""
         ls = self.bot.data.config['strings']["pyfinder()"].split(";")
         # note: string is in the following format:
@@ -576,7 +576,7 @@ class GranblueFantasy(commands.Cog):
         await self.bot.util.clean(inter, 60)
 
     @gbf.sub_command()
-    async def stream(self, inter, op : str = commands.Param(default="")):
+    async def stream(self, inter: disnake.GuildCommandInteraction, op : str = commands.Param(default="")):
         """Post the stream text"""
         if len(self.bot.data.save['stream']['content']) == 0:
             await inter.response.send_message(embed=self.bot.util.embed(title="No event or stream available", color=self.color))
@@ -609,7 +609,7 @@ class GranblueFantasy(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title=title, description=msg, color=self.color))
 
     @gbf.sub_command()
-    async def schedule(self, inter, raw : str = commands.Param(default="")):
+    async def schedule(self, inter: disnake.GuildCommandInteraction, raw : str = commands.Param(default="")):
         """Post the GBF schedule"""
         if len(self.bot.data.save['schedule']) == 0:
             await inter.response.send_message(embed=self.bot.util.embed(title="No schedule available", color=self.color))
@@ -677,7 +677,7 @@ class GranblueFantasy(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="🗓 Event Schedule {} {:%Y/%m/%d %H:%M} JST".format(self.bot.emote.get('clock'), self.bot.util.JST()), url="https://twitter.com/granblue_en", color=self.color, description=msg))
 
     @gbf.sub_command()
-    async def koregra(self, inter):
+    async def koregra(self, inter: disnake.GuildCommandInteraction):
         """Post the time to the next monthly dev post"""
         c = self.bot.util.JST()
         try:
@@ -699,7 +699,7 @@ class GranblueFantasy(commands.Cog):
         await inter.response.send_message(embed=self.bot.util.embed(title="{} Kore Kara".format(self.bot.emote.get('clock')), description="Release approximately in **{}**".format(self.bot.util.delta2str(delta, 2)),  url="https://granbluefantasy.jp/news/index.php", thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
 
     @gbf.sub_command()
-    async def critical(self, inter, weapons : str = commands.Param(description='List of weapon modifiers. Put nothing to get the list.', default='')):
+    async def critical(self, inter: disnake.GuildCommandInteraction, weapons : str = commands.Param(description='List of weapon modifiers. Put nothing to get the list.', default='')):
         """Calculate critical rate"""
         values = {'small10':2, 'small15':3, 'small20':4, 'medium10':5, 'medium15':6.5, 'medium20':7.5, 'big10':8, 'big15':10, 'big20':11, 'bigii15':12, 'wamdus':20, 'hercules':11.5, 'sephira':30}
         ts = {'small':'small15', 'med':'medium15', 'medium':'medium15', 'big':'big15', 'big2':'bigii15', 's10':'small10', 's15':'small15', 's20':'small20', 'm10':'medium10', 'm15':'medium15', 'm20':'medium20', 'med10':'medium10', 'med15':'medium15', 'med20':'medium20', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'bii10':'bigii10', 'bii15':'bigii15', 'b210':'bigii10', 'b215':'bigii15', 'big210':'bigii10', 'big215':'bigii15', 'ameno':'medium20', 'gaebulg':'medium20', 'bulg':'medium20', 'bulge':'medium20', 'gae':'medium20', 'mjolnir':'small20', 'herc':'hercules', 'ecke':'medium15', 'eckesachs':'medium15', 'sachs':'medium15', 'blut':'small15', 'blutgang':'small15', 'indra':'medium15', 'ivory':'bigii15', 'ivoryark':'bigii15', 'ark':'bigii15', 'auberon':'medium15', 'aub':'medium15', 'taisai':'big15', 'pholia':'big15', 'galilei':'medium15', 'europa':'medium15', 'benedia':'medium15', 'thunderbolt':'big15', 'shibow':'big15', 'rein':'bigii15', 'babel':'bigii15', 'mandeb':'bigii15', 'bab-el-mandeb':'bigii15', 'arca':'sephira', 'arcarum':'sephira', 'spoon':'medium15', 'coruscant':'medium15', 'crozier':'medium15', 'eva':'bigii15', 'evanescence':'bigii15', 'opus':'medium20'}
@@ -746,7 +746,7 @@ class GranblueFantasy(commands.Cog):
                 await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
 
     @gbf.sub_command()
-    async def enmity(self, inter, hp : int = commands.Param(description="HP%", ge=1, le=100, default=60), weapons : str = commands.Param(description='List of weapon modifiers. Put nothing to get the list.', default='')):
+    async def enmity(self, inter: disnake.GuildCommandInteraction, hp : int = commands.Param(description="HP%", ge=1, le=100, default=60), weapons : str = commands.Param(description='List of weapon modifiers. Put nothing to get the list.', default='')):
         """Calculate enmity strength at a specific hp value"""
         values = {'small10':6, 'small15':7, 'small20':7.5, 'medium10':8, 'medium15':10, 'big10':10, 'big15':12.5, 'big20':13.5}
         ts = {'small':'small15', 'med':'medium15', 'medium':'medium15', 'big':'big15', 's10':'small10', 's15':'small15', 's20':'small20', 'm10':'medium10', 'm15':'medium15', 'med10':'medium10', 'med15':'medium15', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'opus':'big20'}
@@ -798,7 +798,7 @@ class GranblueFantasy(commands.Cog):
                 await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
 
     @gbf.sub_command()
-    async def stamina(self, inter, hp : int = commands.Param(description="HP%", ge=1, le=100, default=100), weapons : str = commands.Param(description='List of weapon modifiers. Put nothing to get the list.', default='')):
+    async def stamina(self, inter: disnake.GuildCommandInteraction, hp : int = commands.Param(description="HP%", ge=1, le=100, default=100), weapons : str = commands.Param(description='List of weapon modifiers. Put nothing to get the list.', default='')):
         """Calculate stamina strength at a specific hp value"""
         values = {'medium10':(10, 65), 'medium15':(15, 65), 'medium20':(20, 65), 'big10':(10, 56.4), 'big15':(15, 56.4), 'big20':(20, 56.4), 'bigii10':(10, 53.7), 'bigii15':(15, 53.7), 'ancestral':(15, 50.4), 'omegamedium10':(10, 60.4), 'omegamedium15':(15, 60.4), 'omegabig10':(10, 56.4), 'omegabig15':(15, 56.4)}
         ts = {'med':'medium15', 'medium':'medium15', 'big':'big15', 'big2':'bigii15', 'omed':'omegamedium15', 'omedium':'omegamedium15', 'obig':'omegabig15', 'm10':'medium10', 'm15':'medium15', 'm20':'medium20', 'med10':'medium10', 'med15':'medium15', 'med20':'medium20', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'bii10':'bigii10', 'bii15':'bigii15', 'b210':'bigii10', 'b215':'bigii15', 'big210':'bigii10', 'big215':'bigii15', 'dragon':'ancestral', 'opus':'big20', 'om10':'omegamedium10', 'om15':'omegamedium15', 'omed10':'omegamedium10', 'omed15':'omegamedium15', 'ob10':'omegabig10', 'ob15':'omegabig15'}
@@ -864,7 +864,7 @@ class GranblueFantasy(commands.Cog):
                 await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
 
     @gbf.sub_command()
-    async def xp(self, inter, start_level : int = commands.Param(description="Starting Point of the calcul", ge=1, le=149, default=1), end_level : int = commands.Param(description="Final Point of the calcul", ge=1, le=150, default=1)):
+    async def xp(self, inter: disnake.GuildCommandInteraction, start_level : int = commands.Param(description="Starting Point of the calcul", ge=1, le=149, default=1), end_level : int = commands.Param(description="Final Point of the calcul", ge=1, le=150, default=1)):
         """Character experience calculator"""
         xptable = [None, 30, 70, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 550, 600, 650, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 3600, 3800, 4000, 4200, 4400, 4600, 4800, 5000, 5250, 5500, 5750, 6000, 6250, 6500, 6750, 7000, 7250, 7500, 7800, 8100, 8400, 8700, 9000, 9500, 10000, 10500, 11000, 11500, 12000, 12500, 13000, 13500, 14000, 14500, 15000, 15500, 16000, 50000, 20000, 21000, 22000, 23000, 24000, 25000, 26000, 27000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000, 500000, 1000000, 1000000, 1200000, 1200000, 1200000, 1200000, 1200000, 1250000, 1250000, 1250000, 1250000, 1250000, 1300000, 1300000, 1300000, 1300000, 1300000, 1350000, 1350000, 1350000, 1350000, 1350000, 1400000, 1400000, 1400000, 1400000, 1400000, 1450000, 1450000, 1450000, 1450000, 1450000, 1500000, 1500000, 1500000, 1500000, 1500000, 1550000, 1550000, 1550000, 1550000, 1550000, 1600000, 1600000, 1600000, 1600000, 1600000, 1650000, 1650000, 1650000, 1650000, 0]
         if start_level < 1: start_level = 1
@@ -937,7 +937,7 @@ class GranblueFantasy(commands.Cog):
                     return grand_list
 
     @gbf.sub_command()
-    async def doom(self, inter):
+    async def doom(self, inter: disnake.GuildCommandInteraction):
         """Give the time elapsed of various GBF related releases"""
         await inter.response.defer()
         msg = ""
@@ -1105,7 +1105,7 @@ class GranblueFantasy(commands.Cog):
             return False
 
     @gbf.sub_command()
-    async def gacha(self, inter):
+    async def gacha(self, inter: disnake.GuildCommandInteraction):
         """Post the current gacha informations"""
         try:
             content = await self.bot.do(self.getCurrentGacha)
@@ -1156,7 +1156,7 @@ class GranblueFantasy(commands.Cog):
         return None
 
     @gbf.sub_command()
-    async def unsetprofile(self, inter):
+    async def unsetprofile(self, inter: disnake.GuildCommandInteraction):
         """Unlink your GBF id"""
         if str(inter.author.id) not in self.bot.data.save['gbfids']:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="You didn't set your GBF profile ID", color=self.color), ephemeral=True)
@@ -1170,7 +1170,7 @@ class GranblueFantasy(commands.Cog):
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 
     @gbf.sub_command()
-    async def setprofile(self, inter, id : int = commands.Param(description="A valid GBF Profile ID. Usurpation will result in ban.", ge=0)):
+    async def setprofile(self, inter: disnake.GuildCommandInteraction, id : int = commands.Param(description="A valid GBF Profile ID. Usurpation will result in ban.", ge=0)):
         """Link your GBF id to your Discord ID"""
         try:
             if self.bot.ban.check(inter.author.id, self.bot.ban.PROFILE):
@@ -1471,7 +1471,7 @@ class GranblueFantasy(commands.Cog):
     inter: Command interaction
     id: GBF id
     """
-    async def _profile(self, inter, id):
+    async def _profile(self, inter: disnake.GuildCommandInteraction, id):
         data = await self.bot.do(self.getProfileData, id)
         match data:
             case "Maintenance":
@@ -1506,7 +1506,7 @@ class GranblueFantasy(commands.Cog):
         await self.bot.util.clean(inter, 45)
 
     @gbf.sub_command()
-    async def profile(self, inter, target : str = commands.Param(description="Either a valid GBF ID, discord ID or mention", default="")):
+    async def profile(self, inter: disnake.GuildCommandInteraction, target : str = commands.Param(description="Either a valid GBF ID, discord ID or mention", default="")):
         """Retrieve a GBF profile"""
         try:
             await inter.response.defer()
@@ -1539,26 +1539,26 @@ class GranblueFantasy(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
-    async def guide(self, inter):
+    async def guide(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
 
     @guide.sub_command()
-    async def lucilius(self, inter):
+    async def lucilius(self, inter: disnake.GuildCommandInteraction):
         """Post the Lucilius HL Triggers"""
         await inter.response.send_message(embed=self.bot.util.embed(title="Dark Rapture (Hard)", url="https://gbf.wiki/Lucilius_(Raid)#Impossible_.28Hard.29", fields = [{'name': "{} Black Wings".format(self.bot.emote.get('1')), 'value':'**N **{} Phosphosrus (single)\n**OD**{} Iblis (multi, debuffs)\n**OD, both**▫️ Paradise Lost (party)\n**Join**{} Paradise Lost (30K)\n**70%**▫️ Sephiroth (debuff wipe)\n**50%**{} Seven Trumpets (**12 Labors**)\n**1-6**{} increase damage [10M]\n**7**{} use superior element [2M plain]\n**8**{} nullify phalanx [OverChain]\n**9**{} heal [30 hits]\n**10**{} random debuff [10 debuffs]\n**11**{} dispel 2 buffs [trigger PL]\n**12**{} deal plain damage [all labors]'.format(self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('misc'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'))}, {'name': "{} Lucilius".format(self.bot.emote.get('2')), 'value':'**95%**{} Phosphosrus (single)\n**85%**{} Axion (multi)\n**70%**♦️ charge diamonds\n**60%**{} Axion (**party**)\n**55%**♦️ charge diamonds\n**25%**{} Gopherwood Ark (racial check)\n**20 & 15%**{} Axion Apocalypse (multi)\n**10 & 3%**{} Paradise Lost (999k)\n\n*Click the title for more details*'.format(self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'))}], inline=True, footer="Your fate is over", color=self.color, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/303281.png"), ephemeral=True)
 
     @guide.sub_command()
-    async def beelzebub(self, inter):
+    async def beelzebub(self, inter: disnake.GuildCommandInteraction):
         """Post the Beelzebub HL Triggers"""
         await inter.response.send_message(embed=self.bot.util.embed(title="Long Live the King", url="https://gbf.wiki/Beelzebub_(Raid)", description="**100% & OD**▫️ Chaoscaliber (party, stun) [30 hits]\n**N **▫️ Unisonic (multi, counter) [10M]\n**75, 60% & OD**▫️ Karma (summonless) [FC]\n**N **▫️ Black Flies (multi, slashed) [10M]\n**50%**{} Langelaan Field (4T, reflect 2K, doesn't attack) [5M+20M/death]\n**OD**▫️ Chaoscaliber (party x2, stun) [FC]\n**N **▫️ Just Execution (24 hits, -1T to buff/hit) [FC]\n**30 & 15%**▫️ Black Spear (party, defenless) [FC]\n**25 & 10%**▫️ Chaos Legion (party, 10k guarded) [FC]\n**King's Religion**{} Total turns reached 30xPlayer Count".format(self.bot.emote.get('misc'), self.bot.emote.get('misc')), footer="Qilin Fantasy", color=self.color, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/305181.png"), ephemeral=True)
 
     @guide.sub_command()
-    async def belial(self, inter):
+    async def belial(self, inter: disnake.GuildCommandInteraction):
         """Post the Belial HL Triggers"""
         await inter.response.send_message(embed=self.bot.util.embed(title="The Fallen Angel of Cunning", url="https://gbf.wiki/Belial_(Raid)", description="**On Join**{}️ Lemegeton (20K Plain)\n**75, 50, 25%**▫️ Debuff Wipe\n**65%** ▫️ Asmodeus (multi, debuff, omega fruit) [Dispel]\n**50% Form** ▫️ Triple elemental absorption\nGroups: {}{} / {}{} / {}{}\n**50%** ▫️ Anagenesis (dark dmg based on stack)\n**30%** ▫️ Goetia (multi, slashed/supp debuff) [FC]\n**5%** ▫️ Lemegeton (Let you continue, Full diamond)\n**Before 50%**\n**N & OD**▫️ Amadeus (party, perma debuffs)\n**Turn 3**▫️ Goetia (multi, slashed/supp debuff) [15M]\n**Turn 6**▫️ Lemegeton (party, dispel x2, diamond+1) [35 hits]\n**After 50%**\n**N & OD**{} Amadeus (**Raid Wipe**)\n**Turn 3**▫️ Goetia (multi, atk up, stack up) [FC]\n**Turn 6**▫️ Lemegeton (30K, skill & CA seal) [Dispel]\nTurn Triggers above **repeat every 6 turns**\n**Every 3T**▫️ Random fruit applied to party".format(self.bot.emote.get('misc'), self.bot.emote.get('fire'), self.bot.emote.get('wind'), self.bot.emote.get('water'), self.bot.emote.get('earth'), self.bot.emote.get('light'), self.bot.emote.get('dark'), self.bot.emote.get('misc')), footer="Delay to win", color=self.color, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/305281.png"), ephemeral=True)
 
     @guide.sub_command()
-    async def subaha(self, inter):
+    async def subaha(self, inter: disnake.GuildCommandInteraction):
         """Post the Super Ultimate Bahamut HL Triggers"""
         await inter.response.send_message(embed=self.bot.util.embed(title="Rage of Super Ultimate Bahamut", url="https://gbf.wiki/Super_Ultimate_Bahamut_(Raid)", description="{} Each element must cancel omens to reduces the Tenet stacks\n**75-51%**▫️Immune to delay\n{} **Special Attacks**\n**100-76%**▫️Termination Flare (23 hits, Burn/Fear/Cut to buff duration) [15M]\n**75-51%**▫️Verse Ruler (Single DMG. & Swap lowest HP chara.) [20M]\n**51-11**%▫️Crisis Crunch (100% Plain to highest HP chara., can't be revived) [20M]\n**10-0%**▫️Genesis Nova (AOE 999k Plain)\n{} **Cycle Every 6 Turns**\n**100-51%**\nArcadia Foteinos (AOE DMG., Purging Light buff) [10 debuffs]\nArcadia Gnosis (AOE DMG., Godsight buff) [60 hits]\nArcadia Skliros (AOE DMG., DMG Cuts nullified) [20M CA]\nArcadia Laimargos (AOE DMG., Superio Element buff) [20M Skill]\n**50-11%**\nArcadia Tromos (AOE DMG., No guard debuff) [6 Chain]\nArcadia Eclipse (AOE DMG., Max HP capped to 20k) [3.33M Plain]\nArcadia Apocryphos (AOE DMG., Can't summon debuff) [12 skill casts]\n{} **Triggers**\n**75%**▫️Daedalus Drive (AOE 40K Plain)\n**51%**▫️Omnipotent Cocoon (Doesn't attack, Generate Tenets, 5T) [50M]\n**After Cocoon**▫️Double Strike/All Foe Attack, Gain Local Echo of elements at stack 5+, Apply the debuffs from missed 6T Triggers\n**10%**▫️Sirius Origin (4x99k plain, Drain/2->8\\♦️, Apply the debuffs from missed 6T Triggers)".format(self.bot.emote.get('mark'), self.bot.emote.get('skill1'), self.bot.emote.get('mark'), self.bot.emote.get('skill2')), footer="and Knuckles", color=self.color, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/305311.png"), ephemeral=True)
