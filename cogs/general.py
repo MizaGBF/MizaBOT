@@ -76,7 +76,12 @@ class General(commands.Cog):
             except: await inter.edit_original_message(embed=self.bot.util.embed(title="Poll error", description="{}".format(e), color=self.color))
 
     @commands.slash_command(default_permission=True)
-    @commands.cooldown(2, 10, commands.BucketType.guild)
+    @commands.cooldown(3, 10, commands.BucketType.guild)
+    async def utility(self, inter: disnake.GuildCommandInteraction):
+        """Command Group"""
+        pass
+
+    @utility.sub_command()
     async def calc(self, inter: disnake.GuildCommandInteraction, expression : str = commands.Param(description='Mathematical Expression')):
         """Process a mathematical expression. Support variables (Example: cos(a + b) / c, a = 1, b=2,c = 3)."""
         try:
@@ -96,8 +101,7 @@ class General(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Error\n"+str(e), color=self.color), ephemeral=True)
         await self.bot.util.clean(inter, 60)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 20, commands.BucketType.user)
+    @utility.sub_command()
     async def jst(self, inter: disnake.GuildCommandInteraction):
         """Post the current time, JST timezone"""
         await inter.response.send_message(embed=self.bot.util.embed(title="{} {:%Y/%m/%d %H:%M} JST".format(self.bot.emote.get('clock'), self.bot.util.JST()), color=self.color), ephemeral=True)

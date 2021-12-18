@@ -1038,7 +1038,13 @@ class Games(commands.Cog):
         view = TicTacToe(self.bot, bot_game, players, embed)
         await inter.edit_original_message(embed=embed, view=view)
 
-    @game.sub_command()
+    @commands.slash_command(default_permission=True, name="random")
+    @commands.cooldown(1, 50, commands.BucketType.user)
+    async def _random(self, inter: disnake.GuildCommandInteraction):
+        """Command Group"""
+        pass
+
+    @_random.sub_command()
     async def dice(self, inter: disnake.GuildCommandInteraction, dice_string : str = commands.Param(description="Format is NdN. Minimum is 1d6, Maximum is 10d100")):
         """Roll some dies"""
         try:
@@ -1062,16 +1068,14 @@ class Games(commands.Cog):
         except:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Invalid string `{}`\nFormat must be `NdN` (minimum is `1d6`, maximum is `10d100`)".format(dice_string), color=self.color))
 
-    @game.sub_command()
+    @_random.sub_command()
     async def coin(self, inter: disnake.GuildCommandInteraction):
         """Flip a coin"""
         coin = random.randint(0, 1)
         await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{} flipped a coin...".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=(":coin: It landed on **Head**" if (coin == 0) else ":coin: It landed on **Tail**"), color=self.color))
         await self.bot.util.clean(inter, 45)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 300, commands.BucketType.user)
-    @commands.max_concurrency(5, commands.BucketType.default)
+    @_random.sub_command()
     async def quota(self, inter: disnake.GuildCommandInteraction):
         """Give you your GW quota for the day"""
         h = random.randint(800, 4000)
@@ -1149,8 +1153,7 @@ class Games(commands.Cog):
     def randint(self, seed):
         return ((seed * 1103515245) % 4294967296) + 12345
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 600, commands.BucketType.user)
+    @_random.sub_command()
     async def character(self, inter: disnake.GuildCommandInteraction):
         """Generate a random GBF character"""
         seed = (inter.author.id + int(datetime.utcnow().timestamp()) // 86400) # based on user id + day
@@ -1176,8 +1179,7 @@ class Games(commands.Cog):
         await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{}'s daily character".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color))
         await self.bot.util.clean(inter, 30)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 100, commands.BucketType.guild)
+    @_random.sub_command()
     async def xil(self, inter: disnake.GuildCommandInteraction):
         """Generate a random element for Xil (Private Joke)"""
         g = random.Random()
@@ -1190,29 +1192,29 @@ class Games(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 15, commands.BucketType.user)
-    @commands.max_concurrency(5, commands.BucketType.default)
-    async def choose(self, inter: disnake.GuildCommandInteraction, choices : str = commands.Param(description="Format is Choice 1;Choice 2;...;Choice N")):
-        """Select a random string from the user's choices"""
+    async def ask(self, inter: disnake.GuildCommandInteraction):
+        """Command Group"""
+        pass
+
+    @ask.sub_command()
+    async def choice(self, inter: disnake.GuildCommandInteraction, choices : str = commands.Param(description="Format is Choice 1;Choice 2;...;Choice N")):
+        """Ask me to pick a choice"""
         try:
             possible = choices.split(";")
             if len(possible) < 2: raise Exception()
-            await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{}'s choice".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=random.choice(possible), color=self.color))
+            await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{}'s choice".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="`{}`\n{}".format(' '.join(possible), random.choice(possible)), color=self.color))
             await self.bot.util.clean(inter, 45)
         except:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Give me a list of something to choose from, separated by `;`", color=self.color), ephemeral=True)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 15, commands.BucketType.user)
-    @commands.max_concurrency(5, commands.BucketType.default)
-    async def ask(self, inter: disnake.GuildCommandInteraction, question : str = commands.Param()):
+    @ask.sub_command()
+    async def question(self, inter: disnake.GuildCommandInteraction, question : str = commands.Param()):
         """Ask me a question"""
         await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{} asked".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="`{}`\n{}".format(question, random.choice(["It is Certain.","It is decidedly so.","Without a doubt.","Yes definitely.","You may rely on it.","As I see it, yes.","Most likely.","Outlook good.","Yes.","Signs point to yes.","Reply hazy, try again.","Ask again later.","Better not tell you now.","Cannot predict now.","Concentrate and ask again.","Don't count on it.","My reply is no.","My sources say no.","Outlook not so good.","Very doubtful."])), color=self.color))
         await self.bot.util.clean(inter, 45)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 15, commands.BucketType.user)
-    @commands.max_concurrency(5, commands.BucketType.default)
+    @ask.sub_command()
     async def when(self, inter: disnake.GuildCommandInteraction, question : str = commands.Param()):
-        """Ask me when will something happen"""
+        """Ask me when will something happens"""
         await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{} asked".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="`When {}`\n{}".format(question, random.choice(["Never", "Soon:tm:", "Ask again tomorrow", "Can't compute", "42", "One day, my friend", "Next year", "It's a secret to everybody", "Soon enough", "When it's ready", "Five minutes", "This week, surely", "My sources say next month", "NOW!", "I'm not so sure", "In three days"])), color=self.color))
         await self.bot.util.clean(inter, 45)
