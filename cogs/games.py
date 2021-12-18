@@ -1187,7 +1187,7 @@ class Games(commands.Cog):
         g.seed(int((int(datetime.utcnow().timestamp()) // 86400) * (1.0 + 1.0/4.2)))
         e = g.choice(elems)
 
-        final_msg = await inter.response.send_message(embed=self.bot.util.embed(title="Today, Xil's main element is", description="{} **{}**".format(self.bot.emote.get(e), e.capitalize()), color=self.color))
+        await inter.response.send_message(embed=self.bot.util.embed(title="Today, Xil's main element is", description="{} **{}**".format(self.bot.emote.get(e), e.capitalize()), color=self.color))
         await self.bot.util.clean(inter, 30)
 
     @commands.slash_command(default_permission=True)
@@ -1215,6 +1215,15 @@ class Games(commands.Cog):
 
     @ask.sub_command()
     async def when(self, inter: disnake.GuildCommandInteraction, question : str = commands.Param()):
-        """Ask me when will something happens"""
+        """Ask me when will something happen"""
         await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{} asked".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="`When {}`\n{}".format(question, random.choice(["Never", "Soon:tm:", "Ask again tomorrow", "Can't compute", "42", "One day, my friend", "Next year", "It's a secret to everybody", "Soon enough", "When it's ready", "Five minutes", "This week, surely", "My sources say next month", "NOW!", "I'm not so sure", "In three days"])), color=self.color))
         await self.bot.util.clean(inter, 45)
+
+    @commands.message_command(default_permission=True, name="UwU")
+    @commands.cooldown(6, 180, commands.BucketType.guild)
+    async def uwu(self, inter: disnake.MessageCommandInteraction, message: disnake.Message):
+        """UwU-tize a message"""
+        if len(message.content) == 0:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="This message is empty", color=self.color), ephemeral=True)
+        else:
+            await inter.response.send_message(message.clean_content.replace("r","w").replace("than","dan").replace("l","w").replace("oy","oi").replace("the","de").replace("you","u"))

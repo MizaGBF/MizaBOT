@@ -38,7 +38,9 @@ class MizaBot(commands.Bot):
             "Reminder commands regrouped under the group `/remind`",
             "Message command 'Report a Bug' removed, `/bug_report` still exists",
             "ask, choose and when commands regrouped under the `/ask` group",
-            "coin, dice, character, quota and xil commands regrouped under the `/random` group"
+            "coin, dice, character, quota and xil commands regrouped under the `/random` group",
+            "Added back some previously removed commands under the `/gbf` group",
+            "User command 'Check for Bands' removed"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event

@@ -37,28 +37,16 @@ class Moderation(commands.Cog):
 
     @commands.message_command(default_permission=True, name="Channel Info")
     @commands.cooldown(1, 30, commands.BucketType.user)
-    async def channelinfo(self, inter: disnake.MessageCommandInteraction):
+    async def channelinfo(self, inter: disnake.MessageCommandInteraction, message: disnake.Message):
         """Give informations on the current channel"""
-        final_msg = await inter.response.send_message(embed=self.bot.util.embed(title=inter.guild.name, description="Channel: `{}`\nID: `{}`".format(inter.channel.name, inter.channel.id), footer="Guild ID {}".format(inter.guild.id), color=self.color), ephemeral=True)
+        await inter.response.send_message(embed=self.bot.util.embed(title=inter.guild.name, description="Channel: `{}`\nID: `{}`".format(inter.channel.name, inter.channel.id), footer="Guild ID {}".format(inter.guild.id), color=self.color), ephemeral=True)
 
     @commands.message_command(default_permission=True, name="Server Info")
     @commands.cooldown(1, 30, commands.BucketType.user)
-    async def serverinfo(self, inter: disnake.MessageCommandInteraction):
+    async def serverinfo(self, inter: disnake.MessageCommandInteraction, message: disnake.Message):
         """Get informations on the current guild"""
         guild = inter.guild
-        msg = await inter.response.send_message(embed=self.bot.util.embed(title=guild.name + " status", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Members** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, guild.member_count, len(guild.text_channels), len(guild.voice_channels), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at, color=self.color), ephemeral=True)
-
-    @commands.user_command(default_permission=True, name="Check for Bans")
-    @isMod()
-    async def bancheck(self, inter: disnake.UserCommandInteraction, member: disnake.Member):
-        """Check if an user has a ban registered in the bot (Mod Only)"""
-        msg = ""
-        if self.bot.ban.check(member.id, self.bot.ban.OWNER): msg += "Banned from having the bot in its own servers\n"
-        if self.bot.ban.check(member.id, self.bot.ban.SPARK): msg += "Banned from appearing in `rollRanking`\n"
-        if self.bot.ban.check(member.id, self.bot.ban.PROFILE): msg += "Banned from using `setProfile`\n"
-        if self.bot.ban.check(member.id, self.bot.ban.OWNER): msg += "Banned from using the bot\n"
-        if msg == "": msg = "No Bans set for this user"
-        msg = await inter.response.send_message(embed=self.bot.util.embed(author={'name':member.display_name, 'icon_url':member.display_avatar}, description=msg, color=self.color), ephemeral=True)
+        await inter.response.send_message(embed=self.bot.util.embed(title=guild.name + " status", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Members** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, guild.member_count, len(guild.text_channels), len(guild.voice_channels), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at, color=self.color), ephemeral=True)
 
     @commands.slash_command(default_permission=True)
     @isMod()
