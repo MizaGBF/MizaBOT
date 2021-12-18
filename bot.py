@@ -34,7 +34,9 @@ class MizaBot(commands.Bot):
         self.changelog = [ # changelog lines
             "Please use `/bug_report` if you see anything wrong",
             "Check the [Online help](https://mizagbf.github.io/MizaBOT/) for the new command list (and more)",
-            "Mod commands have been regrouped into one group"
+            "GBFGame and Minigame command groups have been regrouped to Game",
+            "Reminder commands regrouped under the group /remind",
+            "Message command 'Report a Bug' removed, /bug_report still exists"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event

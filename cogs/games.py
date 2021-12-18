@@ -356,13 +356,13 @@ class Games(commands.Cog):
         return result, rate, tmp, count
 
     @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 80, commands.BucketType.user)
-    @commands.max_concurrency(10, commands.BucketType.default)
-    async def gbfgame(self, inter: disnake.GuildCommandInteraction):
+    @commands.cooldown(1, 60, commands.BucketType.user)
+    @commands.max_concurrency(15, commands.BucketType.default)
+    async def game(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
 
-    @gbfgame.sub_command()
+    @game.sub_command()
     async def roulette(self, inter: disnake.GuildCommandInteraction, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
         """Imitate the GBF roulette"""
         await inter.response.defer()
@@ -470,7 +470,7 @@ class Games(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer))
         await self.bot.util.clean(inter, 45)
 
-    @gbfgame.sub_command()
+    @game.sub_command()
     async def scratch(self, inter: disnake.GuildCommandInteraction):
         """Imitate the GBF scratch game from Anniversary 2020"""
         await inter.response.defer()
@@ -547,7 +547,7 @@ class Games(commands.Cog):
         await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} is scratching...".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="Click to play the game", footer=footer, color=self.color), view=Scratcher(self.bot, inter.author.id, grid, self.scratcher_thumb, self.color, footer))
         await self.bot.util.clean(inter, 45)
 
-    @gbfgame.sub_command()
+    @game.sub_command()
     async def chestrush(self, inter: disnake.GuildCommandInteraction):
         """Imitate the GBF treasure game from Summer 2020"""
         await inter.response.defer()
@@ -707,7 +707,7 @@ class Games(commands.Cog):
                 return i + 1
         return 0
 
-    @gbfgame.sub_command()
+    @game.sub_command()
     async def fortune(self, inter: disnake.GuildCommandInteraction, usercards : str = commands.Param(description='List your cards here', default="")):
         """Imitate the GBF summer fortune game from Summer 2021"""
         title = '{} is tempting fate...'.format(inter.author.display_name)
@@ -739,125 +739,6 @@ class Games(commands.Cog):
             await asyncio.sleep(0.5)
             await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':inter.author.display_avatar}, description=desc, thumbnail=thumb, color=self.color))
         await self.bot.util.clean(inter, 45)
-
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 300, commands.BucketType.user)
-    @commands.max_concurrency(5, commands.BucketType.default)
-    async def quota(self, inter: disnake.GuildCommandInteraction):
-        """Give you your GW quota for the day"""
-        h = random.randint(800, 4000)
-        m = random.randint(70, 180)
-        c = random.randint(1, 100)
-
-        if inter.author.id == self.bot.data.config['ids'].get('wawi', -1): # joke
-            c = 12
-
-        if c <= 3:
-            c = random.randint(1, 110)
-            if c <= 2:
-                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got the **Eternal Battlefield Pass** 🤖\nCongratulations!!!\nYou will now relive GW over and ovḛ̸̛̠͕̑̋͌̄̎̍͆̆͑̿͌̇̇̕r̸̛̗̥͆͂̒̀̈́͑̑̊͐̉̎̚̚͝ ̵̨̛͔͎͍̞̰̠́͛̒̊̊̀̃͘ư̷͎̤̥̜̘͈̪̬̅̑͂̂̀̃̀̃̅̊̏̎̚͜͝ͅņ̴̢̛̛̥̮͖͉̻̩͍̱̓̽̂̂͌́̃t̵̞̦̿͐̌͗͑̀͛̇̚͝͝ỉ̵͉͕̙͔̯̯͓̘̬̫͚̬̮̪͋̉͆̎̈́́͛̕͘̚͠ͅļ̸̧̨̛͖̹͕̭̝͉̣̜͉̘͙̪͙͔͔̫̟̹̞̪̦̼̻̘͙̮͕̜̼͉̦̜̰̙̬͎͚̝̩̥̪̖͇̖̲̣͎̖̤̥͖͇̟͎̿̊͗̿̈̊͗̆̈́͋͊̔͂̏̍̔̒̐͋̄̐̄̅̇͐̊̈́̐͛͑̌͛̔͗̈́͌̀͑̌̅̉́̔̇́̆̉͆̄̂͂̃̿̏̈͛̇̒͆͗̈́̀̃̕̕͘̚̚͘͘͠͠͠͝͝͠͝͝ͅͅ ̴̢̛̛̛̯̫̯͕̙͙͇͕͕̪̩̗̤̗̺̩̬̞̞͉̱̊̽̇̉̏̃̑̋̋̌̎̾́̉́͌̿̐̆̒̾̆͒͛͌́͒̄͗͊͑̈́̑̐̂̿̋̊͊̈́̃̋̀̀̈̏̅̍̈͆̊̋͋̀̽͑̉̈́͘͘̕̕͝y̷̧̧̨̢̧̮̭̝̦͙͈͉̜͈̳̰̯͔͓̘͚̳̭͎̳̯͈͓̣͕͙̳̭̱͍͎͖̋͊̀͋͘͘ơ̸̢̗̖̹̹͖̣̫̝̞̦̘̙̭̮͕̘̱̆͋̓͗̾͐̉̏̀͂̄̎̂̈́͌͑̅̆̉̈̒͆̈̈̊͐̔̓̀̿̓̈́͝͝͝͠͝u̶̡̧̡̧̨̧̡̡̢̢̢̪̯͙͍̱̦̠̗̹̼̠̳̣͉̞̩̹͕̫͔͚̬̭̗̳̗̫̥̞̰̘̖̞̤͖̳̮̙͎͎̗̙̳͙͖͓̪̱̞͖̠̣̮̘͍̱̥̹͎͎̦̬̹̼̜͕͙͖̫̝̰̯̜̹̬̯͚͕̰̪̼͓̞̫̖̘͙̞͖̺̩͓̹̘̙̫̩̲̻̪̠̞̺͚̫̰̠̼̖̬͔̗̮͙̱̬̩̮̟͓̫̭̲̘̤͎̱̓̊̇́̀̏̏̾̀̄̆̒̂͐̌͂̈̂̓͋̌̓͘̕̕̚͜͜͜͝ͅͅͅͅŗ̷̡̧̨̢̢̢̧̡̡̧̡̢̧̨̨̡̧̛̛̛̬͚̮̜̟̣̤͕̼̫̪̗̙͚͉̦̭̣͓̩̫̞͚̤͇̗̲̪͕̝͍͍̫̞̬̣̯̤̮͉̹̫̬͕̫̥̱̹̲͔͔̪̖̱͔̹͈͔̳͖̩͕͚͓̤̤̪̤̩̰̬͙̞͙̘̯̮̫͕͚̙̜̼̩̰̻̞̺͈̝̝̖͎̻̹̞̥̰̮̥̙̠͔͎̤̲͎͍̟̥̞̗̰͓͍̞̹͍̬͎̲̬̞͈͉̼̥̝͈̼̠̫̙͖̪̼̲̯̲̫̼̺̘̗̘͚̤͓̯̦̣̬͒̑̒́͑͊̍̿̉̇̓̒̅̎͌̈́̐̽͋̏̒͂̈̒̃̿̓̇̈̿̊̎̈́͐̒͂͊̿̈́̿̅̏̀͐͛̎̍͑͂̈́̃̇̀̈͋̾̔̈́̽͌̿̍̇̅̏̋̑̈́̾̊͐̉̊̅͑̀͊̽̂̈́̽̓͗́̄͆̄͑͒̈́́͋̏͊͋̒͗̆̋̌̈̀͑͗̽͂̄̌̕͘͘̚͘̕̕͜͜͜͜͜͜͜͠͝͝͝͝͝͝ͅͅͅ ̷̧̡̧̨̢̧̨̡̨̧̛̛̛̛̮̭͇̣͓̙̺͍̟̜̞̫̪̘̼̞̜̠͇̗̮͕̬̥͓͔͈̟̦͇̥̖̭̝̱̗̠̘̝̹̖͓̝͇̖̫̯̩̞̞̯̲̤̱̻̤͇̲͍͈͓͖̹̗̟̲̪̪̟̩͙̪̝̮̘̽̋̍́̔̊̍̈́͂̌̽͒̆͐͊̏̐͑͛̓̆̈́͌̂͒͆̔̅̓̽͊̅́̾̽̓̏̆̀̀͌̾̀͒̓̇̊̀̐͛̌̋̈͑̇́̂̆̽̈̕̕̚̚͜͠ͅͅͅͅḑ̶̛̛̯͓̠̖͎̭̞̫͑̋̄̄̈̽̎̊͛̽͌̾̋̔̽̔̀̀͐̿̈́̀̃͐͂͆̈̃͑̀̋̑͊̃̆̓̾̎̅̀̆̓̏͊̆̔̈̅͛̍̎̓̀͛͒́̐͆̂̋̋͛̆̈͐͂̏̊̏̏̓̿̔͆̓̽̂̅͆̔͑̔̈̾̈̽̂̃̋̈́̾̎̈́̂̓̃̒͐͆̌̍̀͗̈́̑̌̚̕̕̚͠͠͝ę̴̧̨̨̨̢̨̢̧̧̧̨̧̛̛̛̛̛̛̛̺̪̹̘͈̣͔̜͓̥̥̟͇̱͚͖̠͙͙̱̞̣̤͚̣̟̫̬̟͓̺͙̬͚̹͓̗̬̼͇͙̻͍̖̙̥̩͔̜͕̖͕͔͚̳͙̩͇͙̺͔̲̱̙͉̝̠̤̝̭̮̩̦͇̖̳̞̞̖͎̙͙̲̮̠̣͍̪͙̰̣͉̘͉̦̖̳̫͖͖̘̖̮̲̱̪͕̳̫̫̞̪̜̞̬͙͖͍͖̦͉̯̟̖͇̩͚͙͔̳̫͗̈́̒̎͂̇̀͒̈́̃͐̉͛̾̑̆̃͐̈́̉͒̇̓̏̀͌̐͌̅̓͐́̿͒̅͑̍̓̈́̉̊́̉̀̔̊̍̽͛͛͆̓̈͋̉͋̿̉́̋̈̓̐̈́̔̃͆͗͛̏́̀̑͋̀̽̔̓̎̒̆̌̐̈́̓͂̐̋͊̌͑̓̈́̊̿͋̈́́̃̏̓̉͛͆̂͐͗͗̾̅̌̾͌̈́͊͘̕̚̕̚̚̕͘̕͜͜͜͜͜͜͜͠͝͝͠͝͝͠ͅͅa̸̡͔̯͎̟͙̖̗͔̺̰͇͚̭̲̭͕̫̜͉̯͕̅̈͋̒͋͂̐̕ͅţ̶̡̨̢̢̡̡̡̨̢̡̧̨̢̛̥̭̞͈̼̖͙͇̝̳͇̞̬͎̲̙̰̙̱̳̟̣̗̫̣͉͖̪̩͙̲͇͙̫̘͖̖̜̝̦̥̟̜̠͔̠͎̭͔̘͓͚̩͇͙͎͎̰̘̟̳̪͖̠̪̦̦̫̞̟̗̹̹̤͓͍̜̯͔̼̱̮̹͎͖͍̲͎̠͉̟͈̠̦̯̲̼̥̱̬̜͙̘͕̣̳͇̞͓̝͈̼̞̻͚̘̩̟̩̖̼͍̯̘͉͔̤̘̥̦͑̒͗̅̉̾͗̾̓̈́̍̉̈́͛̀͊̋̀͐̏̈́̀̀̍̇̀̀̈́̃̀̅͛̅̈́̇̽̆̌̈̄͆̄̂͂̔͗͌͊̽̿́͑̒̾̑̊̿͗́̇̋̊̄̀̍̓̆͂̆̔̏̍̑̔̊̾̎̆͛͑̓͒̈̎͌̓͗̀̿̓̃̔̈́͗̃̓̽̓̉̀͛͂̿́̀̌͊̆̋̀̓̇́̔̓͆̋̊̀̋͑́̔́̌̒̾̂̎̋̈́́̀͗̈́̈́́̾̈́͑͋̇͒̀͋͆͗̾͐̆̈́͂͐̈̐̓̍̈́̈̅̓͐̚̚̚̚̕͘̕͘̚̚̚͘͜͜͜͜͜͜͝͠͠͠͝͠ͅͅḥ̴̨̧̧̢̧̢̢̛̛̙̱͚̺̬̖̮̪͈̟͉̦̪̘̰̺̳̱̲͔̲̮̦̦̪̪̲̠͓͎͇͕̯̥͉͍̱̥͓̲̤̫̳̠̝͖̺̙͖͎͙̠͓̺̗̝̩͍͕͎̞͕̤̻̰̘͇͕̟̹̳͇͈͇̳̳̞̗̣͖̙͓̼̬̯͚͎̮͚̳̰͙̙̟̊͆͒͆͌̂̈́̀́̽̿͌̓́̐̑͌͋͆͊͑͛͑̀̋͐̏͌̑̀͛͗̀́̈̀̓̽̇̐̋͊̅͑̊͒̈́̀̀̔̀̇͗̆͑̅̌̑̈́͌̒̅̌̓͋͂̀̍̈́͐̈́̆̐̈́̍͛͂̔̐̎͂̎̇͑̈́̈́̎̉̈́́̒̒̆̌̃̓̈́͂̽̓̆̋̈̂̽̆̓̔͗̓̀̄̈́̂̏͗̐̔͘̕͘͘͜͜͜͜͠͠͝͠͠͝͝͝͠͠͝ͅͅ", thumbnail=inter.author.display_avatar, color=self.color))
-            elif c <= 6:
-                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got a **Slave Pass** 🤖\nCongratulations!!!\nCall your boss and take a day off now!", footer="Full Auto and Botting are forbidden", thumbnail=inter.author.display_avatar, color=self.color))
-            elif c <= 16:
-                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got a **Chen Pass** 😈\nCongratulations!!!\nYour daily honor or meat count must be composed only of the digit 6.", thumbnail=inter.author.display_avatar, color=self.color))
-            elif c <= 21:
-                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got a **Carry Pass** 😈\nDon't stop grinding, continue until your Crew gets the max rewards!", thumbnail=inter.author.display_avatar, color=self.color))
-            elif c <= 26:
-                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got a **Relief Ace Pass** 😈\nPrepare to relieve carries of their 'stress' after the day!!!", footer="wuv wuv", thumbnail=inter.author.display_avatar, color=self.color))
-            else:
-                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got a **Free Leech Pass** 👍\nCongratulations!!!", thumbnail=inter.author.display_avatar, color=self.color))
-            await self.bot.util.clean(inter, 40)
-            return
-        elif c == 3:
-            h = h * random.randint(50, 80)
-            m = m * random.randint(50, 80)
-        elif c <= 6:
-            h = h * random.randint(20, 30)
-            m = m * random.randint(20, 30)
-        elif c <= 9:
-            h = h * random.randint(8, 15)
-            m = m * random.randint(8, 15)
-        elif c == 10:
-            h = h // random.randint(30, 50)
-            m = m // random.randint(30, 50)
-        elif c <= 12:
-            h = h // random.randint(10, 20)
-            m = m // random.randint(10, 20)
-        elif c <= 14:
-            h = h // random.randint(3, 6)
-            m = m // random.randint(3, 6)
-        h = h * 100000
-        m = m * 10
-
-        if inter.author.id == self.bot.data.config['ids'].get('chen', -1): # joke
-            match random.randint(3, 8):
-                case 3: h = 666
-                case 4: h = 6666
-                case 5: h = 66666
-                case 6: h = 666666
-                case 7: h = 6666666
-                case 8: h = 66666666
-            match random.randint(1, 4):
-                case 1: m = 6
-                case 2: m = 66
-                case 3: m = 666
-                case 4: m = 6666
-
-        await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=inter.author.display_avatar, color=self.color))
-        await self.bot.util.clean(inter, 40)
-
-    """randint()
-    Generate a simple pseudo random number based on the seed value
-    
-    Parameters
-    ----------
-    seed: Integer used as the seed
-    
-    Returns
-    ----------
-    int: Pseudo random value which you can use as the next seed
-    """
-    def randint(self, seed):
-        return ((seed * 1103515245) % 4294967296) + 12345
-
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 600, commands.BucketType.user)
-    async def character(self, inter: disnake.GuildCommandInteraction):
-        """Generate a random GBF character"""
-        seed = (inter.author.id + int(datetime.utcnow().timestamp()) // 86400) # based on user id + day
-        values = {
-            'Rarity' : [['SSR', 'SR', 'R'], 3, True, None], # random strings, modulo to use, bool to use emote.get, seed needed to enable
-            'Race' : [['Human', 'Erun', 'Draph', 'Harvin', 'Primal', 'Other'], 6, False, None],
-            'Element' : [['fire', 'water', 'earth', 'wind', 'light', 'dark'], 6, True, None],
-            'Gender' : [['Unknown', '\♂️', '\♀️'], 3, False, None],
-            'Series' : [['Summer', 'Yukata', 'Grand', 'Holiday', 'Halloween', 'Valentine'], 30, True, 6]
-        }
-        msg = ""
-        rarity_mod = 0
-        for k in values:
-            v = seed % values[k][1]
-            if k == "Rarity": rarity_mod = 7 - 2 * v
-            if values[k][3] is not None and v >= values[k][3]:
-                continue
-            if values[k][2]: msg += "**{}** ▫️ {}\n".format(k, self.bot.emote.get(values[k][0][v]))
-            else: msg += "**{}** ▫️ {}\n".format(k, values[k][0][v])
-            seed = self.randint(seed)
-        msg += "**Rating** ▫️ {:.1f}".format(rarity_mod + (seed % 31) / 10)
-
-        await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{}'s daily character".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color))
-        await self.bot.util.clean(inter, 30)
-
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 100, commands.BucketType.guild)
-    async def xil(self, inter: disnake.GuildCommandInteraction):
-        """Generate a random element for Xil (Private Joke)"""
-        g = random.Random()
-        elems = ['fire', 'water', 'earth', 'wind', 'light', 'dark']
-        g.seed(int((int(datetime.utcnow().timestamp()) // 86400) * (1.0 + 1.0/4.2)))
-        e = g.choice(elems)
-
-        final_msg = await inter.response.send_message(embed=self.bot.util.embed(title="Today, Xil's main element is", description="{} **{}**".format(self.bot.emote.get(e), e.capitalize()), color=self.color))
-        await self.bot.util.clean(inter, 30)
 
     """value2head()
     Convert a card value to a string.
@@ -995,14 +876,7 @@ class Games(commands.Cog):
                 return True
         return False
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 50, commands.BucketType.user)
-    @commands.max_concurrency(10, commands.BucketType.default)
-    async def minigame(self, inter: disnake.GuildCommandInteraction):
-        """Command Group"""
-        pass
-
-    @minigame.sub_command()
+    @game.sub_command()
     async def deal(self, inter: disnake.GuildCommandInteraction):
         """Deal a random poker hand"""
         hand = []
@@ -1026,7 +900,7 @@ class Games(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{}'s hand".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color))
         await self.bot.util.clean(inter, 45)
 
-    @minigame.sub_command()
+    @game.sub_command()
     async def poker(self, inter: disnake.GuildCommandInteraction):
         """Play a poker mini-game with other people"""
         await inter.response.defer()
@@ -1077,7 +951,7 @@ class Games(commands.Cog):
             await asyncio.sleep(2)
         await self.bot.util.clean(inter, 45)
 
-    @minigame.sub_command()
+    @game.sub_command()
     async def blackjack(self, inter: disnake.GuildCommandInteraction):
         """Play a blackjack mini-game with other people"""
         await inter.response.defer()
@@ -1142,7 +1016,7 @@ class Games(commands.Cog):
             await asyncio.sleep(2)
         await self.bot.util.clean(inter, 45)
 
-    @minigame.sub_command()
+    @game.sub_command()
     async def tictactoe(self, inter: disnake.GuildCommandInteraction):
         """Play a game of Tic Tac Toe"""
         await inter.response.defer()
@@ -1164,7 +1038,7 @@ class Games(commands.Cog):
         view = TicTacToe(self.bot, bot_game, players, embed)
         await inter.edit_original_message(embed=embed, view=view)
 
-    @minigame.sub_command()
+    @game.sub_command()
     async def dice(self, inter: disnake.GuildCommandInteraction, dice_string : str = commands.Param(description="Format is NdN. Minimum is 1d6, Maximum is 10d100")):
         """Roll some dies"""
         try:
@@ -1188,12 +1062,131 @@ class Games(commands.Cog):
         except:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Invalid string `{}`\nFormat must be `NdN` (minimum is `1d6`, maximum is `10d100`)".format(dice_string), color=self.color))
 
-    @minigame.sub_command()
+    @game.sub_command()
     async def coin(self, inter: disnake.GuildCommandInteraction):
         """Flip a coin"""
         coin = random.randint(0, 1)
         await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{} flipped a coin...".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=(":coin: It landed on **Head**" if (coin == 0) else ":coin: It landed on **Tail**"), color=self.color))
         await self.bot.util.clean(inter, 45)
+
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 300, commands.BucketType.user)
+    @commands.max_concurrency(5, commands.BucketType.default)
+    async def quota(self, inter: disnake.GuildCommandInteraction):
+        """Give you your GW quota for the day"""
+        h = random.randint(800, 4000)
+        m = random.randint(70, 180)
+        c = random.randint(1, 100)
+
+        if inter.author.id == self.bot.data.config['ids'].get('wawi', -1): # joke
+            c = 12
+
+        if c <= 3:
+            c = random.randint(1, 110)
+            if c <= 2:
+                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got the **Eternal Battlefield Pass** 🤖\nCongratulations!!!\nYou will now relive GW over and ovḛ̸̛̠͕̑̋͌̄̎̍͆̆͑̿͌̇̇̕r̸̛̗̥͆͂̒̀̈́͑̑̊͐̉̎̚̚͝ ̵̨̛͔͎͍̞̰̠́͛̒̊̊̀̃͘ư̷͎̤̥̜̘͈̪̬̅̑͂̂̀̃̀̃̅̊̏̎̚͜͝ͅņ̴̢̛̛̥̮͖͉̻̩͍̱̓̽̂̂͌́̃t̵̞̦̿͐̌͗͑̀͛̇̚͝͝ỉ̵͉͕̙͔̯̯͓̘̬̫͚̬̮̪͋̉͆̎̈́́͛̕͘̚͠ͅļ̸̧̨̛͖̹͕̭̝͉̣̜͉̘͙̪͙͔͔̫̟̹̞̪̦̼̻̘͙̮͕̜̼͉̦̜̰̙̬͎͚̝̩̥̪̖͇̖̲̣͎̖̤̥͖͇̟͎̿̊͗̿̈̊͗̆̈́͋͊̔͂̏̍̔̒̐͋̄̐̄̅̇͐̊̈́̐͛͑̌͛̔͗̈́͌̀͑̌̅̉́̔̇́̆̉͆̄̂͂̃̿̏̈͛̇̒͆͗̈́̀̃̕̕͘̚̚͘͘͠͠͠͝͝͠͝͝ͅͅ ̴̢̛̛̛̯̫̯͕̙͙͇͕͕̪̩̗̤̗̺̩̬̞̞͉̱̊̽̇̉̏̃̑̋̋̌̎̾́̉́͌̿̐̆̒̾̆͒͛͌́͒̄͗͊͑̈́̑̐̂̿̋̊͊̈́̃̋̀̀̈̏̅̍̈͆̊̋͋̀̽͑̉̈́͘͘̕̕͝y̷̧̧̨̢̧̮̭̝̦͙͈͉̜͈̳̰̯͔͓̘͚̳̭͎̳̯͈͓̣͕͙̳̭̱͍͎͖̋͊̀͋͘͘ơ̸̢̗̖̹̹͖̣̫̝̞̦̘̙̭̮͕̘̱̆͋̓͗̾͐̉̏̀͂̄̎̂̈́͌͑̅̆̉̈̒͆̈̈̊͐̔̓̀̿̓̈́͝͝͝͠͝u̶̡̧̡̧̨̧̡̡̢̢̢̪̯͙͍̱̦̠̗̹̼̠̳̣͉̞̩̹͕̫͔͚̬̭̗̳̗̫̥̞̰̘̖̞̤͖̳̮̙͎͎̗̙̳͙͖͓̪̱̞͖̠̣̮̘͍̱̥̹͎͎̦̬̹̼̜͕͙͖̫̝̰̯̜̹̬̯͚͕̰̪̼͓̞̫̖̘͙̞͖̺̩͓̹̘̙̫̩̲̻̪̠̞̺͚̫̰̠̼̖̬͔̗̮͙̱̬̩̮̟͓̫̭̲̘̤͎̱̓̊̇́̀̏̏̾̀̄̆̒̂͐̌͂̈̂̓͋̌̓͘̕̕̚͜͜͜͝ͅͅͅͅŗ̷̡̧̨̢̢̢̧̡̡̧̡̢̧̨̨̡̧̛̛̛̬͚̮̜̟̣̤͕̼̫̪̗̙͚͉̦̭̣͓̩̫̞͚̤͇̗̲̪͕̝͍͍̫̞̬̣̯̤̮͉̹̫̬͕̫̥̱̹̲͔͔̪̖̱͔̹͈͔̳͖̩͕͚͓̤̤̪̤̩̰̬͙̞͙̘̯̮̫͕͚̙̜̼̩̰̻̞̺͈̝̝̖͎̻̹̞̥̰̮̥̙̠͔͎̤̲͎͍̟̥̞̗̰͓͍̞̹͍̬͎̲̬̞͈͉̼̥̝͈̼̠̫̙͖̪̼̲̯̲̫̼̺̘̗̘͚̤͓̯̦̣̬͒̑̒́͑͊̍̿̉̇̓̒̅̎͌̈́̐̽͋̏̒͂̈̒̃̿̓̇̈̿̊̎̈́͐̒͂͊̿̈́̿̅̏̀͐͛̎̍͑͂̈́̃̇̀̈͋̾̔̈́̽͌̿̍̇̅̏̋̑̈́̾̊͐̉̊̅͑̀͊̽̂̈́̽̓͗́̄͆̄͑͒̈́́͋̏͊͋̒͗̆̋̌̈̀͑͗̽͂̄̌̕͘͘̚͘̕̕͜͜͜͜͜͜͜͠͝͝͝͝͝͝ͅͅͅ ̷̧̡̧̨̢̧̨̡̨̧̛̛̛̛̮̭͇̣͓̙̺͍̟̜̞̫̪̘̼̞̜̠͇̗̮͕̬̥͓͔͈̟̦͇̥̖̭̝̱̗̠̘̝̹̖͓̝͇̖̫̯̩̞̞̯̲̤̱̻̤͇̲͍͈͓͖̹̗̟̲̪̪̟̩͙̪̝̮̘̽̋̍́̔̊̍̈́͂̌̽͒̆͐͊̏̐͑͛̓̆̈́͌̂͒͆̔̅̓̽͊̅́̾̽̓̏̆̀̀͌̾̀͒̓̇̊̀̐͛̌̋̈͑̇́̂̆̽̈̕̕̚̚͜͠ͅͅͅͅḑ̶̛̛̯͓̠̖͎̭̞̫͑̋̄̄̈̽̎̊͛̽͌̾̋̔̽̔̀̀͐̿̈́̀̃͐͂͆̈̃͑̀̋̑͊̃̆̓̾̎̅̀̆̓̏͊̆̔̈̅͛̍̎̓̀͛͒́̐͆̂̋̋͛̆̈͐͂̏̊̏̏̓̿̔͆̓̽̂̅͆̔͑̔̈̾̈̽̂̃̋̈́̾̎̈́̂̓̃̒͐͆̌̍̀͗̈́̑̌̚̕̕̚͠͠͝ę̴̧̨̨̨̢̨̢̧̧̧̨̧̛̛̛̛̛̛̛̺̪̹̘͈̣͔̜͓̥̥̟͇̱͚͖̠͙͙̱̞̣̤͚̣̟̫̬̟͓̺͙̬͚̹͓̗̬̼͇͙̻͍̖̙̥̩͔̜͕̖͕͔͚̳͙̩͇͙̺͔̲̱̙͉̝̠̤̝̭̮̩̦͇̖̳̞̞̖͎̙͙̲̮̠̣͍̪͙̰̣͉̘͉̦̖̳̫͖͖̘̖̮̲̱̪͕̳̫̫̞̪̜̞̬͙͖͍͖̦͉̯̟̖͇̩͚͙͔̳̫͗̈́̒̎͂̇̀͒̈́̃͐̉͛̾̑̆̃͐̈́̉͒̇̓̏̀͌̐͌̅̓͐́̿͒̅͑̍̓̈́̉̊́̉̀̔̊̍̽͛͛͆̓̈͋̉͋̿̉́̋̈̓̐̈́̔̃͆͗͛̏́̀̑͋̀̽̔̓̎̒̆̌̐̈́̓͂̐̋͊̌͑̓̈́̊̿͋̈́́̃̏̓̉͛͆̂͐͗͗̾̅̌̾͌̈́͊͘̕̚̕̚̚̕͘̕͜͜͜͜͜͜͜͠͝͝͠͝͝͠ͅͅa̸̡͔̯͎̟͙̖̗͔̺̰͇͚̭̲̭͕̫̜͉̯͕̅̈͋̒͋͂̐̕ͅţ̶̡̨̢̢̡̡̡̨̢̡̧̨̢̛̥̭̞͈̼̖͙͇̝̳͇̞̬͎̲̙̰̙̱̳̟̣̗̫̣͉͖̪̩͙̲͇͙̫̘͖̖̜̝̦̥̟̜̠͔̠͎̭͔̘͓͚̩͇͙͎͎̰̘̟̳̪͖̠̪̦̦̫̞̟̗̹̹̤͓͍̜̯͔̼̱̮̹͎͖͍̲͎̠͉̟͈̠̦̯̲̼̥̱̬̜͙̘͕̣̳͇̞͓̝͈̼̞̻͚̘̩̟̩̖̼͍̯̘͉͔̤̘̥̦͑̒͗̅̉̾͗̾̓̈́̍̉̈́͛̀͊̋̀͐̏̈́̀̀̍̇̀̀̈́̃̀̅͛̅̈́̇̽̆̌̈̄͆̄̂͂̔͗͌͊̽̿́͑̒̾̑̊̿͗́̇̋̊̄̀̍̓̆͂̆̔̏̍̑̔̊̾̎̆͛͑̓͒̈̎͌̓͗̀̿̓̃̔̈́͗̃̓̽̓̉̀͛͂̿́̀̌͊̆̋̀̓̇́̔̓͆̋̊̀̋͑́̔́̌̒̾̂̎̋̈́́̀͗̈́̈́́̾̈́͑͋̇͒̀͋͆͗̾͐̆̈́͂͐̈̐̓̍̈́̈̅̓͐̚̚̚̚̕͘̕͘̚̚̚͘͜͜͜͜͜͜͝͠͠͠͝͠ͅͅḥ̴̨̧̧̢̧̢̢̛̛̙̱͚̺̬̖̮̪͈̟͉̦̪̘̰̺̳̱̲͔̲̮̦̦̪̪̲̠͓͎͇͕̯̥͉͍̱̥͓̲̤̫̳̠̝͖̺̙͖͎͙̠͓̺̗̝̩͍͕͎̞͕̤̻̰̘͇͕̟̹̳͇͈͇̳̳̞̗̣͖̙͓̼̬̯͚͎̮͚̳̰͙̙̟̊͆͒͆͌̂̈́̀́̽̿͌̓́̐̑͌͋͆͊͑͛͑̀̋͐̏͌̑̀͛͗̀́̈̀̓̽̇̐̋͊̅͑̊͒̈́̀̀̔̀̇͗̆͑̅̌̑̈́͌̒̅̌̓͋͂̀̍̈́͐̈́̆̐̈́̍͛͂̔̐̎͂̎̇͑̈́̈́̎̉̈́́̒̒̆̌̃̓̈́͂̽̓̆̋̈̂̽̆̓̔͗̓̀̄̈́̂̏͗̐̔͘̕͘͘͜͜͜͜͠͠͝͠͠͝͝͝͠͠͝ͅͅ", thumbnail=inter.author.display_avatar, color=self.color))
+            elif c <= 6:
+                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got a **Slave Pass** 🤖\nCongratulations!!!\nCall your boss and take a day off now!", footer="Full Auto and Botting are forbidden", thumbnail=inter.author.display_avatar, color=self.color))
+            elif c <= 16:
+                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got a **Chen Pass** 😈\nCongratulations!!!\nYour daily honor or meat count must be composed only of the digit 6.", thumbnail=inter.author.display_avatar, color=self.color))
+            elif c <= 21:
+                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got a **Carry Pass** 😈\nDon't stop grinding, continue until your Crew gets the max rewards!", thumbnail=inter.author.display_avatar, color=self.color))
+            elif c <= 26:
+                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got a **Relief Ace Pass** 😈\nPrepare to relieve carries of their 'stress' after the day!!!", footer="wuv wuv", thumbnail=inter.author.display_avatar, color=self.color))
+            else:
+                await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="You got a **Free Leech Pass** 👍\nCongratulations!!!", thumbnail=inter.author.display_avatar, color=self.color))
+            await self.bot.util.clean(inter, 40)
+            return
+        elif c == 3:
+            h = h * random.randint(50, 80)
+            m = m * random.randint(50, 80)
+        elif c <= 6:
+            h = h * random.randint(20, 30)
+            m = m * random.randint(20, 30)
+        elif c <= 9:
+            h = h * random.randint(8, 15)
+            m = m * random.randint(8, 15)
+        elif c == 10:
+            h = h // random.randint(30, 50)
+            m = m // random.randint(30, 50)
+        elif c <= 12:
+            h = h // random.randint(10, 20)
+            m = m // random.randint(10, 20)
+        elif c <= 14:
+            h = h // random.randint(3, 6)
+            m = m // random.randint(3, 6)
+        h = h * 100000
+        m = m * 10
+
+        if inter.author.id == self.bot.data.config['ids'].get('chen', -1): # joke
+            match random.randint(3, 8):
+                case 3: h = 666
+                case 4: h = 6666
+                case 5: h = 66666
+                case 6: h = 666666
+                case 7: h = 6666666
+                case 8: h = 66666666
+            match random.randint(1, 4):
+                case 1: m = 6
+                case 2: m = 66
+                case 3: m = 666
+                case 4: m = 6666
+
+        await inter.response.send_message(embed=self.bot.util.embed(title="{} {}'s daily quota".format(self.bot.emote.get('gw'), inter.author.display_name), description="**Honor:** {:,}\n**Meat:** {:,}".format(h, m), thumbnail=inter.author.display_avatar, color=self.color))
+        await self.bot.util.clean(inter, 40)
+
+    """randint()
+    Generate a simple pseudo random number based on the seed value
+    
+    Parameters
+    ----------
+    seed: Integer used as the seed
+    
+    Returns
+    ----------
+    int: Pseudo random value which you can use as the next seed
+    """
+    def randint(self, seed):
+        return ((seed * 1103515245) % 4294967296) + 12345
+
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 600, commands.BucketType.user)
+    async def character(self, inter: disnake.GuildCommandInteraction):
+        """Generate a random GBF character"""
+        seed = (inter.author.id + int(datetime.utcnow().timestamp()) // 86400) # based on user id + day
+        values = {
+            'Rarity' : [['SSR', 'SR', 'R'], 3, True, None], # random strings, modulo to use, bool to use emote.get, seed needed to enable
+            'Race' : [['Human', 'Erun', 'Draph', 'Harvin', 'Primal', 'Other'], 6, False, None],
+            'Element' : [['fire', 'water', 'earth', 'wind', 'light', 'dark'], 6, True, None],
+            'Gender' : [['Unknown', '\♂️', '\♀️'], 3, False, None],
+            'Series' : [['Summer', 'Yukata', 'Grand', 'Holiday', 'Halloween', 'Valentine'], 30, True, 6]
+        }
+        msg = ""
+        rarity_mod = 0
+        for k in values:
+            v = seed % values[k][1]
+            if k == "Rarity": rarity_mod = 7 - 2 * v
+            if values[k][3] is not None and v >= values[k][3]:
+                continue
+            if values[k][2]: msg += "**{}** ▫️ {}\n".format(k, self.bot.emote.get(values[k][0][v]))
+            else: msg += "**{}** ▫️ {}\n".format(k, values[k][0][v])
+            seed = self.randint(seed)
+        msg += "**Rating** ▫️ {:.1f}".format(rarity_mod + (seed % 31) / 10)
+
+        await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{}'s daily character".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color))
+        await self.bot.util.clean(inter, 30)
+
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 100, commands.BucketType.guild)
+    async def xil(self, inter: disnake.GuildCommandInteraction):
+        """Generate a random element for Xil (Private Joke)"""
+        g = random.Random()
+        elems = ['fire', 'water', 'earth', 'wind', 'light', 'dark']
+        g.seed(int((int(datetime.utcnow().timestamp()) // 86400) * (1.0 + 1.0/4.2)))
+        e = g.choice(elems)
+
+        final_msg = await inter.response.send_message(embed=self.bot.util.embed(title="Today, Xil's main element is", description="{} **{}**".format(self.bot.emote.get(e), e.capitalize()), color=self.color))
+        await self.bot.util.clean(inter, 30)
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 15, commands.BucketType.user)

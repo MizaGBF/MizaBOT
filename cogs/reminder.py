@@ -76,7 +76,12 @@ class Reminder(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
-    async def remind(self, inter: disnake.GuildCommandInteraction, duration : str = commands.Param(description="Format: XdXhXmXs"), msg : str = commands.Param(description="Content of the reminder")):
+    async def remind(self, inter: disnake.GuildCommandInteraction):
+        """Command Group"""
+        pass
+
+    @remind.sub_command()
+    async def add(self, inter: disnake.GuildCommandInteraction, duration : str = commands.Param(description="Format: XdXhXmXs"), msg : str = commands.Param(description="Content of the reminder")):
         """Remind you of something at the specified time (±30 seconds precision)"""
         id = str(inter.author.id)
         if id not in self.bot.data.save['reminders']:
@@ -104,8 +109,7 @@ class Reminder(commands.Cog):
         except:
             await inter.response.send_message(embed=self.bot.util.embed(title="Reminder Error", footer="I have no clues about what went wrong", color=self.color), ephemeral=True)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 10, commands.BucketType.user)
+    @remind.sub_command(name="list")
     async def remindlist(self, inter: disnake.GuildCommandInteraction):
         """Post your current list of reminders"""
         id = str(inter.author.id)
@@ -118,8 +122,7 @@ class Reminder(commands.Cog):
                 embed.add_field(name="#{} ▫️ {:%Y/%m/%d %H:%M} JST".format(i, self.bot.data.save['reminders'][id][i][0]), value=self.bot.data.save['reminders'][id][i][1], inline=False)
             await inter.response.send_message(embed=embed, ephemeral=True)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 10, commands.BucketType.user)
+    @remind.sub_command(name="remove")
     async def reminddel(self, inter: disnake.GuildCommandInteraction, rid : int = commands.Param(description="Number of the reminder to delete")):
         """Delete one of your reminders"""
         id = str(inter.author.id)

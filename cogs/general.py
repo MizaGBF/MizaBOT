@@ -33,16 +33,6 @@ class General(commands.Cog):
         await self.bot.send('debug', embed=self.bot.util.embed(title="Bug Report", description=report, footer="{} ▫️ User ID: {}".format(inter.author.name, inter.author.id), thumbnail=inter.author.display_avatar, color=self.color))
         await inter.response.send_message(embed=self.bot.util.embed(title="Error", description='Thank you, your report has been sent with success.', color=self.color), ephemeral=True)
 
-    @commands.message_command(default_permission=True, name="Report a Bug")
-    @commands.cooldown(1, 30, commands.BucketType.user)
-    async def bugreport(self, inter: disnake.MessageCommandInteraction):
-        """Send the selected message to the author"""
-        if len(inter.target.content) > 0:
-            await self.bot.send('debug', embed=self.bot.util.embed(title="Bug Report", description=inter.target.content, footer="{} ▫️ User ID: {}".format(inter.author.name, inter.author.id), thumbnail=inter.author.display_avatar, color=self.color))
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description='Thank you, your report has been sent with success.', color=self.color), ephemeral=True)
-        else:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="This message can't be sent", color=self.color), ephemeral=True)
-
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 30, commands.BucketType.user)
     async def help(self, inter: disnake.GuildCommandInteraction):
