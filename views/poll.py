@@ -33,7 +33,6 @@ class PollDropdown(disnake.ui.Select):
     interaction: a Discord interaction
     """
     async def callback(self, interaction: disnake.Interaction):
-        self.view.update_last(interaction)
         self.view.votes[interaction.user.id] = self.values[0]
         await interaction.response.send_message(f'Vote updated to `{self.values[0]}`', ephemeral=True)
 

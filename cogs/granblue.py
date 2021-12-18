@@ -1108,16 +1108,17 @@ class GranblueFantasy(commands.Cog):
     async def gacha(self, inter: disnake.GuildCommandInteraction):
         """Post the current gacha informations"""
         try:
+            await inter.response.defer()
             content = await self.bot.do(self.getCurrentGacha)
             if len(content) > 0:
                 description = "{} Current gacha ends in **{}**".format(self.bot.emote.get('clock'), self.bot.util.delta2str(content[0], 2))
                 if content[0] != content[1]:
                     description += "\n{} Spark period ends in **{}**".format(self.bot.emote.get('mark'), self.bot.util.delta2str(content[1], 2))
                 description += "\n" + content[2]
-                await inter.response.send_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, thumbnail=content[3], color=self.color))
+                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, thumbnail=content[3], color=self.color))
         except Exception as e:
             await self.bot.sendError("getcurrentgacha", e)
-            await inter.response.send_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Unavailable", color=self.color), ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Unavailable", color=self.color))
 
     """getProfileData()
     Request a GBF profile
@@ -1541,14 +1542,14 @@ class GranblueFantasy(commands.Cog):
     async def brand(self, inter: disnake.GuildCommandInteraction, target : str = commands.Param(description="Either a valid GBF ID, discord ID or mention", default="")):
         """Check if a GBF profile is restricted"""
         try:
-            await inter.response.defer()
-            id = await self.bot.util.str2gbfid(ctx, target, self.color)
+            await inter.response.defer(ephemeral=True)
+            id = await self.bot.util.str2gbfid(inter, target, self.color)
             if isinstance(id, str):
                 await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description=id, color=self.color))
             else:
-                data = await self.bot.do(self.bot.gbf.request, "http://game.granbluefantasy.jp/forum/search_users_id?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"user_id":id})
+                data = await self.bot.do(self.bot.gbf.request, "http://game.granbluefantasy.jp/forum/search_users_id?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"user_id":int(id)})
                 match data:
-                    case"Maintenance":
+                    case "Maintenance":
                         await inter.edit_original_message(embed=self.bot.util.embed(title="Profile Error", description="Game is in maintenance", color=self.color))
                     case "Down":
                         await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
@@ -1563,17 +1564,16 @@ class GranblueFantasy(commands.Cog):
                                     status = "Account isn't restricted"
                             except:
                                 status = "Account isn't restricted"
-                            inter.edit_original_message(embed=self.bot.util.embed(title="{} {}".format(self.bot.emote.get('gw'), self.bot.util.shortenName(data['user']['nickname'])), description=status, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/leader/talk/{}.png".format(data['user']['image']), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
-        except Exception as e:
+                            await inter.edit_original_message(embed=self.bot.util.embed(title="{} {}".format(self.bot.emote.get('gw'), self.bot.util.shortenName(data['user']['nickname'])), description=status, thumbnail="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/leader/talk/{}.png".format(data['user']['image']), url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+        except:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
-        await self.bot.util.clean(ctx, inter, 45)
 
     @gbf.sub_command()
     async def coop(self, inter: disnake.GuildCommandInteraction):
         """Retrieve the current coop daily missions"""
         try:
-            await inter.response.defer()
-            data = await self.bot.do(self.bot.gbf.request, 'http://game.granbluefantasy.jp/coopraid/daily_mission?PARAMS', account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True)['daily_mission']
+            await inter.response.defer(ephemeral=True)
+            data = (await self.bot.do(self.bot.gbf.request, 'http://game.granbluefantasy.jp/coopraid/daily_mission?PARAMS', account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True))['daily_mission']
             msg = ""
             for i in range(len(data)):
                 if data[i]['category'] == '2':
@@ -1589,12 +1589,11 @@ class GranblueFantasy(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Daily Coop Missions", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))
         except:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
-        await self.bot.util.clean(inter, 45)
 
     @gbf.sub_command()
     async def news(self, inter: disnake.GuildCommandInteraction):
         """Post the latest news posts"""
-        await inter.response.defer()
+        await inter.response.defer(ephemeral=True)
         if 'news_url' not in self.bot.data.save['gbfdata']:
             self.bot.data.save['gbfdata']['news_url'] = []
             self.bot.data.pending = True
@@ -1610,20 +1609,18 @@ class GranblueFantasy(commands.Cog):
         if msg == "":
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
         else:
-            inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Latest Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, image=thumb, color=self.color))
-        await self.bot.util.clean(inter, 45)
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Latest Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, image=thumb, color=self.color))
 
     @gbf.sub_command(name="4koma")
     async def _4koma(self, inter: disnake.GuildCommandInteraction, id : int = commands.Param(description="A 4koma number", default=-123456789)):
         """Post a Granblues Episode"""
         try:
-            await inter.response.defer()
+            await inter.response.defer(ephemeral=True)
             if id == -123456789: id = int(self.bot.data.save['gbfdata']['4koma'])
             if id < 0 or id > int(self.bot.data.save['gbfdata']['4koma']): raise Exception()
             await inter.edit_original_message(embed=self.bot.util.embed(title="Granblue Episode {}".format(id), url="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/comic/episode/episode_{}.jpg".format(id), image="http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/comic/thumbnail/thum_{}.png".format(str(id).zfill(5)), color=self.color))
         except:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Invalid 4koma number", color=self.color))
-        await self.bot.util.clean(inter, 45)
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 10, commands.BucketType.user)

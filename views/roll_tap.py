@@ -32,7 +32,6 @@ class Tap(BaseView):
     """
     @disnake.ui.button(label='TAP', style=disnake.ButtonStyle.blurple)
     async def tap(self, button: disnake.ui.Button, interaction: disnake.Interaction):
-        self.update_last(interaction)
         if not button.disabled and self.ownership_check(interaction):
             self.stopall()
             button.disabled = True

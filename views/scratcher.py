@@ -32,7 +32,6 @@ class ScratcherButton(disnake.ui.Button):
     interaction: a Discord interaction
     """
     async def callback(self, interaction: disnake.Interaction):
-        self.view.update_last(interaction)
         if not self.disabled and self.view.ownership_check(interaction):
             self.disabled = True
             self.label = self.item

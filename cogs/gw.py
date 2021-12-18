@@ -460,7 +460,7 @@ class GuildWar(commands.Cog):
         # set the search strings based on the search type
         if type: txt = "crew"
         else: txt = "player"
-        await inter.response.defer()
+        await inter.response.defer(ephemeral=True)
         
         if terms == "": # no search terms so we print how to use it
             await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="**Usage**\n`/find {} [{}name]` to search a {} by name\n`/find {} %eq [{}name]` or `/find {} %== [{}name]` for an exact match\n`/find {} %id [{}id]` for an id search\n`/find {} %rank [ranking]` for a ranking search\n`/find {} %all ...` to receive all the results by direct message".replace('{}', txt), color=self.color))
@@ -581,8 +581,7 @@ class GuildWar(commands.Cog):
             except Exception as e:
                 if str(e) != "Returning":
                     await self.bot.sendError('findranking (search: {})'.format(terms), e)
-        try: await self.bot.util.clean(inter, 45)
-        except: pass
+                    await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="An error occured", color=self.color))
 
     @gw.sub_command()
     async def box(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
@@ -1064,7 +1063,7 @@ class GuildWar(commands.Cog):
     @gw.sub_command()
     async def lead(self, inter: disnake.GuildCommandInteraction, id_crew_1 : str = commands.Param(description="A crew ID"), id_crew_2 : str = commands.Param(description="A crew ID")):
         """Search two crew current scores and compare them"""
-        await inter.response.defer()
+        await inter.response.defer(ephemeral=True)
         day = self.bot.ranking.getCurrentGWDayID()
         if day is None or (day % 10) <= 1:
             await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Unavailable", color=self.color))

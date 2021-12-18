@@ -41,7 +41,6 @@ class TicTacToeButton(disnake.ui.Button):
     interaction: a disnake interaction
     """
     async def callback(self, interaction: disnake.Interaction):
-        self.view.update_last(interaction)
         if not self.disabled and interaction.user.id == self.view.playing.id and self.view.grid[self.pos] == 0:
             self.disabled = True
             self.view.grid[self.pos] = self.view.playing_index + 1

@@ -22,19 +22,8 @@ class BaseView(disnake.ui.View):
         super().__init__(timeout=timeout)
         self.bot = bot
         self.owner_id = owner_id
-        self.last_interaction = None
+        self.message = None
         self.enable_timeout_cleanup = enable_timeout_cleanup
-
-    """update_last()
-    Update the last interaction received
-    Try to call once for each interaction
-    
-    Parameters
-    ----------
-    interaction: a Discord interaction
-    """
-    def update_last(self, interaction: disnake.Interaction):
-         self.last_interaction = interaction
 
     """ownership_check()
     Check if the interaction user id matches the owner_id set in the constructor
@@ -57,7 +46,8 @@ class BaseView(disnake.ui.View):
     async def on_timeout(self):
         self.stopall()
         if self.enable_timeout_cleanup:
-            self.bot.util.clean(self.last_interaction, 0)
+            try: await self.message.edit(content="{}".format(self.bot.emote.get('lyria')), embed=None, view=None, attachments=[])
+            except: pass
 
     """stop()
     Override disnake.ui.View.stopall()
@@ -67,21 +57,6 @@ class BaseView(disnake.ui.View):
             try: c.disabled = True
             except: pass
         self.stop()
-
-    """kill()
-    Coroutine callback
-    Stop and clean the view after X seconds
-    (Alternative way to clean up the view)
-    
-    Parameters
-    ----------
-    interaction: a Discord interaction
-    """
-    async def kill(self, timeout : int = 60, clean : bool = True):
-        if timeout > 0: await asyncio.sleep(timeout)
-        self.stopall()
-        if clean:
-            self.bot.util.clean(self.last_interaction, 0)
 
     """on_error()
     Coroutine callback
