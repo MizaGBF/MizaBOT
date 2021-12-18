@@ -1226,4 +1226,4 @@ class Games(commands.Cog):
         if len(message.content) == 0:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="This message is empty", color=self.color), ephemeral=True)
         else:
-            await inter.response.send_message(message.clean_content.replace("r","w").replace("than","dan").replace("l","w").replace("oy","oi").replace("the","de").replace("you","u"))
+            await inter.response.send_message(message.clean_content.replace("r","w").replace("R","W").replace("than","dan").replace("Than","Dan").replace("THan","Dan").replace("THAn","Dan").replace("THAN","DAN").replace("thaN","daN").replace("thAn","dAn").replace("thAN","dAN").replace("tHAN","DAN").replace("l","w").replace("L","W").replace("oy","oi").replace("oY","oI").replace("Oy","Oi").replace("OY","OI").replace("the","de").replace("The","De").replace("THe","De").replace("THE","DE").replace("thE","dE").replace("tHe","De").replace("you","u").replace("You","U").replace("YOu","U").replace("YOU","U").replace("yoU","u").replace("yOu","u").replace("yOU","U"))
