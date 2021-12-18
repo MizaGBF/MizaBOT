@@ -609,20 +609,20 @@ class GranblueFantasy(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title=title, description=msg, color=self.color))
 
     @gbf.sub_command()
-    async def schedule(self, inter: disnake.GuildCommandInteraction, raw : str = commands.Param(default="")):
+    async def schedule(self, inter: disnake.GuildCommandInteraction, raw : int = commands.Param(default=0)):
         """Post the GBF schedule"""
         if len(self.bot.data.save['schedule']) == 0:
             await inter.response.send_message(embed=self.bot.util.embed(title="No schedule available", color=self.color))
         else:
             l = len(self.bot.data.save['schedule'])
-            if raw != 'raw': l = l - (l%2) # need an even amount, skipping the last one if odd
+            if raw == 0: l = l - (l%2) # need an even amount, skipping the last one if odd
             i = 0
             msg = ""
             c = self.bot.util.JST()
             nx = None
             md = c.month * 100 + c.day
             while i < l:
-                if raw == 'raw':
+                if raw != 0:
                     if i != 0: msg += ";"
                     else: msg += "`"
                     msg += self.bot.data.save['schedule'][i]
@@ -659,7 +659,7 @@ class GranblueFantasy(commands.Cog):
                         i += 2
                     if on_going: msg += "**"
                     msg += "\n"
-            if raw == 'raw': msg += "`"
+            if raw != 0: msg += "`"
             else:
                 if nx is not None and c < nx:
                     msg += "{} Next event approximately in **{}**\n".format(self.bot.emote.get('mark'), self.bot.util.delta2str(nx - c, 2))
