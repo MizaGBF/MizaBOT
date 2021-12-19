@@ -191,7 +191,7 @@ class Admin(commands.Cog):
     @ban.sub_command()
     async def all(self, inter: disnake.GuildCommandInteraction, id: int):
         """Ban an user from using the bot (Owner Only)"""
-        self.bot.ban.set(id, self.bot.ban.USE_BOT)
+        self.bot.ban.set(id, self.bot.ban.USEmizabot)
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 
     @ban.sub_command()
@@ -213,7 +213,7 @@ class Admin(commands.Cog):
     @unban.sub_command(name="all")
     async def _all(self, inter: disnake.GuildCommandInteraction, id : int):
         """Unban an user from using the bot (Owner Only)"""
-        self.bot.ban.unset(id, self.bot.ban.USE_BOT)
+        self.bot.ban.unset(id, self.bot.ban.USEmizabot)
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 
     @unban.sub_command(name="profile")
@@ -233,16 +233,16 @@ class Admin(commands.Cog):
     async def invite(self, inter: disnake.GuildCommandInteraction):
         pass
 
-    @invite.sub_command()
-    async def set(self, inter: disnake.GuildCommandInteraction, state : int = commands.Param(description="Invite State (0 to close, anything else to open)"), limit : int = commands.Param(description="Maximum number of guilds", default=50)):
+    @invite.sub_command(name="set")
+    async def inviteset(self, inter: disnake.GuildCommandInteraction, state : int = commands.Param(description="Invite State (0 to close, anything else to open)"), limit : int = commands.Param(description="Maximum number of guilds", default=50)):
         """Set the bot invitation settings (Owner Only)"""
         with self.bot.data.lock:
             self.bot.data.save['invite'] = {'state':(state != 0), 'limit':limit}
             self.bot.data.pending = True
         await inter.response.send_message(embed=self.bot.util.embed(title="Invitation setting", description="Open: `{}`\nLimited to max `{}` servers".format(self.bot.data.save['invite']['state'], self.bot.data.save['invite']['limit']), timestamp=self.bot.util.timestamp(), color=self.color), ephemeral=True)
 
-    @invite.sub_command()
-    async def get(self, inter: disnake.GuildCommandInteraction):
+    @invite.sub_command(name="get")
+    async def inviteget(self, inter: disnake.GuildCommandInteraction):
         """Show the bot invitation settings (Owner Only)"""
         await inter.response.send_message(embed=self.bot.util.embed(title="Invitation setting", description="Open: `{}`\nLimited to max `{}` servers".format(self.bot.data.save['invite']['state'], self.bot.data.save['invite']['limit']), timestamp=self.bot.util.timestamp(), color=self.color), ephemeral=True)
 
@@ -253,12 +253,14 @@ class Admin(commands.Cog):
     @_bot.sub_command()
     async def save(self, inter: disnake.GuildCommandInteraction):
         """Command to make a snapshot of the bot's settings (Owner Only)"""
+        await inter.response.defer(ephemeral=True)
         await self.bot.data.autosave(True)
-        await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
+        await inter.edit_original_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
 
     @_bot.sub_command()
     async def load(self, inter: disnake.GuildCommandInteraction, drive : str = commands.Param(description="Add `drive` to load the file from the drive", default="")):
         """Command to reload the bot saved data (Owner Only)"""
+        await inter.response.defer(ephemeral=True)
         self.bot.cancelTask('check_buff')
         if drive == 'drive': 
             if not self.bot.drive.load():
@@ -269,7 +271,7 @@ class Admin(commands.Cog):
             await self.bot.send('debug', embed=self.bot.util.embed(title=inter.me.name, description="save.json reloaded", color=self.color))
         else:
             await self.bot.send('debug', embed=self.bot.util.embed(title=inter.me.name, description="save.json loading failed", color=self.color))
-        await inter.response.send_message(embed=self.bot.util.embed(title="The command finished running", color=self.color), ephemeral=True)
+        await edit_original_message(embed=self.bot.util.embed(title="The command finished running", color=self.color))
 
     @_bot.sub_command()
     async def guilds(self, inter: disnake.GuildCommandInteraction):
