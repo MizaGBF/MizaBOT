@@ -191,7 +191,7 @@ class Admin(commands.Cog):
     @ban.sub_command()
     async def all(self, inter: disnake.GuildCommandInteraction, id: int):
         """Ban an user from using the bot (Owner Only)"""
-        self.bot.ban.set(id, self.bot.ban.USEmizabot)
+        self.bot.ban.set(id, self.bot.ban.USE_BOT)
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 
     @ban.sub_command()
@@ -213,7 +213,7 @@ class Admin(commands.Cog):
     @unban.sub_command(name="all")
     async def _all(self, inter: disnake.GuildCommandInteraction, id : int):
         """Unban an user from using the bot (Owner Only)"""
-        self.bot.ban.unset(id, self.bot.ban.USEmizabot)
+        self.bot.ban.unset(id, self.bot.ban.USE_BOT)
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 
     @unban.sub_command(name="profile")
