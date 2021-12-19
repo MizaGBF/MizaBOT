@@ -464,15 +464,16 @@ class MizaBot(commands.Bot):
                         except: pass
                         await g.leave()
                     case 4: # notify
-                        await self.send('debug', embed=self.util.embed(title=g.name + " added me", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}\n\nUse `$accept` or `$refuse`".format(g.id, g.owner_id, len(g.text_channels), len(g.voice_channels), g.member_count, len(g.roles), len(g.emojis), g.premium_subscription_count, g.premium_tier), thumbnail=g.icon.url, timestamp=g.created_at))
+                        await self.send('debug', embed=self.util.embed(title=g.name + " added me", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(g.id, g.owner_id, len(g.text_channels), len(g.voice_channels), g.member_count, len(g.roles), len(g.emojis), g.premium_subscription_count, g.premium_tier), thumbnail=g.icon.url, timestamp=g.created_at))
                         current_guilds.append(g.id)
                     case _:
                         current_guilds.append(g.id)
             else:
                 current_guilds.append(g.id)
         with self.data.lock:
-            self.data.save['guilds'] = current_guilds
-            self.data.pending = True
+            if current_guilds != self.data.save['guilds']:
+                self.data.save['guilds'] = current_guilds
+                self.data.pending = True
 
     """on_message()
     Event. Called when a message is received
@@ -506,7 +507,10 @@ class MizaBot(commands.Bot):
                     except: pass
                     await guild.leave()
                 case 4: # notify
-                    await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}\n\nUse `$accept` or `$refuse`".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at))
+                    await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at))
+                    with self.data.lock:
+                        self.data.save['guilds'].append(guild.id)
+                        self.data.pending = True
                 case _:
                     pass
         except Exception as e:
