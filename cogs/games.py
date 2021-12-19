@@ -355,14 +355,7 @@ class Games(commands.Cog):
                 tmp = tmp[:-2]
         return result, rate, tmp, count
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 60, commands.BucketType.user)
-    @commands.max_concurrency(15, commands.BucketType.default)
-    async def game(self, inter: disnake.GuildCommandInteraction):
-        """Command Group"""
-        pass
-
-    @game.sub_command()
+    @roll.sub_command()
     async def roulette(self, inter: disnake.GuildCommandInteraction, double : str = commands.Param(description='Force 3 or 6% rates. Check the autocomplete options.', autocomplete=["double", "x2", "6%", "legfest", "flashfest", "flash", "leg", "gala", "2", "normal", "x1", "3%", "gacha", "1"], default="")):
         """Imitate the GBF roulette"""
         await inter.response.defer()
@@ -469,6 +462,13 @@ class Games(commands.Cog):
                     running = False
             await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer))
         await self.bot.util.clean(inter, 45)
+
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 60, commands.BucketType.user)
+    @commands.max_concurrency(15, commands.BucketType.default)
+    async def game(self, inter: disnake.GuildCommandInteraction):
+        """Command Group"""
+        pass
 
     @game.sub_command()
     async def scratch(self, inter: disnake.GuildCommandInteraction):
