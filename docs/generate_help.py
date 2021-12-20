@@ -189,7 +189,7 @@ If the problem persists, make sure you didn't give a role, with this permission 
 This paragraph is true for other permissions that the bot might need.</p>
 
 <h2>How do I remove my GBF Profile ID?</h2>
-<p>Your linked GBF ID can be removed with the /unsetprofile command.
+<p>Your linked GBF ID can be removed with the /gbf unsetprofile command.
 It's also deleted if you leave all servers where the bot is present.</p>
 
 <h2>How do I remove my set Rolls?</h2>
