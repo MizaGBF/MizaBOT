@@ -346,6 +346,9 @@ class GuildWar(commands.Cog):
     async def buff(self, inter: disnake.GuildCommandInteraction):
         """Check when is the next GW buff ((You) Server Only)"""
         try:
+            if inter.guild.id != self.bot.data.config['ids'].get('you_server', -1):
+                await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable in this server", color=self.color), ephemeral=True)
+                return
             d = self.getNextBuff(inter)
             if d != "":
                 await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War (You) Buff status".format(self.bot.emote.get('gw')), description=d, color=self.color))
