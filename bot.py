@@ -30,7 +30,7 @@ except:
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "9.3" # bot version
+        self.version = "9.4" # bot version
         self.changelog = [ # changelog lines
             "Please use `/bug_report` if you see anything wrong",
             "Check the [help](https://mizagbf.github.io/MizaBOT/) for any issues",
@@ -40,7 +40,8 @@ class MizaBot(commands.Bot):
             "ask, choose and when commands regrouped under the `/ask` group",
             "coin, dice, character, quota and xil commands regrouped under the `/random` group",
             "Added back some previously removed commands under the `/gbf` group",
-            "User command 'Check for Bands' removed"
+            "User command 'Check for Bands' removed",
+            "Improved `/help` command"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event

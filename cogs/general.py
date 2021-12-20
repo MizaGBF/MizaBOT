@@ -1,6 +1,7 @@
 ﻿import disnake
 from disnake.ext import commands
 import itertools
+import json
 from views.poll import Poll
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -34,10 +35,76 @@ class General(commands.Cog):
         await inter.response.send_message(embed=self.bot.util.embed(title="Error", description='Thank you, your report has been sent with success.', color=self.color), ephemeral=True)
 
     @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 30, commands.BucketType.user)
-    async def help(self, inter: disnake.GuildCommandInteraction):
-        """Post a link to the online help"""
-        await inter.response.send_message(embed=self.bot.util.embed(title=self.bot.description.splitlines()[0], description="Online Help [here](https://mizagbf.github.io/MizaBOT/)\nCode source [here](https://github.com/MizaGBF/MizaBOT)", thumbnail=inter.me.display_avatar, color=self.color), ephemeral=True)
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    async def help(self, inter: disnake.GuildCommandInteraction, search : str = commands.Param(description="What do you need help for?", default="")):
+        """Get the bot help"""
+        await inter.response.defer(ephemeral=True)
+        t = search.replace('  ', '').replace('  ', '').lower()
+        try:
+            with open('help.json') as json_file:
+                data = json.load(json_file)
+        except:
+            data = {}
+        # searching command match
+        result = []
+        stop_flag = False
+        for k in data:
+            if stop_flag: break
+            for cmd in data[k]:
+                if "command group" in cmd.get('comment', '').lower(): continue
+                name = cmd['name']
+                if 'parent' in cmd: name =  cmd['parent'] + " " + name
+                name = name.lower()
+                if t == name:
+                    result = [cmd]
+                    stop_flag = True
+                    break
+                elif t in name or t in cmd.get('comment', '').lower():
+                    result.append(cmd)
+        msg = ""
+        if search == "":
+            msg = "Online Help [here](https://mizagbf.github.io/MizaBOT/)\nGithub [here](https://github.com/MizaGBF/MizaBOT)".format(search)
+        elif len(result) == 0:
+            msg = "No results found for `{}`\n**For more help:**\nOnline Help [here](https://mizagbf.github.io/MizaBOT/)\nGithub [here](https://github.com/MizaGBF/MizaBOT)".format(search)
+        elif len(result) == 1:
+            match result[0]['type']:
+                case 1:
+                    msg = "**User Command**\n**"
+                case 2:
+                    msg = "**Message Command**\n**"
+                case _:
+                    msg = "**Slash Command\n/"
+            if 'parent' in result[0]: msg += result[0]['parent'] + " "
+            msg += result[0]['name'] + "**\n"
+            if 'comment' in result[0]: msg += result[0]['comment'] + '\n'
+            if result[0]['args'][0] > 0:
+                msg += "**Parameters:**\n"
+                msg += result[0]['args'][1]
+        else:
+            msg = "**Results**\n"
+            count = len(result)
+            for r in result:
+                msg += "**"
+                name = r['name']
+                if 'parent' in r: name = r['parent'] + " " + name
+                match r['type']:
+                    case 1:
+                        msg += name + "** *(User Command)*"
+                    case 2:
+                        msg += name + "** *(Message Command)*"
+                    case _:
+                        msg += "/" + name + "**"
+                if result[0]['args'][0] > 0:
+                    msg += "▫️ {} parameter".format(result[0]['args'][1])
+                    if result[0]['args'][0] > 1: msg += "s"
+                msg += "\n"
+                count -= 1
+                if len(msg) > 1500 and count > 0:
+                    msg += "And {} more commands...\n**For more help:**\nOnline Help [here](https://mizagbf.github.io/MizaBOT/)\nGithub [here](https://github.com/MizaGBF/MizaBOT)".format(count)
+                    break
+
+        await inter.edit_original_message(embed=self.bot.util.embed(title=self.bot.user.name + " Help", description=msg, thumbnail=self.bot.user.display_avatar, color=self.color, url="https://mizagbf.github.io/MizaBOT/"))
+        await self.bot.util.clean(inter, 60)
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 30, commands.BucketType.user)
