@@ -182,6 +182,12 @@ Message Commands are used by right clicking a message and going into the Apps co
 <h2>How do I report a bug?</h2>
 <p>Errors are usually automatically reported but, if you found an odd behavior or what seems like an error, you can use the /bug_report command. You can also right click the message and select Apps > Report a Bug to send me that message.</p>
 
+<h2>Emotes used by the bot don't work</h2>
+<p>Make sure the bot has the <b>Use External Emojis</b> permission enabled.<br>
+If you thinkered with the invite link or the bot role permissions (which I don't recommend to), you can use the invitation link again to restore them to default (without needing to kick the bot).<br>
+If the problem persists, make sure you didn't give a role, with this permission disabled, to the bot.<br>
+This paragraph is true for other permissions that the bot might need.</p>
+
 <h2>How do I remove my GBF Profile ID?</h2>
 <p>Your linked GBF ID can be removed with the /unsetprofile command.
 It's also deleted if you leave all servers where the bot is present.</p>
