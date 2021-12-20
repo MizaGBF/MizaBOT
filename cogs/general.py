@@ -95,12 +95,12 @@ class General(commands.Cog):
                     case _:
                         msg += "/" + name + "**"
                 if result[0]['args'][0] > 0:
-                    msg += "▫️ {} parameter".format(result[0]['args'][1])
+                    msg += "▫️ {} parameter".format(result[0]['args'][0])
                     if result[0]['args'][0] > 1: msg += "s"
                 msg += "\n"
                 count -= 1
                 if len(msg) > 1500 and count > 0:
-                    msg += "And {} more commands...\n**For more help:**\nOnline Help [here](https://mizagbf.github.io/MizaBOT/)\nGithub [here](https://github.com/MizaGBF/MizaBOT)".format(count)
+                    msg += "**And {} more commands...**\n**For more help:**\nOnline Help [here](https://mizagbf.github.io/MizaBOT/)\nGithub [here](https://github.com/MizaGBF/MizaBOT)".format(count)
                     break
 
         await inter.edit_original_message(embed=self.bot.util.embed(title=self.bot.user.name + " Help", description=msg, thumbnail=self.bot.user.display_avatar, color=self.color, url="https://mizagbf.github.io/MizaBOT/"))
