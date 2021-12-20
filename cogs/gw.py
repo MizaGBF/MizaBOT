@@ -355,8 +355,8 @@ class GuildWar(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color), ephemeral=True)
             await self.bot.sendError("gwbuff", e)
 
-    @gw.sub_command()
-    async def ranking(self, inter: disnake.GuildCommandInteraction):
+    @gw.sub_command(name="ranking")
+    async def gwranking(self, inter: disnake.GuildCommandInteraction):
         """Retrieve the current GW ranking"""
         try:
             if self.bot.data.save['gw']['state'] == False or self.bot.util.JST() < self.bot.data.save['gw']['dates']["Preliminaries"] or self.bot.data.save['gw']['ranking'] is None:
@@ -1106,10 +1106,12 @@ class GuildWar(commands.Cog):
 
     @gw.sub_command()
     async def youlead(self, inter: disnake.GuildCommandInteraction, opponent : str = commands.Param(description="Opponent ID to set it", default="")):
-        """Show the current match of (You)
-        (You) Server Only"""
+        """Show the current match of (You) ((You) Server Only)"""
         await inter.response.defer()
-        if opponent != "":
+        if inter.guild.id != self.bot.data.config['ids'].get('you_server', -1):
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable in this server", color=self.color))
+            return
+        elif opponent != "":
             if not self.bot.isMod(inter):
                 await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Only moderators can set the opponent", color=self.color))
                 return
@@ -1193,7 +1195,7 @@ class GuildWar(commands.Cog):
                             pass
 
                 await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.emote.get('gw'), self.bot.data.save['matchtracker']['gwid'], self.bot.data.save['matchtracker']['day']-1), description=msg, timestamp=self.bot.util.timestamp(), thumbnail=self.bot.data.save['matchtracker'].get('chart', None), color=self.color))
-                await self.bot.util.clean(clean, 90)
+                await self.bot.util.clean(inter, 90)
 
     @gw.sub_command()
     async def nm95(self, inter: disnake.GuildCommandInteraction, hp_percent : int = commands.Param(description="HP% of NM95 you want to do", default=100, le=100, ge=1)):
@@ -1335,8 +1337,8 @@ class GuildWar(commands.Cog):
                     fields[-1]['value'] += "#**{}** \▫️ {} \▫️ **{}**\n".format(self.bot.util.valToStr(sorted[i][3]), sorted[i][1], self.bot.util.valToStr(sorted[i][2]))
             return fields, gwid
 
-    @gbfg.sub_command()
-    async def ranking(self, inter: disnake.GuildCommandInteraction):
+    @gbfg.sub_command(name="ranking")
+    async def gbfgranking(self, inter: disnake.GuildCommandInteraction):
         """Sort and post all /gbfg/ crew per contribution"""
         await inter.response.defer()
         fields, gwid = await self.bot.do(self._gbfgranking)

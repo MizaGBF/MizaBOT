@@ -68,10 +68,11 @@ class FourChan(commands.Cog):
     @fourchan.sub_command()
     async def search(self, inter: disnake.GuildCommandInteraction, board : str = commands.Param(description="The board to search on."), search : str = commands.Param(description="Search string")):
         """Search 4chan threads"""
+        await inter.response.defer(ephemeral=True)
         nsfw = ['b', 'r9k', 'pol', 'bant', 'soc', 's4s', 's', 'hc', 'hm', 'h', 'e', 'u', 'd', 'y', 't', 'hr', 'gif', 'aco', 'r']
         board = board.lower().replace('/', '')
         if board in nsfw and not inter.channel.is_nsfw():
-            await inter.response.send_message("The board `{}` is restricted to NSFW channels".format(board), ephemeral=True)
+            await inter.edit_original_message("The board `{}` is restricted to NSFW channels".format(board), ephemeral=True)
             return
         threads = await self.bot.do(self.get4chan, board, search)
         if len(threads) > 0:
@@ -84,13 +85,14 @@ class FourChan(commands.Cog):
                 if len(msg) > 1800:
                     msg += 'and more...'
                     break
-            await inter.response.send_message(embed=self.bot.util.embed(title="4chan Search result", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="4chan Search result", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
-            await inter.response.send_message(embed=self.bot.util.embed(title="4chan Search result", description="No matching threads found", color=self.color), ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="4chan Search result", description="No matching threads found", color=self.color), ephemeral=True)
 
     @fourchan.sub_command()
     async def gbfg(self, inter: disnake.GuildCommandInteraction):
         """Post the latest /gbfg/ threads"""
+        await inter.response.defer(ephemeral=True)
         threads = await self.bot.do(self.get4chan, 'vg', '/gbfg/')
         if len(threads) > 0:
             msg = ""
@@ -102,15 +104,16 @@ class FourChan(commands.Cog):
                 if len(msg) > 1800:
                     msg += 'and more...'
                     break
-            await inter.response.send_message(embed=self.bot.util.embed(title="/gbfg/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="/gbfg/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
-            await inter.response.send_message(embed=self.bot.util.embed(title="/gbfg/ Error", description="I couldn't find a single /gbfg/ thread 😔", color=self.color),ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="/gbfg/ Error", description="I couldn't find a single /gbfg/ thread 😔", color=self.color),ephemeral=True)
 
     @fourchan.sub_command()
     async def hgg(self, inter: disnake.GuildCommandInteraction):
         """Post the latest /hgg2d/ threads (NSFW channels Only)"""
+        await inter.response.defer(ephemeral=True)
         if not inter.channel.is_nsfw():
-            await inter.response.send_message(embed=self.bot.util.embed(title=':underage: NSFW channels only', color=self.color), ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title=':underage: NSFW channels only', color=self.color), ephemeral=True)
             return
         threads = await self.bot.do(self.get4chan, 'vg', '/hgg2d/')
         if len(threads) > 0:
@@ -123,6 +126,6 @@ class FourChan(commands.Cog):
                 if len(msg) > 1800:
                     msg += 'and more...'
                     break
-            await inter.response.send_message(embed=self.bot.util.embed(title="/hgg2d/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="/hgg2d/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
-            await inter.response.send_message(embed=self.bot.util.embed(title="/hgg2d/ Error", description="I couldn't find a single /hgg2d/ thread 😔", color=self.color),ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="/hgg2d/ Error", description="I couldn't find a single /hgg2d/ thread 😔", color=self.color),ephemeral=True)
