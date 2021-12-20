@@ -1,6 +1,6 @@
 # MizaBOT  
 * [Granblue Fantasy](http://game.granbluefantasy.jp) Discord Bot.  
-* Command List available [Here](https://mizagbf.github.io/MizaBOT/).  
+* Command List and Help available [Here](https://mizagbf.github.io/MizaBOT/).  
 
 [![CodeQL](https://github.com/MizaGBF/MizaBOT/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/MizaGBF/MizaBOT/actions/workflows/codeql-analysis.yml)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)  
 ### Requirements  
@@ -16,11 +16,14 @@
   
 ### Informations  
 MizaBOT is a Discord Bot themed around the game [Granblue Fantasy](http://game.granbluefantasy.jp).  
-It features a lot of useful utility commands, including some advanced features, for a total of **over 90 commands**.  
+It features a lot of useful utility commands, including some advanced features, for a total of **over 120 commands**.  
 Check the [Online Help](https://mizagbf.github.io/MizaBOT/) for details.  
   
 It's designed to be used on [Heroku](https://www.heroku.com) and isn't intended to be setup and used by anyone. Still, if you are interested, details are available on the [Wiki](https://github.com/MizaGBF/MizaBOT/wiki) and in this [issue](https://github.com/MizaGBF/MizaBOT/issues/1).  
-
+  
+[![Invite Card](https://mizagbf.github.io/MizaBOT/img/invite.png)](https://discord.com/api/oauth2/authorize?client_id=614723060100104193&permissions=545394785367&scope=bot%20applications.commands)
+Currently open to servers of at least 30 members, without limitations. Again, check the [Online Help](https://mizagbf.github.io/MizaBOT/) for details.    
+  
 ### Features  
 *(The following screenshots were taken on version 8.0)*  
 * Get detailed informations on the game status from Discord  
