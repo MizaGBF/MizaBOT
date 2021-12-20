@@ -347,7 +347,7 @@ class GuildWar(commands.Cog):
         """Check when is the next GW buff ((You) Server Only)"""
         try:
             if inter.guild.id != self.bot.data.config['ids'].get('you_server', -1):
-                await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable in this server", color=self.color), ephemeral=True)
+                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Unavailable in this server", color=self.color), ephemeral=True)
                 return
             d = self.getNextBuff(inter)
             if d != "":
