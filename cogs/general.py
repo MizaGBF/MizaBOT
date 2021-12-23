@@ -2,6 +2,9 @@
 from disnake.ext import commands
 import itertools
 import json
+import re
+import html
+import math
 from views.poll import Poll
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -30,9 +33,9 @@ class General(commands.Cog):
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 30, commands.BucketType.user)
     async def bug_report(self, inter: disnake.GuildCommandInteraction, report : str = commands.Param()):
-        """Send a bug report (or your love confessions) to the author"""
+        """Send a bug report (or your love confessions) to the developer"""
         await self.bot.send('debug', embed=self.bot.util.embed(title="Bug Report", description=report, footer="{} ▫️ User ID: {}".format(inter.author.name, inter.author.id), thumbnail=inter.author.display_avatar, color=self.color))
-        await inter.response.send_message(embed=self.bot.util.embed(title="Error", description='Thank you, your report has been sent with success.', color=self.color), ephemeral=True)
+        await inter.response.send_message(embed=self.bot.util.embed(title="Information", description='Thank you, your report has been sent with success', color=self.color), ephemeral=True)
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
@@ -173,6 +176,51 @@ class General(commands.Cog):
         """Post the current time, JST timezone"""
         await inter.response.send_message(embed=self.bot.util.embed(title="{} {:%Y/%m/%d %H:%M} JST".format(self.bot.emote.get('clock'), self.bot.util.JST()), color=self.color), ephemeral=True)
 
+    @utility.sub_command()
+    async def rollchance(self, inter, count : str = commands.Param(description="Amount of rolls. Leave empty to use your set spark count", default="")):
+        """Calculate your chance of rolling the rate up for a given amount of rolls."""
+        await inter.response.defer(ephemeral=True)
+        try:
+            if count == '':
+                if str(inter.author.id) in self.bot.data.save['spark']:
+                    s = self.bot.data.save['spark'][str(inter.author.id)]
+                    count = (s[0] // 300) + s[1] + s[2] * 10
+                else:
+                    raise Exception("Please specify a valid number of rolls")
+            elif int(count) <= 0:
+                raise Exception("Please specify a valid number of rolls")
+            else:
+                count = int(count)
+            msg = "Your chances of getting at least one of the following rate ups with {} rolls:\n".format(count)
+            rateups = self.bot.get_cog('Games').gachaRateUp()[1]
+            if rateups is None: raise Exception("Unavailable")
+            for r in rateups:
+                msg += "{:} **{:}%** ▫️ {:.2f}%\n".format(self.bot.emote.get('SSR'), r, 100*(1-math.pow(1-float(r)*0.01, count)))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Roll Chance Calculator", description=msg, color=self.color))
+        except Exception as e:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Roll Chance Calculator Error", description=str(e), color=self.color))
+
+    @utility.sub_command()
+    async def fortunechance(self, inter, cards : str = commands.Param(description="Your list of cards, separated by spaces")):
+        """Calculate your chance at the GBF summer fortune game from Summer 2021"""
+        await inter.response.defer(ephemeral=True)
+        cards = cards.split(" ")
+        tier3 = []
+        tier2 = []
+        tier1 = []
+        for c in cards:
+            try:
+                if c == "": continue
+                if len(c) > 3 or int(c) < 0: raise Exception()
+            except:
+                await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Invalid card number `{}`".format(c), color=self.color))
+                return
+            sc = c.zfill(3)
+            if sc[:2] not in tier3: tier3.append(sc[:2])
+            if sc[1:] not in tier2: tier2.append(sc[1:])
+            if sc not in tier1: tier1.append(sc)
+        await inter.edit_original_message(embed=self.bot.util.embed(title="Summer Fortune Calculator", description="Your chances of winning at least one\n**Tier 3** ▫️ {:.2f}%\n**Tier 2** ▫️ {:.2f}%\n**Tier 1** ▫️ {:.2f}%".format(100*(1-math.pow(1-0.03, len(tier3))), 100*(1-math.pow(1-0.02, len(tier2))), 100*(1-math.pow(1-0.002, len(tier1)))), color=self.color))
+
     """cleanhtml()
     Clean the html and escape the string properly
     
@@ -230,7 +278,7 @@ class General(commands.Cog):
         nsfw = ['b', 'r9k', 'pol', 'bant', 'soc', 's4s', 's', 'hc', 'hm', 'h', 'e', 'u', 'd', 'y', 't', 'hr', 'gif', 'aco', 'r']
         board = board.lower().replace('/', '')
         if board in nsfw and not inter.channel.is_nsfw():
-            await inter.edit_original_message("The board `{}` is restricted to NSFW channels".format(board), ephemeral=True)
+            await inter.edit_original_message("The board `{}` is restricted to NSFW channels".format(board))
             return
         threads = await self.bot.do(self.get4chan, board, search)
         if len(threads) > 0:
@@ -245,7 +293,7 @@ class General(commands.Cog):
                     break
             await inter.edit_original_message(embed=self.bot.util.embed(title="4chan Search result", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="4chan Search result", description="No matching threads found", color=self.color), ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="4chan Search result", description="No matching threads found", color=self.color))
 
     @fourchan.sub_command()
     async def gbfg(self, inter: disnake.GuildCommandInteraction):
@@ -264,14 +312,14 @@ class General(commands.Cog):
                     break
             await inter.edit_original_message(embed=self.bot.util.embed(title="/gbfg/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="/gbfg/ Error", description="I couldn't find a single /gbfg/ thread 😔", color=self.color),ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="/gbfg/ Error", description="I couldn't find a single /gbfg/ thread 😔", color=self.color))
 
     @fourchan.sub_command()
     async def hgg(self, inter: disnake.GuildCommandInteraction):
         """Post the latest /hgg2d/ threads (NSFW channels Only)"""
         await inter.response.defer(ephemeral=True)
         if not inter.channel.is_nsfw():
-            await inter.edit_original_message(embed=self.bot.util.embed(title=':underage: NSFW channels only', color=self.color), ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title=':underage: NSFW channels only', color=self.color))
             return
         threads = await self.bot.do(self.get4chan, 'vg', '/hgg2d/')
         if len(threads) > 0:
@@ -286,4 +334,4 @@ class General(commands.Cog):
                     break
             await inter.edit_original_message(embed=self.bot.util.embed(title="/hgg2d/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="/hgg2d/ Error", description="I couldn't find a single /hgg2d/ thread 😔", color=self.color),ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="/hgg2d/ Error", description="I couldn't find a single /hgg2d/ thread 😔", color=self.color))

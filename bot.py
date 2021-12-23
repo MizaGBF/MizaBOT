@@ -32,8 +32,7 @@ class MizaBot(commands.Bot):
     def __init__(self):
         self.version = "9.4" # bot version
         self.changelog = [ # changelog lines
-            "Please use `/bug_report` if you see anything wrong",
-            "Check the [help](https://mizagbf.github.io/MizaBOT/) for any issues",
+            "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
             "`/gbfgame` and `/minigame` command groups have been put under `/game`",
             "Reminder commands regrouped under the group `/remind`",
             "Message command 'Report a Bug' removed, `/bug_report` still exists",
@@ -41,7 +40,8 @@ class MizaBot(commands.Bot):
             "coin, dice, character, quota and xil commands regrouped under the `/random` group",
             "Added back some previously removed commands under the `/gbf` group",
             "User command 'Check for Bands' removed",
-            "Improved `/help` command"
+            "Improved `/help` command",
+            "Regrouped some commands under /utility"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
@@ -150,83 +150,83 @@ class MizaBot(commands.Bot):
     
     Parameters
     ----------
-    ctx: Command context, message or interaction
+    inter: Command context, message or interaction
     
     Returns
     --------
     bool: True if authorized, False if not
     """
-    def isAuthorized(self, ctx): # check if the command is authorized in the channel
-        id = str(ctx.guild.id)
+    def isAuthorized(self, inter): # check if the command is authorized in the channel
+        id = str(inter.guild.id)
         if id in self.data.save['permitted']: # if id is found, it means the check is enabled
-            if ctx.channel.id in self.data.save['permitted'][id]:
+            if inter.channel.id in self.data.save['permitted'][id]:
                 return True # permitted
             return False # not permitted
         return True # default
 
     """isServer()
-    Check if the context is matching this server (server must be set in config.json)
+    Check if the interaction is matching this server (server must be set in config.json)
     
     Parameters
     ----------
-    ctx: Command context
+    inter: Command interaction
     id_string: Server identifier in config.json
     
     Returns
     --------
     bool: True if matched, False if not
     """
-    def isServer(self, ctx, id_string : str): # check if the context is in the targeted guild (guild id must be in config.json)
-        if ctx.guild.id == self.data.config['ids'].get(id_string, -1):
+    def isServer(self, inter, id_string : str): # check if the interaction is in the targeted guild (guild id must be in config.json)
+        if inter.guild.id == self.data.config['ids'].get(id_string, -1):
             return True
         return False
 
     """isChannel()
-    Check if the context is matching this channel (channel must be set in config.json)
+    Check if the interaction is matching this channel (channel must be set in config.json)
     
     Parameters
     ----------
-    ctx: Command context
+    inter: Command interaction
     id_string: Channel identifier in config.json
     
     Returns
     --------
     bool: True if matched, False if not
     """
-    def isChannel(self, ctx, id_string : str): # check if the context is in the targeted channel (channel is must be in config.json)
-        if ctx.channel.id == self.data.config['ids'].get(id_string, -1):
+    def isChannel(self, inter, id_string : str): # check if the context is in the targeted channel (channel is must be in config.json)
+        if inter.channel.id == self.data.config['ids'].get(id_string, -1):
             return True
         return False
 
     """isMod()
-    Check if the context author has the manage message permission
+    Check if the interaction author has the manage message permission
     
     Parameters
     ----------
-    ctx: Command context
+    inter: Command interaction
     
     Returns
     --------
     bool: True if it does, False if not
     """
-    def isMod(self, ctx): # check if the member has the manage_message permission
-        if ctx.author.guild_permissions.manage_messages or ctx.author.id == self.owner.id:
+    def isMod(self, inter): # check if the member has the manage_message permission
+        if inter.author.guild_permissions.manage_messages or inter.author.id == self.owner.id:
             return True
         return False
 
     """isOwner()
-    Check if the context author is the owner (id must be set in config.json)
+    Check if the interaction author is the owner (id must be set in config.json)
     
     Parameters
     ----------
-    ctx: Command context
+    inter: Command interaction
     
     Returns
     --------
     bool: True if it does, False if not
     """
-    def isOwner(self, ctx): # check if the member is the bot owner
-        if ctx.author.id == self.owner.id: # must be defined in config.json
+    def isOwner(self, inter): # check if the member is the bot owner
+        if inter.author.id == self.owner.id: # must be defined in config.json
             return True
         return False
 

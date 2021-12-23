@@ -21,8 +21,12 @@ class Roles(commands.Cog):
     command check
     """
     def isMod(): # for decorators
-        async def predicate(ctx):
-            return ctx.bot.isMod(ctx)
+        async def predicate(inter):
+            if inter.bot.isMod(inter):
+                return True
+            else:
+                await inter.response.send_message(embed=inter.bot.util.embed(title="Error", description="You lack the permission to use this command"), ephemeral=True)
+                return False
         return commands.check(predicate)
 
     @commands.slash_command(default_permission=True)

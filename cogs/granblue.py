@@ -1067,7 +1067,7 @@ class GranblueFantasy(commands.Cog):
                             count = 0
                             for i in rateuplist[k][r]:
                                 if count >= 8 and len(rateuplist[k][r]) - count > 1:
-                                    banner_msg += " and {} more!".format(len(rateuplist[k][r]) - count - 1)
+                                    banner_msg += " and {} more!".format(len(rateuplist[k][r]) - count)
                                     break
                                 elif count > 0: banner_msg += ", "
                                 count += 1

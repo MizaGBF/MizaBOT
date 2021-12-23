@@ -105,3 +105,21 @@ class Twitter():
             return self.client.get_tweets(ids=ids, tweet_fields=['context_annotations', 'created_at', 'entities', 'public_metrics'], user_fields=['profile_image_url'], media_fields=['preview_image_url', 'url'], expansions=['author_id', 'attachments.media_keys', 'entities.mentions.username', 'referenced_tweets.id', 'referenced_tweets.id.author_id'])
         except:
             return None
+
+    """user_last_tweet()
+    Return a list of tweets from an user
+    
+    Parameters
+    ----------
+    screen_name: Twitter user screen name
+    
+    Returns
+    --------
+    unknwon: An object containing tweets of the user, None if error
+    """
+    def user_last_tweet(self, screen_name):
+        try: 
+            user = self.client.get_user(username=screen_name, user_fields=['description', 'profile_image_url', 'pinned_tweet_id']).data
+            return self.client.get_users_tweets(id=user.id, tweet_fields=['context_annotations', 'created_at', 'entities', 'public_metrics'], user_fields=['profile_image_url'], media_fields=['preview_image_url', 'url'], expansions=['author_id', 'attachments.media_keys', 'entities.mentions.username', 'referenced_tweets.id', 'referenced_tweets.id.author_id'], max_results=10)
+        except:
+            return None

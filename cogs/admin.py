@@ -77,8 +77,12 @@ class Admin(commands.Cog):
     command check
     """
     def isOwner():
-        async def predicate(ctx):
-            return ctx.bot.isOwner(ctx)
+        async def predicate(inter):
+            if inter.bot.isOwner(inter):
+                return True
+            else:
+                await inter.response.send_message(embed=inter.bot.util.embed(title="Error", description="You lack the permission to use this command"), ephemeral=True)
+                return False
         return commands.check(predicate)
 
     """guildList()

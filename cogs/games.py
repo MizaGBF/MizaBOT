@@ -2,7 +2,6 @@
 from disnake.ext import commands
 import asyncio
 import random
-import math
 from datetime import datetime, timedelta
 from views.roll_tap import Tap
 from views.scratcher import Scratcher
@@ -1223,7 +1222,8 @@ class Games(commands.Cog):
     @commands.cooldown(6, 180, commands.BucketType.guild)
     async def uwu(self, inter: disnake.MessageCommandInteraction, message: disnake.Message):
         """UwU-tize a message"""
-        if len(message.content) == 0:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="This message is empty", color=self.color), ephemeral=True)
+        msg = message.clean_content.replace("r","w").replace("R","W").replace("than","dan").replace("Than","Dan").replace("THan","Dan").replace("THAn","Dan").replace("THAN","DAN").replace("thaN","daN").replace("thAn","dAn").replace("thAN","dAN").replace("tHAN","DAN").replace("l","w").replace("L","W").replace("oy","oi").replace("oY","oI").replace("Oy","Oi").replace("OY","OI").replace("the","de").replace("The","De").replace("THe","De").replace("THE","DE").replace("thE","dE").replace("tHe","De").replace("you","u").replace("You","U").replace("YOu","U").replace("YOU","U").replace("yoU","u").replace("yOu","u").replace("yOU","U")
+        if len(msg) == 0 or len(msg) >= 2000:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="This message can't be converted", color=self.color), ephemeral=True)
         else:
-            await inter.response.send_message(message.clean_content.replace("r","w").replace("R","W").replace("than","dan").replace("Than","Dan").replace("THan","Dan").replace("THAn","Dan").replace("THAN","DAN").replace("thaN","daN").replace("thAn","dAn").replace("thAN","dAN").replace("tHAN","DAN").replace("l","w").replace("L","W").replace("oy","oi").replace("oY","oI").replace("Oy","Oi").replace("OY","OI").replace("the","de").replace("The","De").replace("THe","De").replace("THE","DE").replace("thE","dE").replace("tHe","De").replace("you","u").replace("You","U").replace("YOu","U").replace("YOU","U").replace("yoU","u").replace("yOu","u").replace("yOU","U"))
+            await inter.response.send_message(msg)

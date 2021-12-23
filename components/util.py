@@ -292,7 +292,8 @@ class Util():
                     await asyncio.sleep(delay)
                     await target.edit_original_message(content="{}".format(self.bot.emote.get('lyria')), embed=None, view=None, attachments=[])
         except Exception as e:
-            await self.bot.sendError("clean", e)
+            if "Unknown Message" not in str(e):
+                await self.bot.sendError("clean", e)
 
     """embed()
     Create a disnake.Embed object
