@@ -33,15 +33,10 @@ class MizaBot(commands.Bot):
         self.version = "9.5" # bot version
         self.changelog = [ # changelog lines
             "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
-            "`/gbfgame` and `/minigame` command groups have been put under `/game`",
-            "Reminder commands regrouped under the group `/remind`",
-            "Message command 'Report a Bug' removed, `/bug_report` still exists",
-            "ask, choose and when commands regrouped under the `/ask` group",
-            "coin, dice, character, quota and xil commands regrouped under the `/random` group",
-            "Added back some previously removed commands under the `/gbf` group",
-            "User command 'Check for Bands' removed",
+            "The command list changed a lot, check the online help if you are looking for one",
             "Improved `/help` command",
-            "Regrouped some commands under /utility"
+            "Regrouped some commands under /utility",
+            "Revamped the gacha system"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event

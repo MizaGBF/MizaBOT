@@ -344,6 +344,23 @@ class Games(commands.Cog):
         """Simulate a SR/SSR Ticket draw"""
         await self._roll(inter, ("{} is using a SR/SSR ticket...", "{} used a SR/SSR ticket"), 0, count=1, mode='srssr', legfest=self.checkLegfest(double))
 
+    """getRoulette()
+    Return the result of a roulette part
+    
+    Parameters
+    ----------
+    count: Integer, number of rolls to do
+    mode: String, gacha mode
+    double: Integer, value for checkLegfest
+    
+    Returns
+    --------
+    typle:
+        - result: list of rolls
+        - rate: SSR rate used
+        - tmp: string containing the output
+        - count: number of R, SR and SSR rolled
+    """
     def getRoulette(self, count, mode, double):
         result = self.gachaRoll(count=count, mode=mode, legfest=self.checkLegfest(double))
         footer = "{}% SSR rate".format(result['rate'])
