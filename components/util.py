@@ -20,6 +20,7 @@ class Util():
         self.starttime = datetime.utcnow() # used to check the uptime
         self.process = psutil.Process(os.getpid())
         self.process.cpu_percent() # called once to initialize
+        self.itemEmoteElement = None # to store emote strings used by formatItemElement()
 
     def init(self):
         self.emote = self.bot.emote
@@ -492,3 +493,33 @@ class Util():
             else: return "{:,.2f}K".format(s/1000).replace('.00', '')
         else:
             return "{:,.1f}".format(s).replace('.0', '')
+
+    """formatItemElement()
+    Format the item string used by the gacha simulator to add an element emoji
+    
+    Parameters
+    ----------
+    raw: string to format
+    mode: integer, 0 to not display the element, 1 to put an emote, anything else to do nothing
+    
+    Returns
+    --------
+    str: resulting string
+    """
+    def formatItemElement(self, raw : str, mode : int):
+        if self.itemEmoteElement is None:
+            self.itemEmoteElement = {
+                "[1]" : "{}".format(self.bot.emote.get('fire')),
+                "[2]" : "{}".format(self.bot.emote.get('water')),
+                "[3]" : "{}".format(self.bot.emote.get('earth')),
+                "[4]" : "{}".format(self.bot.emote.get('wind')),
+                "[5]" : "{}".format(self.bot.emote.get('light')),
+                "[6]" : "{}".format(self.bot.emote.get('dark'))
+            }
+        match mode:
+            case 0: # remove element string
+                return raw[3:]
+            case 1: # replace element string by emote
+                return raw.replace(raw[:3], self.itemEmoteElement[raw[:3]])
+            case _: # undefined, do nothing
+                return raw

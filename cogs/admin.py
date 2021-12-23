@@ -322,11 +322,7 @@ class Admin(commands.Cog):
     async def resetgacha(self, inter: disnake.GuildCommandInteraction):
         """Reset the gacha settings (Owner Only)"""
         with self.bot.data.lock:
-            self.bot.data.save['gbfdata']['gachabanner'] = None
-            self.bot.data.save['gbfdata']['gachacontent'] = None
-            self.bot.data.save['gbfdata']['gachatime'] = None
-            self.bot.data.save['gbfdata']['gachatimesub'] = None
-            self.bot.data.save['gbfdata']['rateup'] = None
+            self.bot.data.save['gbfdata'].pop('gacha', None)
             self.bot.data.pending = True
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 
