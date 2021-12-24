@@ -51,8 +51,7 @@ if __name__ == "__main__":
                     print('Done')
                 else:
                     print(f'Unknown file type "{ext}"')
-        except Exception as e:
-            print(e)
+        except:
             print(f'Error opening file "{fn}"')
     else:
         print('Please drag and drop on save_lzma.py" either a .json or .lzma file to compress/decompress it')
