@@ -7,6 +7,7 @@ import multiprocessing
 from ctypes import c_int
 import io
 import gzip
+import lzma
 import os
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -20,8 +21,28 @@ import os
 # this will be reverted back if a fix is found
 # ----------------------------------------------------------------------------------------------------------------
 
-"""decompressJSON()
+"""decompressJSON_old()
 Decompress the given byte array (which must be valid compressed gzip data) and return the decoded text (utf-8).
+
+Returns
+--------
+str: Decompressed string
+"""
+def decompressJSON_old(inputBytes):
+    with io.BytesIO() as bio:
+        with io.BytesIO(inputBytes) as stream:
+            decompressor = gzip.GzipFile(fileobj=stream, mode='r')
+            while True:  # until EOF
+                chunk = decompressor.read(8192)
+                if not chunk:
+                    decompressor.close()
+                    bio.seek(0)
+                    return bio.read().decode("utf-8")
+                bio.write(chunk)
+            return None
+
+"""decompressJSON()
+Decompress the given byte array (which must be valid compressed lzma data) and return the decoded text (utf-8).
 
 Returns
 --------
@@ -30,11 +51,11 @@ str: Decompressed string
 def decompressJSON(inputBytes):
     with io.BytesIO() as bio:
         with io.BytesIO(inputBytes) as stream:
-            decompressor = gzip.GzipFile(fileobj=stream, mode='r')
-            while True:  # until EOF
-                chunk = decompressor.read(8192)
-                if not chunk:
-                    decompressor.close()
+            decompressor = lzma.LZMADecompressor()
+            while not decompressor.eof:  # until EOF
+                chunk = decompressor.decompress(stream.read(8192), max_length=8192)
+                if decompressor.eof:
+                    if len(chunk) > 0: bio.write(chunk)
                     bio.seek(0)
                     return bio.read().decode("utf-8")
                 bio.write(chunk)
@@ -52,14 +73,15 @@ def compressJSON(inputString):
     with io.BytesIO() as bio:
         bio.write(inputString.encode("utf-8"))
         bio.seek(0)
+        buffers = []
         with io.BytesIO() as stream:
-            compressor = gzip.GzipFile(fileobj=stream, mode='w')
+            compressor = lzma.LZMACompressor()
             while True:  # until EOF
                 chunk = bio.read(8192)
                 if not chunk: # EOF?
-                    compressor.close()
-                    return stream.getvalue()
-                compressor.write(chunk)
+                    buffers.append(compressor.flush())
+                    return b"".join(buffers)
+                buffers.append(compressor.compress(chunk))
 
 """access()
 Return a valid GoogleDrive instance
@@ -95,17 +117,19 @@ def load(folder, ret): # load save.json from the folder id in bot.tokens
         # search the save file
         for s in file_list:
             if s['title'] == "save.gzip":
-                s.GetContentFile(s['title']) # iterate until we find save.json and download it
+                s.GetContentFile(s['title']) # iterate until we find save.gzip and download it
                 with open("save.gzip", "rb") as stream:
                     with open("save.json", "w") as out:
-                        out.write(decompressJSON(stream.read()))
+                        out.write(decompressJSON_old(stream.read()))
                 os.remove("save.gzip")
                 ret.value = 1
                 return
-        # legacy
-        for s in file_list:
-            if s['title'] == "save.json":
-                s.GetContentFile(s['title']) # iterate until we find save.json and download it
+            elif s['title'] == "save.lzma":
+                s.GetContentFile(s['title']) # iterate until we find save.lzma and download it
+                with open("save.lzma", "rb") as stream:
+                    with open("save.json", "w") as out:
+                        out.write(decompressJSON(stream.read()))
+                os.remove("save.lzma")
                 ret.value = 1
                 return
         ret.value = -1
@@ -133,12 +157,12 @@ def save(data, folder, ret): # write save.json to the folder id in bot.tokens
                 if f['title'].find('backup') == 0:
                     f.Delete()
         for f in file_list: # search the previous save(s)
-            if f['title'] == "save.json" or f['title'] == "save.gzip":
+            if f['title'] == "save.json" or f['title'] == "save.gzip" or f['title'] == "save.lzma":
                 prev.append(f)
         # compress
         cdata = compressJSON(data)
         # saving
-        s = drive.CreateFile({'title':'save.gzip', 'mimeType':'application/gzip', "parents": [{"kind": "drive#file", "id": folder}]})
+        s = drive.CreateFile({'title':'save.lzma', 'mimeType':'	application/x-lzma', "parents": [{"kind": "drive#file", "id": folder}]})
         with io.BytesIO(cdata) as stream:
             s.content = stream
             s.Upload()

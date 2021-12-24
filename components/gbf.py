@@ -174,4 +174,5 @@ class GBF():
 
     def isAvailable(self): # use the above to check if the game is up
         v = self.version()
+        if v is None or v == "Maintenance": v = self.version() # try again in case their shitty server is lagging
         return ((v is not None) and (v != "Maintenance"))
