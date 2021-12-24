@@ -132,6 +132,12 @@ def load(folder, ret): # load save.json from the folder id in bot.tokens
                 os.remove("save.lzma")
                 ret.value = 1
                 return
+        # legacy
+        for s in file_list:
+            if s['title'] == "save.json":
+                s.GetContentFile(s['title']) # iterate until we find save.json and download it
+                ret.value = 1
+                return
         ret.value = -1
     except Exception as e:
         print(e)
