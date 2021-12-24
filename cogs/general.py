@@ -33,7 +33,7 @@ class General(commands.Cog):
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 30, commands.BucketType.user)
     async def bug_report(self, inter: disnake.GuildCommandInteraction, report : str = commands.Param()):
-        """Send a bug report (or your love confessions) to the developer"""
+        """Send a bug report or feedback to the developer"""
         await self.bot.send('debug', embed=self.bot.util.embed(title="Bug Report", description=report, footer="{} ▫️ User ID: {}".format(inter.author.name, inter.author.id), thumbnail=inter.author.display_avatar, color=self.color))
         await inter.response.send_message(embed=self.bot.util.embed(title="Information", description='Thank you, your report has been sent with success', color=self.color), ephemeral=True)
 
@@ -192,10 +192,12 @@ class General(commands.Cog):
             else:
                 count = int(count)
             msg = "Your chances of getting at least one of the following rate ups with {} rolls:\n".format(count)
-            rateups = self.bot.get_cog('Games').gachaRateUp()[1]
+            data, rateups, ssrrate, extended = self.bot.get_cog('Games').gachaRateUp()
             if rateups is None: raise Exception("Unavailable")
             for r in rateups:
                 msg += "{:} **{:}%** ▫️ {:.2f}%\n".format(self.bot.emote.get('SSR'), r, 100*(1-math.pow(1-float(r)*0.01, count)))
+            msg += "Your chances of getting at least one SSR with {} rolls:\n".format(count)
+            msg += "{:} **{:}%** ▫️ {:.2f}%\n".format(self.bot.emote.get('SSR'), ssrrate, 100*(1-math.pow(1-float(ssrrate)*0.01, count)))
             await inter.edit_original_message(embed=self.bot.util.embed(title="Roll Chance Calculator", description=msg, color=self.color))
         except Exception as e:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Roll Chance Calculator Error", description=str(e), color=self.color))

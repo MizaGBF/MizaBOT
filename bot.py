@@ -35,8 +35,9 @@ class MizaBot(commands.Bot):
             "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
             "The command list changed a lot, check the online help if you are looking for one",
             "Improved `/help` command",
-            "Regrouped some commands under /utility",
-            "Revamped the gacha system"
+            "Regrouped some commands under `/utility`",
+            "Revamped the gacha system",
+            "Renamed the 'count' option of `/roll count` into 'num'"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event

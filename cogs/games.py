@@ -132,6 +132,7 @@ class Games(commands.Cog):
         legfest = options.get('legfest', True if ssrrate == 6 else False) # legfest parameter
         ssrrate = 15 if mode == 13 else (9 if mode == 12 else (6 if legfest else 3)) # set the ssr rate
         result = {'list':[], 'detail':[0, 0, 0], 'extended':extended, 'rate':ssrrate} # result container
+        if options.get('troll', False): ssrrate *= 2 # private joke
         tenrollsr = False # flag for guaranted SR in ten rolls
         for i in range(0, count):
             d = random.randint(1, 10000000) / 100000 # random value (don't use .random(), it doesn't work well with this)
@@ -211,6 +212,8 @@ class Games(commands.Cog):
     async def _roll(self, inter, titles:tuple=("{}", "{}"), rmode:int=-1, **rollOptions):
         if rmode < 0: raise Exception('Invalid _roll() rmode {}'.format(rmode)) # invalid mode
         await inter.response.defer()
+        if inter.author.id == 132599327682985984: # troll test
+            rollOptions['troll'] = True
         result = await self.bot.do(self.gachaRoll, **rollOptions) # do the rolling
         footer = "{}% SSR rate".format(result['rate']) # message footer
         if rollOptions.get('mode', '') == 'memerollB': footer += " ▫️ until rate up"
@@ -315,9 +318,9 @@ class Games(commands.Cog):
         await self._roll(inter, ("{} is sparking...", "{} sparked"), 3, count=300, mode='ten', legfest=self.checkLegfest(double))
 
     @roll.sub_command()
-    async def count(self, inter: disnake.GuildCommandInteraction, count : int = commands.Param(description='Number of rolls', default=10, ge=1, le=600), double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
+    async def count(self, inter: disnake.GuildCommandInteraction, num : int = commands.Param(description='Number of rolls', default=10, ge=1, le=600), double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
         """Simulate a specific amount of draw"""
-        await self._roll(inter, ("{}" + " is rolling {} times...".format(count), "{} " + "rolled {} times".format(count)), 3, count=count, mode='ten', legfest=self.checkLegfest(double))
+        await self._roll(inter, ("{}" + " is rolling {} times...".format(num), "{} " + "rolled {} times".format(num)), 3, count=num, mode='ten', legfest=self.checkLegfest(double))
 
     @roll.sub_command()
     async def gachapin(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
