@@ -632,8 +632,9 @@ class GranblueFantasy(commands.Cog):
                         dates = self.bot.data.save['schedule'][i].replace(' ', '').split('-')
                         ev_md = []
                         for di in range(0, len(dates)):
+                            if "??" in dates[di]: break
                             ev_md.append(int(dates[di].split('/')[0]) * 100 + int(dates[di].split('/')[1]))
-                        if len(dates) == 2:
+                        if len(ev_md) == 2:
                             if ev_md[0] >= 1200 and ev_md[1] <= 100: ev_md[0] -= 1200
                             on_going = (md >= ev_md[0] and md <= ev_md[1])
                         else:
