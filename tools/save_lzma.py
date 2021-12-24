@@ -1,4 +1,4 @@
-import gzip
+import lzma
 import io
 import json
 import time
@@ -7,11 +7,11 @@ import sys
 def decompress(inputBytes):
     with io.BytesIO() as bio:
         with io.BytesIO(inputBytes) as stream:
-            decompressor = gzip.GzipFile(fileobj=stream, mode='r')
-            while True:  # until EOF
-                chunk = decompressor.read(8192)
-                if not chunk:
-                    decompressor.close()
+            decompressor = lzma.LZMADecompressor()
+            while not decompressor.eof:  # until EOF
+                chunk = decompressor.decompress(stream.read(8192), max_length=8192)
+                if decompressor.eof:
+                    if len(chunk) > 0: bio.write(chunk)
                     bio.seek(0)
                     return bio.read().decode("utf-8")
                 bio.write(chunk)
@@ -21,14 +21,15 @@ def compress(inputString):
     with io.BytesIO() as bio:
         bio.write(inputString.encode("utf-8"))
         bio.seek(0)
+        buffers = []
         with io.BytesIO() as stream:
-            compressor = gzip.GzipFile(fileobj=stream, mode='w')
+            compressor = lzma.LZMACompressor()
             while True:  # until EOF
                 chunk = bio.read(8192)
                 if not chunk: # EOF?
-                    compressor.close()
-                    return stream.getvalue()
-                compressor.write(chunk)
+                    buffers.append(compressor.flush())
+                    return b"".join(buffers)
+                buffers.append(compressor.compress(chunk))
 
 if __name__ == "__main__":
     if len(sys.argv) >= 1:
@@ -39,10 +40,10 @@ if __name__ == "__main__":
                 if ext == 'json':
                     print(f'Compressing "{fn}"')
                     data = compress(ifstream.read().decode('utf-8'))
-                    with open(".".join(fn.split(".")[:-1]) + ".gzip", "wb") as ofstream:
+                    with open(".".join(fn.split(".")[:-1]) + ".lzma", "wb") as ofstream:
                         ofstream.write(data)
                     print('Done')
-                elif ext == 'gzip':
+                elif ext == 'lzma':
                     print(f'Decompressing "{fn}"')
                     data = decompress(ifstream.read())
                     with open(".".join(fn.split(".")[:-1]) + ".json", "w", encoding="utf-8") as ofstream:
@@ -50,9 +51,10 @@ if __name__ == "__main__":
                     print('Done')
                 else:
                     print(f'Unknown file type "{ext}"')
-        except:
+        except Exception as e:
+            print(e)
             print(f'Error opening file "{fn}"')
     else:
-        print('Please drag and drop on save_gzip.py" either a .json or .gzip file to compress/decompress it')
+        print('Please drag and drop on save_lzma.py" either a .json or .lzma file to compress/decompress it')
     print('Closing this prompt in 10 seconds')
     time.sleep(10)
