@@ -37,33 +37,80 @@ class General(commands.Cog):
         await self.bot.send('debug', embed=self.bot.util.embed(title="Bug Report", description=report, footer="{} ▫️ User ID: {}".format(inter.author.name, inter.author.id), thumbnail=inter.author.display_avatar, color=self.color))
         await inter.response.send_message(embed=self.bot.util.embed(title="Information", description='Thank you, your report has been sent with success', color=self.color), ephemeral=True)
 
+    """checkCommand()
+    Recursivly search the application command list
+    
+    Parameters
+    ----------
+    cmd: Command
+    cmd_type: Integer : 0 = slash/group/sub command, 1 = user command, 2 = message command
+    result: List containing the output of the search
+    stack: List used to stack the sub command hierarchy
+    search: Search string
+    status: List, just put True in here to stop all search
+    """
+    def checkCommand(self, cmd, cmd_type, result, stack, search, status):
+        try:
+            children = cmd.children
+            if children is None or len(children) == 0: raise Exception()
+            stack.append(cmd.name)
+            for name in children:
+                self.checkCommand(children[name], cmd_type, result, stack, search, status)
+                if True in status: return
+            stack.pop(-1)
+        except:
+            # global check
+            if cmd.guild_ids is not None: return
+            # name
+            if len(stack) == 0:
+                name = cmd.name
+            else:
+                name = " ".join(stack) + " " + cmd.name
+                if cmd_type == 0:
+                    cmd = self.bot.get_slash_command(name)
+            # description
+            try: description = cmd.description
+            except: 
+                try: description = cmd.option.description
+                except: description = ""
+            # ignore owner commands
+            if 'owner' in description.lower() or name.lower().startswith('owner '):
+                return
+            # options
+            try: options = cmd.options
+            except: 
+                try: options = cmd.option.options
+                except: options = []
+            # match
+            if search == name.lower():
+                while len(result) > 0:
+                    result.pop(0)
+                result.append({"name":name, "description":description, "options":options, "type":cmd_type})
+                status.append(True)
+                return
+            elif search in name.lower() or search in description.lower() or search in str(options).lower():
+                result.append({"name":name, "description":description, "options":options, "type":cmd_type})
+
     @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 10, commands.BucketType.user)
-    async def help(self, inter: disnake.GuildCommandInteraction, search : str = commands.Param(description="What do you need help for?", default="")):
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def help(self, inter: disnake.GuildCommandInteraction, search : str = commands.Param(description="What are you searching for?", default="")):
         """Get the bot help"""
         await inter.response.defer(ephemeral=True)
-        t = search.replace('  ', '').replace('  ', '').lower()
-        try:
-            with open('help.json') as json_file:
-                data = json.load(json_file)
-        except:
-            data = {}
-        # searching command match
         result = []
-        stop_flag = False
-        for k in data:
-            if stop_flag: break
-            for cmd in data[k]:
-                if "command group" in cmd.get('comment', '').lower(): continue
-                name = cmd['name']
-                if 'parent' in cmd: name =  cmd['parent'] + " " + name
-                name = name.lower()
-                if t == name:
-                    result = [cmd]
-                    stop_flag = True
-                    break
-                elif t in name or t in cmd.get('comment', '').lower():
-                    result.append(cmd)
+        stack = []
+        status = []
+        t = search.lower()
+        if t.startswith('/'): t = t[1:]
+        if t != "":
+            for cmd in self.bot.slash_commands: # InvokableApplicationCommand
+                if True in status: break
+                self.checkCommand(cmd, 0, result, stack, t, status)
+            for cmd in self.bot.user_commands:
+                if True in status: break
+                self.checkCommand(cmd, 1, result, stack, t, status)
+            for cmd in self.bot.message_commands:
+                if True in status: break
+                self.checkCommand(cmd, 2, result, stack, t, status)
         msg = ""
         if search == "":
             msg = "Online Help [here](https://mizagbf.github.io/MizaBOT/)\nGithub [here](https://github.com/MizaGBF/MizaBOT)".format(search)
@@ -72,34 +119,35 @@ class General(commands.Cog):
         elif len(result) == 1:
             match result[0]['type']:
                 case 1:
-                    msg = "**User Command**\n**"
+                    msg = "User Command\n**"
                 case 2:
-                    msg = "**Message Command**\n**"
+                    msg = "Message Command\n**"
                 case _:
-                    msg = "**Slash Command\n/"
-            if 'parent' in result[0]: msg += result[0]['parent'] + " "
+                    msg = "Slash Command\n**/"
             msg += result[0]['name'] + "**\n"
-            if 'comment' in result[0]: msg += result[0]['comment'] + '\n'
-            if result[0]['args'][0] > 0:
+            if result[0]['description'] != "": msg += result[0]['description'] + '\n'
+            if len(result[0]['options']) > 0:
                 msg += "**Parameters:**\n"
-                msg += result[0]['args'][1]
+                for o in result[0]['options']:
+                    msg += "**{}** ({})".format(o.name, "{}".format(o.type).replace("OptionType.", "").capitalize())
+                    try: msg += "▫️{}".format(o.description)
+                    except: pass
+                    msg += "\n"
         else:
             msg = "**Results**\n"
             count = len(result)
             for r in result:
                 msg += "**"
-                name = r['name']
-                if 'parent' in r: name = r['parent'] + " " + name
                 match r['type']:
                     case 1:
-                        msg += name + "** *(User Command)*"
+                        msg += r['name'] + "** *(User Command)*"
                     case 2:
-                        msg += name + "** *(Message Command)*"
+                        msg += r['name'] + "** *(Message Command)*"
                     case _:
-                        msg += "/" + name + "**"
-                if result[0]['args'][0] > 0:
-                    msg += "▫️ {} parameter".format(result[0]['args'][0])
-                    if result[0]['args'][0] > 1: msg += "s"
+                        msg += "/" + r['name'] + "**"
+                if len(r['options']) > 0:
+                    msg += "▫️ {} parameter".format(len(r['options']))
+                    if len(r['options']) > 1: msg += "s"
                 msg += "\n"
                 count -= 1
                 if len(msg) > 1500 and count > 0:
@@ -107,7 +155,6 @@ class General(commands.Cog):
                     break
 
         await inter.edit_original_message(embed=self.bot.util.embed(title=self.bot.user.name + " Help", description=msg, thumbnail=self.bot.user.display_avatar, color=self.color, url="https://mizagbf.github.io/MizaBOT/"))
-        await self.bot.util.clean(inter, 60)
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 30, commands.BucketType.user)

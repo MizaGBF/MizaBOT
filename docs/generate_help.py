@@ -566,13 +566,6 @@ def generate_help(): # main function
             except:
                 pass
     generate_html(command_list) # generate the html using the stored data on found commands
-    # generate help.json for the /help slash command
-    with open('../help.json', 'w') as f:
-        for key in command_list:
-            for cmd in command_list[key]:
-                if cmd['type'] == 3: cmd['parent'] = "{}".format(func_index.get(key + "_" + cmd['parent'], cmd['parent']))
-                cmd['args'] = [len(cmd['args']), make_parameters(cmd['args']).replace('<b>', '**').replace('</b>', '**').replace('<br>', '\n').replace('&nbsp;', ' ')]
-        json.dump(command_list, f)
 
 if __name__ == "__main__": # entry point
     generate_help()
