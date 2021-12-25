@@ -41,7 +41,7 @@ class Roles(commands.Cog):
             else:
                 try:
                     await inter.author.add_roles(r)
-                    await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success\nRole `{}` has been added to your profile".format(r), color=self.color), ephemeral=True)
+                    await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", description="Role `{}` has been added to your profile".format(r), color=self.color), ephemeral=True)
                 except:
                     await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Failed to assign the role.\nCheck if you have the role or contact a moderator.", color=self.color), ephemeral=True)
 
@@ -65,7 +65,7 @@ class Roles(commands.Cog):
             else:
                 try:
                     await inter.author.remove_roles(r)
-                    await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success\nRole `{}` has been removed from your profile".format(r), color=self.color), ephemeral=True)
+                    await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", description="Role `{}` has been removed from your profile".format(r), color=self.color), ephemeral=True)
                 except:
                     await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Failed to remove the role.\nCheck if you have the role or contact a moderator.", color=self.color), ephemeral=True)
 
