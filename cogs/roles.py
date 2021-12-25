@@ -41,7 +41,7 @@ class Roles(commands.Cog):
             else:
                 try:
                     await inter.author.add_roles(r)
-                    await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
+                    await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success\nRole `{}` has been added to your profile".format(r), color=self.color), ephemeral=True)
                 except:
                     await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Failed to assign the role.\nCheck if you have the role or contact a moderator.", color=self.color), ephemeral=True)
 
@@ -65,7 +65,7 @@ class Roles(commands.Cog):
             else:
                 try:
                     await inter.author.remove_roles(r)
-                    await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
+                    await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success\nRole `{}` has been removed from your profile".format(r), color=self.color), ephemeral=True)
                 except:
                     await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Failed to remove the role.\nCheck if you have the role or contact a moderator.", color=self.color), ephemeral=True)
 
@@ -105,7 +105,7 @@ class Roles(commands.Cog):
             await inter.response.send_message(embed=embeds[0], ephemeral=True)
 
     @role.sub_command()
-    async def add(self, inter: disnake.GuildCommandInteraction, role_name : str = commands.Param(description="A role name")):
+    async def add(self, inter: disnake.GuildCommandInteraction, role_name : str = commands.Param(description="The self-assignable role you want to add to the list")):
         """Add a role to the list of self-assignable roles (Mod Only)"""
         if not self.bot.isMod(inter):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Only moderators can make a role self-assignable".format(role_name), color=self.color), ephemeral=True)
@@ -130,7 +130,7 @@ class Roles(commands.Cog):
         await inter.response.send_message(embed=self.bot.util.embed(title="Role `{}` added to the self-assignable role list".format(role_name), color=self.color), ephemeral=True)
 
     @role.sub_command()
-    async def remove(self, inter: disnake.GuildCommandInteraction, role_name : str = commands.Param(description="A role name")):
+    async def remove(self, inter: disnake.GuildCommandInteraction, role_name : str = commands.Param(description="The self-assignable role you want to remove from the list")):
         """Remove a role from the list of self-assignable roles (Mod Only)"""
         if not self.bot.isMod(inter):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Only moderators can make a role self-assignable".format(role_name), color=self.color), ephemeral=True)
