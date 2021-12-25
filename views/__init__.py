@@ -48,6 +48,9 @@ class BaseView(disnake.ui.View):
         if self.enable_timeout_cleanup:
             try: await self.message.edit(content="{}".format(self.bot.emote.get('lyria')), embed=None, view=None, attachments=[])
             except: pass
+        else:
+            try: await self.message.edit(view=self)
+            except: pass
 
     """stop()
     Override disnake.ui.View.stopall()

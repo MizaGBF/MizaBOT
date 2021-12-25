@@ -59,7 +59,7 @@ class ChestRush(BaseView):
     color: the color to be used for the message embed
     """
     def __init__(self, bot, owner_id : int, grid, color : int):
-        super().__init__(bot, owner_id=owner_id, timeout=80.0)
+        super().__init__(bot, owner_id=owner_id, timeout=120.0)
         self.grid = grid
         self.color = color
         for i in range(9):

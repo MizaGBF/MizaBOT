@@ -45,14 +45,14 @@ class Poll(BaseView):
     ----------
     bot: a pointer to the bot for ease of access
     author: user object of the poll creator
-    color: integer used for the embed color
+    embed: disnake.Embed object to edit
     title: pool title string
     choices: list of the poll choices (strings)
     """
-    def __init__(self, bot, author, color : int, title : str = "", choices : list = []):
+    def __init__(self, bot, author, embed : disnake.Embed, title : str = "", choices : list = []):
         super().__init__(bot, timeout=None, enable_timeout_cleanup=False)
         self.author = author
-        self.color = color
+        self.embed = embed
         self.title = title
         self.votes = {}
         self.choices = []
@@ -75,12 +75,12 @@ class Poll(BaseView):
     """
     async def run_poll(self, duration : int, message : disnake.Message, channel : disnake.TextChannel):
         timer = self.bot.util.JST() + timedelta(seconds=duration)
-        author={'name':'{} started a poll'.format(self.author.display_name), 'icon_url':self.author.display_avatar}
         while True:
             await asyncio.sleep(1)
             c = self.bot.util.JST()
             if c >= timer: break
-            await message.edit(embed=self.bot.util.embed(author=author, title=self.title, description="{} seconds remaining to vote\n{} participants".format((timer - c).seconds, len(self.votes)), color=self.color))
+            self.embed.description = "{} seconds remaining to vote\n{} participants".format((timer - c).seconds, len(self.votes))
+            await message.edit(embed=self.embed)
         self.stopall()
         await message.delete()
         msg = "**{}** vote(s)\n".format(len(self.votes))
@@ -91,4 +91,4 @@ class Poll(BaseView):
             if self.votes[id] in count: count[self.votes[id]] += 1
         for v in count:
             msg += "`{}` :white_small_square: {}\n".format(v, count[v])
-        await channel.send(embed=self.bot.util.embed(author={'name':"{}'s poll ended".format(self.author.display_name), 'icon_url':self.author.display_avatar}, title=self.title, description=msg, color=self.color))
+        await channel.send(embed=self.bot.util.embed(author={'name':"{}'s poll ended".format(self.author.display_name), 'icon_url':self.author.display_avatar}, title=self.title, description=msg, color=self.embed.color))
