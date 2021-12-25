@@ -50,46 +50,52 @@ class General(commands.Cog):
     status: List, just put True in here to stop all search
     """
     def checkCommand(self, cmd, cmd_type, result, stack, search, status):
-        try:
+        try: # check if the command has children (ONLY HAPPENS FOR SLASH COMMANDS)
             children = cmd.children
             if children is None or len(children) == 0: raise Exception()
-            stack.append(cmd.name)
+            stack.append(cmd.name) # stack the command name
             for name in children:
-                self.checkCommand(children[name], cmd_type, result, stack, search, status)
-                if True in status: return
-            stack.pop(-1)
-        except:
-            # global check
+                self.checkCommand(children[name], cmd_type, result, stack, search, status) # call this command for each children
+                if True in status: return # stop if status contains True
+            stack.pop(-1) # remove the name from the stack
+        except: # sub/message/user command
+            # ignore local commands
             if cmd.guild_ids is not None: return
-            # name
+            # name retrieval
             if len(stack) == 0:
                 name = cmd.name
             else:
                 name = " ".join(stack) + " " + cmd.name
                 if cmd_type == 0:
-                    cmd = self.bot.get_slash_command(name)
-            # description
+                    cmd = self.bot.get_slash_command(name) # unsure if truly needed for sub command
+            # description retrieval
             try: description = cmd.description
             except: 
-                try: description = cmd.option.description
+                try: description = cmd.option.description # sub command
                 except: description = ""
             # ignore owner commands
             if 'owner' in description.lower() or name.lower().startswith('owner '):
                 return
-            # options
+            # options retrieval
             try: options = cmd.options
             except: 
-                try: options = cmd.option.options
+                try: options = cmd.option.options # sub command
                 except: options = []
-            # match
-            if search == name.lower():
-                while len(result) > 0:
+            # make a string from the options (for searching purpose)
+            param_description = ""
+            for o in options:
+                param_description += o.name + " "
+                try: param_description += o.description + " "
+                except: pass
+            # SEARCH
+            if search == name.lower(): # perfectly match the command name
+                while len(result) > 0: # we empty the result list
                     result.pop(0)
-                result.append({"name":name, "description":description, "options":options, "type":cmd_type})
-                status.append(True)
+                result.append({"name":name, "description":description, "options":options, "type":cmd_type}) # put our command
+                status.append(True) # AND stop everything
                 return
-            elif search in name.lower() or search in description.lower() or search in str(options).lower():
-                result.append({"name":name, "description":description, "options":options, "type":cmd_type})
+            elif search in name.lower() or search in description.lower() or search in param_description.lower(): # partial match
+                result.append({"name":name, "description":description, "options":options, "type":cmd_type}) # we append our command
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
@@ -100,60 +106,61 @@ class General(commands.Cog):
         stack = []
         status = []
         t = search.lower()
-        if t.startswith('/'): t = t[1:]
-        if t != "":
-            for cmd in self.bot.slash_commands: # InvokableApplicationCommand
+        if t.startswith('/'): t = t[1:] # remove / if user inputted one
+        if t != "": # only search if the used provided a string
+            for cmd in self.bot.slash_commands: # slash
                 if True in status: break
                 self.checkCommand(cmd, 0, result, stack, t, status)
-            for cmd in self.bot.user_commands:
+            for cmd in self.bot.user_commands: # user
                 if True in status: break
                 self.checkCommand(cmd, 1, result, stack, t, status)
-            for cmd in self.bot.message_commands:
+            for cmd in self.bot.message_commands: # message
                 if True in status: break
                 self.checkCommand(cmd, 2, result, stack, t, status)
         msg = ""
-        if search == "":
+        if t == "": # empty string
             msg = "Online Help [here](https://mizagbf.github.io/MizaBOT/)\nGithub [here](https://github.com/MizaGBF/MizaBOT)".format(search)
-        elif len(result) == 0:
+        elif len(result) == 0: # no results
             msg = "No results found for `{}`\n**For more help:**\nOnline Help [here](https://mizagbf.github.io/MizaBOT/)\nGithub [here](https://github.com/MizaGBF/MizaBOT)".format(search)
-        elif len(result) == 1:
-            match result[0]['type']:
+        elif len(result) == 1: # one result
+            match result[0]['type']: # put the command type
                 case 1:
                     msg = "User Command\n**"
                 case 2:
                     msg = "Message Command\n**"
                 case _:
                     msg = "Slash Command\n**/"
-            msg += result[0]['name'] + "**\n"
-            if result[0]['description'] != "": msg += result[0]['description'] + '\n'
-            if len(result[0]['options']) > 0:
+            msg += result[0]['name'] + "**\n" # its name
+            if result[0]['description'] != "": msg += result[0]['description'] + '\n' # and description if it exists
+            if len(result[0]['options']) > 0: # add the parameters if any
                 msg += "**Parameters:**\n"
                 for o in result[0]['options']:
-                    msg += "**{}** ({})".format(o.name, "{}".format(o.type).replace("OptionType.", "").capitalize())
-                    try: msg += "▫️{}".format(o.description)
+                    msg += "**{}** ({})".format(o.name, "{}".format(o.type).replace("OptionType.", "").capitalize()) # parameter name and type
+                    try: msg += "▫️{}".format(o.description) # parameter description if it exists
                     except: pass
                     msg += "\n"
-        else:
+        else: # multiple results
             msg = "**Results**\n"
-            count = len(result)
+            count = len(result) # count the number of remaining commands
             for r in result:
                 msg += "**"
-                match r['type']:
+                match r['type']: # put the name and type (or / if it's a slash command)
                     case 1:
                         msg += r['name'] + "** *(User Command)*"
                     case 2:
                         msg += r['name'] + "** *(Message Command)*"
                     case _:
                         msg += "/" + r['name'] + "**"
-                if len(r['options']) > 0:
+                if len(r['options']) > 0: # and put the number of parameters
                     msg += "▫️ {} parameter".format(len(r['options']))
                     if len(r['options']) > 1: msg += "s"
                 msg += "\n"
                 count -= 1
-                if len(msg) > 1500 and count > 0:
+                if len(msg) > 1500 and count > 0: # if message too big, stop and put how many remaining commands were found
                     msg += "**And {} more commands...**\n**For more help:**\nOnline Help [here](https://mizagbf.github.io/MizaBOT/)\nGithub [here](https://github.com/MizaGBF/MizaBOT)".format(count)
                     break
 
+        # send output
         await inter.edit_original_message(embed=self.bot.util.embed(title=self.bot.user.name + " Help", description=msg, thumbnail=self.bot.user.display_avatar, color=self.color, url="https://mizagbf.github.io/MizaBOT/"))
 
     @commands.slash_command(default_permission=True)
