@@ -1449,17 +1449,17 @@ class GranblueFantasy(commands.Cog):
             self.dlAndPasteImage(img, job_icon, (0, portrait_size[1]-30), (36, 30))
             
             # saving
-            thumbnail = "{}_{}.png".format(id, datetime.utcnow().timestamp())
-            img.save(thumbnail, "PNG")
-            img.close()
-        except Exception as e:
-            print(e)
-            thumbnail = ""
+            with BytesIO() as output:
+                img.save(output, format="PNG")
+                img.close()
+                thumbnail = output.getvalue()
+        except:
+            thumbnail = None
             try: img.close()
             except: pass
         if trophy == "No Trophy Displayed": title = "\u202d{} **{}**".format(self.bot.emote.get(rarity), name)
         else: title = "\u202d{} **{}**▫️{}".format(self.bot.emote.get(rarity), name, trophy)
-        return title, "{}{}\n{} Crew ▫️ {}\n{}{}\n\n[:earth_asia: Preview]({})".format(rank, comment, self.bot.emote.get('gw'), crew, scores, star, thumbnail), thumbnail
+        return title, "{}{}\n{} Crew ▫️ {}\n{}{}\n".format(rank, comment, self.bot.emote.get('gw'), crew, scores, star), thumbnail
 
     """_profile()
     Retrieve a GBF profile and post it
@@ -1490,15 +1490,13 @@ class GranblueFantasy(commands.Cog):
             x = ""
             title, description, thumbnail = await self.bot.do(self.processProfile, id, data)
             try:
-                with open(thumbnail, 'rb') as infile:
-                    df = disnake.File(infile)
+                with BytesIO(thumbnail) as f:
+                    df = disnake.File(f, filename="profile.png")
                     message = await self.bot.send('image', file=df)
                     df.close()
-                self.bot.file.rm(thumbnail)
-                description = description.replace(thumbnail, message.attachments[0].url)
                 thumbnail = message.attachments[0].url
+                description += "\n[:earth_asia: Preview]({})".format(thumbnail)
             except:
-                description = description.replace("\n[:earth_asia: Preview]({})".format(thumbnail), "")
                 thumbnail = ""
             await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=description, image=thumbnail, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
         await self.bot.util.clean(inter, 45)

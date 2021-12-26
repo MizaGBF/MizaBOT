@@ -585,9 +585,10 @@ class Ranking():
         d.line(lines[0], fill=(0, 0, 255), width=2, joint="curve")
         d.line(lines[1], fill=(255, 0, 0), width=2, joint="curve")
 
-        filename = "chart_{}.png".format(datetime.utcnow().timestamp())
-        img.save(filename, "PNG")
-        return filename
+        with BytesIO() as output:
+            img.save(output, format="PNG")
+            img.close()
+            return output.getvalue()
 
     """updateTracker()
     Update the YouTracker data (GW Match tracker for my crew)
@@ -634,12 +635,11 @@ class Ranking():
             newtracker['plot'].append([t, newtracker['speed'][0] / 1000000, newtracker['speed'][1] / 1000000])
         if len(newtracker['plot']) > 1: # generate chart
             try:
-                imgfile = self.drawChart(newtracker['plot'])
-                with open(imgfile, "rb") as f:
-                    df = disnake.File(f)
+                imgdata = self.drawChart(newtracker['plot'])
+                with BytesIO(imgdata) as f:
+                    df = disnake.File(f, filename="chart.png")
                     message = await self.bot.send('image', file=df)
                     df.close()
-                    self.bot.file.rm(imgfile)
                     newtracker['chart'] = message.attachments[0].url
             except Exception as e:
                 await self.bot.sendError('updatetracker', e)

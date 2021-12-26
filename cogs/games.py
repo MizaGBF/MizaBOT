@@ -1063,6 +1063,8 @@ class Games(commands.Cog):
         embed = self.bot.util.embed(title=":x: Multiplayer Tic Tac Toe :o:", description=":x: {} :o: {}\nTurn of **{}**".format(view.players[0].display_name, (self.bot.user.display_name if len(view.players) < 2 else view.players[1].display_name), view.players[0].display_name), color=self.color)
         view = TicTacToe(self.bot, bot_game, players, embed)
         await inter.edit_original_message(embed=embed, view=view)
+        await view.wait()
+        await self.bot.util.clean(inter, 45)
 
     @commands.slash_command(default_permission=True, name="random")
     @commands.cooldown(1, 50, commands.BucketType.user)
