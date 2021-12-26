@@ -928,7 +928,7 @@ class Games(commands.Cog):
 
     @game.sub_command()
     async def poker(self, inter: disnake.GuildCommandInteraction):
-        """Play a poker mini-game with other people"""
+        """Play a poker mini-game with other people (1 to 6 players)"""
         await inter.response.defer()
         players = [inter.author]
         view = JoinGame(self.bot, players, 6)
@@ -979,7 +979,7 @@ class Games(commands.Cog):
 
     @game.sub_command()
     async def blackjack(self, inter: disnake.GuildCommandInteraction):
-        """Play a blackjack mini-game with other people"""
+        """Play a blackjack mini-game with other people (1 to 6 players)"""
         await inter.response.defer()
         players = [inter.author]
         view = JoinGame(self.bot, players, 6)
@@ -1044,26 +1044,24 @@ class Games(commands.Cog):
 
     @game.sub_command()
     async def tictactoe(self, inter: disnake.GuildCommandInteraction):
-        """Play a game of Tic Tac Toe"""
+        """Play a game of Tic Tac Toe (2 players Only)"""
         await inter.response.defer()
         players = [inter.author]
         view = JoinGame(self.bot, players, 2)
         desc = "Starting in {}s\n{}/2 players"
-        embed = self.bot.util.embed(title=":x: Multiplayer Tic Tac Toe :o:", description=desc.format(30, 1), color=self.color)
+        embed = self.bot.util.embed(title=":x: Multiplayer Tic Tac Toe :o:", description=desc.format(60, 1), color=self.color)
         msg = await inter.channel.send(embed=embed, view=view)
-        self.bot.doAsync(view.updateTimer(msg, embed, desc, 30))
+        self.bot.doAsync(view.updateTimer(msg, embed, desc, 60))
         await view.wait()
         await msg.delete()
         if len(players) == 1:
-            players.append(self.bot.user)
-            bot_game = True
+            await inter.edit_original_message(embed=self.bot.util.embed(title=":x: Multiplayer Tic Tac Toe :o:", description="Error, a 2nd Player is required", color=self.color))
         else:
-            bot_game = False
-        random.shuffle(players)
-        embed = self.bot.util.embed(title=":x: Multiplayer Tic Tac Toe :o:", description=":x: {} :o: {}\nTurn of **{}**".format(view.players[0].display_name, (self.bot.user.display_name if len(view.players) < 2 else view.players[1].display_name), view.players[0].display_name), color=self.color)
-        view = TicTacToe(self.bot, bot_game, players, embed)
-        await inter.edit_original_message(embed=embed, view=view)
-        await view.wait()
+            random.shuffle(players)
+            embed = self.bot.util.embed(title=":x: Multiplayer Tic Tac Toe :o:", description=":x: {} :o: {}\nTurn of **{}**".format(view.players[0].display_name, view.players[1].display_name, view.players[0].display_name), color=self.color)
+            view = TicTacToe(self.bot, players, embed)
+            await inter.edit_original_message(embed=embed, view=view)
+            await view.wait()
         await self.bot.util.clean(inter, 45)
 
     @commands.slash_command(default_permission=True, name="random")

@@ -68,15 +68,13 @@ class TicTacToe(BaseView):
     Parameters
     ----------
     bot: a pointer to the bot for ease of access
-    bot_game: set to True if one of the player is the bot
     players: list of Players
     embed: disnake.Embed to edit
     """
-    def __init__(self, bot, bot_game: bool, players : list, embed : disnake.Embed):
+    def __init__(self, bot, players : list, embed : disnake.Embed):
         super().__init__(bot, timeout=180)
         self.players = players
         self.embed = embed
-        self.bot_game = bot_game
         self.playing = self.players[0]
         self.playing_index = 0
         self.grid = [0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -91,14 +89,6 @@ class TicTacToe(BaseView):
             [0,4,8],
             [2,4,6]
         ]
-        self.bot_id = None
-        if self.bot_game:
-            self.bot_id = (0 if self.playing.id == self.bot.user.id else 1)
-        if self.bot_game and self.bot_id == 0:
-            self.grid[random.choice([0, 2, 6, 8])] = 1
-            self.moves = 1
-            self.playing = self.players[1]
-            self.playing_index = 1
         self.notification = "Turn of {}".format(self.playing.display_name)
         for i in range(9):
             self.add_item(TicTacToeButton(i, self.grid[i]))
@@ -175,23 +165,5 @@ class TicTacToe(BaseView):
         else:
             self.playing_index = (self.playing_index + 1) % 2
             self.playing = self.players[self.playing_index]
-            if self.bot_game and (self.moves % 2) == self.bot_id:
-                target = self.evaluate(9 - self.moves, self.bot_id)[0]
-                self.grid[target] = self.bot_id + 1
-                self.children[target].label = ('X' if self.bot_id == 0 else 'O')
-                self.children[target].style = (disnake.ButtonStyle.success if self.bot_id == 0 else disnake.ButtonStyle.danger)
-                self.children[target].disabled = True
-                self.moves += 1
-                won, win_id = self.state()
-                if won or self.moves == 9:
-                    if win_id is not None:
-                        self.notification = "**{}** is the winner".format(self.playing.display_name)
-                    else:
-                        self.notification = "It's a **Draw**..."
-                    for c in self.children:
-                        c.disabled = True
-                    return True
-                self.playing_index = (self.playing_index + 1) % 2
-                self.playing = self.players[self.playing_index]
             self.notification = "Turn of **{}**".format(self.playing.display_name)
             return False
