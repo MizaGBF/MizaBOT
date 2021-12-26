@@ -84,7 +84,7 @@ class ConnectFour(BaseView):
         piece = self.state + 1
         for c in range(4):
             for r in range(6):
-                if self.grid[c + r] == piece and self.grid[c + 1 + r * 7] == piece and self.grid[c + 2 + r * 7] == piece and self.grid[c + 3 + r * 7] == piece:
+                if self.grid[c + r * 7] == piece and self.grid[c + 1 + r * 7] == piece and self.grid[c + 2 + r * 7] == piece and self.grid[c + 3 + r * 7] == piece:
                     return True
         for c in range(7):
             for r in range(3):
