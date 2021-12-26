@@ -69,7 +69,7 @@ class ConnectFour(BaseView):
         self.notification = "Turn of **{}**".format(self.players[self.state].display_name)
 
     async def update(self, inter, init=False):
-        self.embed.description = self.notification + "\n" + self.render()
+        self.embed.description = ":red_circle: {} :yellow_circle: {}\n".format(self.players[0].display_name, self.players[1].display_name) + self.notification + "\n" + self.render()
         if init: await inter.edit_original_message(embed=self.embed, view=self)
         else: await inter.response.edit_message(embed=self.embed, view=self)
 
