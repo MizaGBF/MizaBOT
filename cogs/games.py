@@ -10,6 +10,7 @@ from collections import defaultdict
 from views.join_game import JoinGame
 from views.tictactoe import TicTacToe
 from views.connectfour import ConnectFour
+from views.battleship import BattleShip
 
 # ----------------------------------------------------------------------------------------------------------------
 # Games Cog
@@ -1085,7 +1086,29 @@ class Games(commands.Cog):
             view = ConnectFour(self.bot, players, embed)
             await view.update(inter, init=True)
             await view.wait()
-        await self.bot.util.clean(inter, 45)
+        await self.bot.util.clean(inter, 60)
+
+    @game.sub_command()
+    async def battleship(self, inter: disnake.GuildCommandInteraction):
+        """Play a game of Battle Ship (2 players Only)"""
+        await inter.response.defer()
+        players = [inter.author]
+        view = JoinGame(self.bot, players, 2)
+        desc = "Starting in {}s\n{}/2 players"
+        embed = self.bot.util.embed(title=":ship: Multiplayer Battle Ship :cruise_ship:", description=desc.format(60, 1), color=self.color)
+        msg = await inter.channel.send(embed=embed, view=view)
+        self.bot.doAsync(view.updateTimer(msg, embed, desc, 60))
+        await view.wait()
+        await msg.delete()
+        if len(players) == 1:
+            await inter.edit_original_message(embed=self.bot.util.embed(title=":ship: Multiplayer Battle Ship :cruise_ship:", description="Error, a 2nd Player is required", color=self.color))
+        else:
+            random.shuffle(players)
+            embed = self.bot.util.embed(title=":ship: Multiplayer Battle Ship :cruise_ship:", description=":ship: {} :cruise_ship: {}".format(players[0].display_name, players[1].display_name), fields=[{'name':players[0].display_name, 'value':'dummy'}, {'name':players[1].display_name, 'value':'dummy'}], footer="Game limited at 6 minutes", color=self.color, inline=False)
+            view = BattleShip(self.bot, players, embed)
+            await view.update(inter, init=True)
+            await view.wait()
+        await self.bot.util.clean(inter, 60)
 
     @commands.slash_command(default_permission=True, name="random")
     @commands.cooldown(1, 50, commands.BucketType.user)

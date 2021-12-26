@@ -1,7 +1,5 @@
 from . import BaseView
 import disnake
-import asyncio
-import random
 
 # ----------------------------------------------------------------------------------------------------------------
 # ConnectFour View
@@ -68,11 +66,27 @@ class ConnectFour(BaseView):
         for i in range(7): self.add_item(ConnectFourButton(i))
         self.notification = "Turn of **{}**".format(self.players[self.state].display_name)
 
+    """update()
+    Update the embed
+    
+    Parameters
+    ----------
+    inter: an interaction
+    init: if True, it uses a different method (only used from the command call itself)
+    """
     async def update(self, inter, init=False):
         self.embed.description = ":red_circle: {} :yellow_circle: {}\n".format(self.players[0].display_name, self.players[1].display_name) + self.notification + "\n" + self.render()
         if init: await inter.edit_original_message(embed=self.embed, view=self)
-        else: await inter.response.edit_message(embed=self.embed, view=self)
+        elif self.state >= 0: await inter.response.edit_message(embed=self.embed, view=self)
+        else: await inter.response.edit_message(embed=self.embed, view=None)
 
+    """insert()
+    Insert a piece in the grid
+    
+    Parameters
+    ----------
+    pos: Column to insert to (note: it must have been checked previously for empty spaces)
+    """
     def insert(self, pos):
         mem = pos
         for i in range(1, 6):
@@ -80,6 +94,13 @@ class ConnectFour(BaseView):
             mem = pos + 7 * i
         self.grid[mem] = self.state + 1
 
+    """checkWin()
+    Check if the current player won
+    
+    Return
+    ----------
+    bool: True if won, False if not
+    """
     def checkWin(self):
         piece = self.state + 1
         for c in range(4):
@@ -100,6 +121,13 @@ class ConnectFour(BaseView):
                     return True
         return False
 
+    """render()
+    Render the grid into a string
+    
+    Return
+    ----------
+    str: resulting string
+    """
     def render(self):
         msg = ""
         for r in range(6):
