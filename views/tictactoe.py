@@ -55,7 +55,6 @@ class TicTacToeButton(disnake.ui.Button):
             if state:
                 self.view.stopall()
                 await interaction.response.edit_message(embed=self.view.embed, view=self.view)
-                await self.view.bot.util.clean(interaction, 70)
             else:
                 await interaction.response.edit_message(embed=self.view.embed, view=self.view)
         else:

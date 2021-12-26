@@ -38,7 +38,8 @@ class MizaBot(commands.Bot):
             "Regrouped some commands under `/utility`",
             "Revamped the gacha system",
             "Renamed the 'count' option of `/roll count` into 'num'",
-            "All self-assignable role commands moved under `/role`"
+            "All self-assignable role commands moved under `/role`",
+            "Added Connect Four to `/game`"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event

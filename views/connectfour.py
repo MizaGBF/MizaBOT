@@ -18,9 +18,8 @@ class ConnectFourButton(disnake.ui.Button):
     column: Corresponding column in the grid (0 - 6)
     """
     def __init__(self, column : int):
-        super().__init__(style=disnake.ButtonStyle.primary, label="{}".format(column+1))
+        super().__init__(style=disnake.ButtonStyle.primary, label='{}'.format(column+1))
         self.column = column
-
 
     """callback()
     Coroutine callback called when the button is called
@@ -31,19 +30,24 @@ class ConnectFourButton(disnake.ui.Button):
     interaction: a disnake interaction
     """
     async def callback(self, interaction: disnake.Interaction):
-        if not self.disabled and self.view.ownership_check(interaction):
-            d = self.pos - 16
-            if d >= 0 or d < 4:
-                self.view.state = self.view.move_2048(d)
-                self.view.update_button()
-                if self.view.state[0] == True:
-                    self.view.embed.description.replace("is playing...", "won :confetti_ball:")
-                elif self.view.state[1] == False:
-                    self.view.embed.description.replace("is playing...", "lost :pensive:")
-                self.view.embed.footer.text = "{} moves".format(self.view.move)
-            await interaction.response.edit_message(embed=self.view.embed, view=self.view)
+        if self.view.state >= 0 and self.view.players[self.view.state].id == interaction.user.id and self.view.grid[self.column] == 0:
+            self.view.insert(self.column)
+            if self.view.checkWin():
+                self.view.notification = "**{}** is the winner".format(self.view.players[self.view.state].display_name)
+                self.view.state = -1
+            elif 0 not in self.view.grid:
+                self.view.notification = "It's a **Draw**..."
+                self.view.state = -1
+            else:
+                self.view.state = (self.view.state + 1) % 2
+                self.view.notification = "Turn of **{}**".format(self.view.players[self.view.state].display_name)
+            if self.view.state < 0:
+                self.view.stopall()
+            elif self.view.grid[self.column] != 0:
+                self.disabled = True
+            await self.view.update(interaction)
         else:
-            await interaction.response.send_message("You aren't the player", ephemeral=True)
+            await interaction.response.send_message("It's not your turn to play or you aren't the player", ephemeral=True)
 
 class ConnectFour(BaseView):
     """__init__()
@@ -56,51 +60,18 @@ class ConnectFour(BaseView):
     embed: disnake.Embed to edit
     """
     def __init__(self, bot, players : list, embed : disnake.Embed):
-        super().__init__(bot, timeout=500)
+        super().__init__(bot, timeout=360)
         self.grid = [0 for i in range(6*7)]
         self.state = 0
         self.players = players
         self.embed = embed
         for i in range(7): self.add_item(ConnectFourButton(i))
-        self.notification = "Turn of {}".format(self.players[self.state].display_name)
+        self.notification = "Turn of **{}**".format(self.players[self.state].display_name)
 
-    async def update(self):
+    async def update(self, inter, init=False):
         self.embed.description = self.notification + "\n" + self.render()
-
-    def run(self): # test
-        self.display()
-        if self.state == self.ai:
-            # play
-            self.state = 1
-        while self.state >= 0:
-            while True:
-                try:
-                    r = int(input("Input column (0-6):"))
-                    if r < 0 or r > 6 or self.grid[r] != 0: raise Exception()
-                    break
-                except:
-                    pass
-            self.insert(r)
-            if self.checkWin():
-                print("Player", self.state+1, "won")
-                self.state = -1
-            elif 0 not in self.grid:
-                print("Draw")
-                self.state = -1
-            else:
-                self.state = (self.state + 1) % 2
-            if self.state == self.ai:
-                # play
-                if self.checkWin():
-                    print("Player", self.state+1, "won")
-                    self.state = -1
-                elif 0 not in self.grid:
-                    print("Draw")
-                    self.state = -1
-                else:
-                    self.state = (self.state + 1) % 2
-            self.display()
-        
+        if init: await inter.edit_original_message(embed=self.embed, view=self)
+        else: await inter.response.edit_message(embed=self.embed, view=self)
 
     def insert(self, pos):
         mem = pos
@@ -121,7 +92,7 @@ class ConnectFour(BaseView):
                     return True
         for c in range(4):
             for r in range(3):
-                if self.grid[c + r * 7] == piece and self.grid[c + 1 + (r + 1) * 7] == piece and self.grid[c + 2 + (r + 2) * 7] == piece and self.grid[c + 2 + (r + 2) * 7] == piece:
+                if self.grid[c + r * 7] == piece and self.grid[c + 1 + (r + 1) * 7] == piece and self.grid[c + 2 + (r + 2) * 7] == piece and self.grid[c + 3 + (r + 3) * 7] == piece:
                     return True
         for c in range(4):
             for r in range(3, 6):
@@ -135,4 +106,4 @@ class ConnectFour(BaseView):
             for c in range(7):
                 msg += "{} ".format(self.grid[c + r * 7])
             msg += "\n"
-        return msg.replace('0 ', ':blue_circle:').replace('1 ', ':red_circle:').replace('2 ', ':yellow_circle:')
+        return msg.replace('0 ', ':blue_circle:').replace('1 ', ':red_circle:').replace('2 ', ':yellow_circle:') + ":one::two::three::four::five::six::seven:"
