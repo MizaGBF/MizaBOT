@@ -1082,7 +1082,7 @@ class Games(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(title=":red_circle: Multiplayer Connect Four :yellow_circle:", description="Error, a 2nd Player is required", color=self.color))
         else:
             random.shuffle(players)
-            embed = self.bot.util.embed(title=":red_circle: Multiplayer Connect Four :yellow_circle:", description=":red_circle: {} :yellow_circle: {}".format(players[0].display_name, players[1].display_name), footer="Game limited to 7 minutes", color=self.color)
+            embed = self.bot.util.embed(title=":red_circle: Multiplayer Connect Four :yellow_circle:", description=":red_circle: {} :yellow_circle: {}".format(players[0].display_name, players[1].display_name), footer="Game limited to 8 minutes", color=self.color)
             view = ConnectFour(self.bot, players, embed)
             await view.update(inter, init=True)
             await view.wait()
@@ -1104,7 +1104,7 @@ class Games(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(title=":ship: Multiplayer Battle Ship :cruise_ship:", description="Error, a 2nd Player is required", color=self.color))
         else:
             random.shuffle(players)
-            embed = self.bot.util.embed(title=":ship: Multiplayer Battle Ship :cruise_ship:", description=":ship: {} :cruise_ship: {}".format(players[0].display_name, players[1].display_name), fields=[{'name':players[0].display_name, 'value':'dummy'}, {'name':players[1].display_name, 'value':'dummy'}], footer="Game limited to 7 minutes", color=self.color, inline=False)
+            embed = self.bot.util.embed(title=":ship: Multiplayer Battle Ship :cruise_ship:", description=":ship: {} :cruise_ship: {}".format(players[0].display_name, players[1].display_name), fields=[{'name':players[0].display_name, 'value':'dummy'}, {'name':players[1].display_name, 'value':'dummy'}], footer="Game limited to 8 minutes", color=self.color, inline=False)
             view = BattleShip(self.bot, players, embed)
             await view.update(inter, init=True)
             await view.wait()

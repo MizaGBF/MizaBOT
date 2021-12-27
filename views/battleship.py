@@ -72,7 +72,7 @@ class BattleShip(BaseView):
     embed: disnake.Embed to edit
     """
     def __init__(self, bot, players : list, embed : disnake.Embed):
-        super().__init__(bot, timeout=420)
+        super().__init__(bot, timeout=480)
         self.grids = [[0 for i in range(20)] + [10 for i in range(5)], [0 for i in range(20)] + [10 for i in range(5)]]
         random.shuffle(self.grids[0])
         random.shuffle(self.grids[1])
