@@ -38,6 +38,7 @@ class BattleShipButton(disnake.ui.Button):
                 res = self.view.shoot("".join(self.view.input))
                 if res == 0:
                     await interaction.response.send_message("You can't shoot at {}".format("".join(self.view.input)), ephemeral=True)
+                    self.view.input[self.btype] = None
                 else:
                     self.view.notification = "{} shot at **{}**\n".format(self.view.players[self.view.state].display_name, "".join(self.view.input))
                     self.view.input = [None, None]
@@ -97,7 +98,7 @@ class BattleShip(BaseView):
     async def update(self, inter, init=False, extra_notif=""):
         self.embed.description = ":ship: {} :cruise_ship: {}\n".format(self.players[0].display_name, self.players[1].display_name) + self.notification + extra_notif
         for i in range(0, 2):
-            self.embed.set_field_at(i, name=self.players[i].display_name, value=self.render(i))
+            self.embed.set_field_at(i, name=(self.players[i].display_name if len(self.players[i].display_name) <= 10 else self.players[i].display_name[:10] + '...'), value=self.render(i))
         if init: await inter.edit_original_message(embed=self.embed, view=self)
         elif self.state >= 0: await inter.response.edit_message(embed=self.embed, view=self)
         else: await inter.response.edit_message(embed=self.embed, view=None)
