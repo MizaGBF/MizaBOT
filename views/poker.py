@@ -102,7 +102,7 @@ class Poker(BaseView):
         self.deck = []
         kind = ["D", "S", "H", "C"]
         for i in range(51):
-            self.deck.append('{}{}'.format((i % 13) + 1, kind[i // 13]))
+            self.deck.append('{}{}'.format((i % 13) + 2, kind[i // 13]))
         random.shuffle(self.deck)
         self.dealer = [self.deck.pop(), self.deck.pop(), self.deck.pop()]
         self.hands = []
@@ -113,20 +113,6 @@ class Poker(BaseView):
         for i, p in enumerate(self.players):
             self.subembeds.append(self.bot.util.embed(title="♠️ {}'s hand ♥".format(p.display_name), description="Initialization", color=self.embed.color))
             self.updateSubEmbed(i)
-
-    """formatCard()
-    Format a card string to be displayed
-    
-    Parameters
-    ----------
-    card: a card string
-    
-    Returns
-    ----------
-    str: formatted card
-    """
-    def formatCard(self, card):
-        return card.replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("10", "tmp").replace("1", "A").replace("tmp", "10")
 
     """update()
     Update the embed
@@ -141,9 +127,9 @@ class Poker(BaseView):
         match self.state:
             case 0: self.embed.description += "🎴, 🎴, 🎴\n"
             case 1: self.embed.description += "🎴, 🎴, 🎴\n"
-            case 2: self.embed.description += "{}, 🎴, 🎴\n".format(self.formatCard(self.dealer[0]))
-            case 3: self.embed.description += "{}, {}, 🎴\n".format(self.formatCard(self.dealer[0]), self.formatCard(self.dealer[1]))
-            case _: self.embed.description += "{}, {}, {}\n".format(self.formatCard(self.dealer[0]), self.formatCard(self.dealer[1]), self.formatCard(self.dealer[2]))
+            case 2: self.embed.description += "{}, 🎴, 🎴\n".format(Poker.value2head(self.dealer[0]))
+            case 3: self.embed.description += "{}, {}, 🎴\n".format(Poker.value2head(self.dealer[0]), Poker.value2head(self.dealer[1]))
+            case _: self.embed.description += "{}, {}, {}\n".format(Poker.value2head(self.dealer[0]), Poker.value2head(self.dealer[1]), Poker.value2head(self.dealer[2]))
         if self.state == 0:
             for i, p in enumerate(self.players):
                 self.embed.description += "{} {} \▫️ 🎴, 🎴\n".format(self.bot.emote.get(str(i+1)), (p.display_name if len(p.display_name) <= 10 else p.display_name[:10] + "..."))
@@ -153,15 +139,17 @@ class Poker(BaseView):
                 self.embed.description += "{} {} \▫️ 🎴, 🎴\n".format(self.bot.emote.get(str(i+1)), (p.display_name if len(p.display_name) <= 10 else p.display_name[:10] + "..."))
         elif self.state == 5:
             for i, p in enumerate(self.players):
-                self.embed.description += "{} {} \▫️ {}, 🎴\n".format(self.bot.emote.get(str(i+1)), (p.display_name if len(p.display_name) <= 10 else p.display_name[:10] + "..."), self.formatCard(self.hands[i][1][0]))
+                self.embed.description += "{} {} \▫️ {}, 🎴\n".format(self.bot.emote.get(str(i+1)), (p.display_name if len(p.display_name) <= 10 else p.display_name[:10] + "..."), Poker.value2head(self.hands[i][1][0]))
         else:
             winner = []
             best = 0
             for i, p in enumerate(self.players):
-                hs, hstr = self.checkPokerHand(self.dealer + self.hands[i][1])
+                hs, hstr = Poker.checkPokerHand(self.dealer + self.hands[i][1])
                 if hs == best: winner.append(p)
-                elif hs > best: winner = [p]
-                self.embed.description += "{} {} \▫️ {}, {}, {}\n".format(self.bot.emote.get(str(i+1)), (p.display_name if len(p.display_name) <= 10 else p.display_name[:10] + "..."), self.formatCard(self.hands[i][1][0]), self.formatCard(self.hands[i][1][1]), hstr)
+                elif hs > best:
+                    best = hs
+                    winner = [p]
+                self.embed.description += "{} {} \▫️ {}, {}, {}\n".format(self.bot.emote.get(str(i+1)), (p.display_name if len(p.display_name) <= 10 else p.display_name[:10] + "..."), Poker.value2head(self.hands[i][1][0]), Poker.value2head(self.hands[i][1][1]), hstr)
             match len(winner):
                 case 0: pass # shouldn't happen
                 case 1:
@@ -206,7 +194,7 @@ class Poker(BaseView):
     index: Player index
     """
     def updateSubEmbed(self, index):
-        self.subembeds[index].description = "{} {} ▫️ {} {}\n".format(self.formatCard(self.hands[index][1][0]), ("**Holding**" if self.hands[index][0] in [10, 11] else ""), self.formatCard(self.hands[index][1][1]), ("**Holding**" if self.hands[index][0] in [1, 11] else ""))
+        self.subembeds[index].description = "{} {} ▫️ {} {}\n".format(Poker.value2head(self.hands[index][1][0]), ("**Holding**" if self.hands[index][0] in [10, 11] else ""), Poker.value2head(self.hands[index][1][1]), ("**Holding**" if self.hands[index][0] in [1, 11] else ""))
         if self.hands[index][0] >= 100:
             self.subembeds[index].description += "**Your hand is locked**\nPlease wait for other players to confirm\n"
 
