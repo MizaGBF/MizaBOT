@@ -30,15 +30,16 @@ class ConnectFourButton(disnake.ui.Button):
     async def callback(self, interaction: disnake.Interaction):
         if self.view.state >= 0 and self.view.players[self.view.state].id == interaction.user.id and self.view.grid[self.column] == 0:
             self.view.insert(self.column)
+            self.view.notification = "{} played in column **{}**\n".format(self.view.players[self.view.state].display_name, self.column)
             if self.view.checkWin():
-                self.view.notification = "**{}** is the winner".format(self.view.players[self.view.state].display_name)
+                self.view.notification += "**{}** is the winner".format(self.view.players[self.view.state].display_name)
                 self.view.state = -1
             elif 0 not in self.view.grid:
-                self.view.notification = "It's a **Draw**..."
+                self.view.notification += "It's a **Draw**..."
                 self.view.state = -1
             else:
                 self.view.state = (self.view.state + 1) % 2
-                self.view.notification = "Turn of **{}**".format(self.view.players[self.view.state].display_name)
+                self.view.notification += "Turn of **{}**".format(self.view.players[self.view.state].display_name)
             if self.view.state < 0:
                 self.view.stopall()
             elif self.view.grid[self.column] != 0:
@@ -58,7 +59,7 @@ class ConnectFour(BaseView):
     embed: disnake.Embed to edit
     """
     def __init__(self, bot, players : list, embed : disnake.Embed):
-        super().__init__(bot, timeout=360)
+        super().__init__(bot, timeout=420)
         self.grid = [0 for i in range(6*7)]
         self.state = 0
         self.players = players

@@ -8,16 +8,20 @@ import random
 # View class used to play Battle Ship
 # ----------------------------------------------------------------------------------------------------------------
 
-class BattleDropdown(disnake.ui.Select):
+class BattleShipButton(disnake.ui.Button):
     """__init__()
-    Dropdown Constructor
+    Button Constructor
+    
+    Parameters
+    ----------
+    btype: 0 for column buttons, 1 for row buttons
+    target: string, target of the button (ABCDE or 12345)
+    row: an integer indicating on what row to set the button on
     """
-    def __init__(self):
-        options = []
-        for l in ['A', 'B', 'C', 'D', 'E']:
-            for n in range(1, 6):
-                options.append(disnake.SelectOption(label="{}{}".format(l, n)))
-        super().__init__(placeholder="Select a Target", min_values=1, max_values=1, options=options)
+    def __init__(self, btype : int, target : str, row : int):
+        super().__init__(style=(disnake.ButtonStyle.success if btype == 0 else disnake.ButtonStyle.danger), label=target, row=row)
+        self.btype = btype
+        self.target = target
 
     """callback()
     Coroutine callback called when the dropdown is used
@@ -29,20 +33,30 @@ class BattleDropdown(disnake.ui.Select):
     """
     async def callback(self, interaction: disnake.Interaction):
         if self.view.state >= 0 and self.view.players[self.view.state].id == interaction.user.id:
-            res = self.view.shoot(self.values[0])
-            if res == 0:
-                await interaction.response.send_message("You can't shoot on this location", ephemeral=True)
-            else:
-                if res == 2:
-                    self.view.notification = "**{}** is the winner".format(self.view.players[self.view.state].display_name)
-                    self.view.state = -1
+            self.view.input[self.btype] = self.target
+            if None not in self.view.input:
+                res = self.view.shoot("".join(self.view.input))
+                if res == 0:
+                    await interaction.response.send_message("You can't shoot at {}".format("".join(self.view.input)), ephemeral=True)
                 else:
-                    self.view.state = (self.view.state + 1) % 2
-                    self.view.notification = "Turn of **{}**".format(self.view.players[self.view.state].display_name)
-                if self.view.state < 0:
-                    self.view.stopall()
-                    self.disabled = True
-                await self.view.update(interaction)
+                    self.view.notification = "{} shot at **{}**\n".format(self.view.players[self.view.state].display_name, "".join(self.view.input))
+                    self.view.input = [None, None]
+                    if res == 2:
+                        self.view.notification += "**{}** is the winner".format(self.view.players[self.view.state].display_name)
+                        self.view.state = -1
+                    else:
+                        self.view.state = (self.view.state + 1) % 2
+                        self.view.notification += "Turn of **{}**".format(self.view.players[self.view.state].display_name)
+                    if self.view.state < 0:
+                        self.view.stopall()
+                        self.disabled = True
+                    await self.view.update(interaction)
+            else:
+                extra_notif = "\n{} is selecting **".format(self.view.players[self.view.state].display_name)
+                extra_notif += ('?' if self.view.input[0] is None else self.view.input[0])
+                extra_notif += ('?' if self.view.input[1] is None else self.view.input[1])
+                extra_notif += "**..."
+                await self.view.update(interaction, extra_notif=extra_notif)
         else:
             await interaction.response.send_message("It's not your turn to play or you aren't the player", ephemeral=True)
 
@@ -57,14 +71,18 @@ class BattleShip(BaseView):
     embed: disnake.Embed to edit
     """
     def __init__(self, bot, players : list, embed : disnake.Embed):
-        super().__init__(bot, timeout=360)
+        super().__init__(bot, timeout=420)
         self.grids = [[0 for i in range(20)] + [10 for i in range(5)], [0 for i in range(20)] + [10 for i in range(5)]]
         random.shuffle(self.grids[0])
         random.shuffle(self.grids[1])
         self.state = 0
         self.players = players
         self.embed = embed
-        self.add_item(BattleDropdown())
+        self.input = [None, None]
+        for i in ['A', 'B', 'C', 'D', 'E']:
+            self.add_item(BattleShipButton(0, i, 0))
+        for i in range(5):
+            self.add_item(BattleShipButton(1, str(i+1), 1))
         self.notification = "Turn of **{}**".format(self.players[self.state].display_name)
 
     """update()
@@ -74,9 +92,10 @@ class BattleShip(BaseView):
     ----------
     inter: an interaction
     init: if True, it uses a different method (only used from the command call itself)
+    extra_notif: optional string to append to the embed description
     """
-    async def update(self, inter, init=False):
-        self.embed.description = ":ship: {} :cruise_ship: {}\n".format(self.players[0].display_name, self.players[1].display_name) + self.notification
+    async def update(self, inter, init=False, extra_notif=""):
+        self.embed.description = ":ship: {} :cruise_ship: {}\n".format(self.players[0].display_name, self.players[1].display_name) + self.notification + extra_notif
         for i in range(0, 2):
             self.embed.set_field_at(i, name=self.players[i].display_name, value=self.render(i))
         if init: await inter.edit_original_message(embed=self.embed, view=self)

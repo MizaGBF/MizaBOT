@@ -733,8 +733,7 @@ class GranblueFantasy(commands.Cog):
             msg += "160% ▫️ {:.1f}% ▫️▫️ 310% ▫️ {:.1f}%\n".format(min(base*2.6 + flat, 100), min(base*4.1 + flat, 100))
             msg += "170% ▫️ {:.1f}% ▫️▫️ 320% ▫️ {:.1f}%\n".format(min(base*2.7 + flat, 100), min(base*4.2 + flat, 100))
             msg += "280% ▫️ {:.1f}%\n".format(min(base*3.8 + flat, 100))
-            await inter.response.send_message(embed=self.bot.util.embed(title="Critical Calculator", description=msg.replace('.0%', '%').replace('100%', '**100%**'), footer=s1, color=self.color))
-            await self.bot.util.clean(inter, 60)
+            await inter.response.send_message(embed=self.bot.util.embed(title="Critical Calculator", description=msg.replace('.0%', '%').replace('100%', '**100%**'), footer=s1, color=self.color), ephemeral=True)
         except Exception as e:
             if str(e) == "Empty Parameter":
                 modstr = ""
@@ -785,8 +784,7 @@ class GranblueFantasy(commands.Cog):
             msg += "160% ▫️ {:.1f}% ▫️▫️ 310% ▫️ {:.1f}%\n".format(base_val*2.6 + flat_val, base_val*4.1 + flat_val)
             msg += "170% ▫️ {:.1f}% ▫️▫️ 320% ▫️ {:.1f}%\n".format(base_val*2.7 + flat_val, base_val*4.2 + flat_val)
             msg += "280% ▫️ {:.1f}%\n".format(base_val*3.8 + flat_val)
-            await inter.response.send_message(embed=self.bot.util.embed(title="Enmity Calculator ▫️ {}% HP".format(hp), description=msg.replace('.0%', '%'), footer=s1, color=self.color))
-            await self.bot.util.clean(inter, 60)
+            await inter.response.send_message(embed=self.bot.util.embed(title="Enmity Calculator ▫️ {}% HP".format(hp), description=msg.replace('.0%', '%'), footer=s1, color=self.color), ephemeral=True)
         except Exception as e:
             if str(e) == "Empty Parameter":
                 modstr = ""
@@ -851,8 +849,7 @@ class GranblueFantasy(commands.Cog):
             msg += "160% ▫️ {:.1f}% ▫️▫️ 310% ▫️ {:.1f}%\n".format(base_val*2.6 + flat_val, base_val*4.1 + flat_val)
             msg += "170% ▫️ {:.1f}% ▫️▫️ 320% ▫️ {:.1f}%\n".format(base_val*2.7 + flat_val, base_val*4.2 + flat_val)
             msg += "280% ▫️ {:.1f}%\n".format(base_val*3.8 + flat_val)
-            await inter.response.send_message(embed=self.bot.util.embed(title="Stamina Calculator ▫️ {}% HP".format(hp), description=msg.replace('.0%', '%'), footer=s1.replace('.0', ''), color=self.color))
-            await self.bot.util.clean(inter, 60)
+            await inter.response.send_message(embed=self.bot.util.embed(title="Stamina Calculator ▫️ {}% HP".format(hp), description=msg.replace('.0%', '%'), footer=s1.replace('.0', ''), color=self.color), ephemeral=True)
         except Exception as e:
             if str(e) == "Empty Parameter":
                 modstr = ""
@@ -877,8 +874,7 @@ class GranblueFantasy(commands.Cog):
                 msg += "**{:,} XP** for lvl **{:}** ({:} books or {:,} candies)\n".format(xpcount, lvl, math.ceil(xpcount / 300000), math.ceil(xpcount / 745))
                 if lvl == end_level: break
             xpcount += xptable[lvl]
-        await inter.response.send_message(embed=self.bot.util.embed(title="Experience Calculator", description=msg, color=self.color))
-        await self.bot.util.clean(inter, 40)
+        await inter.response.send_message(embed=self.bot.util.embed(title="Experience Calculator", description=msg, color=self.color), ephemeral=True)
 
     """getGrandList()
     Request the grand character list from the wiki page and return the list of latest released ones
