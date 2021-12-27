@@ -126,8 +126,8 @@ class GBF():
             for c in B:
                 tA = c.split('=')
                 if tA[0][0] == " ": tA[0] = tA[0][1:]
-                for i in range(0, len(A)):
-                    tB = A[i].split('=')
+                for i, v in enumerate(A):
+                    tB = v.split('=')
                     if tB[0][0] == " ": tB[0] = tB[0][1:]
                     if tA[0] == tB[0]:
                         A[i] = c
@@ -138,7 +138,8 @@ class GBF():
                 self.data.save['gbfaccounts'][id][5] = self.bot.util.JST()
                 self.data.pending = True
             return True
-        except:
+        except Exception as e:
+            self.bot.doAsTask(self.bot.sendError('gbf refresh', e))
             return False
 
     def version(self): # retrieve the game version

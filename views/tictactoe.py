@@ -14,7 +14,7 @@ class TicTacToeButton(disnake.ui.Button):
     Parameters
     ----------
     pos: Integer position in grid (0 - 9)
-    v: default value of the button (0: unused, 1: X, 2: O
+    v: default value of the button (0: unused, 1: X, 2: O)
     """
     def __init__(self, pos : int, v : int):
         super().__init__(style=disnake.ButtonStyle.secondary, label='\u200b', row=pos // 3)
@@ -86,8 +86,8 @@ class TicTacToe(BaseView):
             [2,4,6]
         ]
         self.notification = "Turn of {}".format(self.playing.display_name)
-        for i in range(9):
-            self.add_item(TicTacToeButton(i, self.grid[i]))
+        for i, g in enumerate(self.grid):
+            self.add_item(TicTacToeButton(i, g))
 
     """state()
     Return if the game is won or not
@@ -101,40 +101,6 @@ class TicTacToe(BaseView):
             if self.grid[w[0]] != 0 and self.grid[w[0]] == self.grid[w[1]] and self.grid[w[0]] == self.grid[w[2]]:
                 return True, self.grid[w[0]] - 1
         return False, None
-
-    """evaluate()
-    Minimax function for the AI to calculate the optimal move
-    
-    Parameters
-    ----------
-    depth: number of iterations left, shouldn't be higher than the number of moves left
-    index: 0 for Player 1, 1 for MizaBOT
-    alpha: integer used for earching the best move
-    beta: integer used for earching the best move
-    
-    Returns
-    --------
-    list: [position, score]
-    """
-    def evaluate(self, depth, index, alpha : int = -9999999, beta : int = 9999999):
-        state = self.state()
-        if depth == 0 or state[0]:
-            return [-1, (-1 if state[1] == self.bot_id else 1)]        
-        
-        v_eval = (9999999 if index == self.bot_id else -9999999)
-        for i in range(len(self.grid)):
-            if self.grid[i] != 0: continue
-            self.grid[i] = index + 1
-            score = self.evaluate(depth - 1, (index + 1) % 2, alpha, beta)
-            if (index == self.bot_id and score[1] < v_eval) or (index != self.bot_id and score[1] > v_eval):
-                v_eval = score[1]
-                best_move = i
-            self.grid[i] = 0
-            if index == self.bot_id: beta = min(beta, score[1])
-            else: beta = max(beta, score[1])
-            if beta <= alpha:
-                break
-        return [best_move, v_eval]
 
     """check_status()
     Function to check the game state

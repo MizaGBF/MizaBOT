@@ -101,27 +101,27 @@ class GranblueFantasy(commands.Cog):
                 return "(SSR)"
             case "(r)":
                 return "(R)"
-        for i in range(0, len(term)): # for each character
-            if term[i].isalpha(): # if letter
-                if term[i].isupper(): # is uppercase
+        for c in term: # for each character
+            if c.isalpha(): # if letter
+                if c.isupper(): # is uppercase
                     if not up: # we haven't encountered an uppercase letter
                         up = True
-                        fixed += term[i] # save
+                        fixed += c # save
                     else: # we have
-                        fixed += term[i].lower() # make it lowercase and save
-                elif term[i].islower(): # is lowercase
+                        fixed += c.lower() # make it lowercase and save
+                elif c.islower(): # is lowercase
                     if not up: # we haven't encountered an uppercase letter
-                        fixed += term[i].upper() # make it uppercase and save
+                        fixed += c.upper() # make it uppercase and save
                         up = True
                     else: # we have
-                        fixed += term[i] # save
+                        fixed += c # save
                 else: # other characters
-                    fixed += term[i] # we just save
-            elif term[i] == "/" or term[i] == ":" or term[i] == "#" or term[i] == "-": # we reset the uppercase detection if we encounter those
+                    fixed += c # we just save
+            elif c == "/" or c == ":" or c == "#" or c == "-": # we reset the uppercase detection if we encounter those
                 up = False
-                fixed += term[i]
+                fixed += c
             else: # everything else,
-                fixed += term[i] # we save
+                fixed += c # we save
         return fixed # return the result
 
     """stripWikiStr()

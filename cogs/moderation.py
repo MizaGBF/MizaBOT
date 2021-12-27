@@ -127,8 +127,8 @@ class Moderation(commands.Cog):
         with self.bot.data.lock:
             if gid not in self.bot.data.save['permitted']:
                 self.bot.data.save['permitted'][gid] = []
-            for i in range(0, len(self.bot.data.save['permitted'][gid])):
-                if self.bot.data.save['permitted'][gid][i] == cid:
+            for i, v in enumerate(self.bot.data.save['permitted'][gid]):
+                if v == cid:
                     self.bot.data.save['permitted'][gid].pop(i)
                     self.bot.data.pending = True
                     await self._seeCleanupSetting(inter)

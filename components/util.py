@@ -175,16 +175,15 @@ class Util():
         flags = {'d':False,'h':False,'m':False}
         tmp = 0 # buffer
         sum = 0 # delta in seconds
-        for i in range(0, len(d)):
-            if d[i].isdigit():
-                tmp = (tmp * 10) + int(d[i])
-            elif d[i].lower() in flags:
-                c = d[i].lower()
-                if flags[c]:
+        for c in d:
+            if c.isdigit():
+                tmp = (tmp * 10) + int(c)
+            elif c.lower() in flags:
+                if flags[c.lower()]:
                     return None
                 if tmp < 0:
                     return None
-                flags[c] = True
+                flags[c.lower()] = True
                 match c:
                     case 'd': sum += tmp * 86400
                     case 'h': sum += tmp * 3600

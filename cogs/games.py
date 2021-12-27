@@ -240,16 +240,16 @@ class Games(commands.Cog):
         elif rmode == 1: # memeroll mode
             counter = [0, 0, 0]
             text = ""
-            for i in range(0, len(result['list'])):
+            for i, v in enumerate(result['list']):
                 if i > 0 and i % 3 == 0:
                     await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[0].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
                     await asyncio.sleep(1)
                     text = ""
                 if result['extended']:
-                    text += "{} {}\n".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(result['list'][i][0])), result['list'][i][1])
+                    text += "{} {}\n".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(v[i][0])), v[i][1])
                 else:
-                    text += "{} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(result['list'][i][0])))
-                counter[result['list'][i][0]] += 1
+                    text += "{} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(v[i][0])))
+                counter[v[i][0]] += 1
             title = titles[1].format(inter.author.display_name, len(result['list'])) if (len(result['list']) < 300) else "{} sparked".format(inter.author.display_name)
             await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':inter.author.display_avatar}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
         elif rmode == 2: # ten roll mode
@@ -639,12 +639,12 @@ class Games(commands.Cog):
             if len(cards) == 10: random.shuffle(cards)
         winning = [[], [], [], []]
         patterns = [[3, 2], [2, 2], [2, 3], [1, 2]]
-        for i in range(0, len(patterns)):
-            pad = '{:<0' + str(patterns[i][0]+1) + 'd}'
+        for i, v in enumerate(patterns):
+            pad = '{:<0' + str(v[0]+1) + 'd}'
             pad = int(pad.format(1))
-            for j in range(0, patterns[i][1]):
+            for j in range(0, v[1]):
                 while True:
-                    c = str(random.randint(0, pad-1)).zfill(patterns[i][0])
+                    c = str(random.randint(0, pad-1)).zfill(v[0])
                     if c not in winning[i]:
                         winning[i].append(c)
                         break
@@ -956,8 +956,8 @@ class Games(commands.Cog):
                 if j < 2: msg += ", "
                 else: msg += "\n"
             n = max(1, s)
-            for x in range(0, len(players)):
-                msg += "{} {} \▫️ ".format(self.bot.emote.get(str(x+1)), self.pokerNameStrip(players[x].display_name))
+            for x, p in enumerate(players):
+                msg += "{} {} \▫️ ".format(self.bot.emote.get(str(x+1)), self.pokerNameStrip(p.display_name))
                 if s == 4:
                     highest = self.highestCard(draws[3+2*x:5+2*x])
                 for j in range(0, 2):

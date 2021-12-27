@@ -481,8 +481,7 @@ class Admin(commands.Cog):
 
         if id == -1:
             msg = ""
-            for i in range(0, len(self.bot.data.save['gbfaccounts'])):
-                acc = self.bot.data.save['gbfaccounts'][i]
+            for i, acc in enumerate(self.bot.data.save['gbfaccounts']):
                 if i == self.bot.data.save['gbfcurrent']: msg += "👉 "
                 else: msg += "{} ".format(i)
                 msg += "**{}** ".format(acc[0])

@@ -1038,11 +1038,12 @@ class GuildWar(commands.Cog):
         members = await self.bot.do(self._sortMembers, members)
         fields = []
         total = 0
-        for i in range(0, min(30, len(members))):
+        for i, v in enumerate(members):
+            if i >= 30: break
             if i % 10 == 0:
                 fields.append({'name':'{}'.format(self.bot.emote.get(str(len(fields)+1))), 'value':''})
-            fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) \▫️ **{}**\n".format(members[i][1], members[i][0], self.bot.util.valToStr(members[i][2]))
-            total += members[i][2]
+            fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) \▫️ **{}**\n".format(v[1],v[0], self.bot.util.valToStr(v[2]))
+            total += v[2]
         if gwid is None: gwid = ""
         await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Top 30 of {}".format(inter.guild.name), 'icon_url':inter.guild.icon.url}, description="{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.emote.get('question'), gwid, self.bot.util.valToStr(total), self.bot.util.valToStr(total // min(30, len(members)))), fields=fields, inline=True, color=self.color))
         await self.bot.util.clean(inter, 60)
@@ -1285,12 +1286,12 @@ class GuildWar(commands.Cog):
                         ranking[j] = tmp
             fields = []
             if gwid is None: gwid = ""
-            for i in range(0, len(ranking)):
+            for i, v in enumerate(ranking):
                 if i % 15 == 0: fields.append({'name':'{}'.format(self.bot.emote.get(str(len(fields)+1))), 'value':''})
-                if ranking[i][2] is None:
-                    fields[-1]['value'] += "{} \▫️ {} \▫️ {} \▫️ **n/a**\n".format(i+1, ranking[i][1], ranking[i][0])
+                if v[2] is None:
+                    fields[-1]['value'] += "{} \▫️ {} \▫️ {} \▫️ **n/a**\n".format(i+1, v[1], v[0])
                 else:
-                    fields[-1]['value'] += "{} \▫️ {} \▫️ {} \▫️ **{}**\n".format(i+1, ranking[i][1], ranking[i][0], self.bot.util.valToStr(ranking[i][2]))
+                    fields[-1]['value'] += "{} \▫️ {} \▫️ {} \▫️ **{}**\n".format(i+1, v[1], v[0], self.bot.util.valToStr(v[2]))
             await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ GW{} Dancho Ranking".format(self.bot.emote.get('gw'), gwid), fields=fields, inline=True, color=self.color))
         await self.bot.util.clean(inter, 60)
 
@@ -1332,12 +1333,12 @@ class GuildWar(commands.Cog):
                 if not inserted: sorted.append(tosort[c])
             fields = []
             if gwid is None: gwid = ""
-            for i in range(0, len(sorted)):
+            for i, v in enumerate(sorted):
                 if i % 15 == 0: fields.append({'name':'{}'.format(self.bot.emote.get(str(len(fields)+1))), 'value':''})
-                if sorted[i][3] is None:
-                    fields[-1]['value'] += "{} \▫️ {} \▫️ **{}**\n".format(i+1, sorted[i][1], self.bot.util.valToStr(sorted[i][2]))
+                if v[3] is None:
+                    fields[-1]['value'] += "{} \▫️ {} \▫️ **{}**\n".format(i+1, v[1], self.bot.util.valToStr(v[2]))
                 else:
-                    fields[-1]['value'] += "#**{}** \▫️ {} \▫️ **{}**\n".format(self.bot.util.valToStr(sorted[i][3]), sorted[i][1], self.bot.util.valToStr(sorted[i][2]))
+                    fields[-1]['value'] += "#**{}** \▫️ {} \▫️ **{}**\n".format(self.bot.util.valToStr(v[3]), v[1], self.bot.util.valToStr(v[2]))
             return fields, gwid
 
     @gbfg.sub_command(name="ranking")
@@ -1392,10 +1393,10 @@ class GuildWar(commands.Cog):
             elif len(sortedcrew) > 10: size = 10
             else: size = 5
             slots = 0
-            for i in range(0, len(sortedcrew)):
+            for i, v in enumerate(sortedcrew):
                 if i % size == 0: fields.append({'name':'{}'.format(self.bot.emote.get(str(len(fields)+1))), 'value':''})
-                fields[-1]['value'] += "Rank **{}** \▫️  **{}** \▫️ **{}** slots\n".format(sortedcrew[i]['average'], sortedcrew[i]['name'], 30-sortedcrew[i]['count'])
-                slots += 30-sortedcrew[i]['count']
+                fields[-1]['value'] += "Rank **{}** \▫️  **{}** \▫️ **{}** slots\n".format(v['average'], v['name'], 30-v['count'])
+                slots += 30-v['count']
             await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ recruiting crews ▫️ {} slots".format(self.bot.emote.get('crew'), slots), fields=fields, inline=True, color=self.color, timestamp=self.bot.util.timestamp()))
         await self.bot.util.clean(inter, 90)
 

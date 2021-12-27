@@ -424,11 +424,11 @@ class Ranking():
             self.getrank_update_time = update_time
             it = ['Day 5', 'Day 4', 'Day 3', 'Day 2', 'Day 1', 'Interlude', 'Preliminaries']
             skip_mode = 0
-            for i in range(0, len(it)): # loop to not copy paste this 5 more times
-                if update_time > self.bot.data.save['gw']['dates'][it[i]]:
-                    match it[i]:
+            for i, itd in enumerate(it): # loop to not copy paste this 5 more times
+                if update_time > self.bot.data.save['gw']['dates'][itd]:
+                    match itd:
                         case 'Preliminaries':
-                            if update_time - self.bot.data.save['gw']['dates'][it[i]] < timedelta(days=0, seconds=7200):
+                            if update_time - self.bot.data.save['gw']['dates'][itd] < timedelta(days=0, seconds=7200):
                                 skip_mode = 1 # skip all
                             elif self.bot.data.save['gw']['dates'][it[i-1]] - update_time > timedelta(days=0, seconds=21600):
                                 skip_mode = 1 # skip all
@@ -440,7 +440,7 @@ class Ranking():
                         case 'Day 5':
                             skip_mode = 1 # skip all
                         case _:
-                            if update_time - self.bot.data.save['gw']['dates'][it[i]] < timedelta(days=0, seconds=7200): # only update crews at the start
+                            if update_time - self.bot.data.save['gw']['dates'][itd] < timedelta(days=0, seconds=7200): # only update crews at the start
                                 skip_mode = 3 # skip player
                             elif self.bot.data.save['gw']['dates'][it[i-1]] - update_time > timedelta(days=0, seconds=21600):
                                 skip_mode = 1 # skip all
