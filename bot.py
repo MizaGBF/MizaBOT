@@ -474,17 +474,6 @@ class MizaBot(commands.Bot):
                 self.data.save['guilds'] = current_guilds
                 self.data.pending = True
 
-    """on_message()
-    Event. Called when a message is received
-    
-    Parameters
-    ----------
-    message: Discord Message to be processed
-    """
-    async def on_message(self, message): # to do something with a message
-        if self.running: # don't process commands if exiting
-            await self.process_commands(message) # never forget this line
-
     """on_guild_join()
     Event. Called when the bot join a guild
     
@@ -527,6 +516,7 @@ class MizaBot(commands.Bot):
     bool: True if the command can be processed, False if not
     """
     async def global_check(self, ctx): # called whenever a command is used
+        if not self.running: return False # do nothing if the bot is stopped
         if ctx.guild is None: # if none, the command has been sent via a direct message
             return False # so we ignore
         try:

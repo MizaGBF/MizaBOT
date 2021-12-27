@@ -635,7 +635,7 @@ class GranblueFantasy(commands.Cog):
                             if "??" in dates[di]: break
                             ev_md.append(int(dates[di].split('/')[0]) * 100 + int(dates[di].split('/')[1]))
                         if len(ev_md) == 2:
-                            if ev_md[0] >= 1200 and ev_md[1] <= 100: ev_md[0] -= 1200
+                            if ev_md[0] >= 1200 and ev_md[1] <= 200: ev_md[1] += 1200
                             on_going = (md >= ev_md[0] and md <= ev_md[1])
                         else:
                             on_going = (md >= ev_md[0])

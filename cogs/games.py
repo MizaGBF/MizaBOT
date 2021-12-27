@@ -6,12 +6,12 @@ from datetime import datetime, timedelta
 from views.roll_tap import Tap
 from views.scratcher import Scratcher
 from views.chest_rush import ChestRush
-from collections import defaultdict
 from views.join_game import JoinGame
 from views.tictactoe import TicTacToe
 from views.connectfour import ConnectFour
 from views.battleship import BattleShip
 from views.blackjack import Blackjack
+from views.poker import Poker
 
 # ----------------------------------------------------------------------------------------------------------------
 # Games Cog
@@ -769,142 +769,6 @@ class Games(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':inter.author.display_avatar}, description=desc, thumbnail=thumb, color=self.color))
         await self.bot.util.clean(inter, 45)
 
-    """value2head()
-    Convert a card value to a string.
-    Heads are converted to the equivalent (J, Q, K, A)
-    
-    Parameters
-    ----------
-    value: Integer or string card value
-    
-    Returns
-    --------
-    str: Card string
-    """
-    def value2head(self, value):
-        return str(value).replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
-
-    """valueNsuit2head()
-    Convert a card value and suit to a string.
-    Heads are converted to the equivalent (J, Q, K, A).
-    Suits are converted to ♦, ♠️, ♥️ and ♣️
-    
-    Parameters
-    ----------
-    value: String card value
-    
-    Returns
-    --------
-    str: Card string
-    """
-    def valueNsuit2head(self, value):
-        return value.replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
-
-    """checkPokerHand()
-    Check a poker hand strength
-    
-    Parameters
-    ----------
-    hand: List of card to check
-    
-    Returns
-    --------
-    str: Strength string
-    """
-    def checkPokerHand(self, hand):
-        flush = False
-        # flush detection
-        suits = [h[-1] for h in hand]
-        if len(set(suits)) == 1: flush = True
-        # other checks
-        values = [i[:-1] for i in hand] # get card values
-        value_counts = defaultdict(lambda:0)
-        for v in values:
-            value_counts[v] += 1 # count each match
-        rank_values = [int(i) for i in values] # rank them
-        value_range = max(rank_values) - min(rank_values) # and get the difference
-        # determinate hand from their
-        if flush and set(values) == set(["10", "11", "12", "13", "14"]): return "**Royal Straight Flush**"
-        elif flush and ((len(set(value_counts.values())) == 1 and (value_range==4)) or set(values) == set(["14", "2", "3", "4", "5"])): return "**Straight Flush, high {}**".format(self.value2head(self.highestCardStripped(list(value_counts.keys()))))
-        elif sorted(value_counts.values()) == [1,4]: return "**Four of a Kind of {}**".format(self.value2head(list(value_counts.keys())[list(value_counts.values()).index(4)]))
-        elif sorted(value_counts.values()) == [2,3]: return "**Full House, high {}**".format(self.value2head(list(value_counts.keys())[list(value_counts.values()).index(3)]))
-        elif flush: return "**Flush**"
-        elif (len(set(value_counts.values())) == 1 and (value_range==4)) or set(values) == set(["14", "2", "3", "4", "5"]): return "**Straight, high {}**".format(self.value2head(self.highestCardStripped(list(value_counts.keys()))))
-        elif set(value_counts.values()) == set([3,1]): return "**Three of a Kind of {}**".format(self.value2head(list(value_counts.keys())[list(value_counts.values()).index(3)]))
-        elif sorted(value_counts.values())==[1,2,2]:
-            k = list(value_counts.keys())
-            k.pop(list(value_counts.values()).index(1))
-            return "**Two Pairs, high {}**".format(self.value2head(self.highestCardStripped(k)))
-        elif 2 in value_counts.values(): return "**Pair of {}**".format(self.value2head(list(value_counts.keys())[list(value_counts.values()).index(2)]))
-        else: return "**Highest card is {}**".format(self.value2head(self.highestCard(hand).replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️")))
-
-    """highestCardStripped()
-    Return the highest card in the selection, without the suit
-    
-    Parameters
-    ----------
-    selection: List of card to check
-    
-    Returns
-    --------
-    str: Highest card
-    """
-    def highestCardStripped(self, selection):
-        ic = [int(i) for i in selection] # convert to int
-        return str(sorted(ic)[-1]) # sort and then convert back to str
-
-    """highestCard()
-    Return the highest card in the selection
-    
-    Parameters
-    ----------
-    selection: List of card to check
-    
-    Returns
-    --------
-    str: Highest card
-    """
-    def highestCard(self, selection):
-        for i in range(0, len(selection)): selection[i] = '0'+selection[i] if len(selection[i]) == 2 else selection[i]
-        last = sorted(selection)[-1]
-        if last[0] == '0': last = last[1:]
-        return last
-
-    """pokerNameStrip()
-    Shorten the discord user name
-    
-    Parameters
-    ----------
-    name: User name
-    
-    Returns
-    --------
-    str: Shortened name
-    """
-    def pokerNameStrip(self, name):
-        if len(name) > 10:
-            if len(name.split(" ")[0]) < 10: return name.split(" ")[0]
-            else: return name[:9] + "…"
-        return name
-
-    """gameIsMember()
-    Check if member is in the game
-    
-    Parameters
-    ----------
-    m:  disnake.Member to check
-    m_listm List of participating disnake.Member
-    
-    Returns
-    --------
-    bool: True if present, False if not
-    """
-    def gameIsMember(self, m, m_list):
-        for mb in m_list:
-            if m.id == mb.id:
-                return True
-        return False
-
     @game.sub_command()
     async def deal(self, inter: disnake.GuildCommandInteraction):
         """Deal a random poker hand"""
@@ -920,65 +784,36 @@ class Games(commands.Cog):
             msg = ""
             for i in range(len(hand)):
                 if i > x: msg += "🎴"
-                else: msg += self.valueNsuit2head(hand[i])
+                else: msg += Poker.valueNsuit2head(hand[i])
                 if i < 4: msg += ", "
                 else: msg += "\n"
             if x == 4:
                 await asyncio.sleep(2)
-                msg += await self.bot.do(self.checkPokerHand, hand)
+                msg += (await self.bot.do(Poker.checkPokerHand, hand))[1]
             await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{}'s hand".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color))
         await self.bot.util.clean(inter, 45)
 
     @game.sub_command()
     async def poker(self, inter: disnake.GuildCommandInteraction):
-        """Play a poker mini-game with other people (1 to 6 players)"""
+        """Play a poker mini-game with other people (2 to 6 players)"""
         await inter.response.defer()
         players = [inter.author]
         view = JoinGame(self.bot, players, 6)
         desc = "Starting in {}s\n{}/6 players"
-        embed = self.bot.util.embed(title="♠️ Multiplayer Poker ♥️", description=desc.format(30, 1), color=self.color)
+        embed = self.bot.util.embed(title="♠️ Multiplayer Poker ♥️", description=desc.format(40, 1), color=self.color)
         msg = await inter.channel.send(embed=embed, view=view)
-        self.bot.doAsync(view.updateTimer(msg, embed, desc, 30))
+        self.bot.doAsync(view.updateTimer(msg, embed, desc, 40))
         await view.wait()
-        if len(players) > 6: players = players[:6]
         await msg.delete()
-        # game start
-        draws = []
-        while len(draws) < 3 + 2 * len(players):
-            card = str(random.randint(2, 14)) + random.choice(["D", "S", "H", "C"])
-            if card not in draws:
-                draws.append(card)
-        for s in range(-1, 5):
-            msg = ":spy: Dealer \▫️ "
-            n = s - 2
-            for j in range(0, 3):
-                if j > n: msg += "🎴"
-                else: msg += self.valueNsuit2head(draws[j])
-                if j < 2: msg += ", "
-                else: msg += "\n"
-            n = max(1, s)
-            for x, p in enumerate(players):
-                msg += "{} {} \▫️ ".format(self.bot.emote.get(str(x+1)), self.pokerNameStrip(p.display_name))
-                if s == 4:
-                    highest = self.highestCard(draws[3+2*x:5+2*x])
-                for j in range(0, 2):
-                    if j > s: msg += "🎴"
-                    elif s == 4 and draws[3+j+2*x] == highest: msg += "__" + self.valueNsuit2head(draws[3+j+2*x]) + "__"
-                    else: msg += self.valueNsuit2head(draws[3+j+2*x])
-                    if j == 0: msg += ", "
-                    else:
-                        if s == 4:
-                            msg += " \▫️ "
-                            hand = draws[0:3] + draws[3+2*x:5+2*x]
-                            hstr = await self.bot.do(self.checkPokerHand, hand)
-                            if hstr.startswith("**Highest"):
-                                msg += "**Highest card is {}**".format(self.valueNsuit2head(self.highestCard(draws[3+2*x:5+2*x])))
-                            else:
-                                msg += hstr
-                        msg += "\n"
-            await inter.edit_original_message(embed=self.bot.util.embed(title="♠️ Multiplayer Poker ♥️", description=msg, color=self.color))
-            await asyncio.sleep(2)
-        await self.bot.util.clean(inter, 45)
+        if len(players) == 1:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="♠️ Multiplayer Poker ♥️", description="Error, at least two Players are required", color=self.color))
+        else:
+            embed = self.bot.util.embed(title="♠️ Multiplayer Poker ♥️", description="Initialization", footer="Game limited to 3 minutes", color=self.color)
+            view = Poker(self.bot, players, embed)
+            await view.update(inter, init=True)
+            await view.wait()
+            await view.final()
+        await self.bot.util.clean(inter, 60)
 
     @game.sub_command()
     async def blackjack(self, inter: disnake.GuildCommandInteraction):
@@ -992,7 +827,7 @@ class Games(commands.Cog):
         self.bot.doAsync(view.updateTimer(msg, embed, desc, 30))
         await view.wait()
         await msg.delete()
-        embed = self.bot.util.embed(title="♠️ Multiplayer Blackjack ♥️", description="Initialization", footer="Game limited to 4 minutes", color=self.color, inline=False)
+        embed = self.bot.util.embed(title="♠️ Multiplayer Blackjack ♥️", description="Initialization", footer="Game limited to 4 minutes", color=self.color)
         view = Blackjack(self.bot, players, embed)
         await view.update(inter, init=True)
         await view.wait()

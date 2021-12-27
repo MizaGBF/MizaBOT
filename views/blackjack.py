@@ -65,7 +65,8 @@ class Blackjack(BaseView):
             case 0: msg += " Score is **{}**".format(score)
             case 1: msg += " Stopped at **{}**".format(score)
             case 2: msg += " **Blackjack**"
-            case 3: msg += " **Lost**"
+            case 3: msg += " Reached **21**"
+            case 4: msg += " **Lost**"
         return msg
 
     """getWinner()
@@ -79,7 +80,7 @@ class Blackjack(BaseView):
         winner = []
         best = 0
         for i, p in enumerate(self.players):
-            if self.hands[i][0] == 3:
+            if self.hands[i][0] == 4:
                 continue
             else:
                 score = 0
@@ -87,6 +88,7 @@ class Blackjack(BaseView):
                     if card[:-1] == "1" and score < 11: score += 11
                     elif int(card[:-1]) >= 10: score += 10
                     else: score += int(card[:-1])
+                if score == 21 and len(self.hands[i][1]) == 2: score = 22
                 if score == best:
                     winner.append(p)
                 elif score > best:
@@ -158,8 +160,10 @@ class Blackjack(BaseView):
                 if card[:-1] == "1" and score < 11: score += 11
                 elif int(card[:-1]) >= 10: score += 10
                 else: score += int(card[:-1])
-            if score == 21: self.hands[self.state][0] = 2
-            elif score > 21: self.hands[self.state][0] = 3
+            if score == 21:
+                if len(self.hands[self.state][1]) == 2: self.hands[self.state][0] = 2
+                else: self.hands[self.state][0] = 3
+            elif score > 21: self.hands[self.state][0] = 4
         current_state = self.state
         while True:
             self.state = (self.state + 1) % len(self.players)

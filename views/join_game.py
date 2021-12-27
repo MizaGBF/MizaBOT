@@ -39,7 +39,6 @@ class JoinGame(BaseView):
     async def updateTimer(self, msg, embed, desc, limit):
         timer = self.bot.util.JST() + timedelta(seconds=limit)
         while True:
-            print("hello world")
             await asyncio.sleep(1)
             c = self.bot.util.JST()
             if c >= timer or len(self.players) >= self.limit:
