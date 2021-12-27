@@ -30,21 +30,17 @@ class Reminder(commands.Cog):
         try:
             send = {}
             c = self.bot.util.JST() + timedelta(seconds=30)
-            keys = list(self.bot.data.save['reminders'].keys())
-            for r in keys:
-                di = 0
-                while di < len(self.bot.data.save['reminders'][r]):
-                    if c > self.bot.data.save['reminders'][r][di][0]:
-                        if r not in send: send[r] = []
+            for k, v in list(self.bot.data.save['reminders'].items()):
+                for i, r in enumerate(v):
+                    if c > r[0]:
+                        if k not in send: send[k] = []
                         with self.bot.data.lock:
-                            send[r].append(self.bot.data.save['reminders'][r][di][1][:1900])
-                            self.bot.data.save['reminders'][r].pop(di)
+                            send[k].append(r[1][:1900])
+                            self.bot.data.save['reminders'][k].pop(i)
                             self.bot.data.pending = True
-                    else:
-                        di += 1
-                if len(self.bot.data.save['reminders'][r]) == 0:
+                if len(v) == 0:
                     with self.bot.data.lock:
-                        self.bot.data.save['reminders'].pop(r)
+                        self.bot.data.save['reminders'].pop(k)
                         self.bot.data.pending = True
             return send
         except:
@@ -72,7 +68,7 @@ class Reminder(commands.Cog):
             except Exception as e:
                 await self.bot.sendError('remindertask', e)
                 await asyncio.sleep(200)
-            await asyncio.sleep(40)
+            await asyncio.sleep(50)
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
