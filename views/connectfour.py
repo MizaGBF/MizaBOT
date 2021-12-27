@@ -107,18 +107,34 @@ class ConnectFour(BaseView):
         for c in range(4):
             for r in range(6):
                 if self.grid[c + r * 7] == piece and self.grid[c + 1 + r * 7] == piece and self.grid[c + 2 + r * 7] == piece and self.grid[c + 3 + r * 7] == piece:
+                    self.grid[c + r * 7] += 10
+                    self.grid[c + 1 + r * 7] += 10
+                    self.grid[c + 2 + r * 7] += 10
+                    self.grid[c + 3 + r * 7] += 10
                     return True
         for c in range(7):
             for r in range(3):
                 if self.grid[c + r * 7] == piece and self.grid[c + (r + 1) * 7] == piece and self.grid[c + (r + 2) * 7] == piece and self.grid[c + (r + 3) * 7] == piece:
+                    self.grid[c + r * 7] += 10
+                    self.grid[c + (r + 1) * 7] += 10
+                    self.grid[c + (r + 2) * 7] += 10
+                    self.grid[c + (r + 3) * 7] += 10
                     return True
         for c in range(4):
             for r in range(3):
                 if self.grid[c + r * 7] == piece and self.grid[c + 1 + (r + 1) * 7] == piece and self.grid[c + 2 + (r + 2) * 7] == piece and self.grid[c + 3 + (r + 3) * 7] == piece:
+                    self.grid[c + r * 7] += 10
+                    self.grid[c + 1 + (r + 1) * 7] += 10
+                    self.grid[c + 2 + (r + 2) * 7] += 10
+                    self.grid[c + 3 + (r + 3) * 7] += 10
                     return True
         for c in range(4):
             for r in range(3, 6):
                 if self.grid[c + r * 7] == piece and self.grid[c + 1 + (r - 1) * 7] == piece and self.grid[c + 2 + (r - 2) * 7] == piece and self.grid[c + 3 + (r - 3) * 7] == piece:
+                    self.grid[c + r * 7] += 10
+                    self.grid[c + 1 + (r - 1) * 7] += 10
+                    self.grid[c + 2 + (r - 2) * 7] += 10
+                    self.grid[c + 3 + (r - 3) * 7] += 10
                     return True
         return False
 
@@ -135,4 +151,4 @@ class ConnectFour(BaseView):
             for c in range(7):
                 msg += "{} ".format(self.grid[c + r * 7])
             msg += "\n"
-        return msg.replace('0 ', ':blue_circle:').replace('1 ', ':red_circle:').replace('2 ', ':yellow_circle:') + ":one::two::three::four::five::six::seven:"
+        return msg.replace('10 ', ':blue_circle:').replace('11 ', ':brown_circle:').replace('12 ', ':orange_circle:').replace('0 ', ':blue_circle:').replace('1 ', ':red_circle:').replace('2 ', ':yellow_circle:') + ":one::two::three::four::five::six::seven:"
