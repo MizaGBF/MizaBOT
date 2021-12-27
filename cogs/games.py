@@ -11,6 +11,7 @@ from views.join_game import JoinGame
 from views.tictactoe import TicTacToe
 from views.connectfour import ConnectFour
 from views.battleship import BattleShip
+from views.blackjack import Blackjack
 
 # ----------------------------------------------------------------------------------------------------------------
 # Games Cog
@@ -990,59 +991,12 @@ class Games(commands.Cog):
         msg = await inter.channel.send(embed=embed, view=view)
         self.bot.doAsync(view.updateTimer(msg, embed, desc, 30))
         await view.wait()
-        if len(players) > 6: players = players[:6]
         await msg.delete()
-        # game start
-        # state: 0 = playing card down, 1 = playing card up, 2 = lost, 3 = won, 4 = blackjack
-        status = [{'name':'Dealer', 'score':0, 'cards':[], 'state':0}]
-        for p in players:
-            status.append({'name':p.display_name, 'score':0, 'cards':[], 'state':0})
-        deck = []
-        kind = ["D", "S", "H", "C"]
-        for i in range(51):
-            deck.append('{}{}'.format((i % 13) + 1, kind[i // 13]))
-        
-        done = 0
-        while done < len(status):
-            msg = ""
-            for p in range(len(status)):
-                if status[p]['state'] == 1:
-                    c = deck[0]
-                    deck = deck[1:]
-                    value = int(c[:-1])
-                    if value >= 10: value = 10
-                    elif value == 1 and status[p]['score'] <= 10: value = 11
-                    if status[p]['score'] + value > 21:
-                        status[p]['state'] = 2
-                        done += 1
-                    elif status[p]['score'] + value == 21:
-                        if len(status[p]['cards']) == 1: status[p]['state'] = 4
-                        else: status[p]['state'] = 3
-                        status[p]['score'] += value
-                        done += 1
-                    else:
-                        status[p]['score'] += value
-                    status[p]['cards'].append(c)
-                if p == 0: msg += ":spy: "
-                else: msg += "{} ".format(self.bot.emote.get(str(p)))
-                msg += self.pokerNameStrip(status[p]['name'])
-                msg += " \▫️ "
-                for i in range(len(status[p]['cards'])):
-                    msg += "{}".format(status[p]['cards'][i].replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("10", "tmp").replace("1", "A").replace("tmp", "10"))
-                    if i == len(status[p]['cards']) - 1 and status[p]['state'] == 0: msg += ", 🎴"
-                    elif i < len(status[p]['cards']) - 1: msg += ", "
-                if len(status[p]['cards']) == 0: msg += "🎴"
-                if status[p]['state'] == 0: status[p]['state'] = 1
-                elif status[p]['state'] == 1: status[p]['state'] = 0
-                msg += " \▫️ "
-                match status[p]['state']:
-                    case 4: msg += "**Blackjack**\n"
-                    case 3: msg += "**21**\n"
-                    case 2: msg += "Best {}\n".format(status[p]['score'])
-                    case _: msg += "{}\n".format(status[p]['score'])
-            await inter.edit_original_message(embed=self.bot.util.embed(title="♠️ Multiplayer Blackjack ♥️", description=msg, color=self.color))
-            await asyncio.sleep(2)
-        await self.bot.util.clean(inter, 45)
+        embed = self.bot.util.embed(title="♠️ Multiplayer Blackjack ♥️", description="Initialization", footer="Game limited to 4 minutes", color=self.color, inline=False)
+        view = Blackjack(self.bot, players, embed)
+        await view.update(inter, init=True)
+        await view.wait()
+        await self.bot.util.clean(inter, 60)
 
     @game.sub_command()
     async def tictactoe(self, inter: disnake.GuildCommandInteraction):
