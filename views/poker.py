@@ -21,7 +21,7 @@ class PokerSub(BaseView):
     parent: the Poker view
     """
     def __init__(self, bot, parent):
-        super().__init__(bot, timeout=480)
+        super().__init__(bot, timeout=120)
         self.parent = parent
 
     """do()
@@ -92,12 +92,12 @@ class Poker(BaseView):
     bot: a pointer to the bot for ease of access
     players: list of Players
     embed: disnake.Embed to edit
+    remaining: integer, remaining number of rounds, put 0 to ignore the round system
     """
-    def __init__(self, bot, players : list, embed : disnake.Embed):
-        super().__init__(bot, timeout=180)
+    def __init__(self, bot, players : list, embed : disnake.Embed, remaining : int = 0):
+        super().__init__(bot, timeout=120)
         self.state = 0
         self.players = players
-        random.shuffle(self.players)
         self.embed = embed
         self.deck = []
         kind = ["D", "S", "H", "C"]
@@ -115,6 +115,8 @@ class Poker(BaseView):
             self.subembeds.append(self.bot.util.embed(title="♠️ {}'s hand ♥".format(p.display_name), description="Initialization", color=self.embed.color))
             self.updateSubEmbed(i)
         self.max_state = 3 + len(self.players) * 2
+        self.winners = []
+        self.remaining = remaining
 
     """update()
     Update the embed
@@ -131,7 +133,7 @@ class Poker(BaseView):
             case 1: self.embed.description += "{}, {}, 🎴\n".format(Poker.valueNsuit2head(self.dealer[0]), Poker.valueNsuit2head(self.dealer[1]))
             case _: self.embed.description += "{}, {}, {}\n".format(Poker.valueNsuit2head(self.dealer[0]), Poker.valueNsuit2head(self.dealer[1]), Poker.valueNsuit2head(self.dealer[2]))
         s = self.state - 3
-        winner = []
+        self.winners = []
         best = 0
         for i, p in enumerate(self.players):
             if s < 0:
@@ -143,24 +145,28 @@ class Poker(BaseView):
                 if hs <= self.min_value:
                     hs = int(Poker.highestCard(self.hands[i][1])[:-1])
                     hstr += ", Best in hand is **{}**".format(Poker.value2head(Poker.highestCard(self.hands[i][1]).replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️")))
-                if hs == best: winner.append(p)
+                if hs == best: self.winners.append(p)
                 elif hs > best:
                     best = hs
-                    winner = [p]
+                    self.winners = [p]
                 self.embed.description += "{} {} \▫️ {}, {}, {}\n".format(self.bot.emote.get(str(i+1)), (p.display_name if len(p.display_name) <= 10 else p.display_name[:10] + "..."), Poker.valueNsuit2head(self.hands[i][1][0]), Poker.valueNsuit2head(self.hands[i][1][1]), hstr)
             s -= 2
         if self.state == 0:
             self.embed.description += "Waiting for all players to make their choices"
         elif self.state >= self.max_state - 1:
-            match len(winner):
+            match len(self.winners):
                 case 0: pass # shouldn't happen
                 case 1:
-                    self.embed.description += "**{}** is the winner".format(winner[0].display_name)
+                    self.embed.description += "**{}** is the winner".format(self.winners[0].display_name)
                 case _:
                     self.embed.description += "It's a **draw** between "
-                    for p in winner:
+                    for p in self.winners:
                         self.embed.description += "{}, ".format(p.display_name)
                     self.embed.description = self.embed.description[:-2]
+            match self.remaining:
+                case 0: pass
+                case 1: self.embed.description += "\n*Please wait for the results*"
+                case _: self.embed.description += "\n*Rext round in 10 seconds...*"
         if init:
             await inter.edit_original_message(embed=self.embed, view=self)
             self.message = await inter.original_message()

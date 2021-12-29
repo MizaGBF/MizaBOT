@@ -320,7 +320,7 @@ class Games(commands.Cog):
         await self._roll(inter, ("{} is sparking...", "{} sparked"), 3, count=300, mode='ten', legfest=self.checkLegfest(double))
 
     @roll.sub_command()
-    async def count(self, inter: disnake.GuildCommandInteraction, num : int = commands.Param(description='Number of rolls', default=10, ge=1, le=600), double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
+    async def count(self, inter: disnake.GuildCommandInteraction, num : int = commands.Param(description='Number of rolls', ge=1, le=600), double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
         """Simulate a specific amount of draw"""
         await self._roll(inter, ("{}" + " is rolling {} times...".format(num), "{} " + "rolled {} times".format(num)), 3, count=num, mode='ten', legfest=self.checkLegfest(double))
 
@@ -793,7 +793,7 @@ class Games(commands.Cog):
         await self.bot.util.clean(inter, 45)
 
     @game.sub_command()
-    async def poker(self, inter: disnake.GuildCommandInteraction):
+    async def poker(self, inter: disnake.GuildCommandInteraction, max_round : int = commands.Param(description="Number of rounds to play", ge=1, le=5, default=1)):
         """Play a poker mini-game with other people (2 to 6 players)"""
         await inter.response.defer()
         players = [inter.author]
@@ -807,11 +807,25 @@ class Games(commands.Cog):
         if len(players) == 1:
             await inter.edit_original_message(embed=self.bot.util.embed(title="♠️ Multiplayer Poker ♥️", description="Error, at least two Players are required", color=self.color))
         else:
-            embed = self.bot.util.embed(title="♠️ Multiplayer Poker ♥️", description="Initialization", footer="Game limited to 3 minutes", color=self.color)
-            view = Poker(self.bot, players, embed)
-            await view.update(inter, init=True)
-            await view.wait()
-            await view.final()
+            random.shuffle(players) # randomize the player order
+            win_tracker = {} # track how many wins each player got
+            for p in players: # initialize
+                win_tracker[p.id] = [(p.display_name if len(p.display_name) <= 10 else p.display_name[:10] + "..."), 0]
+            for i in range(0, max_round): # for loop, the game is composed of 3 rounds
+                embed = self.bot.util.embed(title="♠️ Multiplayer Poker ♥️ ▫️ Round {}/{}".format(i+1, max_round), description="Initialization", footer="Round limited to 2 minutes", color=self.color)
+                view = Poker(self.bot, players, embed, (0 if max_round == 1 else (max_round - i)))
+                await view.update(inter, init=True)
+                await view.wait()
+                await view.final()
+                for p in view.winners: # get the winner and increase their counts
+                    win_tracker[p.id][1] += 1
+                await asyncio.sleep(8)
+            if max_round > 1:
+                win_tracker = dict(sorted(win_tracker.items(), key=lambda item: item[1], reverse=True)) # sort in reverse order
+                msg = ""
+                for id, s in win_tracker.items(): # make a string
+                    msg += "**{}** ▫️ **{}** win(s)\n".format(s[0], s[1])
+                await inter.edit_original_message(embed=self.bot.util.embed(title="♠️ Multiplayer Poker ♥️ ▫️ Results", description=msg, color=self.color)) # post it
         await self.bot.util.clean(inter, 60)
 
     @game.sub_command()
