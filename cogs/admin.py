@@ -543,7 +543,7 @@ class Admin(commands.Cog):
         if self.bot.gbf.remove(num):
             await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
         else:
-           await inter.response.send_message("Invalid id", ephemeral=True)
+            await inter.response.send_message("Invalid id", ephemeral=True)
 
     @account.sub_command()
     async def uid(self, inter: disnake.GuildCommandInteraction, num : int, uid : int = -1):
@@ -556,6 +556,8 @@ class Admin(commands.Cog):
                 await inter.response.send_message('debug', embed=self.bot.util.embed(title="Account #{} current UID".format(num), description="`{}`".format(acc[0]), color=self.color), ephemeral=True)
         elif not self.bot.gbf.update(num, uid=uid):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid parameter {}".format(uid), color=self.color), ephemeral=True)
+        else:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
 
     @account.sub_command()
     async def ck(self, inter: disnake.GuildCommandInteraction, num : int, *, ck : str = ""):
@@ -568,6 +570,8 @@ class Admin(commands.Cog):
                 await inter.response.send_message('debug', embed=self.bot.util.embed(title="Account #{} current CK".format(num), description="`{}`".format(acc[1]), color=self.color), ephemeral=True)
         elif not self.bot.gbf.update(num, ck=ck):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid parameter {}".format(ck), color=self.color), ephemeral=True)
+        else:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
 
     @account.sub_command()
     async def ua(self, inter: disnake.GuildCommandInteraction, num : int, *, ua : str = ""):
@@ -580,6 +584,8 @@ class Admin(commands.Cog):
                 await inter.response.send_message('debug', embed=self.bot.util.embed(title="Account #{} current UA".format(num), description="`{}`".format(acc[2]), color=self.color), ephemeral=True)
         elif not self.bot.gbf.update(num, ua=ua):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid parameter {}".format(ua), color=self.color), ephemeral=True)
+        else:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
 
     @_owner.sub_command_group()
     async def db(self, inter: disnake.GuildCommandInteraction):

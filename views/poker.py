@@ -105,6 +105,7 @@ class Poker(BaseView):
             self.deck.append('{}{}'.format((i % 13) + 2, kind[i // 13]))
         random.shuffle(self.deck)
         self.dealer = [self.deck.pop(), self.deck.pop(), self.deck.pop()]
+        self.min_value = Poker.calculateMinValue(self.dealer)
         self.hands = []
         for i in range(len(self.players)):
             self.hands.append([11, [self.deck.pop(), self.deck.pop()]])
@@ -113,6 +114,7 @@ class Poker(BaseView):
         for i, p in enumerate(self.players):
             self.subembeds.append(self.bot.util.embed(title="♠️ {}'s hand ♥".format(p.display_name), description="Initialization", color=self.embed.color))
             self.updateSubEmbed(i)
+        self.max_state = 3 + len(self.players) * 2
 
     """update()
     Update the embed
@@ -125,31 +127,31 @@ class Poker(BaseView):
     async def update(self, inter, init=False):
         self.embed.description = ":spy: Dealer ▫️ "
         match self.state:
-            case 0: self.embed.description += "🎴, 🎴, 🎴\n"
-            case 1: self.embed.description += "🎴, 🎴, 🎴\n"
-            case 2: self.embed.description += "{}, 🎴, 🎴\n".format(Poker.valueNsuit2head(self.dealer[0]))
-            case 3: self.embed.description += "{}, {}, 🎴\n".format(Poker.valueNsuit2head(self.dealer[0]), Poker.valueNsuit2head(self.dealer[1]))
+            case 0: self.embed.description += "{}, 🎴, 🎴\n".format(Poker.valueNsuit2head(self.dealer[0]))
+            case 1: self.embed.description += "{}, {}, 🎴\n".format(Poker.valueNsuit2head(self.dealer[0]), Poker.valueNsuit2head(self.dealer[1]))
             case _: self.embed.description += "{}, {}, {}\n".format(Poker.valueNsuit2head(self.dealer[0]), Poker.valueNsuit2head(self.dealer[1]), Poker.valueNsuit2head(self.dealer[2]))
-        if self.state == 0:
-            for i, p in enumerate(self.players):
+        s = self.state - 3
+        winner = []
+        best = 0
+        for i, p in enumerate(self.players):
+            if s < 0:
                 self.embed.description += "{} {} \▫️ 🎴, 🎴\n".format(self.bot.emote.get(str(i+1)), (p.display_name if len(p.display_name) <= 10 else p.display_name[:10] + "..."))
-            self.embed.description += "Waiting for all players to make their choices"
-        elif self.state <= 4:
-            for i, p in enumerate(self.players):
-                self.embed.description += "{} {} \▫️ 🎴, 🎴\n".format(self.bot.emote.get(str(i+1)), (p.display_name if len(p.display_name) <= 10 else p.display_name[:10] + "..."))
-        elif self.state == 5:
-            for i, p in enumerate(self.players):
+            elif s == 0:
                 self.embed.description += "{} {} \▫️ {}, 🎴\n".format(self.bot.emote.get(str(i+1)), (p.display_name if len(p.display_name) <= 10 else p.display_name[:10] + "..."), Poker.valueNsuit2head(self.hands[i][1][0]))
-        else:
-            winner = []
-            best = 0
-            for i, p in enumerate(self.players):
+            else:
                 hs, hstr = Poker.checkPokerHand(self.dealer + self.hands[i][1])
+                if hs <= self.min_value:
+                    hs = int(Poker.highestCard(self.hands[i][1])[:-1])
+                    hstr += ", Best in hand is **{}**".format(Poker.value2head(Poker.highestCard(self.hands[i][1]).replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️")))
                 if hs == best: winner.append(p)
                 elif hs > best:
                     best = hs
                     winner = [p]
                 self.embed.description += "{} {} \▫️ {}, {}, {}\n".format(self.bot.emote.get(str(i+1)), (p.display_name if len(p.display_name) <= 10 else p.display_name[:10] + "..."), Poker.valueNsuit2head(self.hands[i][1][0]), Poker.valueNsuit2head(self.hands[i][1][1]), hstr)
+            s -= 2
+        if self.state == 0:
+            self.embed.description += "Waiting for all players to make their choices"
+        elif self.state >= self.max_state - 1:
             match len(winner):
                 case 0: pass # shouldn't happen
                 case 1:
@@ -196,13 +198,13 @@ class Poker(BaseView):
     def updateSubEmbed(self, index):
         self.subembeds[index].description = "{} {} ▫️ {} {}\n".format(Poker.valueNsuit2head(self.hands[index][1][0]), ("**Holding**" if self.hands[index][0] in [10, 11] else ""), Poker.valueNsuit2head(self.hands[index][1][1]), ("**Holding**" if self.hands[index][0] in [1, 11] else ""))
         if self.hands[index][0] >= 100:
-            self.subembeds[index].description += "**Your hand is locked**\nPlease wait for other players to confirm\n"
+            self.subembeds[index].description += "**Your hand is locked**\nYou can dismiss this message"
 
     """final()
     Coroutine to announce the results
     """
     async def final(self):
-        while self.state < 7:
+        while self.state < self.max_state:
             await asyncio.sleep(1)
             await self.update(None)
             self.state += 1
@@ -237,6 +239,27 @@ class Poker(BaseView):
     """
     def valueNsuit2head(value):
         return value.replace("D", "\♦️").replace("S", "\♠️").replace("H", "\♥️").replace("C", "\♣️").replace("11", "J").replace("12", "Q").replace("13", "K").replace("14", "A")
+
+    """calculateMinValue()
+    Returns the value of the deal cards
+    
+    Parameters
+    ----------
+    dealer: List of card to check
+    
+    Returns
+    --------
+    int : Strength value
+    """
+    def calculateMinValue(dealer):
+        value_counts = {}
+        for c in dealer:
+            value_counts[c[:-1]] = value_counts.get(c[:-1], 0) + 1
+        if 3 in value_counts.values():
+            return 300 + int(list(value_counts.keys())[list(value_counts.values()).index(3)])
+        elif 2 in value_counts.values():
+            return 100 + int(list(value_counts.keys())[list(value_counts.values()).index(2)])
+        return int(Poker.highestCard(dealer)[:-1])
 
     """checkPokerHand()
     Check a poker hand strength
@@ -315,8 +338,9 @@ class Poker(BaseView):
     str: Highest card
     """
     def highestCard(selection):
-        for i, c in enumerate(selection):
-            selection[i] = c.zfill(3)
-        last = sorted(selection)[-1]
+        cards = []
+        for c in selection:
+            cards.append(c.zfill(3))
+        last = sorted(cards)[-1]
         if last[0] == '0': last = last[1:]
         return last

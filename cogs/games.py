@@ -247,10 +247,10 @@ class Games(commands.Cog):
                     await asyncio.sleep(1)
                     text = ""
                 if result['extended']:
-                    text += "{} {}\n".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(v[i][0])), v[i][1])
+                    text += "{} {}\n".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(v[0])), v[1])
                 else:
-                    text += "{} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(v[i][0])))
-                counter[v[i][0]] += 1
+                    text += "{} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(v[0])))
+                counter[v[0]] += 1
             title = titles[1].format(inter.author.display_name, len(result['list'])) if (len(result['list']) < 300) else "{} sparked".format(inter.author.display_name)
             await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':inter.author.display_avatar}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
         elif rmode == 2: # ten roll mode
@@ -289,8 +289,7 @@ class Games(commands.Cog):
                         if rolls[item] > 1: msg += " x{}".format(rolls[item])
                         await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name, count), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
                         await asyncio.sleep(0.75)
-                        msg += ", "
-                    msg = msg[:-2]
+                        msg += " "
             if rollOptions.get('mode', '') == 'gachapin': amsg = "Gachapin stopped after **{}** rolls\n".format(len(result['list']))
             elif rollOptions.get('mode', '') == 'mukku': amsg = "Mukku stopped after **{}** rolls\n".format(len(result['list']))
             else: amsg = ""

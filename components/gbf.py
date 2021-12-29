@@ -34,7 +34,7 @@ class GBF():
                 headers['Host'] = 'game.granbluefantasy.jp'
                 headers['Origin'] = 'http://game.granbluefantasy.jp'
                 headers['Referer'] = 'http://game.granbluefantasy.jp/'
-            if "headers" in options: headers = {**headers, **options["headers"]}
+            if "headers" in options: headers = headers | options["headers"]
             id = options.get('account', None)
             if id is not None:
                 acc = self.get(id)
@@ -59,7 +59,11 @@ class GBF():
             if payload is None: req = request.Request(url, headers=headers)
             else:
                 if not options.get('no_base_headers', False) and 'Content-Type' not in headers: headers['Content-Type'] = 'application/json'
-                if 'user_id' in payload and payload['user_id'] == "ID": payload['user_id'] = acc[0]
+                if 'user_id' in payload:
+                    match payload['user_id']:
+                        case "ID": payload['user_id'] = acc[0]
+                        case "SID": payload['user_id'] = str(acc[0])
+                        case "IID": payload['user_id'] = int(acc[0])
                 req = request.Request(url, headers=headers, data=json.dumps(payload).encode('utf-8'))
             timeout = options.get('timeout', None)
             if timeout is None or not isinstance(timeout, int): timeout = 20
