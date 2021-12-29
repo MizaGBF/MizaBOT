@@ -286,10 +286,11 @@ class Util():
             if isinstance(target, tuple):
                 if all or not self.bot.isAuthorized(target[0]):
                     await target[1].delete(delay=delay)
-                    await self.react(target[0].message, '✅') # white check mark
+                    try: await self.react(target[0].message, '✅') # white check mark
+                    except: pass
             elif isinstance(target, disnake.interactions.application_command.ApplicationCommandInteraction):
                 if all or not self.bot.isAuthorized(target):
-                    await asyncio.sleep(delay)
+                    if delay is not None: await asyncio.sleep(delay)
                     await target.edit_original_message(content="{}".format(self.bot.emote.get('lyria')), embed=None, view=None, attachments=[])
         except Exception as e:
             if "Unknown Message" not in str(e):

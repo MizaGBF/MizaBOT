@@ -798,15 +798,16 @@ class Games(commands.Cog):
         await inter.response.defer()
         players = [inter.author]
         view = JoinGame(self.bot, players, 6)
-        desc = "Starting in {}s\n{}/6 players"
+        desc = "**" + str(max_round) + "** Round(s)\nStarting in {}s\n{}/6 players"
         embed = self.bot.util.embed(title="♠️ Multiplayer Poker ♥️", description=desc.format(40, 1), color=self.color)
-        msg = await inter.channel.send(embed=embed, view=view)
+        await inter.edit_original_message(embed=embed, view=view)
+        msg = await inter.original_message()
         self.bot.doAsync(view.updateTimer(msg, embed, desc, 40))
         await view.wait()
-        await msg.delete()
         if len(players) == 1:
             await inter.edit_original_message(embed=self.bot.util.embed(title="♠️ Multiplayer Poker ♥️", description="Error, at least two Players are required", color=self.color))
         else:
+            await msg.delete()
             random.shuffle(players) # randomize the player order
             win_tracker = {} # track how many wins each player got
             for p in players: # initialize
@@ -819,14 +820,15 @@ class Games(commands.Cog):
                 await view.final()
                 for p in view.winners: # get the winner and increase their counts
                     win_tracker[p.id][1] += 1
-                await asyncio.sleep(8)
+                await asyncio.sleep(10)
+                if i < max_round - 1: await view.message.delete()
             if max_round > 1:
                 win_tracker = dict(sorted(win_tracker.items(), key=lambda item: item[1], reverse=True)) # sort in reverse order
                 msg = ""
                 for id, s in win_tracker.items(): # make a string
                     msg += "**{}** ▫️ **{}** win(s)\n".format(s[0], s[1])
-                await inter.edit_original_message(embed=self.bot.util.embed(title="♠️ Multiplayer Poker ♥️ ▫️ Results", description=msg, color=self.color)) # post it
-        await self.bot.util.clean(inter, 60)
+                await view.message.edit(embed=self.bot.util.embed(title="♠️ Multiplayer Poker ♥️ ▫️ Results", description=msg, color=self.color)) # post it
+        await self.bot.util.clean((inter, view.message), 60)
 
     @game.sub_command()
     async def blackjack(self, inter: disnake.GuildCommandInteraction):
