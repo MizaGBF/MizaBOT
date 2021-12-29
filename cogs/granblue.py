@@ -1022,7 +1022,7 @@ class GranblueFantasy(commands.Cog):
             
             gacha_data['ratio'] = data['ratio'][0]['ratio']
             
-            possible_zodiac_wpn = ['Ramulus', 'Dormius', 'Gallinarius', 'Canisius', 'Porculius', 'Rodentius', 'Bovinius']
+            possible_zodiac_wpn = ['Ramulus', 'Dormius', 'Gallinarius', 'Canisius', 'Porculius', 'Rodentius', 'Bovinius', 'Tigrisius']
             gacha_data['list'] = [{'rate':0, 'list':{}}, {'rate':0, 'list':{}}, {'rate':0, 'list':{}}]
             gacha_data['rateup'] = {'zodiac':[]}
             # loop over data
@@ -1088,25 +1088,19 @@ class GranblueFantasy(commands.Cog):
                     if k == 'zodiac':
                         if len(content[1]['rateup']['zodiac']) > 0:
                             description += "{} **Zodiac** ▫️ ".format(self.bot.emote.get('loot'))
-                            comma = False
                             for i in content[1]['rateup'][k]:
-                                if comma: description += ", "
-                                else: comma = True
-                                description += self.bot.util.formatItemElement(i, 1)
+                                description += self.bot.util.formatItemElement(i, 1) + " "
                             description += "\n"
                     else:
                         if len(content[1]['rateup'][k]) > 0:
                             for r in content[1]['rateup'][k]:
                                 if k.lower().find("weapon") != -1: description += "{}**{}%** ▫️ ".format(self.bot.emote.get('sword'), r)
                                 elif k.lower().find("summon") != -1: description += "{}**{}%** ▫️ ".format(self.bot.emote.get('summon'), r)
-                                count = 0
-                                for i in content[1]['rateup'][k][r]:
-                                    if count >= 8 and len(content[1]['rateup'][k][r]) - count > 1:
-                                        description += " and **{} more!**".format(len(content[1]['rateup'][k][r]) - count)
+                                for i, item in enumerate(content[1]['rateup'][k][r]):
+                                    if i >= 8 and len(content[1]['rateup'][k][r]) - i > 1:
+                                        description += " and **{} more!**".format(len(content[1]['rateup'][k][r]) - i)
                                         break
-                                    elif count > 0: description += ", "
-                                    count += 1
-                                    description += self.bot.util.formatItemElement(i, 1)
+                                    description += self.bot.util.formatItemElement(item, 1) + " "
                             description += "\n"
                 await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(content[1]['image']), color=self.color))
         except Exception as e:
