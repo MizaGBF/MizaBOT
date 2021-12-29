@@ -171,14 +171,14 @@ class Poker(BaseView):
         elif self.state >= 0: await self.message.edit(embed=self.embed, view=None)
         else: await self.message.edit(embed=self.embed, view=view)
 
-    """giveup()
-    The stop button coroutine callback.
-    Allow the player to stop.
+    """control()
+    The button making the PokerSub view appears.
+    Allow the player to manage their cards.
     
     Parameters
     ----------
     button: the Discord button
-    button: a Discord interaction
+    interaction: a Discord interaction
     """
     @disnake.ui.button(label='See Your Hand', style=disnake.ButtonStyle.primary)
     async def control(self, button: disnake.ui.Button, interaction: disnake.Interaction):
