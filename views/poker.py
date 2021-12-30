@@ -2,7 +2,6 @@ from . import BaseView
 import disnake
 import random
 import asyncio
-from datetime import timedelta
 
 # ----------------------------------------------------------------------------------------------------------------
 # Poker View
@@ -169,7 +168,7 @@ class Poker(BaseView):
                 case _: self.embed.description += "\n*Next round in 10 seconds...*"
         if init: self.message = await inter.followup.send(content=self.bot.util.players2mentions(self.players), embed=self.embed, view=self)
         elif self.state >= 0: await self.message.edit(embed=self.embed, view=None)
-        else: await self.message.edit(embed=self.embed, view=view)
+        else: await self.message.edit(embed=self.embed, view=self)
 
     """control()
     The button making the PokerSub view appears.

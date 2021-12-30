@@ -12,6 +12,7 @@ from views.connectfour import ConnectFour
 from views.battleship import BattleShip
 from views.blackjack import Blackjack
 from views.poker import Poker
+from views.rockpaperscissor import RPS
 
 # ----------------------------------------------------------------------------------------------------------------
 # Games Cog
@@ -20,7 +21,7 @@ from views.poker import Poker
 # ----------------------------------------------------------------------------------------------------------------
 
 class Games(commands.Cog):
-    """Granblue-themed Games and more."""
+    """Granblue-themed (or not) Games and more."""
     def __init__(self, bot):
         self.bot = bot
         self.color = 0xeb6b34
@@ -913,6 +914,32 @@ class Games(commands.Cog):
             view = BattleShip(self.bot, players, embed)
             await view.update(inter, init=True)
             await view.wait()
+        await self.bot.util.clean(inter, 60)
+
+    @game.sub_command()
+    async def rockpaperscissor(self, inter: disnake.GuildCommandInteraction, bestof : int = commands.Param(description="How many rounds to win", ge=1, le=10, default=1)):
+        """Play a Rock Paper Scissor mini-game with other people (2 players Only)"""
+        await inter.response.defer()
+        players = [inter.author]
+        view = JoinGame(self.bot, players, 2)
+        desc = "Best of **" + str(bestof) + "**\nStarting in {}s\n{}/2 players"
+        embed = self.bot.util.embed(title="🪨 Multiplayer Rock Paper Scissor ✂️", description=desc.format(60, 1), color=self.color)
+        msg = await inter.channel.send(embed=embed, view=view)
+        self.bot.doAsync(view.updateTimer(msg, embed, desc, 60))
+        await view.wait()
+        await msg.delete()
+        if len(players) == 1:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="🪨 Multiplayer Rock Paper Scissor ✂️", description="Error, a 2nd Player is required", color=self.color))
+        else:
+            scores = [0, 0]
+            embed = self.bot.util.embed(title="🪨 Multiplayer Rock Paper Scissor ✂️ ▫️ Best of {}".format(bestof), description="Initialization", footer="Round limited to 60 seconds", color=self.color)
+            while True:
+                view = RPS(self.bot, players, embed, scores, bestof)
+                await view.update(inter, init=True)
+                await view.wait()
+                await view.timeoutCheck(inter)
+                if bestof in scores: break
+                await asyncio.sleep(10)
         await self.bot.util.clean(inter, 60)
 
     @commands.slash_command(default_permission=True, name="random")

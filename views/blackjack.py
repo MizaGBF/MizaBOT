@@ -151,6 +151,7 @@ class Blackjack(BaseView):
     stop: boolean, True for the player to stop, False to draw a card
     """
     def play(self, stop):
+        if self.state == -1: return
         if stop:
             self.hands[self.state][0] = 1
         else:
@@ -172,22 +173,20 @@ class Blackjack(BaseView):
             elif current_state == self.state:
                 self.state = -1
                 break
-        if self.players[self.state].id == self.bot.user.id and self.hands[self.state][0] == 0:
+        if self.state >= 0 and self.players[self.state].id == self.bot.user.id and self.hands[self.state][0] == 0:
             self.playai()
 
-    """draw()
-    The draw button coroutine callback.
-    Allow the player to draw a card.
+    """buttoncallback()
+    Callback for buttons
     
     Parameters
     ----------
-    button: the Discord button
-    button: a Discord interaction
+    interaction: a Discord interaction
+    action: boolean used for self.play()
     """
-    @disnake.ui.button(label='Draw Card', style=disnake.ButtonStyle.success)
-    async def draw(self, button: disnake.ui.Button, interaction: disnake.Interaction):
+    async def buttoncallback(self, interaction: disnake.Interaction, action: bool):
         if self.state >= 0 and self.players[self.state].id == interaction.user.id:
-            self.play(False)
+            self.play(action)
             if self.state >= 0:
                 self.notification = "Turn of **{}**".format(self.players[self.state].display_name)
             else:
@@ -197,6 +196,19 @@ class Blackjack(BaseView):
         else:
             await interaction.response.send_message("It's not your turn to play or you aren't the player", ephemeral=True)
 
+    """draw()
+    The draw button coroutine callback.
+    Allow the player to draw a card.
+    
+    Parameters
+    ----------
+    button: the Discord button
+    interaction: a Discord interaction
+    """
+    @disnake.ui.button(label='Draw Card', style=disnake.ButtonStyle.success)
+    async def draw(self, button: disnake.ui.Button, interaction: disnake.Interaction):
+        await self.buttoncallback(interaction, False)
+
     """giveup()
     The stop button coroutine callback.
     Allow the player to stop.
@@ -204,17 +216,8 @@ class Blackjack(BaseView):
     Parameters
     ----------
     button: the Discord button
-    button: a Discord interaction
+    interaction: a Discord interaction
     """
     @disnake.ui.button(label='Stop', style=disnake.ButtonStyle.danger)
     async def giveup(self, button: disnake.ui.Button, interaction: disnake.Interaction):
-        if self.state >= 0 and self.players[self.state].id == interaction.user.id:
-            self.play(True)
-            if self.state >= 0:
-                self.notification = "Turn of **{}**".format(self.players[self.state].display_name)
-            else:
-                self.notification = "The game ended"
-                self.stopall()
-            await self.update(interaction)
-        else:
-            await interaction.response.send_message("It's not your turn to play or you aren't the player", ephemeral=True)
+        await self.buttoncallback(interaction, True)

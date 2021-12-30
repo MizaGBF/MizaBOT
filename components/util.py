@@ -523,3 +523,22 @@ class Util():
                 return raw.replace(raw[:3], self.itemEmoteElement[raw[:3]])
             case _: # undefined, do nothing
                 return raw
+
+    """players2mentions()
+    Take a list of users and return a string mentionning all of them.
+    Used for Games.
+    
+    Parameters
+    ----------
+    players: list of disnake.User/Member
+    
+    Returns
+    --------
+    str: resulting string
+    """
+    def players2mentions(self, players : list):
+        s = ""
+        for p in players:
+            s += p.mention + " "
+        if len(s) > 0: s = s[:-1]
+        return s
