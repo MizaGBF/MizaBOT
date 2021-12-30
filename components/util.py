@@ -373,7 +373,7 @@ class Util():
     ----------
     inter: The command interaction
     target: String, which can be:
-        - Empty (the author GBF ID will be used if set, doesn't work if you set ctx to a channel)
+        - Empty (the author GBF ID will be used if set, doesn't work if you set inter to a channel)
         - Positive integer, representing a GBF ID
         - A Discord Mention (<@discord_id> or <@!discord_id>)
     

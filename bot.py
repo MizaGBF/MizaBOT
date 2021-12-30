@@ -39,7 +39,7 @@ class MizaBot(commands.Bot):
             "Revamped the gacha system",
             "Renamed the 'count' option of `/roll count` into 'num'",
             "All self-assignable role commands moved under `/role`",
-            "Added Connect Four and Battle Ship to `/game`",
+            "Added Connect Four, Battle Ship and Rock Paper Scissor to `/game`",
             "Upgraded the Blackjack and Poker minigames"
         ]
         self.running = True # is False when the bot is shutting down
@@ -145,7 +145,7 @@ class MizaBot(commands.Bot):
             exit(0)
 
     """isAuthorized()
-    Check if the command is authorized to be invoked in this channel
+    Check if the channel is set as Authorized by the auto clean up system.
     
     Parameters
     ----------
@@ -228,29 +228,6 @@ class MizaBot(commands.Bot):
         if inter.author.id == self.owner.id: # must be defined in config.json
             return True
         return False
-
-    """callCommand()
-    Invoke a command from another command
-    
-    Parameters
-    ----------
-    ctx: Command context
-    command: New command to be called
-    *args: New command parameters
-    **kargs: New command keyword parameters
-    
-    Raises
-    ------
-    Exception: If the command isn't found
-    """
-    async def callCommand(self, ctx, command, *args, **kwargs): #call a command from another cog or command
-        for cn in self.cogs:
-            cmds = self.get_cog(cn).get_commands()
-            for cm in cmds:
-                if cm.name == command:
-                    await ctx.invoke(cm, *args, **kwargs)
-                    return
-        raise Exception("Command `{}` not found".format(command))
 
     """send()
     Send a message to a registered channel (must be set in config.json)
@@ -510,28 +487,28 @@ class MizaBot(commands.Bot):
     
     Parameters
     ----------
-    ctx: Command context or interaction
+    inter: Command context or interaction
     
     Returns
     --------
     bool: True if the command can be processed, False if not
     """
-    async def global_check(self, ctx): # called whenever a command is used
+    async def global_check(self, inter): # called whenever a command is used
         if not self.running: return False # do nothing if the bot is stopped
-        if ctx.guild is None: # if none, the command has been sent via a direct message
+        if inter.guild is None: # if none, the command has been sent via a direct message
             return False # so we ignore
         try:
-            id = str(ctx.guild.id)
-            if self.ban.check(ctx.author.id, self.ban.USE_BOT):
+            id = str(inter.guild.id)
+            if self.ban.check(inter.author.id, self.ban.USE_BOT):
                 return False
-            elif id in self.data.save['banned_guilds'] or self.ban.check(ctx.guild.owner_id, self.ban.OWNER): # ban check
-                await ctx.guild.leave() # leave the server if banned
+            elif id in self.data.save['banned_guilds'] or self.ban.check(inter.guild.owner_id, self.ban.OWNER): # ban check
+                await inter.guild.leave() # leave the server if banned
                 return False
-            elif ctx.guild.owner_id in self.data.config['banned']: # banned owner defined in config.json
+            elif inter.guild.owner_id in self.data.config['banned']: # banned owner defined in config.json
                 return False
-            elif not ctx.channel.permissions_for(ctx.author).send_messages:
+            elif not inter.channel.permissions_for(inter.author).send_messages:
                 return False
-            elif not ctx.channel.permissions_for(ctx.me).send_messages:
+            elif not inter.channel.permissions_for(inter.me).send_messages:
                 return False
             return True
         except Exception as e:
