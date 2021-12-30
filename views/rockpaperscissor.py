@@ -39,7 +39,7 @@ class RPS(BaseView):
     init: if True, it uses a different method (only used from the command call itself)
     """
     async def update(self, inter, init=False):
-        if not self.won:
+        if self.state[0] == -1 or self.state[1] == -1:
             self.embed.description = ""
             for i, p in enumerate(self.players):
                 self.embed.description += "**{}** ▫️ ".format(p.display_name)
@@ -57,6 +57,7 @@ class RPS(BaseView):
             if self.state[0] == self.state[1]:
                 self.embed.description += "This round is a **draw**\n"
                 self.embed.description += "**Next round in 10 seconds...**"
+                self.won = True
             else:
                 v = self.state[0] * 10 + self.state[1]
                 win = None
