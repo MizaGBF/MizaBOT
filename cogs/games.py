@@ -839,8 +839,7 @@ class Games(commands.Cog):
         view = JoinGame(self.bot, players, 6)
         desc = "Starting in {}s\n{}/6 players"
         embed = self.bot.util.embed(title="♠️ Multiplayer Blackjack ♥️", description=desc.format(30, 1), color=self.color)
-        await inter.edit_original_message(embed=embed, view=view)
-        msg = await inter.original_message()
+        msg = await inter.channel.send(embed=embed, view=view)
         self.bot.doAsync(view.updateTimer(msg, embed, desc, 30))
         await view.wait()
         await msg.delete()
@@ -848,7 +847,7 @@ class Games(commands.Cog):
         view = Blackjack(self.bot, players, embed)
         await view.update(inter, init=True)
         await view.wait()
-        await self.bot.util.clean((inter, view.message), 60)
+        await self.bot.util.clean(inter, 60)
 
     @game.sub_command()
     async def tictactoe(self, inter: disnake.GuildCommandInteraction):
@@ -858,21 +857,19 @@ class Games(commands.Cog):
         view = JoinGame(self.bot, players, 2)
         desc = "Starting in {}s\n{}/2 players"
         embed = self.bot.util.embed(title=":x: Multiplayer Tic Tac Toe :o:", description=desc.format(60, 1), color=self.color)
-        await inter.edit_original_message(embed=embed, view=view)
-        msg = await inter.original_message()
+        msg = await inter.channel.send(embed=embed, view=view)
         self.bot.doAsync(view.updateTimer(msg, embed, desc, 60))
         await view.wait()
+        await msg.delete()
         if len(players) == 1:
             await inter.edit_original_message(embed=self.bot.util.embed(title=":x: Multiplayer Tic Tac Toe :o:", description="Error, a 2nd Player is required", color=self.color))
-            await self.bot.util.clean(inter, 60)
         else:
-            await msg.delete()
             random.shuffle(players)
             embed = self.bot.util.embed(title=":x: Multiplayer Tic Tac Toe :o:", description=":x: {} :o: {}\nTurn of **{}**".format(view.players[0].display_name, view.players[1].display_name, view.players[0].display_name), footer="Game limited at 3 minutes", color=self.color)
             view = TicTacToe(self.bot, players, embed)
-            msg = await inter.followup.send(content=self.bot.util.players2mentions(players), embed=embed, view=view)
+            await inter.edit_original_message(embed=embed, view=view)
             await view.wait()
-            await self.bot.util.clean((inter, msg), 60)
+        await self.bot.util.clean(inter, 60)
 
     @game.sub_command()
     async def connectfour(self, inter: disnake.GuildCommandInteraction):
@@ -882,21 +879,19 @@ class Games(commands.Cog):
         view = JoinGame(self.bot, players, 2)
         desc = "Starting in {}s\n{}/2 players"
         embed = self.bot.util.embed(title=":red_circle: Multiplayer Connect Four :yellow_circle:", description=desc.format(60, 1), color=self.color)
-        await inter.edit_original_message(embed=embed, view=view)
-        msg = await inter.original_message()
+        msg = await inter.channel.send(embed=embed, view=view)
         self.bot.doAsync(view.updateTimer(msg, embed, desc, 60))
         await view.wait()
+        await msg.delete()
         if len(players) == 1:
             await inter.edit_original_message(embed=self.bot.util.embed(title=":red_circle: Multiplayer Connect Four :yellow_circle:", description="Error, a 2nd Player is required", color=self.color))
-            await self.bot.util.clean(inter, 60)
         else:
-            await msg.delete()
             random.shuffle(players)
             embed = self.bot.util.embed(title=":red_circle: Multiplayer Connect Four :yellow_circle:", description=":red_circle: {} :yellow_circle: {}".format(players[0].display_name, players[1].display_name), footer="Game limited to 8 minutes", color=self.color)
             view = ConnectFour(self.bot, players, embed)
             await view.update(inter, init=True)
             await view.wait()
-            await self.bot.util.clean((inter, view.message), 60)
+        await self.bot.util.clean(inter, 60)
 
     @game.sub_command()
     async def battleship(self, inter: disnake.GuildCommandInteraction):
@@ -906,21 +901,19 @@ class Games(commands.Cog):
         view = JoinGame(self.bot, players, 2)
         desc = "Starting in {}s\n{}/2 players"
         embed = self.bot.util.embed(title=":ship: Multiplayer Battle Ship :cruise_ship:", description=desc.format(60, 1), color=self.color)
-        await inter.edit_original_message(embed=embed, view=view)
-        msg = await inter.original_message()
+        msg = await inter.channel.send(embed=embed, view=view)
         self.bot.doAsync(view.updateTimer(msg, embed, desc, 60))
         await view.wait()
+        await msg.delete()
         if len(players) == 1:
             await inter.edit_original_message(embed=self.bot.util.embed(title=":ship: Multiplayer Battle Ship :cruise_ship:", description="Error, a 2nd Player is required", color=self.color))
-            await self.bot.util.clean(inter, 60)
         else:
-            await msg.delete()
             random.shuffle(players)
             embed = self.bot.util.embed(title=":ship: Multiplayer Battle Ship :cruise_ship:", description=":ship: {} :cruise_ship: {}".format(players[0].display_name, players[1].display_name), fields=[{'name':players[0].display_name, 'value':'dummy'}, {'name':players[1].display_name, 'value':'dummy'}], footer="Game limited to 8 minutes", color=self.color, inline=False)
             view = BattleShip(self.bot, players, embed)
             await view.update(inter, init=True)
             await view.wait()
-            await self.bot.util.clean((inter, view.message), 60)
+        await self.bot.util.clean(inter, 60)
 
     @commands.slash_command(default_permission=True, name="random")
     @commands.cooldown(1, 50, commands.BucketType.user)

@@ -77,9 +77,9 @@ class ConnectFour(BaseView):
     """
     async def update(self, inter, init=False):
         self.embed.description = ":red_circle: {} :yellow_circle: {}\n".format(self.players[0].display_name, self.players[1].display_name) + self.notification + "\n" + self.render()
-        if init: self.message = await inter.followup.send(content=self.bot.util.players2mentions(self.players), embed=self.embed, view=self)
-        elif self.state >= 0: await self.message.edit(embed=self.embed, view=self)
-        else: await self.message.edit(embed=self.embed, view=None)
+        if init: await inter.edit_original_message(embed=self.embed, view=self)
+        elif self.state >= 0: await inter.response.edit_message(embed=self.embed, view=self)
+        else: await inter.response.edit_message(embed=self.embed, view=None)
 
     """insert()
     Insert a piece in the grid
