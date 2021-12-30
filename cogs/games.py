@@ -938,7 +938,7 @@ class Games(commands.Cog):
                 await view.update(inter, init=True)
                 await view.wait()
                 await view.timeoutCheck(inter)
-                if bestof in scores: break
+                if scores[0] >= bestof or scores[1] >= bestof: break
                 await asyncio.sleep(10)
         await self.bot.util.clean(inter, 60)
 

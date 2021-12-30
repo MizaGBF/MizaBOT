@@ -27,7 +27,8 @@ class RPS(BaseView):
         self.embed = embed
         self.scores = scores
         self.target = target
-        self.state = [-1 for p in self.players]
+        self.state = [-1, -1]
+        self.won = False
 
     """update()
     Update the embed
@@ -38,7 +39,7 @@ class RPS(BaseView):
     init: if True, it uses a different method (only used from the command call itself)
     """
     async def update(self, inter, init=False):
-        if -1 in self.state:
+        if not self.won:
             self.embed.description = ""
             for i, p in enumerate(self.players):
                 self.embed.description += "**{}** ▫️ ".format(p.display_name)
@@ -55,6 +56,7 @@ class RPS(BaseView):
             # winner selection
             if self.state[0] == self.state[1]:
                 self.embed.description += "This round is a **draw**\n"
+                self.embed.description += "**Next round in 10 seconds...**"
             else:
                 v = self.state[0] * 10 + self.state[1]
                 win = None
@@ -63,29 +65,37 @@ class RPS(BaseView):
                     case  2: win = 0
                     case 10: win = 0
                     case 12: win = 1
-                    case 20: win = 0
-                    case 21: win = 1
+                    case 20: win = 1
+                    case 21: win = 0
                 self.scores[win] += 1
+                self.won = True
                 if self.target > 1:
                     self.embed.description += "**{}** won this round\n".format(self.players[win].display_name)
                     self.embed.description += "**{}** won {} time(s) ▫️ **{}** won {} time(s)\n".format(self.players[0].display_name, self.scores[0], self.players[1].display_name, self.scores[1])
                     if self.scores[win] >= self.target:
                         self.embed.description += "**{}** is the **Winner**".format(self.players[win].display_name)
                     else:
-                        self.embed.description += "*Next round in 10 seconds...*"
+                        self.embed.description += "**Next round in 10 seconds...**"
                 else:
                     self.embed.description += "**{}** is the **Winner**".format(self.players[win].display_name)
             self.stopall()
         if init:
             await inter.edit_original_message(content=self.bot.util.players2mentions(self.players), embed=self.embed, view=self)
             self.message = await inter.original_message()
-        elif -1 in self.state: await self.message.edit(embed=self.embed, view=self)
+        elif not self.won: await self.message.edit(embed=self.embed, view=self)
         else: await self.message.edit(embed=self.embed, view=None)
 
+    """timeoutCheck()
+    Force a result if the view timedout
+    
+    Parameters
+    ----------
+    inter: a Discord interaction
+    """
     async def timeoutCheck(self, inter):
-        if -1 in self.state:
-            if self.state[0] == -1: self.state[0]= random.randint(0, 2)
-            if self.state[1] == -1: self.state[1]= random.randint(0, 2)
+        if not self.won:
+            if self.state[0] == -1: self.state[0] = random.randint(0, 2)
+            if self.state[1] == -1: self.state[1] = random.randint(0, 2)
             await self.update(inter)
 
     """callback()
