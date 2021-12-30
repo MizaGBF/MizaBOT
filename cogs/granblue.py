@@ -1178,8 +1178,12 @@ class GranblueFantasy(commands.Cog):
                     await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Profile not found", color=self.color), ephemeral=True)
                     return
                 case _:
-                    if (await self.bot.do(self.searchprofile, id)) is not None:
-                        await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="This id is already in use, use the bug_report command if it's a case of griefing", color=self.color), ephemeral=True)
+                    uid = await self.bot.do(self.searchprofile, id)
+                    if uid is not None:
+                        if uid == id:
+                            await inter.response.send_message(embed=self.bot.util.embed(title="Information", description="Your profile is already set to ID `{}`.\nUse `/gbf unsetprofile` if you wish to remove it.".format(id), color=self.color), ephemeral=True)
+                        else:
+                            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="This id is already in use, use the bug_report command if it's a case of griefing", color=self.color), ephemeral=True)
                         return
             # register
             with self.bot.data.lock:

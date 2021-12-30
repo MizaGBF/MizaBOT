@@ -99,9 +99,9 @@ class BattleShip(BaseView):
         self.embed.description = ":ship: {} :cruise_ship: {}\n".format(self.players[0].display_name, self.players[1].display_name) + self.notification + extra_notif
         for i in range(0, 2):
             self.embed.set_field_at(i, name=(self.players[i].display_name if len(self.players[i].display_name) <= 10 else self.players[i].display_name[:10] + '...'), value=self.render(i))
-        if init: await inter.edit_original_message(embed=self.embed, view=self)
-        elif self.state >= 0: await inter.response.edit_message(embed=self.embed, view=self)
-        else: await inter.response.edit_message(embed=self.embed, view=None)
+        if init: self.message = await inter.followup.send(content=self.bot.util.players2mentions(self.players), embed=self.embed, view=self)
+        elif self.state >= 0: await self.message.edit(embed=self.embed, view=self)
+        else: await self.message.edit(embed=self.embed, view=None)
 
     """shoot()
     Try to shoot at a location

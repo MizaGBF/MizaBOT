@@ -118,9 +118,9 @@ class Blackjack(BaseView):
         for i, p in enumerate(self.players):
             self.embed.description += "{} {} \▫️ {}\n".format(self.bot.emote.get(str(i+1)), (p.display_name if len(p.display_name) <= 10 else p.display_name[:10] + "..."), self.formatHand(self.hands[i], (i == self.state)))
         self.embed.description += self.notification
-        if init: await inter.edit_original_message(embed=self.embed, view=self)
-        elif self.state >= 0: await inter.response.edit_message(embed=self.embed, view=self)
-        else: await inter.response.edit_message(embed=self.embed, view=None)
+        if init: self.message = await inter.followup.send(content=self.bot.util.players2mentions(self.players), embed=self.embed, view=self)
+        elif self.state >= 0: await self.message.edit(embed=self.embed, view=self)
+        else: await self.message.edit(embed=self.embed, view=None)
 
     """playai()
     The AI for MizaBOT

@@ -167,7 +167,7 @@ class Poker(BaseView):
                 case 0: pass
                 case 1: self.embed.description += "\n*Please wait for the results*"
                 case _: self.embed.description += "\n*Next round in 10 seconds...*"
-        if init: self.message = await inter.followup.send(embed=self.embed, view=self)
+        if init: self.message = await inter.followup.send(content=self.bot.util.players2mentions(self.players), embed=self.embed, view=self)
         elif self.state >= 0: await self.message.edit(embed=self.embed, view=None)
         else: await self.message.edit(embed=self.embed, view=view)
 
