@@ -136,7 +136,6 @@ class Games(commands.Cog):
         legfest = options.get('legfest', True if ssrrate == 6 else False) # legfest parameter
         ssrrate = 15 if mode == 13 else (9 if mode == 12 else (6 if legfest else 3)) # set the ssr rate
         result = {'list':[], 'detail':[0, 0, 0], 'extended':extended, 'rate':ssrrate} # result container
-        if options.get('troll', False): ssrrate *= 2 # private joke
         tenrollsr = False # flag for guaranted SR in ten rolls
         for i in range(0, count):
             d = random.randint(1, 10000000) / 100000 # random value (don't use .random(), it doesn't work well with this)
@@ -216,8 +215,6 @@ class Games(commands.Cog):
     async def _roll(self, inter, titles:tuple=("{}", "{}"), rmode:int=-1, **rollOptions):
         if rmode < 0: raise Exception('Invalid _roll() rmode {}'.format(rmode)) # invalid mode
         await inter.response.defer()
-        if inter.author.id == 132599327682985984: # troll test
-            rollOptions['troll'] = True
         result = await self.bot.do(self.gachaRoll, **rollOptions) # do the rolling
         footer = "{}% SSR rate".format(result['rate']) # message footer
         if rollOptions.get('mode', '') == 'memerollB': footer += " ▫️ until rate up"
@@ -236,37 +233,67 @@ class Games(commands.Cog):
         if rmode == 0: # single roll mode
             r = result['list'][0]
             if result['extended']:
-                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="{} {}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1]), color=self.color, footer=footer), view=None)
+                rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(r[1].split('>')[1:])) # retrieve the id from the wiki
+                if rid is None: thumb = None # and try to make a thumbnail
+                elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
+                elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
+                else: thumb = None
+                # post
+                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="{} {}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1]), color=self.color, footer=footer, thumbnail=thumb), view=None)
             else:
                 await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="{}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0]))), color=self.color, footer=footer), view=None)
         elif rmode == 1: # memeroll mode
             counter = [0, 0, 0]
             text = ""
+            best = [-1, ""]
             for i, v in enumerate(result['list']):
                 if i > 0 and i % 3 == 0:
                     await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[0].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
                     await asyncio.sleep(1)
                     text = ""
                 if result['extended']:
+                    # store what looks like the best roll
+                    if v[0] > best[0] or (v[0] == best[0] and '**' in v[1]):
+                        best = [v[0], v[1].replace('**', '')]
+                        if '**' in v[1]: best[0] += 1
                     text += "{} {}\n".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(v[0])), v[1])
                 else:
                     text += "{} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(v[0])))
                 counter[v[0]] += 1
+            if best[0] != -1: # make a thumbnail
+                rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[1:]))
+                if rid is None: thumb = None
+                elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
+                elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
+                else: thumb = None
             title = titles[1].format(inter.author.display_name, len(result['list'])) if (len(result['list']) < 300) else "{} sparked".format(inter.author.display_name)
-            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':inter.author.display_avatar}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':inter.author.display_avatar}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer, thumbnail=thumb), view=None)
         elif rmode == 2: # ten roll mode
             if result['extended']:
+                best = [-1, ""]
+                thumb = None
                 for i in range(0, 11):
                     msg = ""
                     for j in range(0, i):
                         if j >= 10: break
+                        # check for best roll
+                        if result['list'][j][0] > best[0] or (result['list'][j][0] == best[0] and '**' in result['list'][j][1]):
+                            best = [result['list'][j][0], result['list'][j][1].replace('**', '')]
+                            if '**' in result['list'][j][1]: best[0] += 1
+                        # write
                         msg += "{} {} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(result['list'][j][0])), result['list'][j][1])
                         if j % 2 == 1: msg += "\n"
                     for j in range(i, 10):
                         msg += '{}'.format(self.bot.emote.get('crystal{}'.format(result['list'][j][0])))
                         if j % 2 == 1: msg += "\n"
-                    await asyncio.sleep(0.75)
-                    await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
+                    if i == 10 and best[0] != -1: # make the thumbnail from best roll
+                        rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[1:]))
+                        if rid is None: thumb = None
+                        elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
+                        elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
+                        else: thumb = None
+                    await asyncio.sleep(0.7)
+                    await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer, thumbnail=thumb), view=None)
             else:
                 msg = ""
                 i = 0
@@ -281,8 +308,19 @@ class Games(commands.Cog):
             count = len(result['list'])
             rate = (100*result['detail'][2]/count)
             msg = ""
+            thumb = None
             if result['extended']:
+                best = [-1, ""]
                 rolls = self.getSSRList(result)
+                for r in rolls: # check for best roll
+                    if best[0] < 3 and '**' in r: best = [3, r.replace('**', '')]
+                    elif best[0] < 2: best = [2, r]
+                if best[0] != -1: # make thumbnail
+                    rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[1:]))
+                    if rid is None: thumb = None
+                    elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
+                    elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
+                    else: thumb = None
                 if len(rolls) > 0:
                     msg = "{} ".format(self.bot.emote.get('SSR'))
                     for item in rolls:
@@ -295,7 +333,7 @@ class Games(commands.Cog):
             elif rollOptions.get('mode', '') == 'mukku': amsg = "Mukku stopped after **{}** rolls\n".format(len(result['list']))
             else: amsg = ""
             msg = "{}{:} {:} ▫️ {:} {:} ▫️ {:} {:}\n{:}\n**{:.2f}%** SSR rate".format(amsg, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), msg, rate)
-            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name, count), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name, count), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer, thumbnail=thumb), view=None)
         await self.bot.util.clean(inter, 40)
 
     @commands.slash_command(default_permission=True)
@@ -366,6 +404,7 @@ class Games(commands.Cog):
         - rate: SSR rate used
         - tmp: string containing the output
         - count: number of R, SR and SSR rolled
+        - best: best ssr we got
     """
     def getRoulette(self, count, mode, double):
         result = self.gachaRoll(count=count, mode=mode, legfest=self.checkLegfest(double))
@@ -373,16 +412,20 @@ class Games(commands.Cog):
         count = len(result['list'])
         rate = (100*result['detail'][2]/count)
         tmp = ""
+        best = [-1, None]
         if result['extended']:
             ssrs = self.getSSRList(result)
-            if len(ssrs) > 0:
+            for r in ssrs: # best roll check
+                if best[0] < 3 and '**' in r: best = [3, r.replace('**', '')]
+                elif best[0] < 2: best = [2, r]
+            if len(ssrs) > 0: # make the text
                 tmp = "\n{} ".format(self.bot.emote.get('SSR'))
                 for item in ssrs:
                     tmp += item
                     if ssrs[item] > 1: tmp += " x{}".format(ssrs[item])
                     tmp += ", "
                 tmp = tmp[:-2]
-        return result, rate, tmp, count
+        return result, rate, tmp, count, best
 
     @roll.sub_command()
     async def roulette(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
@@ -439,6 +482,8 @@ class Games(commands.Cog):
         await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} is spinning the Roulette".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer))
         if not enableJanken and state < 2: state = 1
         running = True
+        prev_best = [-1, None]
+        thumb = None
         while running:
             await asyncio.sleep(2)
             match state:
@@ -463,13 +508,29 @@ class Games(commands.Cog):
                     else:
                         state = 1
                 case 1: # normal rolls
-                    result, rate, tmp, count = await self.bot.do(self.getRoulette, roll, 'ten', double)
+                    result, rate, tmp, count, best = await self.bot.do(self.getRoulette, roll, 'ten', double)
+                    if best[0] > prev_best[0]:
+                        prev_best = best
+                        if best[0] != -1: # update thumbnail
+                            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[1:]))
+                            if rid is None: thumb = None
+                            elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
+                            elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
+                            else: thumb = None
                     footer = "{}% SSR rate".format(result['rate'])
                     msg += "{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
                     if superFlag: state = 4
                     else: running = False
                 case 2: # gachapin
-                    result, rate, tmp, count = await self.bot.do(self.getRoulette, 300, 'gachapin', double)
+                    result, rate, tmp, count, best = await self.bot.do(self.getRoulette, 300, 'gachapin', double)
+                    if best[0] > prev_best[0]:
+                        prev_best = best
+                        if best[0] != -1: # update thumbnail
+                            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[1:]))
+                            if rid is None: thumb = None
+                            elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
+                            elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
+                            else: thumb = None
                     footer = "{}% SSR rate".format(result['rate'])
                     msg += "Gachapin ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
                     if count == 10 and random.randint(1, 100) < 99: state = 3
@@ -477,7 +538,15 @@ class Games(commands.Cog):
                     elif count == 30 and random.randint(1, 100) < 30: state = 3
                     else: running = False
                 case 3:
-                    result, rate, tmp, count = await self.bot.do(self.getRoulette, 300, 'mukku', double)
+                    result, rate, tmp, count, best = await self.bot.do(self.getRoulette, 300, 'mukku', double)
+                    if best[0] > prev_best[0]:
+                        prev_best = best
+                        if best[0] != -1: # update thumbnail
+                            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[1:]))
+                            if rid is None: thumb = None
+                            elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
+                            elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
+                            else: thumb = None
                     msg += ":confetti_ball: Mukku ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
                     if doubleMukku:
                         if random.randint(1, 100) < 25: pass
@@ -486,10 +555,18 @@ class Games(commands.Cog):
                     else:
                         running = False
                 case 4:
-                    result, rate, tmp, count = await self.bot.do(self.getRoulette, 300, 'supermukku', double)
+                    result, rate, tmp, count, best = await self.bot.do(self.getRoulette, 300, 'supermukku', double)
+                    if best[0] > prev_best[0]:
+                        prev_best = best
+                        if best[0] != -1: # update thumbnail
+                            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[1:]))
+                            if rid is None: thumb = None
+                            elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
+                            elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
+                            else: thumb = None
                     msg += ":confetti_ball: **Super Mukku** ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
                     running = False
-            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer))
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer, thumbnail=thumb))
         await self.bot.util.clean(inter, 45)
 
     @commands.slash_command(default_permission=True)

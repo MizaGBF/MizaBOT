@@ -253,7 +253,7 @@ class General(commands.Cog):
                 msg += "{:} **{:}%** ▫️ {:.2f}%\n".format(self.bot.emote.get('SSR'), r, 100*(1-math.pow(1-float(r)*0.01, count)))
             msg += "Your chances of getting at least one SSR with {} rolls:\n".format(count)
             msg += "{:} **{:}%** ▫️ {:.2f}%\n".format(self.bot.emote.get('SSR'), ssrrate, 100*(1-math.pow(1-float(ssrrate)*0.01, count)))
-            await inter.edit_original_message(embed=self.bot.util.embed(title="Roll Chance Calculator", description=msg, color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Roll Chance Calculator", description=msg.replace('100.00%', '99.99%'), color=self.color))
         except Exception as e:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Roll Chance Calculator Error", description=str(e), color=self.color))
 

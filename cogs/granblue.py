@@ -76,54 +76,6 @@ class GranblueFantasy(commands.Cog):
         """Command Group"""
         pass
 
-    """fixCase()
-    Fix the case of individual element of our wiki search terms
-    
-    Parameters
-    ----------
-    term: Word to fix
-    
-    Returns
-    --------
-    str: Fixed word
-    """
-    def fixCase(self, term):
-        fixed = ""
-        up = False
-        match term.lower():
-            case "and": # if it's just 'and', we don't don't fix anything and return a lowercase 'and'
-                return "and"
-            case "of":
-                return "of"
-            case "(sr)":
-                return "(SR)"
-            case "(ssr)":
-                return "(SSR)"
-            case "(r)":
-                return "(R)"
-        for c in term: # for each character
-            if c.isalpha(): # if letter
-                if c.isupper(): # is uppercase
-                    if not up: # we haven't encountered an uppercase letter
-                        up = True
-                        fixed += c # save
-                    else: # we have
-                        fixed += c.lower() # make it lowercase and save
-                elif c.islower(): # is lowercase
-                    if not up: # we haven't encountered an uppercase letter
-                        fixed += c.upper() # make it uppercase and save
-                        up = True
-                    else: # we have
-                        fixed += c # save
-                else: # other characters
-                    fixed += c # we just save
-            elif c == "/" or c == ":" or c == "#" or c == "-": # we reset the uppercase detection if we encounter those
-                up = False
-                fixed += c
-            else: # everything else,
-                fixed += c # we save
-        return fixed # return the result
-
     """stripWikiStr()
     Formating function for wiki skill descriptions
     
@@ -432,7 +384,7 @@ class GranblueFantasy(commands.Cog):
         # build the url (the wiki is case sensitive)
         arr = []
         for s in terms.split(" "):
-            arr.append(self.fixCase(s))
+            arr.append(self.bot.util.wiki_fixCase(s))
         sch = "_".join(arr)
         url = "https://gbf.wiki/{}".format(sch)
         try:
@@ -1032,16 +984,16 @@ class GranblueFantasy(commands.Cog):
                 gacha_data['list'][rarity]['rate'] = float(data['ratio'][2 - rarity]['ratio'][:-1])
                 for item in appear['item']:
                     if item['drop_rate'] not in gacha_data['list'][rarity]['list']: gacha_data['list'][rarity]['list'][item['drop_rate']] = []
-                    gacha_data['list'][rarity]['list'][item['drop_rate']].append("[{}]{}".format(item['attribute'], item['name']))
+                    gacha_data['list'][rarity]['list'][item['drop_rate']].append("{}{}".format(item['attribute'], item['name']))
 
                     if rarity == 2: # ssr
                         if appear['category_name'] not in gacha_data['rateup']: gacha_data['rateup'][appear['category_name']] = {}
                         if 'character_name' in item and item.get('name', '') in possible_zodiac_wpn:
-                            gacha_data['rateup']['zodiac'].append("[{}]{}".format(item['attribute'], item['character_name']))
+                            gacha_data['rateup']['zodiac'].append("{}{}".format(item['attribute'], item['character_name']))
                         if item['incidence'] is not None:
                             if item['drop_rate'] not in gacha_data['rateup'][appear['category_name']]: gacha_data['rateup'][appear['category_name']][item['drop_rate']] = []
-                            if 'character_name' in item and item['character_name'] is not None: gacha_data['rateup'][appear['category_name']][item['drop_rate']].append("[{}]{}".format(item['attribute'], item['character_name']))
-                            else: gacha_data['rateup'][appear['category_name']][item['drop_rate']].append("[{}]{}".format(item['attribute'], item['name']))
+                            if 'character_name' in item and item['character_name'] is not None: gacha_data['rateup'][appear['category_name']][item['drop_rate']].append("{}{}".format(item['attribute'], item['character_name']))
+                            else: gacha_data['rateup'][appear['category_name']][item['drop_rate']].append("{}{}".format(item['attribute'], item['name']))
 
             # add image
             gachas = ['{}/tips/description_gacha.jpg'.format(random_key), '{}/tips/description_gacha_{}.jpg'.format(random_key, logo), '{}/tips/description_{}.jpg'.format(random_key, header_images[0]), 'header/{}.png'.format(header_images[0])]

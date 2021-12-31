@@ -6,6 +6,7 @@ import psutil
 import os
 from shutil import copyfile
 import traceback
+import re
 
 # ----------------------------------------------------------------------------------------------------------------
 # Utility Component
@@ -20,7 +21,10 @@ class Util():
         self.starttime = datetime.utcnow() # used to check the uptime
         self.process = psutil.Process(os.getpid())
         self.process.cpu_percent() # called once to initialize
-        self.itemEmoteElement = None # to store emote strings used by formatItemElement()
+        self.search_re = [
+            re.compile('([12][0-9]{9})\\.'),
+            re.compile('([12][0-9]{9}_02)\\.')
+        ]
 
     def init(self):
         self.emote = self.bot.emote
@@ -507,20 +511,19 @@ class Util():
     str: resulting string
     """
     def formatItemElement(self, raw : str, mode : int):
-        if self.itemEmoteElement is None:
-            self.itemEmoteElement = {
-                "[1]" : "{}".format(self.bot.emote.get('fire')),
-                "[2]" : "{}".format(self.bot.emote.get('water')),
-                "[3]" : "{}".format(self.bot.emote.get('earth')),
-                "[4]" : "{}".format(self.bot.emote.get('wind')),
-                "[5]" : "{}".format(self.bot.emote.get('light')),
-                "[6]" : "{}".format(self.bot.emote.get('dark'))
-            }
+        if len(raw) < 2: return raw
         match mode:
             case 0: # remove element string
-                return raw[3:]
+                return raw[1:]
             case 1: # replace element string by emote
-                return raw.replace(raw[:3], self.itemEmoteElement[raw[:3]])
+                match raw[0]:
+                    case "1": return str(self.bot.emote.get('fire')) + raw[1:]
+                    case "2": return str(self.bot.emote.get('water')) + raw[1:]
+                    case "3": return str(self.bot.emote.get('earth')) + raw[1:]
+                    case "4": return str(self.bot.emote.get('wind')) + raw[1:]
+                    case "5": return str(self.bot.emote.get('light')) + raw[1:]
+                    case "6": return str(self.bot.emote.get('dark')) + raw[1:]
+                    case _: return raw[1:]
             case _: # undefined, do nothing
                 return raw
 
@@ -542,3 +545,81 @@ class Util():
             s += p.mention + " "
         if len(s) > 0: s = s[:-1]
         return s
+
+    """wiki_fixCase()
+    Fix the case of individual element for gbf.wiki search terms
+    
+    Parameters
+    ----------
+    term: Word or String to fix
+    
+    Returns
+    --------
+    str: Fixed word
+    """
+    def wiki_fixCase(self, term):
+        if ' ' in term: # in case we sent a whole string (this function only process word by word, originally)
+            result = []
+            for t in term.split(' '):
+                result.append(self.wiki_fixCase(t))
+            return "_".join(result)
+        else:
+            fixed = ""
+            up = False
+            match term.lower():
+                case "and": # if it's just 'and', we don't don't fix anything and return a lowercase 'and'
+                    return "and"
+                case "of":
+                    return "of"
+                case "(sr)":
+                    return "(SR)"
+                case "(ssr)":
+                    return "(SSR)"
+                case "(r)":
+                    return "(R)"
+            for c in term: # for each character
+                if c.isalpha(): # if letter
+                    if c.isupper(): # is uppercase
+                        if not up: # we haven't encountered an uppercase letter
+                            up = True
+                            fixed += c # save
+                        else: # we have
+                            fixed += c.lower() # make it lowercase and save
+                    elif c.islower(): # is lowercase
+                        if not up: # we haven't encountered an uppercase letter
+                            fixed += c.upper() # make it uppercase and save
+                            up = True
+                        else: # we have
+                            fixed += c # save
+                    else: # other characters
+                        fixed += c # we just save
+                elif c == "/" or c == ":" or c == "#" or c == "-": # we reset the uppercase detection if we encounter those
+                    up = False
+                    fixed += c
+                else: # everything else,
+                    fixed += c # we save
+            return fixed # return the result
+
+    """search_wiki_for_id()
+    Search the wiki for a weapon/summon id
+    
+    Parameters
+    ----------
+    sps: Target name
+    
+    Returns
+    --------
+    str: Target ID, None if error/not found
+    """
+    def search_wiki_for_id(self, sps: str): # search on gbf.wiki to match a summon name to its id
+        try:
+            data = self.bot.gbf.request("https://gbf.wiki/" + self.wiki_fixCase(sps), no_base_headers=True).decode('utf-8')
+            group = self.search_re[1].findall(data)
+            if len(group) > 0: return group[0]
+            group = self.search_re[0].findall(data)
+            return group[0]
+        except:
+            if "(summon)" not in sps.lower():
+                return self.search_wiki_for_id(sps + ' (Summon)')
+            else:
+                return None

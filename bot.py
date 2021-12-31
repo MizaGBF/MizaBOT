@@ -30,17 +30,13 @@ except:
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "9.7" # bot version
+        self.version = "9.8" # bot version
         self.changelog = [ # changelog lines
             "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
-            "The command list changed a lot, check the online help if you are looking for one",
-            "Improved `/help` command",
+            "The command list changed a lot, check the online help or the `/help` command if you are looking for one",
             "Regrouped some commands under `/utility`",
-            "Revamped the gacha system",
-            "Renamed the 'count' option of `/roll count` into 'num'",
             "All self-assignable role commands moved under `/role`",
-            "Added Connect Four, Battle Ship and Rock Paper Scissor to `/game`",
-            "Upgraded the Blackjack and Poker minigames"
+            "Upgraded/Added new commands under `/game`"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
@@ -529,7 +525,7 @@ class MizaBot(commands.Bot):
             await inter.response.send_message(embed=self.util.embed(title="Command Cooldown Error", description=msg.replace('You are on cooldown.', 'This command is on cooldown.'), timestamp=self.util.timestamp()), ephemeral=True)
         elif msg.startswith('Too many people are using this command.'):
             await inter.response.send_message(embed=self.util.embed(title="Command Concurrency Error", description=msg.replace('Too many people are using this command, try again later'), timestamp=self.util.timestamp()), ephemeral=True)
-        elif msg.find('check functions for command') != -1:
+        elif msg.find('check functions for command') != -1 or msg.find('NotFound: 404 Not Found (error code: 10062): Unknown interaction') != -1:
             return
         elif msg.find('required argument that is missing') != -1 or msg.startswith('Converting to "int" failed for parameter'):
             await inter.response.send_message(embed=self.util.embed(title="Command Argument Error", description="A required parameter is missing.", timestamp=self.util.timestamp()), ephemeral=True)
