@@ -160,8 +160,8 @@ class Games(commands.Cog):
                 for rate in data[r]['list']: # find which item we rolled
                     fr = float(rate)
                     for item in data[r]['list'][rate]:
-                        if r == 2 and rate in rateups: last = "**" + self.bot.util.formatItemElement(item, 1) + "**"
-                        else: last = self.bot.util.formatItemElement(item, 1)
+                        if r == 2 and rate in rateups: last = "**" + self.bot.util.formatGachaItem(item) + "**"
+                        else: last = self.bot.util.formatGachaItem(item)
                         if d < fr:
                             roll = [r, last]
                             break
@@ -239,7 +239,7 @@ class Games(commands.Cog):
                 elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
                 else: thumb = None
                 # post
-                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="{} {}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1]), color=self.color, footer=footer, thumbnail=thumb), view=None)
+                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="{}{}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1]), color=self.color, footer=footer, thumbnail=thumb), view=None)
             else:
                 await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="{}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0]))), color=self.color, footer=footer), view=None)
         elif rmode == 1: # memeroll mode
@@ -281,7 +281,7 @@ class Games(commands.Cog):
                             best = [result['list'][j][0], result['list'][j][1].replace('**', '')]
                             if '**' in result['list'][j][1]: best[0] += 1
                         # write
-                        msg += "{} {} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(result['list'][j][0])), result['list'][j][1])
+                        msg += "{}{} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(result['list'][j][0])), result['list'][j][1])
                         if j % 2 == 1: msg += "\n"
                     for j in range(i, 10):
                         msg += '{}'.format(self.bot.emote.get('crystal{}'.format(result['list'][j][0])))

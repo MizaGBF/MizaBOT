@@ -985,17 +985,19 @@ class GranblueFantasy(commands.Cog):
                 if rarity < 0 or rarity > 2: continue # eliminate possible N rarity
                 gacha_data['list'][rarity]['rate'] = float(data['ratio'][2 - rarity]['ratio'][:-1])
                 for item in appear['item']:
+                    if item['kind'] is None: kind = "S"
+                    else: kind = int(item['kind'])-1
                     if item['drop_rate'] not in gacha_data['list'][rarity]['list']: gacha_data['list'][rarity]['list'][item['drop_rate']] = []
-                    gacha_data['list'][rarity]['list'][item['drop_rate']].append("{}{}".format(item['attribute'], item['name']))
+                    gacha_data['list'][rarity]['list'][item['drop_rate']].append("{}{}{}".format(item['attribute'], kind, item['name']))
 
                     if rarity == 2: # ssr
                         if appear['category_name'] not in gacha_data['rateup']: gacha_data['rateup'][appear['category_name']] = {}
                         if 'character_name' in item and item.get('name', '') in possible_zodiac_wpn:
-                            gacha_data['rateup']['zodiac'].append("{}{}".format(item['attribute'], item['character_name']))
+                            gacha_data['rateup']['zodiac'].append("{}{}{}".format(item['attribute'], kind, item['character_name']))
                         if item['incidence'] is not None:
                             if item['drop_rate'] not in gacha_data['rateup'][appear['category_name']]: gacha_data['rateup'][appear['category_name']][item['drop_rate']] = []
-                            if 'character_name' in item and item['character_name'] is not None: gacha_data['rateup'][appear['category_name']][item['drop_rate']].append("{}{}".format(item['attribute'], item['character_name']))
-                            else: gacha_data['rateup'][appear['category_name']][item['drop_rate']].append("{}{}".format(item['attribute'], item['name']))
+                            if 'character_name' in item and item['character_name'] is not None: gacha_data['rateup'][appear['category_name']][item['drop_rate']].append("{}{}{}".format(item['attribute'], kind, item['character_name']))
+                            else: gacha_data['rateup'][appear['category_name']][item['drop_rate']].append("{}{}{}".format(item['attribute'], kind, item['name']))
 
             # add image
             gachas = ['{}/tips/description_gacha.jpg'.format(random_key), '{}/tips/description_gacha_{}.jpg'.format(random_key, logo), '{}/tips/description_{}.jpg'.format(random_key, header_images[0]), 'header/{}.png'.format(header_images[0])]
@@ -1043,7 +1045,7 @@ class GranblueFantasy(commands.Cog):
                         if len(content[1]['rateup']['zodiac']) > 0:
                             description += "{} **Zodiac** ▫️ ".format(self.bot.emote.get('loot'))
                             for i in content[1]['rateup'][k]:
-                                description += self.bot.util.formatItemElement(i, 1) + " "
+                                description += self.bot.util.formatGachaItem(i) + " "
                             description += "\n"
                     else:
                         if len(content[1]['rateup'][k]) > 0:
@@ -1054,7 +1056,7 @@ class GranblueFantasy(commands.Cog):
                                     if i >= 8 and len(content[1]['rateup'][k][r]) - i > 1:
                                         description += " and **{} more!**".format(len(content[1]['rateup'][k][r]) - i)
                                         break
-                                    description += self.bot.util.formatItemElement(item, 1) + " "
+                                    description += self.bot.util.formatGachaItem(item) + " "
                             description += "\n"
                 await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(content[1]['image']), color=self.color))
         except Exception as e:
