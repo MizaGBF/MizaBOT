@@ -1,4 +1,5 @@
 import tweepy
+import html
 
 # ----------------------------------------------------------------------------------------------------------------
 # Twitter Component
@@ -123,3 +124,32 @@ class Twitter():
             return self.client.get_users_tweets(id=user.id, tweet_fields=['context_annotations', 'created_at', 'entities', 'public_metrics'], user_fields=['profile_image_url'], media_fields=['preview_image_url', 'url'], expansions=['author_id', 'attachments.media_keys', 'entities.mentions.username', 'referenced_tweets.id', 'referenced_tweets.id.author_id'], max_results=10)
         except:
             return None
+
+    """get_schedule_from_granblue_en()
+    Get the pinned schedule tweet from @Granblue_EN to make a schedule list usable by the bot
+    
+    Returns
+    --------
+    tuple:
+        - str: Title/Month
+        - list: Schedule
+        - time: tweet.created_at
+    """
+    def get_schedule_from_granblue_en(self):
+        tw = self.pinned('granblue_en')
+        month = None
+        schedule = None
+        created_at = None
+        if tw is not None:
+            txt = html.unescape(tw.text)
+            if txt.find(" = ") != -1 and txt.find("chedule") != -1:
+                created_at = tw.created_at
+                s = txt.find("https://t.co/")
+                if s != -1: txt = txt[:s]
+                lines = txt.split('\n')
+                month = lines[0]
+                schedule = []
+                for i in range(1, len(lines)):
+                    if lines[i] != "":
+                        schedule += lines[i].split(" = ")
+        return month, schedule, created_at

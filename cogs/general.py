@@ -252,10 +252,10 @@ class General(commands.Cog):
             data, rateups, ssrrate, extended = self.bot.get_cog('Games').gachaRateUp()
             if rateups is None: raise Exception("Unavailable")
             for r in rateups:
-                msg += "{:} **{:}%** ▫️ {:.2f}%\n".format(self.bot.emote.get('SSR'), r, 100*(1-math.pow(1-float(r)*0.01, count)))
+                msg += "{:} **{:}%** ▫️ {:.3f}%\n".format(self.bot.emote.get('SSR'), r, 100*(1-math.pow(1-float(r)*0.01, count)))
             msg += "Your chances of getting at least one SSR with {} rolls:\n".format(count)
-            msg += "{:} **{:}%** ▫️ {:.2f}%\n".format(self.bot.emote.get('SSR'), ssrrate, 100*(1-math.pow(1-float(ssrrate)*0.01, count)))
-            await inter.edit_original_message(embed=self.bot.util.embed(title="Roll Chance Calculator", description=msg.replace('100.00%', '99.99%'), color=self.color))
+            msg += "{:} **{:}%** ▫️ {:.3f}%\n".format(self.bot.emote.get('SSR'), ssrrate, 100*(1-math.pow(1-float(ssrrate)*0.01, count)))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Roll Chance Calculator", description=msg.replace('100.000%', '99.999%'), color=self.color))
         except Exception as e:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Roll Chance Calculator Error", description=str(e), color=self.color))
 

@@ -601,6 +601,8 @@ class GranblueFantasy(commands.Cog):
                             evt = c.replace(month=int(evd[0]), day=int(evd[1]), hour=18, minute=0, second=0, microsecond=0)
                             if evt > c and (nx is None or evt < nx):
                                 nx = evt
+                                if nx - c > timedelta(days=300): # new year fix
+                                    nx = None
                         except:
                             pass
                     if on_going: msg += "**"

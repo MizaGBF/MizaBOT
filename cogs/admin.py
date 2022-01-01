@@ -3,7 +3,6 @@ from disnake.ext import commands
 import asyncio
 from datetime import datetime, timedelta
 import random
-import html
 import gc
 import os
 
@@ -57,14 +56,15 @@ class Admin(commands.Cog):
             if not self.bot.running: return
             count = await self.bot.do(self.bot.data.clean_spark) # clean up spark data
             if count > 0:
-                await self.bot.send('debug', embed=self.bot.util.embed(title="cleansave()", description="Cleaned {} unused spark saves".format(count), timestamp=self.bot.util.timestamp()))
-            count = await self.bot.data.clean_profile() # clean up profile data
-            if count > 0:
-                await self.bot.send('debug', embed=self.bot.util.embed(title="cleansave()", description="Cleaned {} unused profiles".format(count), timestamp=self.bot.util.timestamp()))
+                await self.bot.send('debug', embed=self.bot.util.embed(title="clean()", description="Cleaned {} unused spark saves".format(count), timestamp=self.bot.util.timestamp()))
+            if self.bot.util.JST().day == 1: # only clean on the first day of each month
+                count = await self.bot.data.clean_profile() # clean up profile data
+                if count > 0:
+                    await self.bot.send('debug', embed=self.bot.util.embed(title="clean()", description="Cleaned {} unused profiles".format(count), timestamp=self.bot.util.timestamp()))
             if await self.bot.do(self.bot.data.clean_schedule): # clean up schedule data
-                await self.bot.send('debug', embed=self.bot.util.embed(title="cleansave()", description="The schedule has been cleaned up", timestamp=self.bot.util.timestamp()))
+                await self.bot.send('debug', embed=self.bot.util.embed(title="clean()", description="The schedule has been cleaned up", timestamp=self.bot.util.timestamp()))
         except asyncio.CancelledError:
-            await self.bot.sendError('cleansave', 'cancelled')
+            await self.bot.sendError('clean', 'cancelled')
             return
         except Exception as e:
             await self.bot.sendError('cleansave', e)
@@ -427,23 +427,18 @@ class Admin(commands.Cog):
     @schedule.sub_command()
     async def get(self, inter: disnake.GuildCommandInteraction):
         """Retrieve the monthly schedule from @granble_en (Owner Only / Tweepy Only)"""
-        tw = self.bot.twitter.pinned('granblue_en')
-        if tw is not None:
-            txt = html.unescape(tw.text)
-            if txt.find(" = ") != -1 and txt.find("chedule") != -1:
-                s = txt.find("https://t.co/")
-                if s != -1: txt = txt[:s]
-                lines = txt.split('\n')
-                msg = lines[0] + '\n`'
-                for i in range(1, len(lines)):
-                    if lines[i] != "":
-                        msg += lines[i].replace(" = ", ";") + ";"
-                msg = msg[:-1]
-                msg += "`"
-                await self.bot.send('debug', embed=self.bot.util.embed(title="Granblue Fantasy Schedule from @granblue_en", description=msg, color=self.color))
-                await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
-                return
-        await inter.response.send_message("I couldn't retrieve the schedule from Twitter", ephemeral=True)
+        await inter.response.defer(ephemeral=True)
+        month, schedule, created_at = self.bot.twitter.get_schedule_from_granblue_en()
+        if schedule is None:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="I couldn't retrieve the schedule from Twitter", color=self.color))
+        else:
+            msg = month + '\n'
+            msg += '`'
+            for el in schedule:
+                msg += el + ";"
+            if len(schedule) > 0: msg = msg[:-1]
+            msg += '`'
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Granblue Fantasy Schedule from @granblue_en", description=msg, color=self.color))
 
     @schedule.sub_command(name="clean")
     async def _clean(self, inter: disnake.GuildCommandInteraction):
