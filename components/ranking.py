@@ -217,29 +217,7 @@ class Ranking():
                                     self.bot.data.save['gw']['ranking'] = None
                                     self.bot.data.pending = True
 
-                            # update DB
-                            getrankout = await self.gwgetrank(update_time)
-                            if getrankout == "":
-                                data = await self.bot.do(self.GWDBver)
-                                with self.dblock:
-                                    if data is not None and data[1] is not None:
-                                        if self.bot.data.save['gw']['id'] != data[1]['gw']: # different gw, we move
-                                            if data[0] is not None: # backup old gw if it exists
-                                                self.bot.drive.mvFile("GW_old.sql", self.bot.data.config['tokens']['files'], "GW{}_backup.sql".format(data[0]['gw']))
-                                            self.bot.drive.mvFile("GW.sql", self.bot.data.config['tokens']['files'], "GW_old.sql")
-                                            self.bot.file.mv("GW.sql", "GW_old.sql")
-                                    if not self.bot.drive.overwriteFile("temp.sql", "application/sql", "GW.sql", self.bot.data.config['tokens']['files']): # upload
-                                        await self.bot.sendError('gwgetrank', 'Upload failed')
-                                    self.bot.file.mv('temp.sql', "GW.sql")
-                                    self.dbstate = [False, False]
-                                    fs = ["GW_old.sql", "GW.sql"]
-                                    for i in [0, 1]:
-                                        self.bot.sql.remove(fs[i])
-                                        if self.bot.file.exist(fs[i]):
-                                            self.bot.sql.add(fs[i])
-                                            self.dbstate[i] = True
-                            elif getrankout != "Invalid day" and getrankout != "Skipped":
-                                await self.bot.sendError('gwgetrank', 'Failed\n' + getrankout)
+                            await self.retrieve_ranking(update_time)
                             await asyncio.sleep(100)
                         else:
                             await asyncio.sleep(25)
@@ -251,6 +229,37 @@ class Ranking():
             except Exception as e:
                 await self.bot.sendError('checkgwranking', e)
                 return
+
+    """retrieve_ranking()
+    Coroutine to start the ranking retrieval process
+    
+    Parameters
+    --------
+    update_time: Datetime, current time period of 20min
+    """
+    async def retrieve_ranking(self, update_time):
+        getrankout = await self.gwgetrank(update_time)
+        if getrankout == "":
+            data = await self.bot.do(self.GWDBver)
+            with self.dblock:
+                if data is not None and data[1] is not None:
+                    if self.bot.data.save['gw']['id'] != data[1]['gw']: # different gw, we move
+                        if data[0] is not None: # backup old gw if it exists
+                            self.bot.drive.mvFile("GW_old.sql", self.bot.data.config['tokens']['files'], "GW{}_backup.sql".format(data[0]['gw']))
+                        self.bot.drive.mvFile("GW.sql", self.bot.data.config['tokens']['files'], "GW_old.sql")
+                        self.bot.file.mv("GW.sql", "GW_old.sql")
+                if not self.bot.drive.overwriteFile("temp.sql", "application/sql", "GW.sql", self.bot.data.config['tokens']['files']): # upload
+                    await self.bot.sendError('gwgetrank', 'Upload failed')
+                self.bot.file.mv('temp.sql', "GW.sql")
+                self.dbstate = [False, False]
+                fs = ["GW_old.sql", "GW.sql"]
+                for i in [0, 1]:
+                    self.bot.sql.remove(fs[i])
+                    if self.bot.file.exist(fs[i]):
+                        self.bot.sql.add(fs[i])
+                        self.dbstate[i] = True
+        elif getrankout != "Invalid day" and getrankout != "Skipped":
+            await self.bot.sendError('gwgetrank', 'Failed\n' + getrankout)
 
     """getrankProcess()
     Thread to retrieve mass data from the ranking

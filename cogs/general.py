@@ -48,8 +48,9 @@ class General(commands.Cog):
     stack: List used to stack the sub command hierarchy
     search: Search string
     status: List, just put True in here to stop all search
+    owner: Boolean, True if the author is the owner
     """
-    def checkCommand(self, cmd, cmd_type, result, stack, search, status):
+    def checkCommand(self, cmd, cmd_type, result, stack, search, status, owner):
         try: # check if the command has children (ONLY HAPPENS FOR SLASH COMMANDS)
             children = cmd.children
             if children is None or len(children) == 0: raise Exception()
@@ -74,7 +75,7 @@ class General(commands.Cog):
                 try: description = cmd.option.description # sub command
                 except: description = ""
             # ignore owner commands
-            if 'owner' in description.lower() or name.lower().startswith('owner '):
+            if not owner and ('owner' in description.lower() or name.lower().startswith('owner ')):
                 return
             # options retrieval
             try: options = cmd.options
@@ -102,6 +103,7 @@ class General(commands.Cog):
     async def help(self, inter: disnake.GuildCommandInteraction, search : str = commands.Param(description="What are you searching for?", default="")):
         """Get the bot help"""
         await inter.response.defer(ephemeral=True)
+        owner = self.bot.isOwner(inter)
         result = []
         stack = []
         status = []
@@ -110,13 +112,13 @@ class General(commands.Cog):
         if t != "": # only search if the used provided a string
             for cmd in self.bot.slash_commands: # slash
                 if True in status: break
-                self.checkCommand(cmd, 0, result, stack, t, status)
+                self.checkCommand(cmd, 0, result, stack, t, status, owner)
             for cmd in self.bot.user_commands: # user
                 if True in status: break
-                self.checkCommand(cmd, 1, result, stack, t, status)
+                self.checkCommand(cmd, 1, result, stack, t, status, owner)
             for cmd in self.bot.message_commands: # message
                 if True in status: break
-                self.checkCommand(cmd, 2, result, stack, t, status)
+                self.checkCommand(cmd, 2, result, stack, t, status, owner)
         msg = ""
         if t == "": # empty string
             msg = "Online Help [here](https://mizagbf.github.io/MizaBOT/)\nGithub [here](https://github.com/MizaGBF/MizaBOT)".format(search)

@@ -676,7 +676,7 @@ class Admin(commands.Cog):
     @gw.sub_command()
     async def reloaddb(self, inter: disnake.GuildCommandInteraction):
         """Download GW.sql (Owner Only)"""
-        await inter.response.defer()
+        await inter.response.defer(ephemeral=True)
         await self.bot.do(self.bot.ranking.reloadGWDB)
         vers = await self.bot.do(self.bot.ranking.GWDBver)
         msg = ""
@@ -687,7 +687,7 @@ class Admin(commands.Cog):
                 msg += 'GW{} '.format(vers[i].get('gw', '??'))
                 msg += '(version {})'.format(vers[i].get('ver', 'ERROR'))
             msg += "\n"
-        await inter.edit_original_message(embed=self.bot.util.embed(title="Guild War Databases", description=msg, timestamp=self.bot.util.timestamp(), color=self.color), ephemeral=True)
+        await inter.edit_original_message(embed=self.bot.util.embed(title="Guild War Databases", description=msg, timestamp=self.bot.util.timestamp(), color=self.color))
 
     @gw.sub_command()
     async def resetleader(self, inter: disnake.GuildCommandInteraction):
@@ -732,7 +732,7 @@ class Admin(commands.Cog):
                 self.bot.data.pending = True
             await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
         else:
-            await inter.response.send_message("The next set of buffs is already beind skipped", ephemeral=True)
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="The next set of buffs is already beind skipped", color=self.color), ephemeral=True)
 
     @gw.sub_command()
     async def cancelskip(self, inter: disnake.GuildCommandInteraction):
@@ -745,11 +745,22 @@ class Admin(commands.Cog):
 
     @gw.sub_command()
     async def cleartracker(self, inter: disnake.GuildCommandInteraction):
-        """Clear the gw match tracker (Owner Only)"""
+        """Clear the GW match tracker (Owner Only)"""
         with self.bot.data.lock:
             self.bot.data.save['youtracker'] = None
             self.bot.data.pending = True
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
+
+    @gw.sub_command()
+    async def forceupdateranking(self, inter: disnake.GuildCommandInteraction):
+        """Force the retrieval of the GW ranking (Owner Only)"""
+        await inter.response.defer(ephemeral=True)
+        if self.bot.data.save['gw']['state']:
+            current_time = self.bot.util.JST()
+            await self.bot.ranking.retrieve_ranking(current_time - timedelta(seconds=60 * (current_time.minute % 20)))
+            await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
+        else:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="The next set of buffs is already beind skipped", color=self.color))
 
     @gw.sub_command(name="set")
     async def __se_t(self, inter: disnake.GuildCommandInteraction, id : int = commands.Param(description="Guild War ID", ge=0, le=999), element : str = commands.Param(description="Guild War Element Advantage", autocomplete=['fire', 'water', 'earth', 'wind', 'light', 'dark']), day : int = commands.Param(description="Guild War Start Day", ge=1, le=31), month : int = commands.Param(description="Guild War Start Month", ge=1, le=12), year : int = commands.Param(description="Guild War Start Year", ge=2021)):

@@ -466,7 +466,7 @@ class MizaBot(commands.Bot):
                     except: pass
                     await guild.leave()
                 case 3: # member count check
-                    try: await guild.get_or_fetch_member(guild.owner_id).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=guild.icon.url))
+                    try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=guild.icon.url))
                     except: pass
                     await guild.leave()
                 case 4: # notify
