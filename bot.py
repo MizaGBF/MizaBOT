@@ -36,7 +36,8 @@ class MizaBot(commands.Bot):
             "The command list changed a lot, check the online help or the `/help` command if you are looking for one",
             "Regrouped some commands under `/utility`",
             "All self-assignable role commands moved under `/role`",
-            "Upgraded/Added new commands under `/game`"
+            "Upgraded/Added new commands under `/game`",
+            "`/find` commands moved to `/gw find`"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event

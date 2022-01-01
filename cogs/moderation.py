@@ -180,8 +180,11 @@ class Moderation(commands.Cog):
             self.bot.pinboard.add(str(inter.guild.id), tracked, emoji, mod, threshold, pinning_channel)
             await inter.response.send_message(embed=self.bot.util.embed(title="Pinboard enabled on {}".format(inter.guild.name), description="{} tracked channels (`{}`)\n{} {} emotes are needed to trigger a pin\n[Output channel](https://discord.com/channels/{}/{})".format(len(tracked), tracked, threshold, emoji, inter.guild.id, pinning_channel), footer="Use the command again to change those settings", color=self.color), ephemeral=True)
         except Exception as e:
-            await self.bot.sendError('enablepinboard', e)
-            await inter.response.send_message(embed=self.bot.util.embed(title="Pinboard Error", description="{}".format(e), footer="Try the command without parameters to see the detailed instructions", color=self.color), ephemeral=True)
+            if str(e).find("isn't a valid channel") == -1:
+                await self.bot.sendError('enablepinboard', e)
+                await inter.response.send_message(embed=self.bot.util.embed(title="Pinboard Error", description="Critical Error, my owner got detailed error\nFeel free to try again, or wait for a fix if the error persists\n`{}`".format(e), footer="Try the command without parameters to see the detailed instructions", color=self.color), ephemeral=True)
+            else:
+                await inter.response.send_message(embed=self.bot.util.embed(title="Pinboard Error", description="{}".format(e), footer="Try the command without parameters to see the detailed instructions", color=self.color), ephemeral=True)
 
     @pinboard.sub_command(name="disable")
     async def disablepinboard(self, inter: disnake.GuildCommandInteraction):
