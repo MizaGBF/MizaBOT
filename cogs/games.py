@@ -381,7 +381,7 @@ class Games(commands.Cog):
     @roll.sub_command()
     async def memeroll(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), rateup : str = commands.Param(description='Input anything to roll until a rate up SSR', default="")):
         """Simulate rolls until a SSR"""
-        await self._roll(inter, ("{} is memerolling...", "{} memerolled {} times"), 1, mode=('memerollB' if rateup != "" else 'memerollA'), legfest=self.checkLegfest(double))
+        await self._roll(inter, (("{} is memerolling until a rate up SSR..." if rateup != "" else "{} is memerolling..."), ("{} memerolled {} times until a rate up SSR" if rateup != "" else "{} memerolled {} times")), 1, mode=('memerollB' if rateup != "" else 'memerollA'), legfest=self.checkLegfest(double))
 
     @roll.sub_command()
     async def srssr(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
