@@ -56,7 +56,7 @@ class General(commands.Cog):
             if children is None or len(children) == 0: raise Exception()
             stack.append(cmd.name) # stack the command name
             for name in children:
-                self.checkCommand(children[name], cmd_type, result, stack, search, status) # call this command for each children
+                self.checkCommand(children[name], cmd_type, result, stack, search, status, owner) # call this command for each children
                 if True in status: return # stop if status contains True
             stack.pop(-1) # remove the name from the stack
         except: # sub/message/user command
