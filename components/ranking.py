@@ -289,12 +289,12 @@ class Ranking():
             return None
         elif current_time >= self.bot.data.save['gw']['dates']["End"]:
             return 25
-        elif current_time > self.bot.data.save['gw']['dates']["Day 5"]:
+        elif current_time >= self.bot.data.save['gw']['dates']["Day 5"]:
             return 25
-        elif current_time > self.bot.data.save['gw']['dates']["Day 1"]:
+        elif current_time >= self.bot.data.save['gw']['dates']["Day 1"]:
             it = ['Day 5', 'Day 4', 'Day 3', 'Day 2', 'Day 1']
             for i in range(1, len(it)): # loop to not copy paste this 5 more times
-                if current_time > self.bot.data.save['gw']['dates'][it[i]]:
+                if current_time >= self.bot.data.save['gw']['dates'][it[i]]:
                     d = self.bot.data.save['gw']['dates'][it[i-1]] - current_time
                     if d < timedelta(seconds=18000): return 16 - i
                     else: return 6 - i
