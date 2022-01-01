@@ -57,7 +57,7 @@ class Admin(commands.Cog):
             count = await self.bot.do(self.bot.data.clean_spark) # clean up spark data
             if count > 0:
                 await self.bot.send('debug', embed=self.bot.util.embed(title="clean()", description="Cleaned {} unused spark saves".format(count), timestamp=self.bot.util.timestamp()))
-            if self.bot.util.JST().day == 1: # only clean on the first day of each month
+            if self.bot.util.JST().day == 3: # only clean on the third day of each month
                 count = await self.bot.data.clean_profile() # clean up profile data
                 if count > 0:
                     await self.bot.send('debug', embed=self.bot.util.embed(title="clean()", description="Cleaned {} unused profiles".format(count), timestamp=self.bot.util.timestamp()))
