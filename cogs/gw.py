@@ -1131,7 +1131,7 @@ class GuildWar(commands.Cog):
                         mode = 0
                         terms = self.htmlescape(terms)
                     case 1:
-                        terms = self.htmlescape(terms[4:])
+                        terms = self.htmlescape(terms)
                         mode = 1
                     case 2:
                         try:
@@ -1142,7 +1142,7 @@ class GuildWar(commands.Cog):
                             raise Exception("Returning")
                     case 3:
                         try:
-                            terms = int(terms[6:])
+                            terms = int(terms)
                             mode = 3
                         except:
                             await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="`{}` isn't a valid syntax".format(terms), color=self.color))
