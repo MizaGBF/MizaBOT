@@ -257,7 +257,7 @@ class Data():
         elif c.day == 1 and c.hour < 18:
             fd = c + timedelta(seconds=60)
         else:
-            return False
+            fd = c + timedelta(days=2)
         d = fd - c
         new_schedule = []
         if self.bot.twitter.client is not None and d.days < 1: # retrieve schedule from @granblue_en if we are close to the date
