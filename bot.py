@@ -430,11 +430,11 @@ class MizaBot(commands.Bot):
                     case 1: # ban check
                         await g.leave()
                     case 2: # invite state check
-                        try: await g.get_or_fetch_member(g.owner_id).send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=g.icon.url))
+                        try: await (await g.get_or_fetch_member(g.owner_id)).send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=g.icon.url))
                         except: pass
                         await g.leave()
                     case 3: # member count check
-                        try: await g.get_or_fetch_member(g.owner_id).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=g.icon.url))
+                        try: await (await g.get_or_fetch_member(g.owner_id)).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=g.icon.url))
                         except: pass
                         await g.leave()
                     case 4: # notify
@@ -462,7 +462,7 @@ class MizaBot(commands.Bot):
                 case 1: # ban check
                     await guild.leave()
                 case 2: # invite state check
-                    try: await guild.get_or_fetch_member(guild.owner_id).send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon.url))
+                    try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon.url))
                     except: pass
                     await guild.leave()
                 case 3: # member count check
