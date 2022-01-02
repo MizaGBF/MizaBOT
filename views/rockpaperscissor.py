@@ -39,47 +39,48 @@ class RPS(BaseView):
     init: if True, it uses a different method (only used from the command call itself)
     """
     async def update(self, inter, init=False):
-        if self.state[0] == -1 or self.state[1] == -1:
-            self.embed.description = ""
-            for i, p in enumerate(self.players):
-                self.embed.description += "**{}** ▫️ ".format(p.display_name)
-                if self.state[i] == -1: self.embed.description += "*is thinking...*\n"
-                else: self.embed.description += "*made its choice.*\n"
-        else:
-            self.embed.description = ""
-            for i, p in enumerate(self.players):
-                self.embed.description += "**{}** ▫️ ".format(p.display_name)
-                match self.state[i]:
-                    case 0: self.embed.description += "selected 🪨 **Rock**\n"
-                    case 1: self.embed.description += "selected 🧻 **Paper**\n"
-                    case 2: self.embed.description += "selected ✂️ **Scissor**\n"
-            # winner selection
-            if self.state[0] == self.state[1]:
-                self.embed.description += "This round is a **draw**\n"
-                self.embed.description += "**Next round in 10 seconds...**"
-                self.won = True
+        if not self.won:
+            if self.state[0] == -1 or self.state[1] == -1:
+                self.embed.description = ""
+                for i, p in enumerate(self.players):
+                    self.embed.description += "**{}** ▫️ ".format(p.display_name)
+                    if self.state[i] == -1: self.embed.description += "*is thinking...*\n"
+                    else: self.embed.description += "*made its choice.*\n"
             else:
-                v = self.state[0] * 10 + self.state[1]
-                win = None
-                match v:
-                    case  1: win = 1
-                    case  2: win = 0
-                    case 10: win = 0
-                    case 12: win = 1
-                    case 20: win = 1
-                    case 21: win = 0
-                self.scores[win] += 1
-                self.won = True
-                if self.target > 1:
-                    self.embed.description += "**{}** won this round\n".format(self.players[win].display_name)
-                    self.embed.description += "**{}** won {} time(s) ▫️ **{}** won {} time(s)\n".format(self.players[0].display_name, self.scores[0], self.players[1].display_name, self.scores[1])
-                    if self.scores[win] >= self.target:
-                        self.embed.description += "**{}** is the **Winner**".format(self.players[win].display_name)
-                    else:
-                        self.embed.description += "**Next round in 10 seconds...**"
+                self.embed.description = ""
+                for i, p in enumerate(self.players):
+                    self.embed.description += "**{}** ▫️ ".format(p.display_name)
+                    match self.state[i]:
+                        case 0: self.embed.description += "selected 🪨 **Rock**\n"
+                        case 1: self.embed.description += "selected 🧻 **Paper**\n"
+                        case 2: self.embed.description += "selected ✂️ **Scissor**\n"
+                # winner selection
+                if self.state[0] == self.state[1]:
+                    self.embed.description += "This round is a **draw**\n"
+                    self.embed.description += "**Next round in 10 seconds...**"
+                    self.won = True
                 else:
-                    self.embed.description += "**{}** is the **Winner**".format(self.players[win].display_name)
-            self.stopall()
+                    v = self.state[0] * 10 + self.state[1]
+                    win = None
+                    match v:
+                        case  1: win = 1
+                        case  2: win = 0
+                        case 10: win = 0
+                        case 12: win = 1
+                        case 20: win = 1
+                        case 21: win = 0
+                    self.scores[win] += 1
+                    self.won = True
+                    if self.target > 1:
+                        self.embed.description += "**{}** won this round\n".format(self.players[win].display_name)
+                        self.embed.description += "**{}** won {} time(s) ▫️ **{}** won {} time(s)\n".format(self.players[0].display_name, self.scores[0], self.players[1].display_name, self.scores[1])
+                        if self.scores[win] >= self.target:
+                            self.embed.description += "**{}** is the **Winner**".format(self.players[win].display_name)
+                        else:
+                            self.embed.description += "**Next round in 10 seconds...**"
+                    else:
+                        self.embed.description += "**{}** is the **Winner**".format(self.players[win].display_name)
+                self.stopall()
         if init:
             await inter.edit_original_message(content=self.bot.util.players2mentions(self.players), embed=self.embed, view=self)
             self.message = await inter.original_message()
@@ -108,6 +109,7 @@ class RPS(BaseView):
     action: integer, what item the player picked
     """
     async def callback(self, interaction: disnake.Interaction, action: int):
+        await interaction.response.defer(ephemeral=True)
         i = None
         for idx, p in enumerate(self.players):
             if p.id == interaction.user.id:
@@ -116,19 +118,19 @@ class RPS(BaseView):
                     break
         if i is not None:
             if self.state[i] != -1:
-                await interaction.response.send_message("You can't change your choice", ephemeral=True)
+                await interaction.edit_original_message("You can't change your choice", ephemeral=True)
             else:
                 self.state[i] = action
+                await self.update(interaction)
                 match action:
                     case 0:
-                        await interaction.response.send_message("You selected Rock", ephemeral=True)
+                        await interaction.edit_original_message("You selected Rock", ephemeral=True)
                     case 1:
-                        await interaction.response.send_message("You selected Paper", ephemeral=True)
+                        await interaction.edit_original_message("You selected Paper", ephemeral=True)
                     case 2:
-                        await interaction.response.send_message("You selected Scissor", ephemeral=True)
-                await self.update(interaction)
+                        await interaction.edit_original_message("You selected Scissor", ephemeral=True)
         else:
-            await interaction.response.send_message("You can't play this game", ephemeral=True)
+            await interaction.edit_original_message("You can't play this game", ephemeral=True)
 
     @disnake.ui.button(label='Rock', style=disnake.ButtonStyle.primary, emoji='🪨')
     async def rock(self, button: disnake.ui.Button, interaction: disnake.Interaction):

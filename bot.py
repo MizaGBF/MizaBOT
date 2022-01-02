@@ -30,7 +30,7 @@ except:
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "9.8" # bot version
+        self.version = "9.9" # bot version
         self.changelog = [ # changelog lines
             "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
             "The command list changed a lot, check the online help or the `/help` command if you are looking for one",
@@ -410,6 +410,33 @@ class MizaBot(commands.Bot):
         else: # notify
             return 4
 
+    """newGuildCheck()
+    Used to check for new guilds.
+    Call checkGuild(), do what's needed and return a value corresponding to it
+    
+    Returns
+    ----------
+    int: 1 is banned, 2 can't invite, 3 not enough members, 4 is new, everything else is ok
+    """
+    async def newGuildCheck(self, guild):
+        ret = self.checkGuild(guild)
+        match ret:
+            case 1: # ban check
+                await guild.leave()
+            case 2: # invite state check
+                try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon.url))
+                except: pass
+                await guild.leave()
+            case 3: # member count check
+                try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=guild.icon.url))
+                except: pass
+                await guild.leave()
+            case 4: # notify
+                await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at))
+            case _:
+                pass
+        return ret
+
     """checkGuildList()
     Check the server list (on startup) for new servers.
     This is just in case someone invites the bot while it's down.
@@ -423,27 +450,18 @@ class MizaBot(commands.Bot):
                     self.data.save['guilds'].append(g.id)
                     self.data.pending = True
         # list all the current guilds and check new ones
-        current_guilds = []
-        for g in self.guilds:
-            if g.id not in self.data.save['guilds']:
-                match self.checkGuild(g):
-                    case 1: # ban check
-                        await g.leave()
-                    case 2: # invite state check
-                        try: await (await g.get_or_fetch_member(g.owner_id)).send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=g.icon.url))
-                        except: pass
-                        await g.leave()
-                    case 3: # member count check
-                        try: await (await g.get_or_fetch_member(g.owner_id)).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=g.icon.url))
-                        except: pass
-                        await g.leave()
-                    case 4: # notify
-                        await self.send('debug', embed=self.util.embed(title=g.name + " added me", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(g.id, g.owner_id, len(g.text_channels), len(g.voice_channels), g.member_count, len(g.roles), len(g.emojis), g.premium_subscription_count, g.premium_tier), thumbnail=g.icon.url, timestamp=g.created_at))
+        try:
+            current_guilds = []
+            for g in self.guilds:
+                if g.id not in self.data.save['guilds']:
+                    ret = await self.newGuildCheck(g)
+                    if ret not in [1, 2, 3]:
                         current_guilds.append(g.id)
-                    case _:
-                        current_guilds.append(g.id)
-            else:
-                current_guilds.append(g.id)
+                else:
+                    current_guilds.append(g.id)
+        except Exception as e:
+            await self.bot.sendError("checkGuildList", e)
+            return
         with self.data.lock:
             if current_guilds != self.data.save['guilds']:
                 self.data.save['guilds'] = current_guilds
@@ -458,24 +476,10 @@ class MizaBot(commands.Bot):
     """
     async def on_guild_join(self, guild):
         try:
-            match self.checkGuild(guild):
-                case 1: # ban check
-                    await guild.leave()
-                case 2: # invite state check
-                    try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon.url))
-                    except: pass
-                    await guild.leave()
-                case 3: # member count check
-                    try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=guild.icon.url))
-                    except: pass
-                    await guild.leave()
-                case 4: # notify
-                    await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at))
-                    with self.data.lock:
-                        self.data.save['guilds'].append(guild.id)
-                        self.data.pending = True
-                case _:
-                    pass
+            if await self.newGuildCheck(guild) == 4:
+                with self.data.lock:
+                    self.data.save['guilds'].append(guild.id)
+                    self.data.pending = True
         except Exception as e:
             self.sendError('on_guild_join', e)
 

@@ -423,8 +423,7 @@ class Games(commands.Cog):
                 for item in ssrs:
                     tmp += item
                     if ssrs[item] > 1: tmp += " x{}".format(ssrs[item])
-                    tmp += ", "
-                tmp = tmp[:-2]
+                    tmp += " "
         return result, rate, tmp, count, best
 
     @roll.sub_command()
