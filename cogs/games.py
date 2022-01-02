@@ -454,7 +454,7 @@ class Games(commands.Cog):
             if forcedSuperMukku: superFlag = True
             if l == 2 and forced3pc:
                 try:
-                    l = (2 if int(gacha_data['ratio'][0]) == 6 else 1)
+                    l = (2 if int(self.bot.get_cog('GranblueFantasy').getCurrentGacha()[1]['ratio'][0]) == 6 else 1)
                     if l == 2: footer = "6% SSR rate ▪️ Fixed rate"
                     else: footer = "3% SSR rate ▪️ Fixed rate"
                 except: pass
