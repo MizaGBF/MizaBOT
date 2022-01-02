@@ -109,7 +109,6 @@ class RPS(BaseView):
     action: integer, what item the player picked
     """
     async def callback(self, interaction: disnake.Interaction, action: int):
-        await interaction.response.defer(ephemeral=True)
         i = None
         for idx, p in enumerate(self.players):
             if p.id == interaction.user.id:
@@ -118,19 +117,19 @@ class RPS(BaseView):
                     break
         if i is not None:
             if self.state[i] != -1:
-                await interaction.edit_original_message(content="You can't change your choice")
+                await interaction.response.send_message("You can't change your choice", ephemeral=True)
             else:
                 self.state[i] = action
                 await self.update(interaction)
                 match action:
                     case 0:
-                        await interaction.edit_original_message(content="You selected Rock")
+                        await interaction.response.send_message("You selected Rock", ephemeral=True)
                     case 1:
-                        await interaction.edit_original_message(content="You selected Paper")
+                        await interaction.response.send_message("You selected Paper", ephemeral=True)
                     case 2:
-                        await interaction.edit_original_message(content="You selected Scissor")
+                        await interaction.response.send_message("You selected Scissor", ephemeral=True)
         else:
-            await interaction.edit_original_message(content="You can't play this game")
+            await interaction.response.send_message("You can't play this game", ephemeral=True)
 
     @disnake.ui.button(label='Rock', style=disnake.ButtonStyle.primary, emoji='🪨')
     async def rock(self, button: disnake.ui.Button, interaction: disnake.Interaction):
