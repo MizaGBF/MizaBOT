@@ -436,15 +436,15 @@ class Games(commands.Cog):
         rps = ['rock', 'paper', 'scissor']
         ct = self.bot.util.JST()
         # customization settings
-        fixedS = ct.replace(year=2021, month=3, day=29, hour=19, minute=0, second=0, microsecond=0) # beginning of fixed rolls
-        fixedE = fixedS.replace(day=31, hour=19) # end of fixed rolls
+        fixedS = ct.replace(year=2022, month=1, day=3, hour=19, minute=0, second=0, microsecond=0) # beginning of fixed rolls
+        fixedE = fixedS.replace(day=5, hour=0) # end of fixed rolls
         forced3pc = True # force 3%
-        forcedRollCount = 100 # number of rolls during fixed rolls
+        forcedRollCount = 200 # number of rolls during fixed rolls
         forcedSuperMukku = True
-        enable200 = False # add 200 on wheel
-        enableJanken = False
-        maxJanken = 2 # number of RPS
-        doubleMukku = True
+        enable200 = True # add 200 on wheel
+        enableJanken = True
+        maxJanken = 1 # number of RPS
+        doubleMukku = False
         # settings end
         state = 0
         superFlag = False
@@ -453,9 +453,12 @@ class Games(commands.Cog):
             roll = forcedRollCount
             if forcedSuperMukku: superFlag = True
             if l == 2 and forced3pc:
-                l = self.isLegfest("")
-                if l == 2: footer = "6% SSR rate ▪️ Fixed rate"
-                else: footer = "3% SSR rate ▪️ Fixed rate"
+                try:
+                    l = (2 if int(gacha_data['ratio'][0]) == 6 else 1)
+                    if l == 2: footer = "6% SSR rate ▪️ Fixed rate"
+                    else: footer = "3% SSR rate ▪️ Fixed rate"
+                except: pass
+            
             d = 0
             state = 1
         else:
