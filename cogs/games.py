@@ -233,7 +233,7 @@ class Games(commands.Cog):
         if rmode == 0: # single roll mode
             r = result['list'][0]
             if result['extended']:
-                rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(r[1].split('>')[1:])) # retrieve the id from the wiki
+                rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(r[1].split('>')[2:])) # retrieve the id from the wiki
                 if rid is None: thumb = None # and try to make a thumbnail
                 elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
                 elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
@@ -261,7 +261,7 @@ class Games(commands.Cog):
                     text += "{} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(v[0])))
                 counter[v[0]] += 1
             if best[0] != -1: # make a thumbnail
-                rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[1:]))
+                rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[2:]))
                 if rid is None: thumb = None
                 elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
                 elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
@@ -287,7 +287,7 @@ class Games(commands.Cog):
                         msg += '{}'.format(self.bot.emote.get('crystal{}'.format(result['list'][j][0])))
                         if j % 2 == 1: msg += "\n"
                     if i == 10 and best[0] != -1: # make the thumbnail from best roll
-                        rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[1:]))
+                        rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[2:]))
                         if rid is None: thumb = None
                         elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
                         elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
@@ -316,7 +316,7 @@ class Games(commands.Cog):
                     if best[0] < 3 and '**' in r: best = [3, r.replace('**', '')]
                     elif best[0] < 2: best = [2, r]
                 if best[0] != -1: # make thumbnail
-                    rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[1:]))
+                    rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[2:]))
                     if rid is None: thumb = None
                     elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
                     elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
@@ -512,7 +512,7 @@ class Games(commands.Cog):
                     if best[0] > prev_best[0]:
                         prev_best = best
                         if best[0] != -1: # update thumbnail
-                            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[1:]))
+                            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[2:]))
                             if rid is None: thumb = None
                             elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
                             elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
@@ -526,7 +526,7 @@ class Games(commands.Cog):
                     if best[0] > prev_best[0]:
                         prev_best = best
                         if best[0] != -1: # update thumbnail
-                            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[1:]))
+                            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[2:]))
                             if rid is None: thumb = None
                             elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
                             elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
@@ -542,7 +542,7 @@ class Games(commands.Cog):
                     if best[0] > prev_best[0]:
                         prev_best = best
                         if best[0] != -1: # update thumbnail
-                            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[1:]))
+                            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[2:]))
                             if rid is None: thumb = None
                             elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
                             elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
@@ -559,7 +559,7 @@ class Games(commands.Cog):
                     if best[0] > prev_best[0]:
                         prev_best = best
                         if best[0] != -1: # update thumbnail
-                            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[1:]))
+                            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[2:]))
                             if rid is None: thumb = None
                             elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
                             elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
@@ -1183,7 +1183,7 @@ class Games(commands.Cog):
         try:
             possible = choices.split(";")
             if len(possible) < 2: raise Exception()
-            await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{}'s choice".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="`{}`\n{}".format(' '.join(possible), random.choice(possible)), color=self.color))
+            await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{}'s choice".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="`{}`\n{}".format('` `'.join(possible), random.choice(possible)), color=self.color))
             await self.bot.util.clean(inter, 45)
         except:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Give me a list of something to choose from, separated by `;`", color=self.color), ephemeral=True)
