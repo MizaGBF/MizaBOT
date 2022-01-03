@@ -466,7 +466,7 @@ class GranblueFantasy(commands.Cog):
             await self.bot.sendError("getMaintenanceStatus", e)
 
         try:
-            buf = await self.bot.do(self.getCurrentGacha)
+            buf = await self.bot.do(self.bot.gacha.get)
             if len(buf) > 0:
                 description += "\n{} Current gacha ends in **{}**".format(self.bot.emote.get('SSR'), self.bot.util.delta2str(buf[1]['time'] - buf[0], 2))
                 if buf[1]['time'] != buf[1]['timesub']:
@@ -923,144 +923,16 @@ class GranblueFantasy(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
         await self.bot.util.clean(inter, 40)
 
-    """getCurrentGacha()
-    Get the current GBF gacha banner data.
-    
-    Returns
-    --------
-    list: Containing:
-        - timedelta: Remaining time
-        - timedelta: Remaining time (for multi element spark periods)
-        - str: String containing the ssr rate and gacha rate up list
-        - str: Gacha banner image
-    """
-    def getCurrentGacha(self):
-        c = self.bot.util.JST().replace(microsecond=0) - timedelta(seconds=80)
-        if ('gacha' not in self.bot.data.save['gbfdata'] or self.bot.data.save['gbfdata']['gacha'] is None or c >= self.bot.data.save['gbfdata']['gacha']['time']) and not self.getGacha():
-            return []
-        if self.bot.data.save['gbfdata']['gacha']['time'] is None:
-            return []
-        return [c, self.bot.data.save['gbfdata']['gacha']]
-
-    """getGacha()
-    Request and update the GBF gacha in the save data
-    
-    Returns
-    --------
-    bool: True if success, False if error
-    """
-    def getGacha(self): # get current gacha
-        if not self.bot.gbf.isAvailable():
-            return False
-        try:
-            c = self.bot.util.JST()
-            #gacha page
-            data = self.bot.gbf.request("http://game.granbluefantasy.jp/gacha/list?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
-            if data is None: raise Exception()
-            # will contain the data
-            gacha_data = {}
-            gacha_data['time'] = datetime.strptime(data['legend']['lineup'][-1]['end'], '%m/%d %H:%M').replace(year=c.year, microsecond=0)
-            NY = False
-            if c > gacha_data['time']:
-                gacha_data['time'] = gacha_data['time'].replace(year=gacha_data['time'].year+1) # new year fix
-                NY = True
-            gacha_data['timesub'] = datetime.strptime(data['ceiling']['end'], '%Y/%m/%d %H:%M').replace(microsecond=0)
-            if (NY == False and gacha_data['timesub'] < gacha_data['time']) or (NY == True and gacha_data['timesub'] > gacha_data['time']): gacha_data['time'] = gacha_data['timesub'] # switched
-            random_key = data['legend']['random_key']
-            header_images = data['header_images']
-            logo = {'logo_fire':1, 'logo_water':2, 'logo_earth':3, 'logo_wind':4, 'logo_dark':5, 'logo_light':6}.get(data.get('logo_image', ''), data.get('logo_image', '').replace('logo_', ''))
-            id = data['legend']['lineup'][-1]['id']
-
-            # draw rate
-            data = self.bot.gbf.request("http://game.granbluefantasy.jp/gacha/provision_ratio/{}/1?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
-            
-            gacha_data['ratio'] = data['ratio'][0]['ratio']
-            
-            possible_zodiac_wpn = ['Ramulus', 'Dormius', 'Gallinarius', 'Canisius', 'Porculius', 'Rodentius', 'Bovinius', 'Tigrisius']
-            gacha_data['list'] = [{'rate':0, 'list':{}}, {'rate':0, 'list':{}}, {'rate':0, 'list':{}}]
-            gacha_data['rateup'] = {'zodiac':[]}
-            # loop over data
-            for appear in data['appear']:
-                rarity = appear['rarity'] - 2
-                if rarity < 0 or rarity > 2: continue # eliminate possible N rarity
-                gacha_data['list'][rarity]['rate'] = float(data['ratio'][2 - rarity]['ratio'][:-1])
-                for item in appear['item']:
-                    if item['kind'] is None: kind = "S"
-                    else: kind = int(item['kind'])-1
-                    if item['drop_rate'] not in gacha_data['list'][rarity]['list']: gacha_data['list'][rarity]['list'][item['drop_rate']] = []
-                    gacha_data['list'][rarity]['list'][item['drop_rate']].append("{}{}{}".format(item['attribute'], kind, item['name']))
-
-                    if rarity == 2: # ssr
-                        if appear['category_name'] not in gacha_data['rateup']: gacha_data['rateup'][appear['category_name']] = {}
-                        if 'character_name' in item and item.get('name', '') in possible_zodiac_wpn:
-                            gacha_data['rateup']['zodiac'].append("{}{}{}".format(item['attribute'], kind, item['character_name']))
-                        if item['incidence'] is not None:
-                            if item['drop_rate'] not in gacha_data['rateup'][appear['category_name']]: gacha_data['rateup'][appear['category_name']][item['drop_rate']] = []
-                            if 'character_name' in item and item['character_name'] is not None: gacha_data['rateup'][appear['category_name']][item['drop_rate']].append("{}{}{}".format(item['attribute'], kind, item['character_name']))
-                            else: gacha_data['rateup'][appear['category_name']][item['drop_rate']].append("{}{}{}".format(item['attribute'], kind, item['name']))
-
-            # add image
-            gachas = ['{}/tips/description_gacha.jpg'.format(random_key), '{}/tips/description_gacha_{}.jpg'.format(random_key, logo), '{}/tips/description_{}.jpg'.format(random_key, header_images[0]), 'header/{}.png'.format(header_images[0])]
-            for g in gachas:
-                data = self.bot.gbf.request("http://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(g), no_base_headers=True)
-                if data is not None:
-                    gacha_data['image'] = g
-                    break
-
-            # save
-            with self.bot.data.lock:
-                # clean old version
-                for key in ['rateup', 'gachatime', 'gachatimesub', 'gachabanner', 'gachacontent', 'gacharateups']:
-                    self.bot.data.save['gbfdata'].pop(key, None)
-                self.bot.data.save['gbfdata']['gacha'] = gacha_data
-                self.bot.data.pending = True
-            return True
-        except Exception as e:
-            print('updategacha(): ', self.bot.util.pexc(e))
-            self.bot.errn += 1
-            with self.bot.data.lock:
-                self.bot.data.save['gbfdata']['gacha'] = None
-                self.bot.data.pending = True # save anyway
-            return False
-
     @gbf.sub_command()
     async def gacha(self, inter: disnake.GuildCommandInteraction):
         """Post the current gacha informations"""
         try:
             await inter.response.defer()
-            content = await self.bot.do(self.getCurrentGacha)
-            if len(content) > 0:
-                description = "{} Current gacha ends in **{}**".format(self.bot.emote.get('clock'), self.bot.util.delta2str(content[1]['time'] - content[0], 2))
-                if content[1]['time'] != content[1]['timesub']:
-                    description += "\n{} Spark period ends in **{}**".format(self.bot.emote.get('mark'), self.bot.util.delta2str(content[1]['timesub'] - content[0], 2))
-                
-                description += "\n{} **{}** Rate".format(self.bot.emote.get('SSR'), content[1]['ratio'])
-                if not content[1]['ratio'].startswith('3'):
-                    description += " ▫️ **Premium Gala**"
-                description += "\n"
-                
-                # build rate up
-                for k in content[1]['rateup']:
-                    if k == 'zodiac':
-                        if len(content[1]['rateup']['zodiac']) > 0:
-                            description += "{} **Zodiac** ▫️ ".format(self.bot.emote.get('loot'))
-                            for i in content[1]['rateup'][k]:
-                                description += self.bot.util.formatGachaItem(i) + " "
-                            description += "\n"
-                    else:
-                        if len(content[1]['rateup'][k]) > 0:
-                            for r in content[1]['rateup'][k]:
-                                if k.lower().find("weapon") != -1: description += "{}**{}%** ▫️ ".format(self.bot.emote.get('sword'), r)
-                                elif k.lower().find("summon") != -1: description += "{}**{}%** ▫️ ".format(self.bot.emote.get('summon'), r)
-                                for i, item in enumerate(content[1]['rateup'][k][r]):
-                                    if i >= 8 and len(content[1]['rateup'][k][r]) - i > 1:
-                                        description += " and **{} more!**".format(len(content[1]['rateup'][k][r]) - i)
-                                        break
-                                    description += self.bot.util.formatGachaItem(item) + " "
-                            description += "\n"
-                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(content[1]['image']), color=self.color))
+            description, thumbnail = await self.bot.do(self.bot.gacha.summary)
+            if description is None: raise Exception('No Gacha')
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, thumbnail=thumbnail, color=self.color))
         except Exception as e:
-            await self.bot.sendError("getcurrentgacha", e)
+            if str(e) != 'No Gacha': await self.bot.sendError("getcurrentgacha", e)
             await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Unavailable", color=self.color))
 
     """getProfileData()

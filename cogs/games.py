@@ -54,62 +54,6 @@ class Games(commands.Cog):
         for r in self.scam:
             self.scam_rate += r[0]
 
-    """gachaRateUp()
-    Return the current real gacha from GBF, if it exists in the bot memory.
-    If not, a dummy/limited one is generated.
-    
-    Returns
-    --------
-    tuple: Containing:
-        - The whole rate list
-        - The banner rate up
-        - The ssr rate, in %
-        - Boolean indicating if the gacha is the real one
-    """
-    def gachaRateUp(self):
-        try:
-            gacha_data = self.bot.get_cog('GranblueFantasy').getCurrentGacha()[1]
-            if len(gacha_data['list']) == 0: raise Exception()
-            data = gacha_data['list']
-            rateups = []
-            # build a list of rate up
-            for k in gacha_data['rateup']:
-                if k == "zodiac": continue
-                if len(gacha_data['rateup'][k]) > 0:
-                    for r in gacha_data['rateup'][k]:
-                        if r not in rateups: rateups.append(r)
-            ssrrate = int(gacha_data['ratio'][0])
-            extended = True
-        except:
-            data = [{}, {'rate':15}, {'rate':3}]
-            rateups = None
-            ssrrate = 3
-            extended = False
-        return data, rateups, ssrrate, extended
-
-    """checkLegfest()
-    Check the provided parameter and the real gacha to determine if we will be using a 6 or 3% SSR rate
-    
-    Parameters
-    ----------
-    selected: Integer, selected value by the user (-1 default, 0 is 3%, anything else is 6%)
-    
-    Returns
-    --------
-    bool: True if 6%, False if 3%
-    """
-    def checkLegfest(self, selected):
-        match selected:
-            case 0:
-                return False
-            case -1:
-                try:
-                    return (self.bot.data.save['gbfdata']['gacha']['ratio'][0] == '6')
-                except:
-                    return False
-            case _:
-                return True
-
     """gachaRoll()
     Simulate GBF gacha and return the result.
     
@@ -132,7 +76,7 @@ class Games(commands.Cog):
         mode = {'single':0, 'srssr':1, 'memerollA':2, 'memerollB':3, 'ten':10, 'gachapin':11, 'mukku':12, 'supermukku':13}[options['mode']]
         count = options.get('count', 300)
         if count < 1: count = 1
-        data, rateups, ssrrate, extended = self.gachaRateUp() # get current gacha (dummy one if error)
+        data, rateups, ssrrate, extended = self.bot.gacha.retrieve() # get current gacha (dummy one if error)
         legfest = options.get('legfest', True if ssrrate == 6 else False) # legfest parameter
         ssrrate = 15 if mode == 13 else (9 if mode == 12 else (6 if legfest else 3)) # set the ssr rate
         result = {'list':[], 'detail':[0, 0, 0], 'extended':extended, 'rate':ssrrate} # result container
@@ -346,27 +290,27 @@ class Games(commands.Cog):
     @roll.sub_command()
     async def single(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
         """Simulate a single draw"""
-        await self._roll(inter, ("{} did a single roll...", "{} did a single roll"), 0, count=1, mode='single', legfest=self.checkLegfest(double))
+        await self._roll(inter, ("{} did a single roll...", "{} did a single roll"), 0, count=1, mode='single', legfest=self.bot.gacha.isLegfest(double))
 
     @roll.sub_command()
     async def ten(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
         """Simulate a ten draw"""
-        await self._roll(inter, ("{} did ten rolls...", "{} did ten rolls"), 2, count=10, mode='ten', legfest=self.checkLegfest(double))
+        await self._roll(inter, ("{} did ten rolls...", "{} did ten rolls"), 2, count=10, mode='ten', legfest=self.bot.gacha.isLegfest(double))
 
     @roll.sub_command()
     async def spark(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
         """Simulate a spark"""
-        await self._roll(inter, ("{} is sparking...", "{} sparked"), 3, count=300, mode='ten', legfest=self.checkLegfest(double))
+        await self._roll(inter, ("{} is sparking...", "{} sparked"), 3, count=300, mode='ten', legfest=self.bot.gacha.isLegfest(double))
 
     @roll.sub_command()
     async def count(self, inter: disnake.GuildCommandInteraction, num : int = commands.Param(description='Number of rolls', ge=1, le=600), double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
         """Simulate a specific amount of draw"""
-        await self._roll(inter, ("{}" + " is rolling {} times...".format(num), "{} " + "rolled {} times".format(num)), 3, count=num, mode='ten', legfest=self.checkLegfest(double))
+        await self._roll(inter, ("{}" + " is rolling {} times...".format(num), "{} " + "rolled {} times".format(num)), 3, count=num, mode='ten', legfest=self.bot.gacha.isLegfest(double))
 
     @roll.sub_command()
     async def gachapin(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
         """Simulate a Gachapin Frenzy"""
-        await self._roll(inter, ("{} is rolling the Gachapin...", "{} rolled the Gachapin"), 3, count=300, mode='gachapin', legfest=self.checkLegfest(double))
+        await self._roll(inter, ("{} is rolling the Gachapin...", "{} rolled the Gachapin"), 3, count=300, mode='gachapin', legfest=self.bot.gacha.isLegfest(double))
 
     @roll.sub_command()
     async def mukku(self, inter: disnake.GuildCommandInteraction):
@@ -381,12 +325,12 @@ class Games(commands.Cog):
     @roll.sub_command()
     async def memeroll(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), rateup : str = commands.Param(description='Input anything to roll until a rate up SSR', default="")):
         """Simulate rolls until a SSR"""
-        await self._roll(inter, (("{} is memerolling until a rate up SSR..." if rateup != "" else "{} is memerolling..."), ("{} memerolled {} times until a rate up SSR" if rateup != "" else "{} memerolled {} times")), 1, mode=('memerollB' if rateup != "" else 'memerollA'), legfest=self.checkLegfest(double))
+        await self._roll(inter, (("{} is memerolling until a rate up SSR..." if rateup != "" else "{} is memerolling..."), ("{} memerolled {} times until a rate up SSR" if rateup != "" else "{} memerolled {} times")), 1, mode=('memerollB' if rateup != "" else 'memerollA'), legfest=self.bot.gacha.isLegfest(double))
 
     @roll.sub_command()
     async def srssr(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
         """Simulate a SR/SSR Ticket draw"""
-        await self._roll(inter, ("{} is using a SR/SSR ticket...", "{} used a SR/SSR ticket"), 0, count=1, mode='srssr', legfest=self.checkLegfest(double))
+        await self._roll(inter, ("{} is using a SR/SSR ticket...", "{} used a SR/SSR ticket"), 0, count=1, mode='srssr', legfest=self.bot.gacha.isLegfest(double))
 
     """getRoulette()
     Return the result of a roulette part
@@ -407,7 +351,7 @@ class Games(commands.Cog):
         - best: best ssr we got
     """
     def getRoulette(self, count, mode, double):
-        result = self.gachaRoll(count=count, mode=mode, legfest=self.checkLegfest(double))
+        result = self.gachaRoll(count=count, mode=mode, legfest=self.bot.gacha.isLegfest(double))
         footer = "{}% SSR rate".format(result['rate'])
         count = len(result['list'])
         rate = (100*result['detail'][2]/count)
@@ -452,7 +396,7 @@ class Games(commands.Cog):
             roll = forcedRollCount
             if forcedSuperMukku: superFlag = True
             if double == 1 and forced3pc:
-                try: double = (1 if int(self.bot.get_cog('GranblueFantasy').getCurrentGacha()[1]['ratio'][0]) == 6 else 0)
+                try: double = (1 if int(self.bot.gacha.get()[1]['ratio'][0]) == 6 else 0)
                 except: pass
             
             d = 0

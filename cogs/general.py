@@ -249,7 +249,7 @@ class General(commands.Cog):
             else:
                 count = int(count)
             msg = "Your chances of getting at least one of the following rate ups with {} rolls:\n".format(count)
-            data, rateups, ssrrate, extended = self.bot.get_cog('Games').gachaRateUp()
+            data, rateups, ssrrate, extended = self.bot.gacha.retrieve()
             if rateups is None: raise Exception("Unavailable")
             for r in rateups:
                 msg += "{:} **{:}%** ▫️ {:.3f}%\n".format(self.bot.emote.get('SSR'), r, 100*(1-math.pow(1-float(r)*0.01, count)))

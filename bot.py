@@ -11,6 +11,7 @@ from components.file import File
 from components.sql import SQL
 from components.ranking import Ranking
 from components.ban import Ban
+from components.gacha import Gacha
 import cogs
 
 import disnake
@@ -60,6 +61,7 @@ class MizaBot(commands.Bot):
         self.sql = SQL(self)
         self.ranking = Ranking(self)
         self.ban = Ban(self)
+        self.gacha = Gacha(self)
         
         # loading data
         self.data.loadConfig()
@@ -85,6 +87,7 @@ class MizaBot(commands.Bot):
         self.sql.init()
         self.ranking.init()
         self.ban.init()
+        self.gacha.init()
 
         # init base class
         super().__init__(case_insensitive=True, description="MizaBOT version {}\n[Source code](https://github.com/MizaGBF/MizaBOT)▫️[Online Command List](https://mizagbf.github.io/MizaBOT/)".format(self.version), help_command=None, owner=self.data.config['ids']['owner'], max_messages=None, intents=disnake.Intents.default())
