@@ -248,13 +248,13 @@ class General(commands.Cog):
                 raise Exception("Please specify a valid number of rolls")
             else:
                 count = int(count)
-            msg = "Your chances of getting at least one of the following rate ups with {} rolls:\n".format(count)
-            data, rateups, ssrrate, extended = self.bot.gacha.retrieve()
-            if rateups is None: raise Exception("Unavailable")
+            msg = "Your chances of getting at least one SSR of the following rates with {} rolls:\n".format(count)
+            ssrrate, rateups = self.bot.gacha.allRates()
+            if ssrrate is None: raise Exception("Unavailable")
             for r in rateups:
-                msg += "{:} **{:}%** ▫️ {:.3f}%\n".format(self.bot.emote.get('SSR'), r, 100*(1-math.pow(1-float(r)*0.01, count)))
+                msg += "{:} **{:.3f}%** ▫️ {:.3f}%\n".format(self.bot.emote.get('SSR'), r, 100*(1-math.pow(1-r*0.01, count)))
             msg += "Your chances of getting at least one SSR with {} rolls:\n".format(count)
-            msg += "{:} **{:}%** ▫️ {:.3f}%\n".format(self.bot.emote.get('SSR'), ssrrate, 100*(1-math.pow(1-float(ssrrate)*0.01, count)))
+            msg += "{:} **{:.2f}%** ▫️ {:.3f}%\n".format(self.bot.emote.get('SSR'), ssrrate, 100*(1-math.pow(1-ssrrate*0.01, count)))
             await inter.edit_original_message(embed=self.bot.util.embed(title="Roll Chance Calculator", description=msg.replace('100.000%', '99.999%'), color=self.color))
         except Exception as e:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Roll Chance Calculator Error", description=str(e), color=self.color))

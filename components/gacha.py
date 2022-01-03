@@ -223,3 +223,22 @@ class Gacha():
                     return False
             case _:
                 return True
+
+    """allRates()
+    Return a list of all different possible SSR rates in the current gacha
+    
+    Returns
+    --------
+    tuple:
+        float: ssr rate, return None if error
+        list: Rate list, return None if error
+    """
+    def allRates(self):
+        try:
+            r = []
+            for rate in list(self.bot.data.save['gbfdata']['gacha']['list'][2]['list'].keys()):
+                if float(rate) not in r:
+                    r.append(float(rate))
+            return float(self.bot.data.save['gbfdata']['gacha']['ratio'][:-1]), sorted(r, reverse=True)
+        except:
+            return None, None
