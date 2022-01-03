@@ -451,11 +451,8 @@ class Games(commands.Cog):
             msg = "{} {} :confetti_ball: :tada: Guaranteed **{} 0 0** R O L L S :tada: :confetti_ball: {} {}\n".format(self.bot.emote.get('crystal'), self.bot.emote.get('crystal'), forcedRollCount//100, self.bot.emote.get('crystal'), self.bot.emote.get('crystal'))
             roll = forcedRollCount
             if forcedSuperMukku: superFlag = True
-            if l == 2 and forced3pc:
-                try:
-                    l = (2 if int(self.bot.get_cog('GranblueFantasy').getCurrentGacha()[1]['ratio'][0]) == 6 else 1)
-                    if l == 2: footer = "6% SSR rate ▪️ Fixed rate"
-                    else: footer = "3% SSR rate ▪️ Fixed rate"
+            if double == 1 and forced3pc:
+                try: double = (1 if int(self.bot.get_cog('GranblueFantasy').getCurrentGacha()[1]['ratio'][0]) == 6 else 0)
                 except: pass
             
             d = 0
