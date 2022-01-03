@@ -148,9 +148,9 @@ class Gacha():
                         if i == 2: sum_ssr += float(r) * len(rarity['list'][r])
 
                 # rate description
-                description += "\n{} **Rate: {}** Advertised".format(self.bot.emote.get('SSR'), content[1]['ratio'])
+                description += "\n{} **Rate:** Advertised **{}**".format(self.bot.emote.get('SSR'), content[1]['ratio'])
                 if not content[1]['ratio'].startswith('3'):
-                    description += "**(Premium Gala)**"
+                    description += " **(Premium Gala)**"
                 description += " ▫️ Sum of rates **{:.3f}%**".format(100 * sum_ssr / sum_total)
                 description += "\n"
                 
