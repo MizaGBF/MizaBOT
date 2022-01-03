@@ -80,24 +80,35 @@ class Games(commands.Cog):
         legfest = options.get('legfest', True if ssrrate == 6 else False) # legfest parameter
         ssrrate = 15 if mode == 13 else (9 if mode == 12 else (6 if legfest else 3)) # set the ssr rate
         result = {'list':[], 'detail':[0, 0, 0], 'extended':extended, 'rate':ssrrate} # result container
-        tenrollsr = False # flag for guaranted SR in ten rolls
+        tenrollsr = False # flag for guaranted SR in ten rolls 
+        # calcul R,SR,SSR & total
+        proba = []
+        for r in data:
+            proba.append(0)
+            for rate in r['list']:
+                proba[-1] += float(rate) * len(r['list'][rate])
+        if extended and ssrrate != data[2]['rate']: # in case of different ssr rate set by user
+            ssr_mod = ssrrate / data[2]['rate']
+            proba[2] *= ssr_mod
+        else:
+            ssr_mod = 1
+        # rolling loop
         for i in range(0, count):
-            d = random.randint(1, 10000000) / 100000 # random value (don't use .random(), it doesn't work well with this)
+            d = random.randint(1, int(sum(proba) * 1000)) / 1000 # our roll
             if mode == 1 or (mode >= 10 and (i % 10 == 9) and not tenrollsr): sr_mode = True # force sr in srssr mode OR when 10th roll of ten roll)
             else: sr_mode = False # else doesn't set
-            if d < ssrrate: # SSR CASE
+            if d <= proba[2]: # SSR CASE
                 r = 2
-                if extended and ssrrate != data[r]['rate']:
-                    d = d * (data[r]['rate'] / ssrrate)
                 tenrollsr = True
-            elif (not sr_mode and d < 15 + ssrrate) or sr_mode: # SR CASE
+                d /= ssr_mod
+            elif (not sr_mode and d <= proba[1] + proba[2]) or sr_mode: # SR CASE
                 r = 1
                 d -= ssrrate
-                while d >= 15: d -= 15
+                while d >= proba[1]: d -= proba[1]
                 tenrollsr = True
             else: # R CASE
                 r = 0
-                d -= ssrrate + 15
+                d -= ssrrate + proba[1]
             if i % 10 == 9: tenrollsr = False # unset flag if we did 10 rolls
             if extended: # if we have a real gacha
                 roll = None
@@ -106,7 +117,7 @@ class Games(commands.Cog):
                     for item in data[r]['list'][rate]:
                         if r == 2 and rate in rateups: last = "**" + self.bot.util.formatGachaItem(item) + "**"
                         else: last = self.bot.util.formatGachaItem(item)
-                        if d < fr:
+                        if d <= fr:
                             roll = [r, last]
                             break
                         d -= fr

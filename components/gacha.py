@@ -138,13 +138,23 @@ class Gacha():
                 description = "{} Current gacha ends in **{}**".format(self.bot.emote.get('clock'), self.bot.util.delta2str(content[1]['time'] - content[0], 2))
                 if content[1]['time'] != content[1]['timesub']:
                     description += "\n{} Spark period ends in **{}**".format(self.bot.emote.get('mark'), self.bot.util.delta2str(content[1]['timesub'] - content[0], 2))
-                
-                description += "\n{} **{}** Rate".format(self.bot.emote.get('SSR'), content[1]['ratio'])
+
+                # calculate real ssr rate
+                sum_ssr = 0
+                sum_total = 0
+                for i, rarity in enumerate(content[1]['list']):
+                    for r in rarity['list']:
+                        sum_total += float(r) * len(rarity['list'][r])
+                        if i == 2: sum_ssr += float(r) * len(rarity['list'][r])
+
+                # rate description
+                description += "\n{} **Rate: {}** Advertised".format(self.bot.emote.get('SSR'), content[1]['ratio'])
                 if not content[1]['ratio'].startswith('3'):
-                    description += " ▫️ **Premium Gala**"
+                    description += "**(Premium Gala)**"
+                description += " ▫️ Sum of rates **{:.3f}%**".format(100 * sum_ssr / sum_total)
                 description += "\n"
                 
-                # build rate up
+                # build rate up list
                 for k in content[1]['rateup']:
                     if k == 'zodiac':
                         if len(content[1]['rateup']['zodiac']) > 0:
@@ -167,6 +177,7 @@ class Gacha():
             return None, None
         except Exception as e:
             raise e
+
 
     """retrieve()
     Return the current real gacha from GBF, if it exists in the bot memory.
