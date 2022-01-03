@@ -141,17 +141,17 @@ class Gacha():
 
                 # calculate real ssr rate
                 sum_ssr = 0
-                sum_total = 0
+                # sum_total = 0 # NOTE: ignoring it for now
                 for i, rarity in enumerate(content[1]['list']):
                     for r in rarity['list']:
-                        sum_total += float(r) * len(rarity['list'][r])
+                        # sum_total += float(r) * len(rarity['list'][r]) # NOTE: ignoring it for now
                         if i == 2: sum_ssr += float(r) * len(rarity['list'][r])
 
                 # rate description
                 description += "\n{} **Rate:** Advertised **{}**".format(self.bot.emote.get('SSR'), content[1]['ratio'])
                 if not content[1]['ratio'].startswith('3'):
                     description += " **(Premium Gala)**"
-                description += " ▫️ Sum of rates **{:.3f}%**".format(100 * sum_ssr / sum_total)
+                description += " ▫️ Sum of rates **{:.3f}%**".format(sum_ssr)
                 description += "\n"
                 
                 # build rate up list

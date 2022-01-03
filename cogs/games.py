@@ -292,7 +292,7 @@ class Games(commands.Cog):
         await self.bot.util.clean(inter, 40)
 
     @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 15, commands.BucketType.user)
+    @commands.cooldown(1, 20, commands.BucketType.user)
     @commands.max_concurrency(10, commands.BucketType.default)
     async def roll(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
