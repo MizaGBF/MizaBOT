@@ -408,7 +408,7 @@ class MizaBot(commands.Bot):
             return 1
         elif 'invite' not in self.data.save or self.data.save['invite']['state'] == False or len(self.guilds) >= self.data.save['invite']['limit']: # invite state check
             return 2
-        elif guild.member_count <= 30: # member count check
+        elif guild.member_count <= 25: # member count check
             return 3
         else: # notify
             return 4
@@ -431,7 +431,7 @@ class MizaBot(commands.Bot):
                 except: pass
                 await guild.leave()
             case 3: # member count check
-                try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 30 members.", thumbnail=guild.icon.url))
+                try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 25 members.", thumbnail=guild.icon.url))
                 except: pass
                 await guild.leave()
             case 4: # notify
