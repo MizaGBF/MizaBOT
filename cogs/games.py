@@ -276,6 +276,8 @@ class Games(commands.Cog):
                     elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
                     elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
                     else: thumb = None
+                else:
+                    thumb = "https://cdn.discordapp.com/attachments/614716155646705676/928619876078219274/loser.png"
                 if len(rolls) > 0:
                     msg = "{} ".format(self.bot.emote.get('SSR'))
                     for item in rolls:
@@ -436,7 +438,7 @@ class Games(commands.Cog):
         await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} is spinning the Roulette".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer))
         if not enableJanken and state < 2: state = 1
         running = True
-        prev_best = [-1, None]
+        prev_best = [-2, None]
         thumb = None
         while running:
             await asyncio.sleep(2)
@@ -471,6 +473,8 @@ class Games(commands.Cog):
                             elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
                             elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
                             else: thumb = None
+                        else:
+                            thumb = "https://cdn.discordapp.com/attachments/614716155646705676/928619876078219274/loser.png"
                     footer = "{}% SSR rate".format(result['rate'])
                     msg += "{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
                     if superFlag: state = 4
@@ -485,6 +489,8 @@ class Games(commands.Cog):
                             elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
                             elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
                             else: thumb = None
+                        else:
+                            thumb = "https://cdn.discordapp.com/attachments/614716155646705676/928619876078219274/loser.png"
                     footer = "{}% SSR rate".format(result['rate'])
                     msg += "Gachapin ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
                     if count == 10 and random.randint(1, 100) < 99: state = 3
@@ -501,6 +507,8 @@ class Games(commands.Cog):
                             elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
                             elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
                             else: thumb = None
+                        else:
+                            thumb = "https://cdn.discordapp.com/attachments/614716155646705676/928619876078219274/loser.png"
                     msg += ":confetti_ball: Mukku ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
                     if doubleMukku:
                         if random.randint(1, 100) < 25: pass
@@ -518,6 +526,8 @@ class Games(commands.Cog):
                             elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
                             elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
                             else: thumb = None
+                        else:
+                            thumb = "https://cdn.discordapp.com/attachments/614716155646705676/928619876078219274/loser.png"
                     msg += ":confetti_ball: **Super Mukku** ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
                     running = False
             await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer, thumbnail=thumb))
