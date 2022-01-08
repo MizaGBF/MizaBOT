@@ -903,7 +903,7 @@ class GranblueFantasy(commands.Cog):
                         for r in regexs:
                             m = re.search(r, t)
                             if m:
-                                msg += "**{}** since the last {}\n".format(m.group(1), w.replace("_", " ").replace("Category:", "").replace('Sunlight', 'Arcarum Sunlight').replace('Sephira', 'Arcarum Sephira').replace('Gold', 'ROTB Gold'))
+                                msg += "**{}** since the last [{}](https://gbf.wiki/{})\n".format(m.group(1), w.replace("_", " ").replace("Category:", "").replace('Sunlight', 'Arcarum Sunlight').replace('Sephira', 'Arcarum Sephira').replace('Gold', 'ROTB Gold'), w)
                                 break
 
         # summer disaster
@@ -914,7 +914,7 @@ class GranblueFantasy(commands.Cog):
         try:
             grands = await self.getGrandList()
             for e in grands:
-                msg += "**{} days** since {} {}\n".format(self.bot.util.delta2str(c - grands[e]['date'], 3).split('d')[0], self.bot.emote.get(e), grands[e]['name'])
+                msg += "**{} days** since {} [{}](https://gbf.wiki/{})\n".format(self.bot.util.delta2str(c - grands[e]['date'], 3).split('d')[0], self.bot.emote.get(e), grands[e]['name'], grands[e]['name'].replace(' ', '_'))
         except:
             pass
 
