@@ -305,15 +305,15 @@ class Data():
              guild_ids.append(str(g.id))
         count = 0
         with self.bot.data.lock:
-            for gid in self.bot.data.save['st']:
+            for gid in list(self.bot.data.save['st'].keys()):
                 if gid not in guild_ids:
                     self.bot.data.save['st'].pop(gid)
                     count += 1
-            for gid in self.bot.data.save['permitted']:
+            for gid in list(self.bot.data.save['permitted'].keys()):
                 if gid not in guild_ids:
                     self.bot.data.save['permitted'].pop(gid)
                     count += 1
-            for gid in self.bot.data.save['pinboard']:
+            for gid in list(self.bot.data.save['pinboard'].keys()):
                 if gid not in guild_ids:
                     self.bot.data.save['pinboard'].pop(gid)
                     count += 1
