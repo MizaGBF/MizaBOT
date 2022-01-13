@@ -57,12 +57,15 @@ class Admin(commands.Cog):
             count = await self.bot.do(self.bot.data.clean_spark) # clean up spark data
             if count > 0:
                 await self.bot.send('debug', embed=self.bot.util.embed(title="clean()", description="Cleaned {} unused spark saves".format(count), timestamp=self.bot.util.timestamp()))
+            if await self.bot.do(self.bot.data.clean_schedule): # clean up schedule data
+                await self.bot.send('debug', embed=self.bot.util.embed(title="clean()", description="The schedule has been cleaned up", timestamp=self.bot.util.timestamp()))
+            count = await self.bot.do(self.bot.data.clean_others)
+            if count > 0: # clean up ST/cleanup/pinboard data
+                await self.bot.send('debug', embed=self.bot.util.embed(title="clean()", description="Cleaned {} unused guild datas".format(count), timestamp=self.bot.util.timestamp()))
             if self.bot.util.JST().day == 3: # only clean on the third day of each month
                 count = await self.bot.data.clean_profile() # clean up profile data
                 if count > 0:
                     await self.bot.send('debug', embed=self.bot.util.embed(title="clean()", description="Cleaned {} unused profiles".format(count), timestamp=self.bot.util.timestamp()))
-            if await self.bot.do(self.bot.data.clean_schedule): # clean up schedule data
-                await self.bot.send('debug', embed=self.bot.util.embed(title="clean()", description="The schedule has been cleaned up", timestamp=self.bot.util.timestamp()))
         except asyncio.CancelledError:
             await self.bot.sendError('clean', 'cancelled')
             return
@@ -91,7 +94,7 @@ class Admin(commands.Cog):
     async def guildList(self): # list all guilds the bot is in and send it in the debug channel
         msg = ""
         for s in self.bot.guilds:
-            msg += "**{}** `{}`owned by **{}** `{}`\n".format(s.name, s.id, s.owner.name, s.owner.id)
+            msg += "**{}** `{}`owned by `{}`\n".format(s.name, s.id, s.owner_id)
             if len(msg) > 1800:
                 await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.display_avatar, color=self.color))
                 msg = ""

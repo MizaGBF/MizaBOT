@@ -291,3 +291,32 @@ class Data():
                 self.bot.data.pending = True
             return True
         return False
+
+    """clean_others()
+    Coroutine to clean st/cleanup/pinboard datas
+    
+    Parameters
+    --------
+    int: Number of cleaned entries
+    """
+    def clean_others(self):
+        guild_ids = []
+        for g in self.bot.guilds:
+             guild_ids.append(str(g.id))
+        count = 0
+        with self.bot.data.lock:
+            for gid in self.bot.data.save['st']:
+                if s not in guild_ids:
+                    self.bot.data.save['st'].pop(gid)
+                    count += 1
+            for gid in self.bot.data.save['permitted']:
+                if s not in guild_ids:
+                    self.bot.data.save['permitted'].pop(gid)
+                    count += 1
+            for gid in self.bot.data.save['pinboard']:
+                if s not in guild_ids:
+                    self.bot.data.save['pinboard'].pop(gid)
+                    count += 1
+            if count != 0:
+                self.bot.data.pending = True
+        return count
