@@ -417,23 +417,34 @@ class MizaBot(commands.Bot):
     Used to check for new guilds.
     Call checkGuild(), do what's needed and return a value corresponding to it
     
+    Parameters
+    ----------
+    guild: guild to check
+    disable_leave: if True, the bot only alerts the owner if a new guild is up
+    
     Returns
     ----------
     int: 1 is banned, 2 can't invite, 3 not enough members, 4 is new, everything else is ok
     """
-    async def newGuildCheck(self, guild):
+    async def newGuildCheck(self, guild, disable_leave=False):
         ret = self.checkGuild(guild)
         match ret:
             case 1: # ban check
                 await guild.leave()
             case 2: # invite state check
-                try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon.url))
-                except: pass
-                await guild.leave()
+                if disable_leave:
+                    await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description=":warning: **It doesn't satisfy the Invite state check**\n**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at))
+                else:
+                    try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon.url))
+                    except: pass
+                    await guild.leave()
             case 3: # member count check
-                try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 25 members.", thumbnail=guild.icon.url))
-                except: pass
-                await guild.leave()
+                if disable_leave:
+                    await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description=":warning: **It doesn't satisfy the Member count check**\n**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at))
+                else:
+                    try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 25 members.", thumbnail=guild.icon.url))
+                    except: pass
+                    await guild.leave()
             case 4: # notify
                 await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at))
             case _:
@@ -457,7 +468,7 @@ class MizaBot(commands.Bot):
             current_guilds = []
             for g in self.guilds:
                 if g.id not in self.data.save['guilds']:
-                    ret = await self.newGuildCheck(g)
+                    ret = await self.newGuildCheck(g, True)
                     if ret not in [1, 2, 3]:
                         current_guilds.append(g.id)
                 else:

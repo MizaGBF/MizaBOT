@@ -128,10 +128,10 @@ class Admin(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Exec Error", description="Exception\n{}".format(e), footer=expression, color=self.color), ephemeral=True)
 
     @_owner.sub_command()
-    async def leave(self, inter: disnake.GuildCommandInteraction, id: int):
+    async def leave(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param()):
         """Make the bot leave a server (Owner Only)"""
         try:
-            toleave = self.bot.get_guild(id)
+            toleave = self.bot.get_guild(int(id))
             await toleave.leave()
             await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
             await self.guildList()
@@ -144,19 +144,19 @@ class Admin(commands.Cog):
         pass
 
     @ban.sub_command()
-    async def server(self, inter: disnake.GuildCommandInteraction, id: int):
+    async def server(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param()):
         """Command to leave and ban a server (Owner Only)"""
-        id = str(id)
         try:
+            gid = int(id)
+            try:
+                toleave = self.bot.get_guild(gid)
+                await toleave.leave()
+            except:
+                pass
             if id not in self.bot.data.save['banned_guilds']:
                 with self.bot.data.lock:
                     self.bot.data.save['banned_guilds'].append(id)
                     self.bot.data.pending = True
-            try:
-                toleave = self.bot.get_guild(id)
-                await toleave.leave()
-            except:
-                pass
             await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
             await self.guildList()
         except Exception as e:
@@ -164,9 +164,8 @@ class Admin(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="An unexpected error occured", color=self.color), ephemeral=True)
 
     @ban.sub_command()
-    async def owner(self, inter: disnake.GuildCommandInteraction, id: int):
+    async def owner(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param()):
         """Command to ban a server owner and leave all its servers (Owner Only)"""
-        id = str(id)
         try:
             self.bot.ban.set(id, self.bot.ban.OWNER)
             for g in self.bot.guilds:
@@ -182,7 +181,7 @@ class Admin(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="An unexpected error occured", color=self.color), ephemeral=True)
 
     @ban.sub_command()
-    async def checkid(self, inter: disnake.GuildCommandInteraction, id : int):
+    async def checkid(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param()):
         """ID Based Check if an user has a ban registered in the bot (Owner Only)"""
         msg = ""
         if self.bot.ban.check(id, self.bot.ban.OWNER): msg += "Banned from having the bot in its own servers\n"
@@ -193,19 +192,19 @@ class Admin(commands.Cog):
         await inter.response.send_message(embed=self.bot.util.embed(title="User {}".format(id), description=msg, color=self.color), ephemeral=True)
 
     @ban.sub_command()
-    async def all(self, inter: disnake.GuildCommandInteraction, id: int):
+    async def all(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param()):
         """Ban an user from using the bot (Owner Only)"""
         self.bot.ban.set(id, self.bot.ban.USE_BOT)
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 
     @ban.sub_command()
-    async def profile(self, inter: disnake.GuildCommandInteraction, id: int):
+    async def profile(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param()):
         """ID based Ban for $setProfile (Owner Only)"""
         self.bot.ban.set(id, self.bot.ban.PROFILE)
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 
     @ban.sub_command()
-    async def rollid(self, inter: disnake.GuildCommandInteraction, id: int):
+    async def rollid(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param()):
         """ID based Ban for $rollranking (Owner Only)"""
         self.bot.ban.set(id, self.bot.ban.SPARK)
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
@@ -215,19 +214,19 @@ class Admin(commands.Cog):
         pass
 
     @unban.sub_command(name="all")
-    async def _all(self, inter: disnake.GuildCommandInteraction, id : int):
+    async def _all(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param()):
         """Unban an user from using the bot (Owner Only)"""
         self.bot.ban.unset(id, self.bot.ban.USE_BOT)
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 
     @unban.sub_command(name="profile")
-    async def _profile(self, inter: disnake.GuildCommandInteraction, id : int):
+    async def _profile(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param()):
         """ID based Unban for $setProfile (Owner Only)"""
         self.bot.ban.unset(id, self.bot.ban.PROFILE)
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 
     @unban.sub_command()
-    async def roll(self, inter: disnake.GuildCommandInteraction, id : int):
+    async def roll(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param()):
         """Unban an user from all the roll ranking (Owner Only)
         Ask me for an unban (to avoid abuses)"""
         self.bot.ban.unset(id, self.bot.ban.SPARK)

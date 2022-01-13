@@ -449,9 +449,9 @@ class Ranking():
                         case 'Day 5':
                             skip_mode = 1 # skip all
                         case _:
-                            if update_time - self.bot.data.save['gw']['dates'][itd] < timedelta(days=0, seconds=7200): # only update crews at the start
+                            if update_time - self.bot.data.save['gw']['dates'][itd] < timedelta(days=0, seconds=7200): # skip players at the start of rounds
                                 skip_mode = 3 # skip player
-                            elif self.bot.data.save['gw']['dates'][it[i-1]] - update_time > timedelta(days=0, seconds=21600):
+                            elif self.bot.data.save['gw']['dates'][it[i-1]] - update_time > timedelta(days=0, seconds=21600): # skip during break
                                 skip_mode = 1 # skip all
                     break
             if skip_mode == 1: return 'Skipped'
