@@ -306,15 +306,15 @@ class Data():
         count = 0
         with self.bot.data.lock:
             for gid in self.bot.data.save['st']:
-                if s not in guild_ids:
+                if gid not in guild_ids:
                     self.bot.data.save['st'].pop(gid)
                     count += 1
             for gid in self.bot.data.save['permitted']:
-                if s not in guild_ids:
+                if gid not in guild_ids:
                     self.bot.data.save['permitted'].pop(gid)
                     count += 1
             for gid in self.bot.data.save['pinboard']:
-                if s not in guild_ids:
+                if gid not in guild_ids:
                     self.bot.data.save['pinboard'].pop(gid)
                     count += 1
             if count != 0:
