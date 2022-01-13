@@ -142,6 +142,18 @@ class Admin(commands.Cog):
             await self.bot.sendError('leave', e)
             await inter.response.send_message(embed=self.bot.util.embed(title="An unexpected error occured", color=self.color), ephemeral=True)
 
+    @_owner.sub_command()
+    async def accept(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param()):
+        """Add a server to the confirmed servers list (Owner Only)"""
+        try:
+            gid = int(id)
+            if gid not in self.data.save['guilds']:
+                self.data.save['guilds'].append(gid)
+            await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
+        except Exception as e:
+            await self.bot.sendError('accept', e)
+            await inter.response.send_message(embed=self.bot.util.embed(title="An unexpected error occured", color=self.color), ephemeral=True)
+
     @_owner.sub_command_group()
     async def ban(self, inter: disnake.GuildCommandInteraction):
         pass
