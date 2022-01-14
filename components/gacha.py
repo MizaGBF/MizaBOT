@@ -37,6 +37,54 @@ class Gacha():
             return []
         return [c, self.bot.data.save['gbfdata']['gacha']]
 
+    """process()
+    Process and retrieve the gacha rates
+    
+    Prameters
+    --------
+    id: Banner id
+    sub_id: draw id (1 = single roll, 2 = ten roll, 3 = scam gacha)
+    
+    Returns
+    --------
+    tuple: Contains:
+        -ratio, the gacha rates
+        -list, the item list
+        -rateup, the rate up items
+    """
+    def process(self, id, sub_id):
+        try:
+            # draw rate
+            data = self.bot.gbf.request("http://game.granbluefantasy.jp/gacha/provision_ratio/{}/{}?PARAMS".format(id, sub_id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
+            
+            gratio = data['ratio'][0]['ratio']
+            
+            possible_zodiac_wpn = ['Ramulus', 'Dormius', 'Gallinarius', 'Canisius', 'Porculius', 'Rodentius', 'Bovinius', 'Tigrisius']
+            glist = [{'rate':0, 'list':{}}, {'rate':0, 'list':{}}, {'rate':0, 'list':{}}]
+            grateup = {'zodiac':[]}
+            # loop over data
+            for appear in data['appear']:
+                rarity = appear['rarity'] - 2
+                if rarity < 0 or rarity > 2: continue # eliminate possible N rarity
+                glist[rarity]['rate'] = float(data['ratio'][2 - rarity]['ratio'][:-1])
+                for item in appear['item']:
+                    if item['kind'] is None: kind = "S"
+                    else: kind = int(item['kind'])-1
+                    if item['drop_rate'] not in glist[rarity]['list']: glist[rarity]['list'][item['drop_rate']] = []
+                    glist[rarity]['list'][item['drop_rate']].append("{}{}{}".format(item['attribute'], kind, item['name']))
+
+                    if rarity == 2: # ssr
+                        if appear['category_name'] not in grateup: grateup[appear['category_name']] = {}
+                        if 'character_name' in item and item.get('name', '') in possible_zodiac_wpn:
+                            grateup['zodiac'].append("{}{}{}".format(item['attribute'], kind, item['character_name']))
+                        if item['incidence'] is not None:
+                            if item['drop_rate'] not in grateup[appear['category_name']]: grateup[appear['category_name']][item['drop_rate']] = []
+                            if 'character_name' in item and item['character_name'] is not None: grateup[appear['category_name']][item['drop_rate']].append("{}{}{}".format(item['attribute'], kind, item['character_name']))
+                            else: grateup[appear['category_name']][item['drop_rate']].append("{}{}{}".format(item['attribute'], kind, item['name']))
+            return gratio, glist, grateup
+        except:
+            return None, None, None
+
     """update()
     Request and update the GBF gacha in the save data
     
@@ -67,32 +115,9 @@ class Gacha():
             id = data['legend']['lineup'][-1]['id']
 
             # draw rate
-            data = self.bot.gbf.request("http://game.granbluefantasy.jp/gacha/provision_ratio/{}/1?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
-            
-            gacha_data['ratio'] = data['ratio'][0]['ratio']
-            
-            possible_zodiac_wpn = ['Ramulus', 'Dormius', 'Gallinarius', 'Canisius', 'Porculius', 'Rodentius', 'Bovinius', 'Tigrisius']
-            gacha_data['list'] = [{'rate':0, 'list':{}}, {'rate':0, 'list':{}}, {'rate':0, 'list':{}}]
-            gacha_data['rateup'] = {'zodiac':[]}
-            # loop over data
-            for appear in data['appear']:
-                rarity = appear['rarity'] - 2
-                if rarity < 0 or rarity > 2: continue # eliminate possible N rarity
-                gacha_data['list'][rarity]['rate'] = float(data['ratio'][2 - rarity]['ratio'][:-1])
-                for item in appear['item']:
-                    if item['kind'] is None: kind = "S"
-                    else: kind = int(item['kind'])-1
-                    if item['drop_rate'] not in gacha_data['list'][rarity]['list']: gacha_data['list'][rarity]['list'][item['drop_rate']] = []
-                    gacha_data['list'][rarity]['list'][item['drop_rate']].append("{}{}{}".format(item['attribute'], kind, item['name']))
-
-                    if rarity == 2: # ssr
-                        if appear['category_name'] not in gacha_data['rateup']: gacha_data['rateup'][appear['category_name']] = {}
-                        if 'character_name' in item and item.get('name', '') in possible_zodiac_wpn:
-                            gacha_data['rateup']['zodiac'].append("{}{}{}".format(item['attribute'], kind, item['character_name']))
-                        if item['incidence'] is not None:
-                            if item['drop_rate'] not in gacha_data['rateup'][appear['category_name']]: gacha_data['rateup'][appear['category_name']][item['drop_rate']] = []
-                            if 'character_name' in item and item['character_name'] is not None: gacha_data['rateup'][appear['category_name']][item['drop_rate']].append("{}{}{}".format(item['attribute'], kind, item['character_name']))
-                            else: gacha_data['rateup'][appear['category_name']][item['drop_rate']].append("{}{}{}".format(item['attribute'], kind, item['name']))
+            gacha_data['ratio'], gacha_data['list'], gacha_data['rateup'] = self.process(id, 1)
+            if gacha_data['ratio'] is None:
+                raise Exception()
 
             # add image
             gachas = ['{}/tips/description_gacha.jpg'.format(random_key), '{}/tips/description_gacha_{}.jpg'.format(random_key, logo), '{}/tips/description_{}.jpg'.format(random_key, header_images[0]), 'header/{}.png'.format(header_images[0])]
