@@ -1098,7 +1098,6 @@ class GuildWar(commands.Cog):
         """Search a crew or player GW score in the bot data"""
         await self.findranking(inter, False, terms, search_type, mode_past, mode_all)
 
-
     """findranking()
     Extract parameters from terms and call searchGWDB() with the proper settings.
     inter is used to output the result.
@@ -1169,9 +1168,13 @@ class GuildWar(commands.Cog):
                     x = len(result)
                     if x > xl: x = xl
                     await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Sending your {}/{} result(s)".format(x, len(result)), color=self.color))
-                elif type and len(result) > 6: x = 6 # set number of crew results to send if greater than 6
-                elif not type and len(result) > 15: x = 15 # set number of player results to send if greater than 15
+                elif type and len(result) > 9: x = 9 # set number of crew results to send if greater than 6
+                elif not type and len(result) > 18: x = 18 # set number of player results to send if greater than 15
                 else: x = len(result) # else set the number of results to send equal to the available amount
+                
+                # max to display
+                max_crew = 9
+                max_player = 18
                 
                 # embed fields for the message
                 fields = []
@@ -1189,7 +1192,7 @@ class GuildWar(commands.Cog):
                         fields[-1]['value'] = "[{}](http://game.granbluefantasy.jp/#guild/detail/{}){}".format(result[i].id, result[i].id, fields[-1]['value'])
                         gwnum = result[i].gw
                         # sending via dm if %all is set
-                        if all and ((i % 6) == 5 or i == x - 1):
+                        if all and ((i % max_crew) == max_crew - 1 or i == x - 1):
                             try:
                                 await inter.author.send(embed=self.bot.util.embed(title="{} **Guild War {}**".format(self.bot.emote.get('gw'), gwnum), fields=fields, inline=True, color=self.color))
                             except:
@@ -1197,7 +1200,7 @@ class GuildWar(commands.Cog):
                                 raise Exception("Returning")
                             fields = []
                     else: # player -----------------------------------------------------------------
-                        if i % 5 == 0:
+                        if i % (max_player // 3) == 0:
                             fields.append({'name':'Page {}'.format(self.bot.emote.get(str(((i // 5) % 3) + 1))), 'value':''})
                         if result[i].ranking is None:
                             fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{})\n".format(self.escape(result[i].name), result[i].id)
@@ -1207,7 +1210,7 @@ class GuildWar(commands.Cog):
                         else: fields[-1]['value'] += "n/a\n"
                         gwnum = result[i].gw
                         # sending via dm if %all is set
-                        if all and ((i % 15) == 14 or i == x - 1):
+                        if all and ((i % max_player) == max_player - 1 or i == x - 1):
                             try:
                                 await inter.author.send(embed=self.bot.util.embed(title="{} **Guild War {}**".format(self.bot.emote.get('gw'), gwnum), fields=fields, inline=True, color=self.color))
                             except:
@@ -1218,8 +1221,8 @@ class GuildWar(commands.Cog):
                 if all:
                     await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Done, please check your private messages", color=self.color))
                     raise Exception("Returning")
-                elif type and len(result) > 6: desc = "6/{} random result(s) shown".format(len(result)) # crew
-                elif not type and len(result) > 30: desc = "30/{} random result(s) shown".format(len(result)) # player
+                elif type and len(result) > max_crew: desc = "{}/{} random result(s) shown".format(max_crew, len(result)) # crew
+                elif not type and len(result) > max_player: desc = "{}/{} random result(s) shown".format(max_player, len(result)) # player
                 else: desc = ""
                 await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War {}**".format(self.bot.emote.get('gw'), gwnum), description=desc, fields=fields, inline=True, color=self.color))
             except Exception as e:
