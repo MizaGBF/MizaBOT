@@ -102,7 +102,13 @@ class Gacha():
             if data is None: raise Exception()
             # will contain the data
             gacha_data = {}
-            gacha_data['time'] = datetime.strptime(data['legend']['lineup'][-1]['end'], '%m/%d %H:%M').replace(year=c.year, microsecond=0)
+            index = -1
+            scam_ids = []
+            for i, g in enumerate(data['legend']['lineup']):
+                if g['name'] == "Premium Draw": index = i
+                elif g['name'].find("Star Premium") != -1: scam_ids.append(g['id'])
+            
+            gacha_data['time'] = datetime.strptime(data['legend']['lineup'][index]['end'], '%m/%d %H:%M').replace(year=c.year, microsecond=0)
             NY = False
             if c > gacha_data['time']:
                 gacha_data['time'] = gacha_data['time'].replace(year=gacha_data['time'].year+1) # new year fix
@@ -112,12 +118,20 @@ class Gacha():
             random_key = data['legend']['random_key']
             header_images = data['header_images']
             logo = {'logo_fire':1, 'logo_water':2, 'logo_earth':3, 'logo_wind':4, 'logo_dark':5, 'logo_light':6}.get(data.get('logo_image', ''), data.get('logo_image', '').replace('logo_', ''))
-            id = data['legend']['lineup'][-1]['id']
+            id = data['legend']['lineup'][index]['id']
 
             # draw rate
             gacha_data['ratio'], gacha_data['list'], gacha_data['rateup'] = self.process(id, 1)
             if gacha_data['ratio'] is None:
                 raise Exception()
+
+            # scam gachas
+            for sid in scam_ids:
+                gratio, glist, grateup = self.process(sid, 3)
+                if gratio is not None:
+                    if 'scam' not in gacha_data:
+                        gacha_data['scam'] = []
+                    gacha_data['scam'].append({'ratio':gratio, 'list':glist, 'rateup':grateup})
 
             # add image
             gachas = ['{}/tips/description_gacha.jpg'.format(random_key), '{}/tips/description_gacha_{}.jpg'.format(random_key, logo), '{}/tips/description_{}.jpg'.format(random_key, header_images[0]), 'header/{}.png'.format(header_images[0])]
@@ -177,6 +191,7 @@ class Gacha():
                 if not content[1]['ratio'].startswith('3'):
                     description += " **(Premium Gala)**"
                 description += " ▫️ Sum of rates **{:.3f}%**".format(sum_ssr)
+                if 'scam' in content[1]: description += "\n{} **{}** Star Premium Draw(s) available".format(self.bot.emote.get('mark'), len(content[1]['scam']))
                 description += "\n"
                 
                 # build rate up list
@@ -208,6 +223,10 @@ class Gacha():
     Return the current real gacha from GBF, if it exists in the bot memory.
     If not, a dummy/limited one is generated.
     
+    Prameters
+    --------
+    scam: Integer, to retrieve a scam gacha data (None for standard gacha)
+    
     Returns
     --------
     tuple: Containing:
@@ -216,9 +235,15 @@ class Gacha():
         - The ssr rate, in %
         - Boolean indicating if the gacha is the real one
     """
-    def retrieve(self):
+    def retrieve(self, scam):
         try:
-            gacha_data = self.get()[1]
+            data = self.get()[1]
+            if scam is None:
+                gacha_data = data
+            else:
+                if 'scam' not in data or scam < 0 or scam >= len(data['scam']):
+                    raise Exception()
+                gacha_data = data['scam'][scam]
             if len(gacha_data['list']) == 0: raise Exception()
             data = gacha_data['list']
             rateups = []
