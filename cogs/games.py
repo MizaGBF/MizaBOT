@@ -283,14 +283,14 @@ class Games(commands.Cog):
                         elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
                         elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
                         else: thumb = None
-                    if scam: msg += "{} {}".format(self.bot.emote.get('SSR'), self.bot.emote.get('crystal2'))
+                    if scam: msg += "{}{}\n{}".format(self.bot.emote.get('SSR'), self.bot.emote.get('crystal2'), self.bot.emote.get('red'))
                     await asyncio.sleep(0.7)
                     await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer, thumbnail=thumb), view=None)
                 if scam:
                     sroll = self.scamRoll(rollOptions.get('scam', 1)-1)
-                    msg = '\n'.join(msg.split('\n')[:-1])
-                    msg += "{} {}\n{}".format(self.bot.emote.get('SSR'), self.bot.util.formatGachaItem(sroll[0]), sroll[1])
-                    rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(sroll[0][2:]))
+                    msg = '\n'.join(msg.split('\n')[:-2])
+                    msg += "\n{}**{}**\n{}**{}**".format(self.bot.emote.get('SSR'), self.bot.util.formatGachaItem(sroll[0]), self.bot.emote.get('red'), sroll[1])
+                    rid = await self.bot.do(self.bot.util.search_wiki_for_id, sroll[0][2:])
                     if rid is None: thumb = None
                     elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
                     elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
@@ -360,8 +360,8 @@ class Games(commands.Cog):
 
     @roll.sub_command(name="scam")
     async def scam_(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), scam_index : int = commands.Param(description='Which Scam gacha to use (Default: 1 for the first one)', default=1, ge=1)):
-        """Simulate a ten draws and the Scam Gacha"""
-        await self._roll(inter, ("{} is getting Scammed...", "{}  got Scammed"), 2, scam=scam_index, count=10, mode='scam', legfest=self.bot.gacha.isLegfest(double))
+        """Simulate ten draws and the Scam Gacha"""
+        await self._roll(inter, ("{} is getting Scammed...", "{} got Scammed"), 2, scam=scam_index, count=10, mode='scam', legfest=self.bot.gacha.isLegfest(double))
 
     @roll.sub_command()
     async def spark(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):

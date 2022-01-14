@@ -38,7 +38,7 @@ class Gacha():
         return [c, self.bot.data.save['gbfdata']['gacha']]
 
     """process()
-    Process and retrieve the gacha rates
+    Reetrieve and process the gacha rates
     
     Prameters
     --------
@@ -235,7 +235,7 @@ class Gacha():
         - The ssr rate, in %
         - Boolean indicating if the gacha is the real one
     """
-    def retrieve(self, scam):
+    def retrieve(self, scam=None):
         try:
             data = self.get()[1]
             if scam is None:
