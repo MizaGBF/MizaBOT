@@ -132,8 +132,9 @@ class DreadBarrage(commands.Cog):
     @db.sub_command()
     async def box(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
         """Convert Dread Barrage box values"""
+        box = self.bot.util.strToInt(value)
         t = 0
-        b = self.bot.util.strToInt(value)
+        b = box
         if box >= 1: t += 1600
         if box >= 2: t += 2400
         if box >= 3: t += 2400
