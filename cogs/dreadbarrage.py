@@ -101,7 +101,7 @@ class DreadBarrage(commands.Cog):
     async def token(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
         """Convert Dread Barrage token values"""
         try:
-            tok = self.bot.util.strToInt(tok)
+            tok = self.bot.util.strToInt(value)
             if tok < 1 or tok > 9999999999: raise Exception()
             b = 0
             t = tok
@@ -133,7 +133,7 @@ class DreadBarrage(commands.Cog):
     async def box(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
         """Convert Dread Barrage box values"""
         t = 0
-        b = box
+        b = self.bot.util.strToInt(value)
         if box >= 1: t += 1600
         if box >= 2: t += 2400
         if box >= 3: t += 2400
