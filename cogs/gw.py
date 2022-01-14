@@ -1158,6 +1158,10 @@ class GuildWar(commands.Cog):
                 if result is None:
                     await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Database unavailable", color=self.color))
                     raise Exception("Returning")
+                    
+                # max to display
+                max_crew = 9
+                max_player = 18
 
                 if len(result) == 0: # check number of matches
                     await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="`{}` not found".format(html.unescape(str(terms))), color=self.color))
@@ -1168,13 +1172,9 @@ class GuildWar(commands.Cog):
                     x = len(result)
                     if x > xl: x = xl
                     await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Sending your {}/{} result(s)".format(x, len(result)), color=self.color))
-                elif type and len(result) > 9: x = 9 # set number of crew results to send if greater than 6
-                elif not type and len(result) > 18: x = 18 # set number of player results to send if greater than 15
+                elif type and len(result) > max_crew: x = max_crew # set number of crew results to send if greater than max_crew
+                elif not type and len(result) > max_player: x = max_player # set number of player results to send if greater than max_player
                 else: x = len(result) # else set the number of results to send equal to the available amount
-                
-                # max to display
-                max_crew = 9
-                max_player = 18
                 
                 # embed fields for the message
                 fields = []
