@@ -566,7 +566,7 @@ class Admin(commands.Cog):
         elif not self.bot.gbf.update(num, uid=uid):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid parameter {}".format(uid), color=self.color), ephemeral=True)
         else:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
+            await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
 
     @account.sub_command()
     async def ck(self, inter: disnake.GuildCommandInteraction, num : int, *, ck : str = ""):
@@ -580,7 +580,7 @@ class Admin(commands.Cog):
         elif not self.bot.gbf.update(num, ck=ck):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid parameter {}".format(ck), color=self.color), ephemeral=True)
         else:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
+            await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
 
     @account.sub_command()
     async def ua(self, inter: disnake.GuildCommandInteraction, num : int, *, ua : str = ""):
@@ -594,7 +594,7 @@ class Admin(commands.Cog):
         elif not self.bot.gbf.update(num, ua=ua):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid parameter {}".format(ua), color=self.color), ephemeral=True)
         else:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
+            await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
 
     @_owner.sub_command_group()
     async def db(self, inter: disnake.GuildCommandInteraction):
