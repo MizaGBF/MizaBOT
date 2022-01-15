@@ -377,7 +377,7 @@ class GuildWar(commands.Cog):
                         if c in self.bot.data.save['gw']['ranking'][2+x] and self.bot.data.save['gw']['ranking'][2+x][c] != 0:
                             fields[x]['value'] += " \▫️ {}/min".format(self.bot.util.valToStr(self.bot.data.save['gw']['ranking'][2+x][c]))
                         fields[x]['value'] += "\n"
-                    if fields[x]['value'] == '': fields[0]['value'] = 'Unavailable'
+                    if fields[x]['value'] == '': fields[x]['value'] = 'Unavailable'
 
                 em = self.bot.util.formatElement(self.bot.data.save['gw']['element'])
                 d = self.bot.util.JST() - self.bot.data.save['gw']['ranking'][4]
