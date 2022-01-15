@@ -1062,9 +1062,9 @@ class Games(commands.Cog):
                     msg += "\n**Total**: {:}, **Average**: {:}, **Percentile**: {:.1f}%".format(sum(rolls), round(sum(rolls)/len(rolls)), sum(rolls) * 100 / (n * d)).replace('.0%', '%')
                 await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"🎲 {} rolled {}...".format(inter.author.display_name, dice_string), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color))
                 await asyncio.sleep(1)
-            await self.bot.util.clean(inter, 45)
         except:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Invalid string `{}`\nFormat must be `NdN` (minimum is `1d6`, maximum is `10d100`)".format(dice_string), color=self.color))
+        await self.bot.util.clean(inter, 45)
 
     @_random.sub_command()
     async def coin(self, inter: disnake.GuildCommandInteraction):
