@@ -125,6 +125,7 @@ class GBF():
 
     def refresh(self, id : int, ck : str):
         try:
+            if ck is None: return False
             A = self.data.save['gbfaccounts'][id][1].split(';')
             B = ck.split(';')
             for c in B:
