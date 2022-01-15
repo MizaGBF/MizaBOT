@@ -888,7 +888,7 @@ class GuildWar(commands.Cog):
         gwid = None
         await inter.response.defer()
         for sid in self.bot.data.save['gbfids']:
-            m = inter.guild.get_or_fetch_member(int(sid))
+            m = await inter.guild.get_or_fetch_member(int(sid))
             if m is not None:
                 pdata = await self.bot.do(self.bot.ranking.searchGWDB, self.bot.data.save['gbfids'][sid], 2)
                 if pdata is not None and pdata[1] is not None and len(pdata[1]) == 1:
