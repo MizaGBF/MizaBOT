@@ -546,7 +546,7 @@ class GuildWar(commands.Cog):
             if target < 10000: raise Exception()
             honor = [0, 0, 0]
             ex = 0
-            meat_per_ex_average = 4
+            meat_per_ex_average = 7.1
             meat = 0
             total_meat = 0
             nm = [0, 0]
