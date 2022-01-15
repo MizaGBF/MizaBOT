@@ -1077,7 +1077,7 @@ class Games(commands.Cog):
     async def quota(self, inter: disnake.GuildCommandInteraction):
         """Give you your GW quota for the day"""
         h = random.randint(800, 4000)
-        m = random.randint(70, 180)
+        m = random.randint(120, 280)
         c = random.randint(1, 100)
 
         if inter.author.id == self.bot.data.config['ids'].get('wawi', -1): # joke
