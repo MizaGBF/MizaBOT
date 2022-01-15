@@ -405,6 +405,33 @@ class Ranking():
     """
     async def gwgetrank(self, update_time):
         try:
+            state = "" # return value
+            self.getrank_update_time = update_time
+            it = ['Day 5', 'Day 4', 'Day 3', 'Day 2', 'Day 1', 'Interlude', 'Preliminaries']
+            skip_mode = 0
+            for i, itd in enumerate(it): # loop to not copy paste this 5 more times
+                if update_time > self.bot.data.save['gw']['dates'][itd]:
+                    match itd:
+                        case 'Preliminaries':
+                            if update_time - self.bot.data.save['gw']['dates'][itd] < timedelta(days=0, seconds=3600): # first hour of gw
+                                skip_mode = 1 # skip all
+                            elif self.bot.data.save['gw']['dates'][it[i-1]] - update_time < timedelta(days=0, seconds=21600):
+                                skip_mode = 1 # skip all
+                        case 'Interlude':
+                            if update_time.minute > 10: # only update players hourly
+                                skip_mode = 1 # skip all
+                            else:
+                                skip_mode = 2 # skip crew
+                        case 'Day 5':
+                            skip_mode = 1 # skip all
+                        case _:
+                            if update_time - self.bot.data.save['gw']['dates'][itd] < timedelta(days=0, seconds=7200): # skip players at the start of rounds
+                                skip_mode = 3 # skip player
+                            elif self.bot.data.save['gw']['dates'][it[i-1]] - update_time < timedelta(days=0, seconds=21600): # skip during break
+                                skip_mode = 1 # skip all
+                    break
+            if skip_mode == 1: return 'Skipped'
+        
             self.bot.drive.delFiles(["temp.sql"], self.bot.data.config['tokens']['files']) # delete previous temp file (if any)
             self.bot.file.rm('temp.sql') # locally too
             if self.bot.drive.cpyFile("GW.sql", self.bot.data.config['tokens']['files'], "temp.sql"): # copy existing gw.sql to temp.sql
@@ -430,32 +457,6 @@ class Ranking():
                     conn.close()
                     self.bot.file.rm('temp.sql')
 
-            state = "" # return value
-            self.getrank_update_time = update_time
-            it = ['Day 5', 'Day 4', 'Day 3', 'Day 2', 'Day 1', 'Interlude', 'Preliminaries']
-            skip_mode = 0
-            for i, itd in enumerate(it): # loop to not copy paste this 5 more times
-                if update_time > self.bot.data.save['gw']['dates'][itd]:
-                    match itd:
-                        case 'Preliminaries':
-                            if update_time - self.bot.data.save['gw']['dates'][itd] < timedelta(days=0, seconds=7200):
-                                skip_mode = 1 # skip all
-                            elif self.bot.data.save['gw']['dates'][it[i-1]] - update_time > timedelta(days=0, seconds=21600):
-                                skip_mode = 1 # skip all
-                        case 'Interlude':
-                            if update_time.minute > 10: # only update players hourly
-                                skip_mode = 1 # skip all
-                            else:
-                                skip_mode = 2 # skip crew
-                        case 'Day 5':
-                            skip_mode = 1 # skip all
-                        case _:
-                            if update_time - self.bot.data.save['gw']['dates'][itd] < timedelta(days=0, seconds=7200): # skip players at the start of rounds
-                                skip_mode = 3 # skip player
-                            elif self.bot.data.save['gw']['dates'][it[i-1]] - update_time > timedelta(days=0, seconds=21600): # skip during break
-                                skip_mode = 1 # skip all
-                    break
-            if skip_mode == 1: return 'Skipped'
             for n in [0, 1]: # n == 0 (crews) or 1 (players)
                 if skip_mode == 2 and n == 0: continue
                 elif skip_mode == 3 and n == 1: continue
