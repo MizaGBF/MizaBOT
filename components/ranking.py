@@ -86,7 +86,7 @@ class Ranking():
                 res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest/ranking/guild/detail/{}/0?PARAMS".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
             case 2: # player
                 res = self.bot.gbf.request("http://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?PARAMS".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
-        return None
+        return res
 
     """updateRankingThread()
     Thread to update the cutoff data
