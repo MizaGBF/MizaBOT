@@ -658,8 +658,8 @@ class GuildWar(commands.Cog):
         try:
             id = int(id)
         except:
-            if id == "": return {'error':"Please input the id or the name of the crew\nOnly some crews are registered, please input an id instead"}
-            return {'error':"Invalid name `{}`\nOnly some crews are registered, please input an id instead".format(id)}
+            if id == "": return {'error':"Please input the ID or the name of the crew\nOnly some crews are registered, please input an ID instead\nYou can try `/gw find crew` to search for your crew ID (in blue)"}
+            return {'error':"Invalid name `{}`\nOnly some crews are registered, please input an ID instead\nYou can try `/gw find crew` to search for your crew ID (in blue)".format(id)}
         if id < 0 or id >= 10000000:
             return {'error':'Out of range ID'}
 
@@ -825,23 +825,12 @@ class GuildWar(commands.Cog):
                 fields[-1]['value'] += entry
         return title, description, fields, footer
 
-    """postCrewData()
-    Call getCrewData() and processCrewData() and post the result
-    
-    Raises
-    ------
-    Exception: The raised Exception if an error occurs
-    
-    Parameters
-    ----------
-    inter: Command interaction
-    id: Crew id
-    mode: processCrewData() mode
-    """
-    async def postCrewData(self, inter, id, mode = 0):
+    @gw.sub_command(name="crew")
+    async def _crew(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param(description="Crew ID"), mode : int = commands.Param(description="Mode (0=Auto, 1=Rank, 2=Honor)", ge=0, le=2, default=0)):
+        """Get a crew profile"""
+        await inter.response.defer()
         try:
             # retrieve formatted crew data
-            await inter.response.defer()
             crew = await self.bot.do(self.getCrewData, id, 0)
 
             if 'error' in crew: # print the error if any
@@ -850,16 +839,11 @@ class GuildWar(commands.Cog):
                 return
 
             title, description, fields, footer = await self.bot.do(self.processCrewData, crew, mode)
-
             await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=description, fields=fields, inline=True, url="http://game.granbluefantasy.jp/#guild/detail/{}".format(crew['id']), footer=footer, timestamp=crew['timestamp'], color=self.color))
-            await self.bot.util.clean(inter, 60)
         except Exception as e:
-            raise Exception('Error in postCrewData()') from e
-
-    @gw.sub_command(name="crew")
-    async def _crew(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param(description="Crew ID"), mode : int = commands.Param(description="Mode (0=Auto, 1=Rank, 2=Honor)", ge=0, le=2, default=0)):
-        """Get a crew profile"""
-        await self.postCrewData(inter, id, mode)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="A critical error occured, wait for a fix if the error persists", color=self.color))
+            await self.bot.sendError('crew', e)
+        await self.bot.util.clean(inter, 60)
 
     """_sortMembers()
     Sort members by GW contributions
