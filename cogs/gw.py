@@ -654,12 +654,19 @@ class GuildWar(commands.Cog):
             case _: id = target
         crew_id_list = {**(self.bot.data.config['granblue']['gbfgcrew']), **(self.bot.data.config['granblue'].get('othercrew', {}))}
         id = crew_id_list.get(id.lower(), id) # check if the id is a gbfgcrew
+        gwdata = None
         # check id validityy
         try:
             id = int(id)
         except:
-            if id == "": return {'error':"Please input the ID or the name of the crew\nOnly some crews are registered, please input an ID instead\nYou can try `/gw find crew` to search for your crew ID (in blue)"}
-            return {'error':"Invalid name `{}`\nOnly some crews are registered, please input an ID instead\nYou can try `/gw find crew` to search for your crew ID (in blue)".format(id)}
+            if id == "":
+                return {'error':"Please input the ID or the name of the crew\nOnly some crews are registered, please input an ID instead\nYou can try `/gw find crew` to search for your crew ID (in blue)"}
+            else:
+                gwdata = self.bot.ranking.searchGWDB(id, 11)
+                if len(gwdata[1]) == 1:
+                    id = gwdata[1][0].id
+                else:
+                    return {'error':"Invalid name `{}`\nOnly some crews are registered, please input an ID instead\nYou can try `/gw find crew` to search for your crew ID (in blue)".format(id)}
         if id < 0 or id >= 10000000:
             return {'error':'Out of range ID'}
 
@@ -717,13 +724,14 @@ class GuildWar(commands.Cog):
 
         # get the last gw score
         crew['scores'] = []
-        data = self.bot.ranking.searchGWDB(id, 12)
+        if gwdata is None:
+            gwdata = self.bot.ranking.searchGWDB(id, 12)
         for n in range(0, 2):
             try:
-                if data[n][0].ranking is None or data[n][0].day != 4:
-                    crew['scores'].append("{} GW**{}** ▫️ {} ▫️ **{:,}** honors ".format(self.bot.emote.get('gw'), data[n][0].gw, ('Total Day {}'.format(data[n][0].day) if data[n][0].day > 0 else 'Total Prelim.'), data[n][0].current))
+                if gwdata[n][0].ranking is None or gwdata[n][0].day != 4:
+                    crew['scores'].append("{} GW**{}** ▫️ {} ▫️ **{:,}** honors ".format(self.bot.emote.get('gw'), gwdata[n][0].gw, ('Total Day {}'.format(gwdata[n][0].day) if gwdata[n][0].day > 0 else 'Total Prelim.'), gwdata[n][0].current))
                 else:
-                    crew['scores'].append("{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors ".format(self.bot.emote.get('gw'), data[n][0].gw, data[n][0].ranking, data[n][0].current))
+                    crew['scores'].append("{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors ".format(self.bot.emote.get('gw'), gwdata[n][0].gw, gwdata[n][0].ranking, gwdata[n][0].current))
             except:
                 pass
 
