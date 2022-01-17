@@ -631,3 +631,27 @@ class Util():
             return group[0]
         except:
             return None
+
+    """progressBar()
+    Coroutine to display a progress bar message
+    
+    Parameters
+    ----------
+    inter: Command interaction
+    percent: percentage value (between 0 and 1)
+    edit: True to edit the original message, False to send one
+    ephemeral: type of message, only when edit is False
+    """
+    async def progressBar(self, inter, percent: float, edit, ephemeral=False):
+        if percent < 0: percent = 0
+        elif percent > 1: percent = 1
+        percent = int(100 * percent)
+        msg = ""
+        for i in range(0, 110, 10):
+            if i - percent <= -10: msg += ":green_square:"
+            elif i - percent <= -5: msg += ":yellow_square:"
+            elif i - percent < 0: msg += ":blue_square:"
+            else: msg += ":black_large_square:"
+        if edit: await inter.edit_original_message(embed=self.embed(description="**{}%** {}".format(percent, msg), footer="patience", color=0xffffff))
+        else: await inter.response.send_message(embed=self.embed(description="**{}%** {}".format(percent, msg), footer="patience", color=0xffffff), ephemeral=True)
+            
