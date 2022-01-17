@@ -239,8 +239,10 @@ class Games(commands.Cog):
             counter = [0, 0, 0]
             text = ""
             best = [-1, ""]
+            if rollOptions['mode'] == 'memerollB': item_count = 5
+            else: item_count = 3
             for i, v in enumerate(result['list']):
-                if i > 0 and i % 3 == 0:
+                if i > 0 and i % item_count == 0:
                     await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[0].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
                     await asyncio.sleep(1)
                     text = ""
