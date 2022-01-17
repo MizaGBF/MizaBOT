@@ -31,14 +31,15 @@ except:
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "9.11" # bot version
+        self.version = "9.12" # bot version
         self.changelog = [ # changelog lines
             "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
             "The command list changed a lot, check the online help or the `/help` command if you are looking for one",
             "Regrouped some commands under `/utility`",
             "All self-assignable role commands moved under `/role`",
             "Upgraded/Added new commands under `/game`",
-            "`/find` commands moved to `/gw find`"
+            "`/find` commands moved to `/gw find`",
+            "Reworked `/gw box` and `/db box` commands",
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event

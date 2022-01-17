@@ -449,31 +449,27 @@ class GuildWar(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color), ephemeral=True)
 
     @gw.sub_command()
-    async def box(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
+    async def box(self, inter: disnake.GuildCommandInteraction, box : int = commands.Param(description="Number of box to clear", ge=1, le=1000), box_done : int = commands.Param(description="Your current box progress, default 0 (Will be ignored if equal or higher than target)", ge=0, default=0)):
         """Convert Guild War box values"""
-        t = 0
-        box = self.bot.util.strToInt(value)
-        b = box
-        if box >= 1: t += 1600
-        if box >= 2: t += 2400
-        if box >= 3: t += 2400
-        if box >= 4: t += 2400
-        if box > 80:
-            t += (box - 80) * 15000
-            box = 80
-        if box > 45:
-            t += (box - 45) * 10000
-            box = 45
-        if box > 4:
-            t += (box - 4) * 2000
-        ex = math.ceil(t / 56.0)
-        explus = math.ceil(t / 66.0)
-        n90 = math.ceil(t / 83.0)
-        n95 = math.ceil(t / 111.0)
-        n100 = math.ceil(t / 168.0)
-        n150 = math.ceil(t / 257.0)
-        wanpan = math.ceil(t / 48.0)
-        await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War Token Calculator ▫️ {} boxes".format(self.bot.emote.get('gw'), b), description="**{:,}** tokens needed\n\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(t, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color), ephemeral=True)
+        try:
+            t = 0
+            if box_done >= box: raise Exception("Your current box count `{}` is higher or equal to your target `{}`".format(box_done, box))
+            for b in range(box_done+1, box+1):
+                if b == 1: t+= 1600
+                elif b <= 4: t+= 2400
+                elif b <= 45: t+= 2000
+                elif b <= 80: t+= 10000
+                else: t+= 15000
+            ex = math.ceil(t / 56.0)
+            explus = math.ceil(t / 66.0)
+            n90 = math.ceil(t / 83.0)
+            n95 = math.ceil(t / 111.0)
+            n100 = math.ceil(t / 168.0)
+            n150 = math.ceil(t / 257.0)
+            wanpan = math.ceil(t / 48.0)
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War Token Calculator ▫️ {} boxes".format(self.bot.emote.get('gw'), box), description="**{:,}** tokens needed{:}\n\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(t, ("" if box_done == 0 else " from box **{}**".format(box_done)), ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color), ephemeral=True)
+        except Exception as e:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
 
     @gw.sub_command()
     async def token(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
