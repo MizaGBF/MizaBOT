@@ -8,6 +8,7 @@ import time
 import sqlite3
 import random
 import math
+from io import BytesIO
 
 # ----------------------------------------------------------------------------------------------------------------
 # Ranking Component
