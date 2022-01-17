@@ -210,9 +210,10 @@ class Ranking():
                                 for i in range(0, 4):
                                     self.rankingtempdata[i] = dict(sorted(self.rankingtempdata[i].items(), reverse=True, key=lambda item: int(item[1])))
 
-                                with self.bot.data.lock: 
-                                    self.bot.data.save['gw']['ranking'] = self.rankingtempdata
-                                    self.bot.data.pending = True
+                                if len(self.rankingtempdata[0]) + len(self.rankingtempdata[1]) > 0: # only update if we got data (NOTE: check how it affects estimations)
+                                    with self.bot.data.lock: 
+                                        self.bot.data.save['gw']['ranking'] = self.rankingtempdata
+                                        self.bot.data.pending = True
                             except Exception as ex:
                                 await self.bot.sendError('checkgwranking sub', ex)
                                 with self.bot.data.lock:
