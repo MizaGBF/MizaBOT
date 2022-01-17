@@ -198,7 +198,7 @@ class Ranking():
                                 else: diff = 0
                                 self.rankingtargets = []
                                 for c in crews:
-                                    self.rankingtargets.append([ diff, True, mode, c])
+                                    self.rankingtargets.append([diff, True, mode, c])
                                 for p in players:
                                     self.rankingtargets.append([diff, False, 2, p])
                                 n_thread = len(self.rankingtargets)
