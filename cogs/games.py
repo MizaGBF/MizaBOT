@@ -203,8 +203,10 @@ class Games(commands.Cog):
             case 'memerollB':
                 footer += " ▫️ until rate up"
             case 'scam':
-                if not result['extended']:
-                    await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Star Premium Gacha feature unavailable", color=self.color))
+                sroll = self.scamRoll(rollOptions.get('scam', 1)-1)
+                if sroll[0] is None:
+                    await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="No Star Premium Gachas available", color=self.color))
+                    await self.bot.util.clean(inter, 40)
                     return
                 scam = True
             case _:
@@ -287,7 +289,6 @@ class Games(commands.Cog):
                     await asyncio.sleep(0.7)
                     await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer, thumbnail=thumb), view=None)
                 if scam:
-                    sroll = self.scamRoll(rollOptions.get('scam', 1)-1)
                     msg = '\n'.join(msg.split('\n')[:-2])
                     msg += "\n{}**{}**\n{}**{}**".format(self.bot.emote.get('SSR'), self.bot.util.formatGachaItem(sroll[0]), self.bot.emote.get('red'), sroll[1])
                     rid = await self.bot.do(self.bot.util.search_wiki_for_id, sroll[0][2:])
