@@ -579,6 +579,8 @@ class Util():
                     return "and"
                 case "of":
                     return "of"
+                case "de":
+                    return "de"
                 case "(sr)":
                     return "(SR)"
                 case "(ssr)":
