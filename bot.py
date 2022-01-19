@@ -291,7 +291,9 @@ class MizaBot(commands.Bot):
         if id is None: id = ""
         else: id = " {}".format(id)
         self.errn += 1
-        await self.send('debug', embed=self.util.embed(title="Error in {}() {}".format(func_name, id), description=str(self.util.pexc(error))[:4000], timestamp=self.util.timestamp()))
+        msg = str(self.util.pexc(error))
+        if len(msg) > 4000: msg = msg[:4000] + "..."
+        await self.send('debug', embed=self.util.embed(title="Error in {}() {}".format(func_name, id), description=msg, timestamp=self.util.timestamp()))
 
     """on_ready()
     Event. Called on connection
