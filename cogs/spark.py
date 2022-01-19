@@ -64,7 +64,7 @@ class Sparking(commands.Cog):
                 await self.bot.util.clean(inter, 30)
         except Exception as e:
             await self.bot.sendError('seeRoll', e)
-            await inter.response.send_message(embed=self.bot.util.embed(title="Critical Error", description="I warned my owner", color=self.color, footer=str(e)), ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Critical Error", description="I warned my owner", color=self.color, footer=str(e)), ephemeral=True)
 
     @spark.sub_command()
     async def set(self, inter: disnake.GuildCommandInteraction, crystal : int = commands.Param(description="Your amount of Crystals", ge=0, le=900000, default=0), single : int = commands.Param(description="Your amount of Single Draw Tickets", ge=0, le=1000, default=0), ten : int = commands.Param(description="Your amount of Ten Draw Tickets", ge=0, le=100, default=0)):
