@@ -530,7 +530,7 @@ class GuildWar(commands.Cog):
             nm95 = math.ceil(target / 910000)
             nm100 = math.ceil(target / 2650000)
             nm150 = math.ceil(target / 4100000)
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Honor Calculator ▫️ {} honors".format(self.bot.emote.get('gw'), self.bot.util.valToStr(target)), description="**{:,}** EX+ (**{:,}** AP)\n**{:,}** NM90 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM95 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM100 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM150 (**{:,}** AP, **{:,}** meats)\n".format(exp, exp * 30, nm90, nm90 * 30, nm90 * 5, nm95, nm95 * 40, nm95 * 10, nm100, nm100 * 50, nm90 * 20, nm150, nm150 * 50, nm150* 20), color=self.color), ephemeral=True)
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Honor Calculator ▫️ {} honors".format(self.bot.emote.get('gw'), self.bot.util.valToStr(target)), description="**{:,}** EX+ (**{:,}** AP)\n**{:,}** NM90 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM95 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM100 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM150 (**{:,}** AP, **{:,}** meats)\n".format(exp, exp * 30, nm90, nm90 * 30, nm90 * 5, nm95, nm95 * 40, nm95 * 10, nm100, nm100 * 50, nm100 * 20, nm150, nm150 * 50, nm150* 20), color=self.color), ephemeral=True)
         except:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid honor number", color=self.color), ephemeral=True)
 
