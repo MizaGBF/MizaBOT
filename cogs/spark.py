@@ -57,9 +57,9 @@ class Sparking(commands.Cog):
             if fr != 1: title += "s"
             # sending
             if s is None:
-                await inter.response.send_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.display_avatar}, description="Update your rolls with the `/setroll` command", footer="Next spark between {} and {} from 0 rolls".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), color=self.color), ephemeral=ephemeral)
+                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.display_avatar}, description="Update your rolls with the `/setroll` command", footer="Next spark between {} and {} from 0 rolls".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), color=self.color), ephemeral=ephemeral)
             else:
-                await inter.response.send_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.display_avatar}, description="**{} {} {} {} {} {}**\n*Expecting {} to {} rolls in {}*".format(self.bot.emote.get("crystal"), s[0], self.bot.emote.get("singledraw"), s[1], self.bot.emote.get("tendraw"), s[2], expected[0], expected[1], now.strftime("%B")), footer="Next spark between {} and {}".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), timestamp=timestamp, color=self.color), ephemeral=ephemeral)
+                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.display_avatar}, description="**{} {} {} {} {} {}**\n*Expecting {} to {} rolls in {}*".format(self.bot.emote.get("crystal"), s[0], self.bot.emote.get("singledraw"), s[1], self.bot.emote.get("tendraw"), s[2], expected[0], expected[1], now.strftime("%B")), footer="Next spark between {} and {}".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), timestamp=timestamp, color=self.color), ephemeral=ephemeral)
             if not ephemeral:
                 await self.bot.util.clean(inter, 30)
         except Exception as e:
@@ -71,6 +71,7 @@ class Sparking(commands.Cog):
         """Set your roll count"""
         id = str(inter.author.id)
         try:
+            await inter.response.defer()
             if crystal < 0 or single < 0 or ten < 0:
                 raise Exception('Negative numbers')
             if crystal > 500000 or single > 1000 or ten > 100:
@@ -84,7 +85,7 @@ class Sparking(commands.Cog):
                 self.bot.data.pending = True
             await self._seeroll(inter, inter.author, True)
         except:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color), ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color), ephemeral=True)
 
     """_estimate()
     Calculate a spark estimation (using my personal stats)
@@ -130,6 +131,7 @@ class Sparking(commands.Cog):
     @spark.sub_command()
     async def see(self, inter: disnake.GuildCommandInteraction, member : disnake.Member = None):
         """Post your (or the target) roll count"""
+        await inter.response.defer()
         await self._seeroll(inter, member, False)
 
     @spark.sub_command()
