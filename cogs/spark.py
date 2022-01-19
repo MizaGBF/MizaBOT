@@ -32,7 +32,7 @@ class Sparking(commands.Cog):
     member: A disnake.Member object
     ephemeral: Boolean to display or not the result to everyone
     """
-    async def _seeroll(self, inter, member, ephemeral):
+    async def _seeroll(self, inter, member):
         if member is None: member = inter.author
         id = str(member.id)
         try:
@@ -57,21 +57,21 @@ class Sparking(commands.Cog):
             if fr != 1: title += "s"
             # sending
             if s is None:
-                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.display_avatar}, description="Update your rolls with the `/setroll` command", footer="Next spark between {} and {} from 0 rolls".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), color=self.color), ephemeral=ephemeral)
+                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.display_avatar}, description="Update your rolls with the `/setroll` command", footer="Next spark between {} and {} from 0 rolls".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), color=self.color))
             else:
-                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.display_avatar}, description="**{} {} {} {} {} {}**\n*Expecting {} to {} rolls in {}*".format(self.bot.emote.get("crystal"), s[0], self.bot.emote.get("singledraw"), s[1], self.bot.emote.get("tendraw"), s[2], expected[0], expected[1], now.strftime("%B")), footer="Next spark between {} and {}".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), timestamp=timestamp, color=self.color), ephemeral=ephemeral)
+                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.display_avatar}, description="**{} {} {} {} {} {}**\n*Expecting {} to {} rolls in {}*".format(self.bot.emote.get("crystal"), s[0], self.bot.emote.get("singledraw"), s[1], self.bot.emote.get("tendraw"), s[2], expected[0], expected[1], now.strftime("%B")), footer="Next spark between {} and {}".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), timestamp=timestamp, color=self.color))
             if not ephemeral:
                 await self.bot.util.clean(inter, 30)
         except Exception as e:
             await self.bot.sendError('seeRoll', e)
-            await inter.edit_original_message(embed=self.bot.util.embed(title="Critical Error", description="I warned my owner", color=self.color, footer=str(e)), ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Critical Error", description="I warned my owner", color=self.color, footer=str(e)))
 
     @spark.sub_command()
     async def set(self, inter: disnake.GuildCommandInteraction, crystal : int = commands.Param(description="Your amount of Crystals", ge=0, le=900000, default=0), single : int = commands.Param(description="Your amount of Single Draw Tickets", ge=0, le=1000, default=0), ten : int = commands.Param(description="Your amount of Ten Draw Tickets", ge=0, le=100, default=0)):
         """Set your roll count"""
         id = str(inter.author.id)
         try:
-            await inter.response.defer()
+            await inter.response.defer(ephemeral=True)
             if crystal < 0 or single < 0 or ten < 0:
                 raise Exception('Negative numbers')
             if crystal > 500000 or single > 1000 or ten > 100:
@@ -83,9 +83,9 @@ class Sparking(commands.Cog):
                 else:
                     self.bot.data.save['spark'][id] = [crystal, single, ten, datetime.utcnow()]
                 self.bot.data.pending = True
-            await self._seeroll(inter, inter.author, True)
+            await self._seeroll(inter, inter.author)
         except:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color), ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Give me your number of crystals, single tickets and ten roll tickets, please", color=self.color))
 
     """_estimate()
     Calculate a spark estimation (using my personal stats)
@@ -132,7 +132,7 @@ class Sparking(commands.Cog):
     async def see(self, inter: disnake.GuildCommandInteraction, member : disnake.Member = None):
         """Post your (or the target) roll count"""
         await inter.response.defer()
-        await self._seeroll(inter, member, False)
+        await self._seeroll(inter, member)
 
     @spark.sub_command()
     async def zero(self, inter: disnake.GuildCommandInteraction, day_difference: int = commands.Param(description="Add a number of days to today date", ge=0, default=0)):
