@@ -291,7 +291,7 @@ class MizaBot(commands.Bot):
         if id is None: id = ""
         else: id = " {}".format(id)
         self.errn += 1
-        await self.send('debug', embed=self.util.embed(title="Error in {}() {}".format(func_name, id), description=self.util.pexc(error), timestamp=self.util.timestamp()))
+        await self.send('debug', embed=self.util.embed(title="Error in {}() {}".format(func_name, id), description=str(self.util.pexc(error))[:4000], timestamp=self.util.timestamp()))
 
     """on_ready()
     Event. Called on connection
@@ -475,7 +475,7 @@ class MizaBot(commands.Bot):
                 else:
                     current_guilds.append(g.id)
         except Exception as e:
-            await self.bot.sendError("checkGuildList", e)
+            await self.sendError("checkGuildList", e)
             return
         with self.data.lock:
             if current_guilds != self.data.save['guilds']:
