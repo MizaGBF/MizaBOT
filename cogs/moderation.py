@@ -50,7 +50,9 @@ class Moderation(commands.Cog):
     async def serverinfo(self, inter: disnake.MessageCommandInteraction, message: disnake.Message):
         """Get informations on the current guild"""
         guild = inter.guild
-        await inter.response.send_message(embed=self.bot.util.embed(title=guild.name + " status", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Members** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, guild.member_count, len(guild.text_channels), len(guild.voice_channels), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at, color=self.color), ephemeral=True)
+        try: icon = guild.icon.url
+        except: icon = None
+        await inter.response.send_message(embed=self.bot.util.embed(title=guild.name + " status", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Members** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, guild.member_count, len(guild.text_channels), len(guild.voice_channels), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=icon, timestamp=guild.created_at, color=self.color), ephemeral=True)
 
     @commands.slash_command(default_permission=True)
     @isMod()
@@ -72,7 +74,7 @@ class Moderation(commands.Cog):
                 self.bot.data.pending = True
             await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
         else:
-            await inter.response.send_message(embed=self.bot.util.embed(title=inter.guild.name, description="No ST set on this server\nI can't delete.", thumbnail=inter.guild.icon.url, color=self.color), ephemeral=True)
+            await inter.response.send_message(embed=self.bot.util.embed(title=inter.guild.name, description="No ST set on this server\nI can't delete.", color=self.color), ephemeral=True)
 
     @strike.sub_command(name="set")
     async def setst(self, inter: disnake.GuildCommandInteraction, st1 : int = commands.Param(description="First Strike Time (JST)", ge=0, le=23), st2 : int = commands.Param(description="Second Strike Time (JST)", ge=0, le=23)):
@@ -115,9 +117,9 @@ class Moderation(commands.Cog):
                         msg += c.name + "\n"
                     except:
                         pass
-            await inter.response.send_message(embed=self.bot.util.embed(title="Auto Cleanup is enable in all channels but the following ones:", description=msg, thumbnail=inter.guild.icon.url, footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
+            await inter.response.send_message(embed=self.bot.util.embed(title="Auto Cleanup is enable in all channels but the following ones:", description=msg, footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
         else:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Auto Cleanup is disabled in all channels", thumbnail=inter.guild.icon.url, footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
+            await inter.response.send_message(embed=self.bot.util.embed(title="Auto Cleanup is disabled in all channels", footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
 
     @cleanup.sub_command(name="toggle")
     async def toggleautocleanup(self, inter: disnake.GuildCommandInteraction):
@@ -145,9 +147,9 @@ class Moderation(commands.Cog):
             with self.bot.data.lock:
                 self.bot.data.save['permitted'].pop(gid)
                 self.bot.data.pending = True
-            await inter.response.send_message(embed=self.bot.util.embed(title="Auto Cleanup is disabled in all channels", thumbnail=inter.guild.icon.url, footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
+            await inter.response.send_message(embed=self.bot.util.embed(title="Auto Cleanup is disabled in all channels", footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
         else:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Auto Cleanup is already disabled in all channels", thumbnail=inter.guild.icon.url, footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
+            await inter.response.send_message(embed=self.bot.util.embed(title="Auto Cleanup is already disabled in all channels", footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
 
     @cleanup.sub_command(name="see")
     async def seecleanupsetting(self, inter: disnake.GuildCommandInteraction):

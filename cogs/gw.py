@@ -882,8 +882,10 @@ class GuildWar(commands.Cog):
                 if pdata is not None and pdata[1] is not None and len(pdata[1]) == 1:
                     if gwid is None: gwid = pdata[1][0].gw
                     members.append([pdata[1][0].id, pdata[1][0].name, pdata[1][0].current]) # id, name, honor
+        try: icon = inter.guild.icon.url
+        except: icon = None
         if len(members) == 0:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="{} Top 30 of {}".format(self.bot.emote.get('gw'), inter.guild.name), description="Unavailable", inline=True, thumbnail=inter.guild.icon.url, color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Top 30 of {}".format(inter.guild.name), 'icon_url':icon}, description="Unavailable", inline=True, color=self.color))
             return
         members = await self.bot.do(self._sortMembers, members)
         fields = []
@@ -895,7 +897,7 @@ class GuildWar(commands.Cog):
             fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) \▫️ **{}**\n".format(v[1],v[0], self.bot.util.valToStr(v[2]))
             total += v[2]
         if gwid is None: gwid = ""
-        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Top 30 of {}".format(inter.guild.name), 'icon_url':inter.guild.icon.url}, description="{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.emote.get('question'), gwid, self.bot.util.valToStr(total), self.bot.util.valToStr(total // min(30, len(members)))), fields=fields, inline=True, color=self.color))
+        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Top 30 of {}".format(inter.guild.name), 'icon_url':icon}, description="{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.emote.get('question'), gwid, self.bot.util.valToStr(total), self.bot.util.valToStr(total // min(30, len(members)))), fields=fields, inline=True, color=self.color))
         await self.bot.util.clean(inter, 60)
 
     """requestCrew()

@@ -147,8 +147,8 @@ class Admin(commands.Cog):
         """Add a server to the confirmed servers list (Owner Only)"""
         try:
             gid = int(id)
-            if gid not in self.data.save['guilds']:
-                self.data.save['guilds'].append(gid)
+            if gid not in self.bot.data.save['guilds']:
+                self.bot.data.save['guilds'].append(gid)
             await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
         except Exception as e:
             await self.bot.sendError('accept', e)

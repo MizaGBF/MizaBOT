@@ -431,25 +431,27 @@ class MizaBot(commands.Bot):
     """
     async def newGuildCheck(self, guild, disable_leave=False):
         ret = self.checkGuild(guild)
+        try: icon = guild.icon.url
+        except: icon = None
         match ret:
             case 1: # ban check
                 await guild.leave()
             case 2: # invite state check
                 if disable_leave:
-                    await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description=":warning: **It doesn't satisfy the Invite state check**\n**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at))
+                    await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description=":warning: **It doesn't satisfy the Invite state check**\n**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=icon, timestamp=guild.created_at))
                 else:
-                    try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=guild.icon.url))
+                    try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=icon))
                     except: pass
                     await guild.leave()
             case 3: # member count check
                 if disable_leave:
-                    await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description=":warning: **It doesn't satisfy the Member count check**\n**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at))
+                    await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description=":warning: **It doesn't satisfy the Member count check**\n**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=icon, timestamp=guild.created_at))
                 else:
-                    try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 25 members.", thumbnail=guild.icon.url))
+                    try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="The bot is currently limited to servers of at least 25 members.", thumbnail=icon))
                     except: pass
                     await guild.leave()
             case 4: # notify
-                await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=guild.icon.url, timestamp=guild.created_at))
+                await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=icon, timestamp=guild.created_at))
             case _:
                 pass
         return ret
