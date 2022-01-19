@@ -31,7 +31,7 @@ except:
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "9.12" # bot version
+        self.version = "9.13" # bot version
         self.changelog = [ # changelog lines
             "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
             "The command list changed a lot, check the online help or the `/help` command if you are looking for one",
@@ -515,16 +515,14 @@ class MizaBot(commands.Bot):
     """
     async def global_check(self, inter): # called whenever a command is used
         if not self.running: return False # do nothing if the bot is stopped
-        if inter.guild is None: # if none, the command has been sent via a direct message
+        if inter.guild is None or isinstance(inter.channel, disnake.PartialMessageable): # if none or channel is PartialMessageable, the command has been sent via a direct message
             return False # so we ignore
         try:
             id = str(inter.guild.id)
             if self.ban.check(inter.author.id, self.ban.USE_BOT):
                 return False
-            elif id in self.data.save['banned_guilds'] or self.ban.check(inter.guild.owner_id, self.ban.OWNER): # ban check
+            elif id in self.data.save['banned_guilds'] or self.ban.check(inter.guild.owner_id, self.ban.OWNER) or inter.guild.owner_id in self.data.config['banned']: # ban check (3rd one is defined in config.json)
                 await inter.guild.leave() # leave the server if banned
-                return False
-            elif inter.guild.owner_id in self.data.config['banned']: # banned owner defined in config.json
                 return False
             elif not inter.channel.permissions_for(inter.author).send_messages:
                 return False
