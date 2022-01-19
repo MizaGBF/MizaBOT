@@ -149,6 +149,7 @@ class Admin(commands.Cog):
             gid = int(id)
             if gid not in self.bot.data.save['guilds']:
                 self.bot.data.save['guilds'].append(gid)
+                self.bot.data.pending = True
             await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
         except Exception as e:
             await self.bot.sendError('accept', e)
