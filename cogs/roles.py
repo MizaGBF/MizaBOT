@@ -16,7 +16,7 @@ class Roles(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
-    @commands.max_concurrency(10, commands.BucketType.default)
+    @commands.max_concurrency(4, commands.BucketType.default)
     async def role(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass

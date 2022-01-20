@@ -591,7 +591,7 @@ class Games(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 60, commands.BucketType.user)
-    @commands.max_concurrency(15, commands.BucketType.default)
+    @commands.max_concurrency(5, commands.BucketType.default)
     async def game(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
@@ -1041,6 +1041,7 @@ class Games(commands.Cog):
 
     @commands.slash_command(default_permission=True, name="random")
     @commands.cooldown(1, 50, commands.BucketType.user)
+    @commands.max_concurrency(4, commands.BucketType.default)
     async def _random(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
@@ -1193,6 +1194,7 @@ class Games(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 15, commands.BucketType.user)
+    @commands.max_concurrency(4, commands.BucketType.default)
     async def ask(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass

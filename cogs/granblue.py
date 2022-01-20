@@ -72,6 +72,7 @@ class GranblueFantasy(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(2, 20, commands.BucketType.user)
+    @commands.max_concurrency(8, commands.BucketType.default)
     async def gbf(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass

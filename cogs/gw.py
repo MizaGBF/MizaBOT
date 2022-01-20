@@ -287,6 +287,7 @@ class GuildWar(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
+    @commands.max_concurrency(8, commands.BucketType.default)
     async def gw(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass

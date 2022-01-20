@@ -185,7 +185,7 @@ class General(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 100, commands.BucketType.guild)
-    @commands.max_concurrency(5, commands.BucketType.default)
+    @commands.max_concurrency(2, commands.BucketType.default)
     async def poll(self, inter: disnake.GuildCommandInteraction, duration : int = commands.Param(description="In seconds", ge=60, le=500), poll_data : str = commands.Param(description="Format is: `title;choice1;choice2;...;choiceN`")):
         """Make a poll"""
         try:
@@ -205,6 +205,7 @@ class General(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(3, 10, commands.BucketType.guild)
+    @commands.max_concurrency(4, commands.BucketType.default)
     async def utility(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
@@ -327,6 +328,7 @@ class General(commands.Cog):
 
     @commands.slash_command(default_permission=True, name="4chan")
     @commands.cooldown(1, 2, commands.BucketType.default)
+    @commands.max_concurrency(4, commands.BucketType.default)
     async def fourchan(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass

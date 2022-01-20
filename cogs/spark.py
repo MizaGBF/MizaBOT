@@ -19,6 +19,7 @@ class Sparking(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(2, 10, commands.BucketType.user)
+    @commands.max_concurrency(4, commands.BucketType.default)
     async def spark(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
