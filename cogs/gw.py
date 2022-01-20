@@ -824,8 +824,8 @@ class GuildWar(commands.Cog):
                     case "4": r = "deface"
                     case _: r = "ensign"
                 entry = '{} [{}](http://game.granbluefantasy.jp/#profile/{})'.format(self.bot.emote.get(r), self.escape(self.bot.util.shortenName(p['name'])), p['id'])
-                if gwstate:  entry += " \▫️ {}".format(self.bot.util.valToStr(p['honor']))
-                else: entry += " \▫️ r**{}**".format(p['level'])
+                if gwstate:  entry += " - {}".format(self.bot.util.valToStr(p['honor']))
+                else: entry += " - r**{}**".format(p['level'])
                 entry += "\n"
                 fields[-1]['value'] += entry
         return title, description, fields, footer

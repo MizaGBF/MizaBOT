@@ -691,7 +691,7 @@ class Admin(commands.Cog):
         vers = await self.bot.do(self.bot.ranking.GWDBver)
         msg = ""
         for i in [0, 1]:
-            msg += "**{}** :white_small_square: ".format('GW_old.sql' if (i == 0) else 'GW.sql')
+            msg += "**{}** ▫️ ".format('GW_old.sql' if (i == 0) else 'GW.sql')
             if vers[i] is None: msg += "Not loaded"
             else:
                 msg += 'GW{} '.format(vers[i].get('gw', '??'))

@@ -104,8 +104,8 @@ class Pinboard():
                     if len(message.embeds) > 0:
                         if len(message.embeds[0].description) > 0: embed_dict['fields'] = [{'inline': True, 'name':'Content', 'value':message.embeds[0].description}] + embed_dict['fields']
                         if 'image' not in embed_dict and message.embeds[0].image.url != message.embeds[0].Empty: embed_dict['image'] = {'url':message.embeds[0].image.url}
-                        if len(message.embeds[0].title) > 0: embed_dict['title'] += " :white_small_square: " + message.embeds[0].title
-                        elif message.embeds[0].author.name != disnake.Embed.Empty: embed_dict['title'] += " :white_small_square: " + message.embeds[0].author.name
+                        if len(message.embeds[0].title) > 0: embed_dict['title'] += " ▫️ " + message.embeds[0].title
+                        elif message.embeds[0].author.name != disnake.Embed.Empty: embed_dict['title'] += " ▫️ " + message.embeds[0].author.name
                     # add link to description
                     embed_dict['description'] += ":earth_asia: [**Link**](https://discordapp.com/channels/{}/{}/{})\n".format(message.guild.id, message.channel.id, message.id)
                     if 'image' in embed_dict and embed_dict['image'] == disnake.Embed.Empty:

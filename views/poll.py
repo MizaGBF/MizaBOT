@@ -90,5 +90,5 @@ class Poll(BaseView):
         for id, v in self.votes.items():
             if v in count: count[v] += 1
         for v in count:
-            msg += "`{}` :white_small_square: {}\n".format(v, count[v])
+            msg += "`{}` ▫️ {}\n".format(v, count[v])
         await channel.send(embed=self.bot.util.embed(author={'name':"{}'s poll ended".format(self.author.display_name), 'icon_url':self.author.display_avatar}, title=self.title, description=msg, color=self.embed.color))
