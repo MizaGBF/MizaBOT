@@ -249,7 +249,9 @@ class MizaBot(commands.Bot):
             return await self.channel.get(channel_name).send(msg, embed=embed, file=file, view=view)
         except Exception as e:
             self.errn += 1
-            print("Channel {} error: {}".format(channel_name, self.util.pexc(e)))
+            msg = str(self.util.pexc(e))
+            if len(msg) > 4000: msg = msg[:4000] + "..."
+            print("Channel {} error: {}".format(channel_name, msg))
             return None
 
     """sendMulti()
