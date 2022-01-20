@@ -362,6 +362,7 @@ class Ranking():
                     with self.getranklockOut:
                         item = self.getrank_qo.pop() # retrieve an item
                 except:
+                    time.sleep(0.1)
                     continue # skip if error or no item in the queue
 
                 if self.getrank_mode: # if crew, update the existing crew (if it exists) or create a new entry
