@@ -363,8 +363,9 @@ class GuildWar(commands.Cog):
     async def gwranking(self, inter: disnake.GuildCommandInteraction):
         """Retrieve the current GW ranking"""
         try:
+            await inter.response.defer()
             if self.bot.data.save['gw']['state'] == False or self.bot.util.JST() < self.bot.data.save['gw']['dates']["Preliminaries"] or self.bot.data.save['gw']['ranking'] is None:
-                await inter.response.send_message(embed=self.bot.util.embed(title="Ranking unavailable", color=self.color))
+                await inter.edit_original_message(embed=self.bot.util.embed(title="Ranking unavailable", color=self.color))
             else:
                 fields = [{'name':'**Crew Ranking**', 'value':''}, {'name':'**Player Ranking**', 'value':''}]
                 for x in [0, 1]:
@@ -382,26 +383,27 @@ class GuildWar(commands.Cog):
 
                 em = self.bot.util.formatElement(self.bot.data.save['gw']['element'])
                 d = self.bot.util.JST() - self.bot.data.save['gw']['ranking'][4]
-                await inter.response.send_message(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Updated: **{}** ago".format(self.bot.util.delta2str(d, 0)), fields=fields, footer="Update on minute 5, 25 and 45", timestamp=self.bot.util.timestamp(), inline=True, color=self.color))
+                await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Updated: **{}** ago".format(self.bot.util.delta2str(d, 0)), fields=fields, footer="Update on minute 5, 25 and 45", timestamp=self.bot.util.timestamp(), inline=True, color=self.color))
         except Exception as e:
             await self.bot.sendError("ranking", e)
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color), ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color))
 
     @gw.sub_command()
     async def estimation(self, inter: disnake.GuildCommandInteraction):
         """Estimate the GW ranking at the end of current day"""
         try:
+            await inter.response.defer()
             if self.bot.data.save['gw']['state'] == False or self.bot.util.JST() < self.bot.data.save['gw']['dates']["Preliminaries"] or self.bot.data.save['gw']['ranking'] is None:
-                await inter.response.send_message(embed=self.bot.util.embed(title="Estimation unavailable", color=self.color))
+                await inter.edit_original_message(embed=self.bot.util.embed(title="Estimation unavailable", color=self.color))
             else:
                 em = self.bot.util.formatElement(self.bot.data.save['gw']['element'])
                 current_time_left = self.getGWTimeLeft()
                 if current_time_left is None:
-                    await inter.response.send_message(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Estimations are currently unavailable", inline=True, color=self.color))
+                    await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Estimations are currently unavailable", inline=True, color=self.color))
                     return
                 elif current_time_left.days > 0 or current_time_left.seconds > 21300:
                     current_time_left -= timedelta(seconds=21300)
-                    await inter.response.send_message(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Estimations available in **{}**".format(self.bot.util.delta2str(current_time_left)), inline=True, color=self.color))
+                    await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Estimations available in **{}**".format(self.bot.util.delta2str(current_time_left)), inline=True, color=self.color))
                     return
                 seconds_left = self.getGWTimeLeft(self.bot.data.save['gw']['ranking'][4]).seconds
                 fields = [{'name':'**Crew Ranking**', 'value':''}, {'name':'**Player Ranking**', 'value':''}]
@@ -444,10 +446,10 @@ class GuildWar(commands.Cog):
                             fields[x]['value'] += '\n'
                     if fields[x]['value'] == '': fields[x]['value'] = 'Unavailable'
                 d = self.bot.util.JST() - self.bot.data.save['gw']['ranking'][4]
-                await inter.response.send_message(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Time left: **{}** \▫️ Updated: **{}** ago\nThis is a simple estimation, take it with a grain of salt.".format(self.bot.util.delta2str(current_time_left), self.bot.util.delta2str(d, 0)), fields=fields, footer="Update on minute 5, 25 and 45", timestamp=self.bot.util.timestamp(), inline=True, color=self.color))
+                await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War {}** {}".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em), description="Time left: **{}** \▫️ Updated: **{}** ago\nThis is a simple estimation, **take it with a grain of salt**.".format(self.bot.util.delta2str(current_time_left), self.bot.util.delta2str(d, 0)), fields=fields, footer="Update on minute 5, 25 and 45", timestamp=self.bot.util.timestamp(), inline=True, color=self.color))
         except Exception as e:
             await self.bot.sendError("estimation", e)
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color), ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color))
 
     @gw.sub_command()
     async def box(self, inter: disnake.GuildCommandInteraction, box : int = commands.Param(description="Number of box to clear", ge=1, le=1000), box_done : int = commands.Param(description="Your current box progress, default 0 (Will be ignored if equal or higher than target)", ge=0, default=0)):
