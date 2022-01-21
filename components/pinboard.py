@@ -115,7 +115,14 @@ class Pinboard():
                     ch = self.bot.get_channel(self.bot.data.save['pinboard'][idx]['output'])
                     await ch.send(embed=embed)
                 except Exception as x:
-                    await self.bot.sendError("pinboard check", "Guild `{}` : `{}`\nException:\n{}".format(message.guild, message.guild.id, self.bot.util.pexc(x)))
+                    if 'Missing Access' in str(x):
+                        try:
+                            c = await self.bot.get_channel(payload.channel_id)
+                            await c.send(mbed=self.bot.util.embed(title="Pinboard error", description="I'm not permitted to post in the output channel"))
+                        except:
+                            pass
+                    else:
+                        await self.bot.sendError("pinboard check", "Guild `{}` : `{}`\nException:\n{}".format(message.guild, message.guild.id, self.bot.util.pexc(x)))
                 return True
         return False
 
