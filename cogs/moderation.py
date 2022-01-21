@@ -110,7 +110,7 @@ class Moderation(commands.Cog):
     """
     async def _seeCleanupSetting(self, inter: disnake.GuildCommandInteraction):
         gid = str(inter.guild.id)
-        if gid in self.bot.data.save['permitted']:
+        if gid in self.bot.data.save['permitted'] and len(self.bot.data.save['permitted'][gid]) > 0:
             msg = ""
             for c in inter.guild.channels:
                 if c.id in self.bot.data.save['permitted'][gid]:
