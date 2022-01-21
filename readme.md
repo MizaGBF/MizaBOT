@@ -22,26 +22,25 @@ Check the [Online Help](https://mizagbf.github.io/MizaBOT/) for details.
 It's designed to be used on [Heroku](https://www.heroku.com) and isn't intended to be setup and used by anyone. Still, if you are interested, details are available on the [Wiki](https://github.com/MizaGBF/MizaBOT/wiki) and in this [issue](https://github.com/MizaGBF/MizaBOT/issues/1).  
   
 [![Invite Card](https://mizagbf.github.io/MizaBOT/img/invite.png)](https://discord.com/api/oauth2/authorize?client_id=614723060100104193&permissions=545394785367&scope=bot%20applications.commands)  
-Currently open to servers of at least 25 members, without limitations. Again, check the [Online Help](https://mizagbf.github.io/MizaBOT/) for details.    
+Currently open to servers of at least 25 members, **up to 90 servers**. Again, check the [Online Help](https://mizagbf.github.io/MizaBOT/) for details.    
   
 ### Features  
-*(The following screenshots were taken on version 8.0)*  
+*(The following screenshots were taken on version 9.13)*  
 * Get detailed informations on the game status from Discord  
-![GBF command](https://cdn.discordapp.com/attachments/614716155646705676/858731441316036638/unknown.png)
-![Gacha command](https://cdn.discordapp.com/attachments/614716155646705676/858731761131323392/unknown.png)
+![/gbf info](https://media.discordapp.net/attachments/614716155646705676/934039092180713472/unknown.png)
+![/gbf gacha](https://media.discordapp.net/attachments/614716155646705676/934039127404449802/unknown.png)
 * Manage and estimate your next Granblue Spark  
-![SeeRoll command](https://cdn.discordapp.com/attachments/614716155646705676/858729482386145310/unknown.png)
+![/spark see](https://media.discordapp.net/attachments/614716155646705676/934039488999616602/unknown.png)
 * Find and search in-game profiles and crews  
-![Profile command](https://cdn.discordapp.com/attachments/614716155646705676/858730610260443196/unknown.png)
+![/gbf profile](https://media.discordapp.net/attachments/614716155646705676/934039850619920384/unknown.png)
 * Search the [wiki](https://gbf.wiki/) directly from Discord  
-![Wiki command](https://cdn.discordapp.com/attachments/614716155646705676/858730975025954875/unknown.png)
+![/gbf wiki](https://media.discordapp.net/attachments/614716155646705676/934040026126356510/unknown.png)
 * Get Unite and Fight detailed informations  
-![Estim command](https://cdn.discordapp.com/attachments/614716155646705676/858732302635892766/unknown.png)
-![Ranking command](https://cdn.discordapp.com/attachments/614716155646705676/858732645869551646/unknown.png)
-![Findplayer command](https://cdn.discordapp.com/attachments/614716155646705676/858733133879574559/unknown.png)
-![Findcrew command](https://cdn.discordapp.com/attachments/614716155646705676/858733490480873514/unknown.png)
+![/gw estimation](https://media.discordapp.net/attachments/614716155646705676/934040181244309584/unknown.png)
+![/gw ranking](https://media.discordapp.net/attachments/614716155646705676/934040124617007124/unknown.png)
+![/gw find player](https://media.discordapp.net/attachments/614716155646705676/934040315835322398/unknown.png)
+![/gw find crew](https://media.discordapp.net/attachments/614716155646705676/934040684355268638/unknown.png)
 * ~~Salty~~ Fun Game commands  
-![Spark command](https://cdn.discordapp.com/attachments/614716155646705676/858733892926963732/unknown.png)
-![Roulette command](https://cdn.discordapp.com/attachments/614716155646705676/858734003560251422/unknown.png)
-![Scratcher command](https://cdn.discordapp.com/attachments/614716155646705676/858734170222362664/unknown.png)
+![/roll spark](https://media.discordapp.net/attachments/614716155646705676/934040932850995210/unknown.png)
+![/game scratch](https://media.discordapp.net/attachments/614716155646705676/934041270584766474/unknown.png)
 * And much more... Consult the [command list](https://mizagbf.github.io/MizaBOT/) for details.  

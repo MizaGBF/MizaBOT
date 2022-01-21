@@ -157,12 +157,16 @@ It's open source and available on <a href="https://github.com/MizaGBF/MizaBOT">G
 It provides various commands, ranging from utilty to recreative ones, related (or not) to the game.<br></p>
 
 <h2>How to invite?</h2>
-<p><b>Invitations are only open to servers of 25 or more people.</b><br>
+<p><b>Invitations are only open to servers of 25 or more people, UP TO A TOTAL OF 90 SERVERS.</b><br>
+Discord doesn't allow you to grow past 100 servers without having to go through a verification process asking for your personal informations, and there is no way I'm giving them that.<br>
+As a result, slots 91 to 100 will be reserved for my personal use.<br>
+I also reserve myself the right to make the bot leave your server if the need arise.<br>
 Here's the invitation link:<br>
 <br>
 <a href="https://discord.com/api/oauth2/authorize?client_id=614723060100104193&permissions=545394785367&scope=bot%20applications.commands"><img src="img/invite.png"></a><br>
 <br>
 <b>If the bot leaves your server on its own</b>, it means you don't satisfy the requirements, the invitations are closed OR you or your server has been banned from using the Bot.<br>
+The reason will be sent to the server owner (if the bot can send it a DM).<br>
 Finally, I don't recommend tweaking the invite link permissions. If you add more roles to the bot, make sure those roles don't disable permissions that the bot needs.</p>
 
 <h2>What to do after inviting the bot?</h2>
@@ -185,6 +189,7 @@ First, activate developer mode in your Discord Settings, it will come handy.<br>
 Second, go to every channels you want to be able to trigger the pinboard, and copy their ID (with a right click > Copy ID)<br>
 Third, put those IDs together in one string, separated by a semi colon (example: 4687977847;84786464;64768468)<br>
 Fourth, make a new channel dedicated to it, called pinboard or whatever. Right click on that channel and copy its ID too (Don't put it with the others).<br>
+Finally, <b>make sure the bot can access those channels</b>. It only needs the read permission for the tracked channels but it <b>needs</b> the send message permission to post in the output one.<br>
 <br>
 Now you can do /mod pinboard enable:<br>
 tracked_channels will be the string I made you do.<br>
