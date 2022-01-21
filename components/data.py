@@ -204,18 +204,18 @@ class Data():
     def clean_spark(self): # clean up spark data
         count = 0
         c = datetime.utcnow()
-        keys = list(self.bot.data.save['spark'].keys())
+        keys = list(self.save['spark'].keys())
         for id in keys:
-            if len(self.bot.data.save['spark'][id]) == 3: # backward compatibility
-                with self.bot.data.lock:
-                    self.bot.data.save['spark'][id].append(c)
-                    self.bot.data.pending = True
+            if len(self.save['spark'][id]) == 3: # backward compatibility
+                with self.lock:
+                    self.save['spark'][id].append(c)
+                    self.pending = True
             else:
-                d = c - self.bot.data.save['spark'][id][3]
+                d = c - self.save['spark'][id][3]
                 if d.days >= 30:
-                    with self.bot.data.lock:
-                        del self.bot.data.save['spark'][id]
-                        self.bot.data.pending = True
+                    with self.lock:
+                        del self.save['spark'][id]
+                        self.pending = True
                     count += 1
         return count
 
@@ -228,7 +228,7 @@ class Data():
     """
     async def clean_profile(self): # clean up profiles
         count = 0
-        keys = list(self.bot.data.save['gbfids'].keys())
+        keys = list(self.save['gbfids'].keys())
         for uid in keys:
             found = False
             for g in self.bot.guilds:
@@ -237,9 +237,9 @@ class Data():
                     break
             if not found:
                 count += 1
-                with self.bot.data.lock:
-                    self.bot.data.save['gbfids'].pop(uid)
-                    self.bot.data.pending = True
+                with self.lock:
+                    self.save['gbfids'].pop(uid)
+                    self.pending = True
         return count
 
     """clean_schedule()
@@ -273,9 +273,9 @@ class Data():
                     count += 1
                     time.sleep(2000)
         else: # else, just clean up old entries
-            for i in range(0, ((len(self.bot.data.save['schedule'])//2)*2), 2):
+            for i in range(0, ((len(self.save['schedule'])//2)*2), 2):
                 try:
-                    date = self.bot.data.save['schedule'][i].replace(" ", "").split("-")[-1].split("/")
+                    date = self.save['schedule'][i].replace(" ", "").split("-")[-1].split("/")
                     x = c.replace(month=int(date[0]), day=int(date[1])+1, microsecond=0)
                     if c - x > timedelta(days=160):
                         x = x.replace(year=x.year+1)
@@ -283,12 +283,12 @@ class Data():
                         continue
                 except:
                     pass
-                new_schedule.append(self.bot.data.save['schedule'][i])
-                new_schedule.append(self.bot.data.save['schedule'][i+1])
-        if len(new_schedule) != 0 and len(new_schedule) != len(self.bot.data.save['schedule']):
-            with self.bot.data.lock:
-                self.bot.data.save['schedule'] = new_schedule
-                self.bot.data.pending = True
+                new_schedule.append(self.save['schedule'][i])
+                new_schedule.append(self.save['schedule'][i+1])
+        if len(new_schedule) != 0 and len(new_schedule) != len(self.save['schedule']):
+            with self.lock:
+                self.save['schedule'] = new_schedule
+                self.pending = True
             return True
         return False
 
@@ -304,19 +304,19 @@ class Data():
         for g in self.bot.guilds:
              guild_ids.append(str(g.id))
         count = 0
-        with self.bot.data.lock:
-            for gid in list(self.bot.data.save['st'].keys()):
+        with self.lock:
+            for gid in list(self.save['st'].keys()):
                 if gid not in guild_ids:
-                    self.bot.data.save['st'].pop(gid)
+                    self.save['st'].pop(gid)
                     count += 1
-            for gid in list(self.bot.data.save['permitted'].keys()):
-                if gid not in guild_ids or len(self.bot.data.save['permitted'][gid]) == 0:
-                    self.bot.data.save['permitted'].pop(gid)
+            for gid in list(self.save['permitted'].keys()):
+                if gid not in guild_ids or len(self.save['permitted'][gid]) == 0:
+                    self.save['permitted'].pop(gid)
                     count += 1
-            for gid in list(self.bot.data.save['pinboard'].keys()):
+            for gid in list(self.save['pinboard'].keys()):
                 if gid not in guild_ids:
-                    self.bot.data.save['pinboard'].pop(gid)
+                    self.save['pinboard'].pop(gid)
                     count += 1
             if count != 0:
-                self.bot.data.pending = True
+                self.pending = True
         return count
