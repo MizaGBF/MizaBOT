@@ -116,7 +116,7 @@ class Pinboard():
                     ch = self.bot.get_channel(self.bot.data.save['pinboard'][idx]['output'])
                     await ch.send(embed=embed)
                 except Exception as x:
-                    if 'Missing Access' in str(x):
+                    if 'Missing Access' in str(x) or 'Missing Permissions' in str(x):
                         try:
                             c = await self.bot.get_channel(payload.channel_id)
                             await c.send(mbed=self.bot.util.embed(title="Pinboard error", description="I'm not permitted to post in the output channel"))
