@@ -38,7 +38,8 @@ class Pinboard():
             if message.id in self.cache: return False
             reactions = message.reactions
         except Exception as e:
-            await self.bot.sendError('raw_react', e)
+            if  'Missing Access' not in str(e):
+                await self.bot.sendError('raw_react', e)
             return False
         me = message.guild.me
         count = 0
