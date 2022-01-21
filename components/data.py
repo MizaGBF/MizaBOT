@@ -310,7 +310,7 @@ class Data():
                     self.bot.data.save['st'].pop(gid)
                     count += 1
             for gid in list(self.bot.data.save['permitted'].keys()):
-                if gid not in guild_ids:
+                if gid not in guild_ids or len(self.bot.data.save['permitted'][gid]) == 0:
                     self.bot.data.save['permitted'].pop(gid)
                     count += 1
             for gid in list(self.bot.data.save['pinboard'].keys()):
