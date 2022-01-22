@@ -26,11 +26,12 @@ class Admin(commands.Cog):
     Bot Task managing the autosave and update of the bot status
     """
     async def status(self): # background task changing the bot status and calling autosave()
+        await self.bot.change_presence(status=disnake.Status.online, activity=disnake.activity.Game(name='I rebooted, /changelog for news'))
         while True:
             try:
+                await asyncio.sleep(3600)
                 await self.bot.change_presence(status=disnake.Status.online, activity=disnake.activity.Game(name=random.choice(self.bot.data.config['games'])))
                 gc.collect()
-                await asyncio.sleep(3600)
                 # check if it's time for the bot maintenance for me (every 2 weeks or so)
                 c = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
                 if self.bot.data.save['bot_maintenance'] and c > self.bot.data.save['bot_maintenance'] and c.day == 16:

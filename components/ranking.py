@@ -363,7 +363,7 @@ class Ranking():
                 c.execute('CREATE TABLE players (ranking int, id int, name text, current_total int)')
             i = 0
             while i < self.getrank_count: # count is the number of entries to process
-                if not self.bot.running or self.bot.data.save['maintenance']['state'] or self.stoprankupdate :#or (self.bot.util.JST() - self.getrank_update_time > timedelta(seconds=1000)): # stop if the bot is stopping
+                if not self.bot.running or self.bot.data.save['maintenance']['state'] or self.stoprankupdate or (self.bot.util.JST() - self.getrank_update_time > timedelta(seconds=1000)): # stop if the bot is stopping
                     self.stoprankupdate = True # send the stop signal
                     try:
                         c.execute("commit")

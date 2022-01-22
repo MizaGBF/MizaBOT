@@ -31,7 +31,7 @@ except:
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "9.13" # bot version
+        self.version = "9.14" # bot version
         self.changelog = [ # changelog lines
             "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
             "The command list changed a lot, check the online help or the `/help` command if you are looking for one",
@@ -40,6 +40,7 @@ class MizaBot(commands.Bot):
             "Upgraded/Added new commands under `/game`",
             "`/find` commands moved to `/gw find`",
             "Reworked `/gw box` and `/db box` commands",
+            "Crew data will now track top speed (starting GW61)"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
