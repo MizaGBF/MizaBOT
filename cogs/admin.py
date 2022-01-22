@@ -132,6 +132,17 @@ class Admin(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Exec Error", description="Exception\n{}".format(e), footer=expression, color=self.color), ephemeral=True)
 
     @_owner.sub_command()
+    async def answer(self, inter: disnake.GuildCommandInteraction, target_id : str = commands.Param(), message : str = commands.Param()):
+        """Send feedback to a bug report (Owner Only)"""
+        try:
+            await inter.response.defer(ephemeral=True)
+            u = await self.bot.get_or_fetch_user(int(target_id))
+            await u.send(embed=self.bot.util.embed(title="Answer to your bug report", description=message, color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Answering to {}".format(u.display_name), description="`{}`\nMessage sent with success".format(message), color=self.color))
+        except Exception as e:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Answer Error", description="Exception\n{}".format(e), color=self.color))
+
+    @_owner.sub_command()
     async def leave(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param()):
         """Make the bot leave a server (Owner Only)"""
         try:
