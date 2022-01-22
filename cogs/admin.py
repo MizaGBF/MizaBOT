@@ -794,7 +794,7 @@ class Admin(commands.Cog):
                 self.bot.data.save['gw']['state'] = False
                 self.bot.data.save['gw']['id'] = id
                 self.bot.data.save['gw']['ranking'] = None
-                self.bot.data.save['gw']['element'] = advElement.lower()
+                self.bot.data.save['gw']['element'] = element.lower()
                 # build the calendar
                 self.bot.data.save['gw']['dates'] = {}
                 self.bot.data.save['gw']['dates']["Preliminaries"] = datetime.utcnow().replace(year=year, month=month, day=day, hour=19, minute=0, second=0, microsecond=0)
