@@ -514,7 +514,7 @@ class GuildWar(commands.Cog):
                 else: msg += "**{:,}** {:} (**{:,}** pots, **{:,}** meats)\n".format(v, bv[0], v*bv[1], v*bv[2])
             v = math.ceil(t / 48.0)
             msg += "**{:,}** NM100 leeching (**{:}** BP)".format(v, v*3)
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War Token Calculator ▫️ {} tokens".format(self.bot.emote.get('gw'), t), description=msg, footer=("Including final rally if you solo everything" if final_rally else ""), color=self.color), ephemeral=True)
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War Token Calculator ▫️ {} tokens".format(self.bot.emote.get('gw'), t), description=msg, footer=("Imply you solo all your hosts and clear the final rally" if final_rally else ""), color=self.color), ephemeral=True)
         except:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid token number", color=self.color), ephemeral=True)
 
