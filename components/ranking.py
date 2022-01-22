@@ -37,6 +37,7 @@ class Score():
         self.total3 = None
         self.day4 = None
         self.total4 = None
+        self.speed = None
 
 class Ranking():
     def __init__(self, bot):
@@ -191,7 +192,7 @@ class Ranking():
                                 mode = 1
                             # update $ranking and $estimation
                             try:
-                                update_time = current_time - timedelta(seconds=60 * (current_time.minute % 20))
+                                update_time = current_time.replace(minute=20 * (current_time.minute // 20), second=1, microsecond=0) # ranking are updated around minute 2
                                 self.rankingtempdata = [{}, {}, {}, {}, update_time]
                                 if self.bot.data.save['gw']['ranking'] is not None:
                                     diff = self.rankingtempdata[4] - self.bot.data.save['gw']['ranking'][4]
@@ -239,9 +240,10 @@ class Ranking():
     Parameters
     --------
     update_time: Datetime, current time period of 20min
+    force: True to force regardless of time and day (only for debug/test purpose)
     """
-    async def retrieve_ranking(self, update_time):
-        getrankout = await self.gwgetrank(update_time)
+    async def retrieve_ranking(self, update_time, force=False):
+        getrankout = await self.gwgetrank(update_time, force)
         if getrankout == "":
             data = await self.bot.do(self.GWDBver)
             with self.dblock:
@@ -324,7 +326,7 @@ class Ranking():
     """
     def gwdbbuilder(self):
         try:
-            day = self.getCurrentGWDayID() # calculate which day it is (0 being prelim, 1 being interlude/day 1, etc...)
+            day = self.getCurrentGWDayID() # calculate which day it is (0 being prelim, 1 being interlude, 2 = day 1, etc...)
             if day is None or day >= 10:
                 self.stoprankupdate = True # send the stop signal
                 return "Invalid day"
@@ -333,16 +335,27 @@ class Ranking():
             conn = sqlite3.connect('temp.sql', isolation_level=None) # open temp.sql
             c = conn.cursor()
             c.execute("BEGIN")
+            diff = None
+            timestamp = None
+            new_timestamp = int(self.getrank_update_time.timestamp())
 
             c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'") # create info table if it doesn't exist (contains gw id and db version)
             if c.fetchone()[0] < 1:
-                 c.execute('CREATE TABLE info (gw int, ver int)')
-                 c.execute('INSERT INTO info VALUES ({}, 2)'.format(self.bot.data.save['gw']['id'])) # ver 2
+                 c.execute('CREATE TABLE info (gw int, ver int, date int)')
+                 c.execute('INSERT INTO info VALUES ({}, 3, {})'.format(self.bot.data.save['gw']['id'], new_timestamp)) # ver 3
+            else:
+                c.execute("SELECT * FROM info")
+                x = c.fetchone()
+                timestamp = x[2]
+                prev_time = datetime.fromtimestamp(timestamp) - timedelta(seconds=60*20)
+                diff = self.getrank_update_time - prev_time
+                diff = diff.seconds / 60
+                c.execute("UPDATE info SET date = {} WHERE ver = 3".format(new_timestamp))
 
             if self.getrank_mode: # crew table creation (IF it doesn't exist)
                 c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='crews'")
                 if c.fetchone()[0] < 1:
-                    c.execute('CREATE TABLE crews (ranking int, id int, name text, preliminaries int, total_1 int, total_2 int, total_3 int, total_4 int)')
+                    c.execute('CREATE TABLE crews (ranking int, id int, name text, preliminaries int, total_1 int, total_2 int, total_3 int, total_4 int, speed float, last_time int)')
             else: # player table creation (delete an existing one, we want the file to keep a small size)
                 c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='players'")
                 if c.fetchone()[0] == 1:
@@ -350,7 +363,7 @@ class Ranking():
                 c.execute('CREATE TABLE players (ranking int, id int, name text, current_total int)')
             i = 0
             while i < self.getrank_count: # count is the number of entries to process
-                if not self.bot.running or self.bot.data.save['maintenance']['state'] or self.stoprankupdate or (self.bot.util.JST() - self.getrank_update_time > timedelta(seconds=1000)): # stop if the bot is stopping
+                if not self.bot.running or self.bot.data.save['maintenance']['state'] or self.stoprankupdate :#or (self.bot.util.JST() - self.getrank_update_time > timedelta(seconds=1000)): # stop if the bot is stopping
                     self.stoprankupdate = True # send the stop signal
                     try:
                         c.execute("commit")
@@ -366,12 +379,19 @@ class Ranking():
                     continue # skip if error or no item in the queue
 
                 if self.getrank_mode: # if crew, update the existing crew (if it exists) or create a new entry
-                    c.execute("SELECT count(*) FROM crews WHERE id = {}".format(int(item['id'])))
-                    if c.fetchone()[0] != 0:
-                        c.execute("UPDATE crews SET ranking = {}, name = '{}', {} = {} WHERE id = {}".format(int(item['ranking']), item['name'].replace("'", "''"), {0:'preliminaries',1:'total_1',2:'total_2',3:'total_3',4:'total_4'}.get(day, 'undef'), int(item['point']), int(item['id'])))
+                    c.execute("SELECT * FROM crews WHERE id = {}".format(int(item['id'])))
+                    x = c.fetchone()
+                    if x is not None:
+                        last_val = x[3+day]
+                        last_update = x[9]
+                        if diff is None or last_val is None or last_val == int(item['point']) or last_update != timestamp or new_timestamp == timestamp:
+                            c.execute("UPDATE crews SET ranking = {}, name = '{}', {} = {}, last_time = {} WHERE id = {}".format(int(item['ranking']), item['name'].replace("'", "''"), {0:'preliminaries',1:'total_1',2:'total_2',3:'total_3',4:'total_4'}.get(day, 'undef'), int(item['point']), new_timestamp, int(item['id'])))
+                        else:
+                            speed = (int(item['point']) - last_val) / diff
+                            c.execute("UPDATE crews SET ranking = {}, name = '{}', {} = {}, speed = {}, last_time = {} WHERE id = {}".format(int(item['ranking']), item['name'].replace("'", "''"), {0:'preliminaries',1:'total_1',2:'total_2',3:'total_3',4:'total_4'}.get(day, 'undef'), int(item['point']), (speed if (x[8] is None or speed > x[8]) else x[8]), new_timestamp, int(item['id'])))
                     else:
                         honor = {day: int(item['point'])}
-                        c.execute("INSERT INTO crews VALUES ({},{},'{}',{},{},{},{},{})".format(int(item['ranking']), int(item['id']), item['name'].replace("'", "''"), honor.get(0, 'NULL'), honor.get(1, 'NULL'), honor.get(2, 'NULL'), honor.get(3, 'NULL'), honor.get(4, 'NULL')))
+                        c.execute("INSERT INTO crews VALUES ({},{},'{}',{},{},{},{},{},{},{})".format(int(item['ranking']), int(item['id']), item['name'].replace("'", "''"), honor.get(0, 'NULL'), honor.get(1, 'NULL'), honor.get(2, 'NULL'), honor.get(3, 'NULL'), honor.get(4, 'NULL'), 'NULL', new_timestamp))
                 else: # if player, just add to the table
                     c.execute("INSERT INTO players VALUES ({},{},'{}',{})".format(int(item['rank']), int(item['user_id']), item['name'].replace("'", "''"), int(item['point'])))
                 i += 1
@@ -401,12 +421,13 @@ class Ranking():
     Parameters
     ----------
     update_time: time of this ranking interval
+    force: True to force the retrieval (debug only)
     
     Returns
     --------
     str: empty string if success, error message if not
     """
-    async def gwgetrank(self, update_time):
+    async def gwgetrank(self, update_time, force):
         try:
             state = "" # return value
             self.getrank_update_time = update_time
@@ -433,6 +454,7 @@ class Ranking():
                             elif self.bot.data.save['gw']['dates'][it[i-1]] - update_time < timedelta(days=0, seconds=18800): # skip during break
                                 skip_mode = 1 # skip all
                     break
+            if force: skip_mode = 0
             if skip_mode == 1: return 'Skipped'
         
             self.bot.drive.delFiles(["temp.sql"], self.bot.data.config['tokens']['files']) # delete previous temp file (if any)
@@ -452,7 +474,7 @@ class Ranking():
                             gw = int(row[0])
                             ver = int(row[1])
                             break
-                        if gw != self.bot.data.save['gw']['id'] or ver != 2: raise Exception()
+                        if gw != self.bot.data.save['gw']['id'] or ver != 3: raise Exception()
                     c.close()
                     conn.close()
                 except:
@@ -714,14 +736,14 @@ class Ranking():
                 c.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='info'")
                 if c.fetchone()[0] < 1:
                     c.execute("SELECT * FROM GW")
-                    for row in c.fetchall():
-                        res[i] = {'gw':int(row[0]), 'ver':1}
-                        break
+                    x = c.fetchone()
+                    res[i] = {'gw':int(x[0]), 'ver':1, 'date':None}
                 else:
                     c.execute("SELECT * FROM info")
-                    for row in c.fetchall():
-                        res[i] = {'gw':int(row[0]), 'ver':int(row[1])}
-                        break
+                    x = c.fetchone()
+                    res[i] = {'gw':int(x[0]), 'ver':int(x[1]), 'date':None}
+                    if res[i]['ver'] >= 3:
+                        res[i]['date'] = datetime.fromtimestamp(x[2])
             except:
                 res[i] = {'ver':0}
             db.close()
@@ -784,7 +806,7 @@ class Ranking():
                             s.name = r[2]
                             s.current = r[3]
                         else: # crew
-                            if s.ver == 2: # newest database format
+                            if s.ver >= 2: # newest database format
                                 s.ranking = r[0]
                                 s.id = r[1]
                                 s.name = r[2]
@@ -797,6 +819,8 @@ class Ranking():
                                 if s.total2 is not None and s.total1 is not None: s.day2 = s.total2 - s.total1
                                 if s.total3 is not None and s.total2 is not None: s.day3 = s.total3 - s.total2
                                 if s.total4 is not None and s.total3 is not None: s.day4 = s.total4 - s.total3
+                                if s.ver >= 3:
+                                    s.speed = r[8]
                             else: # old database format
                                 s.ranking = r[0]
                                 s.id = r[1]

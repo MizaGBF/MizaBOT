@@ -767,10 +767,10 @@ class Admin(commands.Cog):
         await inter.response.defer(ephemeral=True)
         if self.bot.data.save['gw']['state']:
             current_time = self.bot.util.JST()
-            await self.bot.ranking.retrieve_ranking(current_time - timedelta(seconds=60 * (current_time.minute % 20)))
-            await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
+            await self.bot.ranking.retrieve_ranking(current_time.replace(minute=20 * (current_time.minute // 20), second=1, microsecond=0), force=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
         else:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="The next set of buffs is already beind skipped", color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="The next set of buffs is already beind skipped", color=self.color))
 
     @gw.sub_command(name="set")
     async def __se_t(self, inter: disnake.GuildCommandInteraction, id : int = commands.Param(description="Guild War ID", ge=0, le=999), element : str = commands.Param(description="Guild War Element Advantage", autocomplete=['fire', 'water', 'earth', 'wind', 'light', 'dark']), day : int = commands.Param(description="Guild War Start Day", ge=1, le=31), month : int = commands.Param(description="Guild War Start Month", ge=1, le=12), year : int = commands.Param(description="Guild War Start Year", ge=2021)):

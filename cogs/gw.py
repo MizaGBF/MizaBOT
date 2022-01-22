@@ -728,9 +728,10 @@ class GuildWar(commands.Cog):
         for n in range(0, 2):
             try:
                 if gwdata[n][0].ranking is None or gwdata[n][0].day != 4:
-                    crew['scores'].append("{} GW**{}** ▫️ {} ▫️ **{:,}** honors ".format(self.bot.emote.get('gw'), gwdata[n][0].gw, ('Total Day {}'.format(gwdata[n][0].day) if gwdata[n][0].day > 0 else 'Total Prelim.'), gwdata[n][0].current))
+                    crew['scores'].append("{} GW**{}** | {} | **{:,}** honors ".format(self.bot.emote.get('gw'), gwdata[n][0].gw, ('Total Day {}'.format(gwdata[n][0].day) if gwdata[n][0].day > 0 else 'Total Prelim.'), gwdata[n][0].current))
                 else:
-                    crew['scores'].append("{} GW**{}** ▫️ #**{}** ▫️ **{:,}** honors ".format(self.bot.emote.get('gw'), gwdata[n][0].gw, gwdata[n][0].ranking, gwdata[n][0].current))
+                    crew['scores'].append("{} GW**{}** | #**{}** | **{:,}** honors ".format(self.bot.emote.get('gw'), gwdata[n][0].gw, gwdata[n][0].ranking, gwdata[n][0].current))
+                if gwdata[n][0].speed is not None: crew['scores'][-1] += " | Top Speed **{}/min**".format(self.bot.util.valToStr(gwdata[n][0].speed))
             except:
                 pass
 
@@ -809,11 +810,11 @@ class GuildWar(commands.Cog):
                     elif median > average * 0.5: health = ':warning:'
                     elif median > average * 0.25: health = ':put_litter_in_its_place:'
                     else: health = ':skull_crossbones:'
-                    description += "\n{} GW**{}** \▫️ Player Sum **{}** \▫️ Avg. **{}**".format(health, gwid, self.bot.util.valToStr(total), self.bot.util.valToStr(average))
+                    description += "\n{} GW**{}** | Player Sum **{}** | Avg. **{}**".format(health, gwid, self.bot.util.valToStr(total), self.bot.util.valToStr(average))
                     if median > 0:
-                        description += " \▫️ Med. **{}**".format(self.bot.util.valToStr(median))
+                        description += " | Med. **{}**".format(self.bot.util.valToStr(median))
                     if unranked > 0:
-                        description += " \▫️ **{}** n/a".format(unranked)
+                        description += " | **{}** n/a".format(unranked)
             # create the fields
             i = 0
             for p in players:
@@ -1182,6 +1183,7 @@ class GuildWar(commands.Cog):
                         if result[i].day2 is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('2'), result[i].day2)
                         if result[i].day3 is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('3'), result[i].day3)
                         if result[i].day4 is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('4'), result[i].day4)
+                        if result[i].speed is not None: fields[-1]['value'] += "{}▫️{}/min\n".format(self.bot.emote.get('clock'), self.bot.util.valToStr(result[i].speed))
                         if fields[-1]['value'] == "": fields[-1]['value'] = "No data"
                         fields[-1]['value'] = "[{}](http://game.granbluefantasy.jp/#guild/detail/{}){}".format(result[i].id, result[i].id, fields[-1]['value'])
                         gwnum = result[i].gw
