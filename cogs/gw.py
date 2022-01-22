@@ -475,10 +475,11 @@ class GuildWar(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
 
     @gw.sub_command()
-    async def token(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
+    async def token(self, inter: disnake.GuildCommandInteraction, token_target : str = commands.Param(description="Number of tokens you want (support B, M and K)"), final_rally : int = commands.Param(description="1 to include final rally (default), 0 to disable", default=1, le=1, ge=0)):
         """Convert Guild War token values"""
         try:
-            tok = self.bot.util.strToInt(value)
+            final_rally = (final_rally == 1)
+            tok = self.bot.util.strToInt(token_target)
             if tok < 1 or tok > 9999999999: raise Exception()
             b = 0
             t = tok
@@ -497,14 +498,23 @@ class GuildWar(commands.Cog):
             while tok >= 15000:
                 tok -= 15000
                 b += 1
-            ex = math.ceil(t / 56.0)
-            explus = math.ceil(t / 66.0)
-            n90 = math.ceil(t / 83.0)
-            n95 = math.ceil(t / 111.0)
-            n100 = math.ceil(t / 168.0)
-            n150 = math.ceil(t / 257.0)
-            wanpan = math.ceil(t / 48.0)
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War Token Calculator ▫️ {} tokens".format(self.bot.emote.get('gw'), t), description="**{:,}** box(s) and **{:,}** leftover tokens\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(b, tok, ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color), ephemeral=True)
+            base = [
+                ['EX', 30, 0, 56, 3.06], # name, AP, tokens, FR token
+                ['EX+', 30, 0, 66, 4.85],
+                ['NM90', 30, 5, 83, 15.6],
+                ['NM95', 40, 10, 111, 54.6],
+                ['NM100', 50, 20, 168, 159],
+                ['NM150', 50, 20, 257, 246],
+            ]
+            msg = "**{:,}** box(s) and **{:,}** leftover tokens\n".format(b, tok)
+            for bv in base:
+                if final_rally: v = math.ceil(t / (bv[3]+bv[4]))
+                else: v = math.ceil(t / bv[3])
+                if bv[2] == 0: msg += "**{:,}** {:} (**{:,}** pots)\n".format(v, bv[0], v*bv[1])
+                else: msg += "**{:,}** {:} (**{:,}** pots, **{:,}** meats)\n".format(v, bv[0], v*bv[1], v*bv[2])
+            v = math.ceil(t / 48.0)
+            msg += "**{:,}** NM100 leeching (**{:}** BP)".format(v, v*3)
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War Token Calculator ▫️ {} tokens".format(self.bot.emote.get('gw'), t), description=msg, footer=("Including final rally if you solo everything" if final_rally else ""), color=self.color), ephemeral=True)
         except:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid token number", color=self.color), ephemeral=True)
 

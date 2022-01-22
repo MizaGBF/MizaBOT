@@ -34,13 +34,9 @@ class MizaBot(commands.Bot):
         self.version = "9.14" # bot version
         self.changelog = [ # changelog lines
             "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
-            "The command list changed a lot, check the online help or the `/help` command if you are looking for one",
-            "Regrouped some commands under `/utility`",
-            "All self-assignable role commands moved under `/role`",
-            "Upgraded/Added new commands under `/game`",
-            "`/find` commands moved to `/gw find`",
             "Reworked `/gw box` and `/db box` commands",
-            "Crew data will now track top speed (starting GW61)"
+            "Crew data will now track top speed (starting GW61)",
+            "`/gw token` upgraded with final rally tokens (enabled by default)"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
