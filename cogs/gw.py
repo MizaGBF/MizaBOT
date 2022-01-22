@@ -506,7 +506,7 @@ class GuildWar(commands.Cog):
                 ['NM100', 50, 20, 168, 159],
                 ['NM150', 50, 20, 257, 246],
             ]
-            msg = "**{:,}** box(s) and **{:,}** leftover tokens\n".format(b, tok)
+            msg = "**{:,}** box(s) and **{:,}** leftover tokens\n\n".format(b, tok)
             for bv in base:
                 if final_rally: v = math.ceil(t / (bv[3]+bv[4]))
                 else: v = math.ceil(t / bv[3])
