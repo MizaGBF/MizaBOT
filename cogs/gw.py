@@ -24,6 +24,7 @@ class GuildWar(commands.Cog):
         try: self.guild_ids.append(self.bot.data.config['ids']['you_server'])
         except: pass
         self.crewcache = {}
+        self.supercrew_ongoing = False
 
     def startTasks(self):
         self.bot.runTask('check_buff', self.checkGWBuff)
@@ -886,6 +887,10 @@ class GuildWar(commands.Cog):
     @gw.sub_command()
     async def supercrew(self, inter: disnake.GuildCommandInteraction):
         """Sort and post the top 30 server members per contribution"""
+        if self.supercrew_ongoing:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="This command is limited to running once at a given time.\nIt's currently running, either here or in another server.\nPlease wait and try again.", color=self.color), ephemeral=True)
+            return
+        self.supercrew_ongoing = True
         members = []
         gwid = None
         await inter.response.defer()
@@ -898,8 +903,9 @@ class GuildWar(commands.Cog):
                     members.append([pdata[1][0].id, pdata[1][0].name, pdata[1][0].current]) # id, name, honor
         try: icon = inter.guild.icon.url
         except: icon = None
+        self.supercrew_ongoing = False
         if len(members) == 0:
-            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Top 30 of {}".format(inter.guild.name), 'icon_url':icon}, description="Unavailable", inline=True, color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Top 30 of {}".format(inter.guild.name), 'icon_url':icon}, description="Unavailable", inline=True, color=self.color), ephemeral=False)
             return
         members = await self.bot.do(self._sortMembers, members)
         fields = []
