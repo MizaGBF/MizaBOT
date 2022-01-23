@@ -889,11 +889,10 @@ class GuildWar(commands.Cog):
         members = []
         gwid = None
         await inter.response.defer()
-        cpy = self.bot.data.save['gbfids'].copy()
-        for sid in cpy:
-            m = await inter.guild.get_or_fetch_member(int(sid))
+        for disid, gbfid in self.bot.data.save['gbfids'].items():
+            m = await inter.guild.get_or_fetch_member(int(disid))
             if m is not None:
-                pdata = await self.bot.do(self.bot.ranking.searchGWDB, cpy[sid], 2)
+                pdata = await self.bot.do(self.bot.ranking.searchGWDB, gbfid, 2)
                 if pdata is not None and pdata[1] is not None and len(pdata[1]) == 1:
                     if gwid is None: gwid = pdata[1][0].gw
                     members.append([pdata[1][0].id, pdata[1][0].name, pdata[1][0].current]) # id, name, honor

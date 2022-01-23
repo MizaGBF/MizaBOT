@@ -162,12 +162,11 @@ class Sparking(commands.Cog):
     """
     async def _ranking(self, inter: disnake.GuildCommandInteraction, guild):
         ranking = {}
-        for id in self.bot.data.save['spark']:
+        for id, s in self.bot.data.save['spark'].items():
             if self.bot.ban.check(id, self.bot.ban.SPARK):
                 continue
             m = await guild.get_or_fetch_member(int(id))
             if m is not None:
-                s = self.bot.data.save['spark'][id]
                 if s[0] < 0 or s[1] < 0 or s[2] < 0:
                     continue
                 r = (s[0] / 300) + s[1] + s[2] * 10
