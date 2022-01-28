@@ -581,6 +581,8 @@ class Util():
                     return "of"
                 case "de":
                     return "de"
+                case "the":
+                    return "the"
                 case "(sr)":
                     return "(SR)"
                 case "(ssr)":
