@@ -106,7 +106,9 @@ class Gacha():
             scam_ids = []
             for i, g in enumerate(data['legend']['lineup']):
                 if g['name'] == "Premium Draw": index = i
-                elif g['name'].find("Star Premium") != -1: scam_ids.append(g['id'])
+                elif g['name'].find("Star Premium") != -1:
+                    for subscam in g['campaign_gacha_ids']:
+                        scam_ids.append(subscam['id'])
             
             gacha_data['time'] = datetime.strptime(data['legend']['lineup'][index]['end'], '%m/%d %H:%M').replace(year=c.year, microsecond=0)
             NY = False
