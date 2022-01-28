@@ -205,8 +205,9 @@ class Games(commands.Cog):
             case 'scam':
                 sroll = self.scamRoll(rollOptions.get('scam', 1)-1)
                 if sroll[0] is None:
-                    await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="No Star Premium Gachas available", color=self.color))
+                    await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="No Star Premium Gachas available at index #{}".format(rollOptions.get('scam', 1)), color=self.color))
                     await self.bot.util.clean(inter, 40)
+                    return
                 footer += " ▫️ Selected Scam #{}".format(rollOptions.get('scam', 1))
                 scam = True
             case _:
