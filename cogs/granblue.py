@@ -534,10 +534,7 @@ class GranblueFantasy(commands.Cog):
         if len(self.bot.data.save['stream']['content']) == 0:
             await inter.response.send_message(embed=self.bot.util.embed(title="No event or stream available", color=self.color))
         elif op == "raw":
-            msg = ""
-            for c in self.bot.data.save['stream']['content']:
-                msg += c + '\n'
-            await inter.response.send_message(embed=self.bot.util.embed(title="Raw Stream Data", description='`' + msg + '`', color=self.color), ephemeral=True)
+            await inter.response.send_message(embed=self.bot.util.embed(title="Raw Stream Data", description='`' + ';'.join(self.bot.data.save['stream']['content']) + '`', color=self.color), ephemeral=True)
         else:
             title = self.bot.data.save['stream']['content'][0]
             msg = ""

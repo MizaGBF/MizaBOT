@@ -413,7 +413,7 @@ class Admin(commands.Cog):
     async def __set(self, inter: disnake.GuildCommandInteraction, txt : str = commands.Param()):
         """Set the stream command text (Owner Only)"""
         with self.bot.data.lock:
-            self.bot.data.save['stream']['content'] = txt.split('\n')
+            self.bot.data.save['stream']['content'] = txt.split(';')
             self.bot.data.pending = True
         await inter.response.send_message(embed=self.bot.util.embed(title="Stream Settings", description="Stream text sets to\n`{}`".format(txt), color=self.color))
 
