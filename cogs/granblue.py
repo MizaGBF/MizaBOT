@@ -623,6 +623,15 @@ class GranblueFantasy(commands.Cog):
                 except Exception as e:
                     await self.bot.sendError("getMaintenanceStatus", e)
                 try:
+                    buf = await self.bot.do(self.bot.gacha.get)
+                    if len(buf) > 0:
+                        msg += "{} Current gacha ends in **{}**".format(self.bot.emote.get('SSR'), self.bot.util.delta2str(buf[1]['time'] - buf[0], 2))
+                        if buf[1]['time'] != buf[1]['timesub']:
+                            msg += " (Spark period ends in **{}**)".format(self.bot.util.delta2str(buf[1]['timesub'] - buf[0], 2))
+                        msg += "\n"
+                except Exception as e:
+                    await self.bot.sendError("getgachatime", e)
+                try:
                     current_time = self.bot.util.JST()
                     if current_time < self.bot.data.save['stream']['time']:
                         msg += "{} Stream starts in **{}**".format(self.bot.emote.get('crystal'), self.bot.util.delta2str(self.bot.data.save['stream']['time'] - current_time, 2))
