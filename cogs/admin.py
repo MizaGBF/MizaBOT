@@ -449,7 +449,7 @@ class Admin(commands.Cog):
         with self.bot.data.lock:
             self.bot.data.save['schedule'] = txt.split(';')
             self.bot.data.pending = True
-        await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
+        await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success\nNew Schedule:\n`{}`".format(';'.join(self.bot.data.save['schedule'])), color=self.color), ephemeral=True)
 
     @schedule.sub_command()
     async def get(self, inter: disnake.GuildCommandInteraction):
