@@ -1393,6 +1393,25 @@ class GranblueFantasy(commands.Cog):
         except:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
 
+    @gbf.sub_command(name="crew")
+    async def _crew(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param(description="Crew ID")):
+        """Get a crew profile (Use /gw crew for contributions)"""
+        await inter.response.defer()
+        try:
+            # retrieve formatted crew data
+            crew = await self.bot.do(self.bot.get_cog('GuildWar').getCrewData, id, 0)
+
+            if 'error' in crew: # print the error if any
+                if len(crew['error']) > 0:
+                    await inter.edit_original_message(embed=self.bot.util.embed(title="Crew Error", description=crew['error'], color=self.color))
+                return
+
+            title, description, fields, footer = await self.bot.do(self.bot.get_cog('GuildWar').processCrewData, crew, 1)
+            await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=description, fields=fields, inline=True, url="http://game.granbluefantasy.jp/#guild/detail/{}".format(crew['id']), footer=footer, timestamp=crew['timestamp'], color=self.color))
+        except Exception as e:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
+        await self.bot.util.clean(inter, 60)
+
     @gbf.sub_command()
     async def coop(self, inter: disnake.GuildCommandInteraction):
         """Retrieve the current coop daily missions"""
