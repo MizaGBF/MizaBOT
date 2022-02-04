@@ -408,7 +408,7 @@ class MizaBot(commands.Bot):
             return 0
         elif id in self.data.save['banned_guilds'] or self.ban.check(guild.owner_id, self.ban.OWNER): # ban check
             return 1
-        elif 'invite' not in self.data.save or self.data.save['invite']['state'] == False or len(self.guilds) >= self.data.save['invite']['limit']: # invite state check
+        elif 'invite' not in self.data.save or self.data.save['invite']['state'] == False or len(self.guilds) > self.data.save['invite']['limit']: # invite state check
             return 2
         elif guild.member_count <= 25: # member count check
             return 3
@@ -439,7 +439,7 @@ class MizaBot(commands.Bot):
                 if disable_leave:
                     await self.send('debug', embed=self.util.embed(title=guild.name + " added me", description=":warning: **It doesn't satisfy the Invite state check**\n**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Members** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, len(guild.text_channels), len(guild.voice_channels), guild.member_count, len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=icon, timestamp=guild.created_at))
                 else:
-                    try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="Invitations are currently closed.", thumbnail=icon))
+                    try: await (await guild.get_or_fetch_member(guild.owner_id)).send(embed=self.util.embed(title="Error", description="Invitations are currently closed or the bot reached max capacity.", thumbnail=icon))
                     except: pass
                     await guild.leave()
             case 3: # member count check
