@@ -152,7 +152,8 @@ class Data():
             'matchtracker': None,
             'pinboard': {},
             'invite': {'state':0, 'limit':50},
-            'ban': {}
+            'ban': {},
+            'announcement': {}
         }
         for k in list(data.keys()): # remove useless
             if k not in expected:
@@ -316,6 +317,10 @@ class Data():
             for gid in list(self.save['pinboard'].keys()):
                 if gid not in guild_ids:
                     self.save['pinboard'].pop(gid)
+                    count += 1
+            for gid in list(self.save['announcement'].keys()):
+                if gid not in guild_ids:
+                    self.save['announcement'].pop(gid)
                     count += 1
             if count != 0:
                 self.pending = True
