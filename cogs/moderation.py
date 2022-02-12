@@ -157,6 +157,28 @@ class Moderation(commands.Cog):
         """See all channels where no clean up is performed (Mod Only)"""
         await self._seeCleanupSetting(inter)
 
+    @mod.sub_command_group()
+    async def announcement(self, inter: disnake.GuildCommandInteraction):
+        pass
+
+    @cleanup.sub_command(name="see")
+    async def togglechannel(self, inter: disnake.GuildCommandInteraction):
+        """Enable/Disable game announcements in the specified channel (Mod Only)"""
+        await inter.response.defer(ephemeral=True)
+        cid = inter.channel.id
+        gid = str(inter.guild.id)
+        b = True
+        with self.bot.data.lock:
+            if self.bot.data.save['announcement'].get(gid, -1) == cid:
+                b = False
+                self.bot.data.save['announcement'].pop(gid)
+            else:
+                self.bot.data.save['announcement'][gid] = cid
+            self.bot.data.pending = True
+        if b:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Announcement Setting", description="This channel will now receive notifications.\n**Please** make sure the bot is allowed to post messages in this channel.\nUse this command again to disable, or in another channel to change it.", footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
+        else:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Announcement Setting", description="This channel won't receive notifications anymore.", footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
 
     @mod.sub_command_group()
     async def pinboard(self, inter: disnake.GuildCommandInteraction):
