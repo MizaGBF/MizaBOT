@@ -145,6 +145,8 @@ Finally, I don't recommend tweaking the invite link permissions. If you add more
 <br>
 2B) If you still want to use it in other channels, there is an auto clean up system (meaning the command messages will be deleted after a while, to avoid spam). Check out the command /mod cleanup toggle (and its helpers /mod cleanup reset, /mod cleanup see)<br>
 <br>
+3) Make sure the bot has the <b>external emoji</b> permission or it won't be able to use its custom emojis. More details in the FAQ.<br>
+<br>
 And you are mostly done after this.</p>
 
 <h2>What other features can I enable on my server?</h2>
