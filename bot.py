@@ -405,7 +405,7 @@ class MizaBot(commands.Bot):
     """
     def checkGuild(self, guild):
         id = str(guild.id)
-        if id == str(self.data.config['ids']['debug_server']):
+        if id == str(self.data.config['ids']['debug_server']) or int(id) in self.data.save['guilds']:
             return 0
         elif id in self.data.save['banned_guilds'] or self.ban.check(guild.owner_id, self.ban.OWNER): # ban check
             return 1
