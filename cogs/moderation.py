@@ -176,9 +176,9 @@ class Moderation(commands.Cog):
                 self.bot.data.save['announcement'][gid] = cid
             self.bot.data.pending = True
         if b:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Announcement Setting", description="This channel will now receive notifications.\n**Please** make sure the bot is allowed to post messages in this channel.\nUse this command again to disable, or in another channel to change it.", footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Announcement Setting", description="This channel will now receive notifications.\n**Please** make sure the bot is allowed to post messages in this channel.\nUse this command again to disable, or in another channel to change it.", footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color))
         else:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Announcement Setting", description="This channel won't receive notifications anymore.", footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color), ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Announcement Setting", description="This channel won't receive notifications anymore.", footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color))
 
     @mod.sub_command_group()
     async def pinboard(self, inter: disnake.GuildCommandInteraction):

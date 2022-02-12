@@ -242,7 +242,7 @@ class MizaBot(commands.Bot):
     --------
     disnake.Message: The sent message or None if error
     """
-    async def send(self, channel_name : str, msg : str = "", embed : disnake.Embed = None, file : disnake.File = None, view : disnake.ui.View = None): # send something to a registered channel
+    async def send(self, channel_name, msg : str = "", embed : disnake.Embed = None, file : disnake.File = None, view : disnake.ui.View = None): # send something to a registered channel
         try:
             return await self.channel.get(channel_name).send(msg, embed=embed, file=file, view=view)
         except Exception as e:
