@@ -161,7 +161,7 @@ class Moderation(commands.Cog):
     async def announcement(self, inter: disnake.GuildCommandInteraction):
         pass
 
-    @announcement.sub_command(name="see")
+    @announcement.sub_command()
     async def togglechannel(self, inter: disnake.GuildCommandInteraction):
         """Enable/Disable game announcements in the specified channel (Mod Only)"""
         await inter.response.defer(ephemeral=True)
