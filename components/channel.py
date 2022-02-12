@@ -60,9 +60,13 @@ class Channel():
     """get()
     Get a registered channel
     
+    Parameters
+    ----------
+    name: Channel name. Can also pass directly a Channel ID if the channel isn't registered.
+    
     Returns
     ----------
-    discord.Channel: Discord Channel
+    discord.Channel: Discord Channel, None if error
     """
     def get(self, name):
-        return self.cache.get(name, None)
+        return self.cache.get(name, self.bot.get_channel(name))
