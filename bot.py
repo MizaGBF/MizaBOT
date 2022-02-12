@@ -36,7 +36,8 @@ class MizaBot(commands.Bot):
             "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
             "Reworked `/gw box` and `/db box` commands",
             "Crew data will now track top speed (starting GW61)",
-            "`/gw token` upgraded with final rally tokens (enabled by default)"
+            "`/gw token` upgraded with final rally tokens (enabled by default)",
+            "`/mod announcement togglechannel` added to receive game or bot news"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
