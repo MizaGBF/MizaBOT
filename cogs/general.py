@@ -186,15 +186,67 @@ class General(commands.Cog):
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 100, commands.BucketType.guild)
     @commands.max_concurrency(2, commands.BucketType.default)
-    async def poll(self, inter: disnake.GuildCommandInteraction, duration : int = commands.Param(description="In seconds", ge=60, le=500), poll_data : str = commands.Param(description="Format is: `title;choice1;choice2;...;choiceN`")):
+    async def poll(self, inter: disnake.GuildCommandInteraction):
         """Make a poll"""
         try:
-            splitted = poll_data.split(';')
-            if len(splitted) < 2: raise Exception('Specify at least a poll title and two choices\nFormat: `duration title;choice1;choice2;...;choiceN`')
-            elif len(splitted) > 20: raise Exception('A Poll is limited to 20 choices')
-            embed = self.bot.util.embed(author={'name':'{} started a poll'.format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, title=splitted[0], description="{} seconds remaining to vote".format(duration), color=self.color)
-            view = Poll(self.bot, inter.author, embed, splitted[0], splitted[1:])
-            await inter.response.send_message(embed=self.bot.util.embed(title="Information", description="Your poll is starting", color=self.color), ephemeral=True)
+            await inter.response.send_modal(
+                title="Create Poll",
+                custom_id="create_poll",
+                components=[
+                    disnake.ui.TextInput(
+                        label="Title",
+                        placeholder="The title of the poll",
+                        custom_id="title",
+                        style=disnake.TextInputStyle.short,
+                        min_length=1,
+                        max_length=100,
+                    ),
+                    disnake.ui.TextInput(
+                        label="Choices",
+                        placeholder="choice1;choice2;...;choiceN",
+                        custom_id="choices",
+                        style=disnake.TextInputStyle.paragraph,
+                        min_length=1,
+                        max_length=200,
+                    ),
+                    disnake.ui.TextInput(
+                        label="Duration",
+                        placeholder="Between 60 and 500 seconds",
+                        custom_id="duration",
+                        style=disnake.TextInputStyle.short,
+                        min_length=2,
+                        max_length=3,
+                    ),
+                ],
+            )
+            try:
+                modal_inter: disnake.ModalInteraction = await self.bot.wait_for(
+                    "modal_submit",
+                    check=lambda i: i.custom_id == "create_poll" and i.author.id == inter.author.id,
+                    timeout=300,
+                )
+            except asyncio.TimeoutError:
+                return
+                
+            title = modal_inter.text_values['title']
+            try:
+                duration = int(modal_inter.text_values['duration'])
+                if duration < 60: duration = 60
+                elif duration > 500: duration = 500
+            except:
+                await modal_inter.response.send_message(embed=self.bot.util.embed(title="Poll error", description="`{}` isn't a valid duration".format(modal_inter.text_values['duration']), color=self.color), ephemeral=True)
+                return
+            try:
+                choices = modal_inter.text_values['choices'].split(';')
+                if len(choices) < 2: raise Exception()
+                elif len(choices) > 20: raise Exception()
+            except:
+                await modal_inter.response.send_message(embed=self.bot.util.embed(title="Poll error", description="You can't have less than 2 or more than 20 choices\n{}".format(choices), color=self.color), ephemeral=True)
+                return
+            await modal_inter.response.send_message(embed=self.bot.util.embed(title="Information", description="Your poll is starting", color=self.color), ephemeral=True)
+
+            embed = self.bot.util.embed(author={'name':'{} started a poll'.format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, title=title, description="{} seconds remaining to vote".format(duration), color=self.color)
+            view = Poll(self.bot, inter.author, embed, title, choices)
             msg_to_edit = await inter.channel.send(embed=embed)
             msg_view = await inter.channel.send('\u200b', view=view)
             await view.run_poll(duration, msg_to_edit, inter.channel)
