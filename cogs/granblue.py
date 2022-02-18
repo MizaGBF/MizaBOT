@@ -561,8 +561,9 @@ class GranblueFantasy(commands.Cog):
     @gbf.sub_command()
     async def schedule(self, inter: disnake.GuildCommandInteraction, raw : int = commands.Param(default=0)):
         """Post the GBF schedule"""
+        await inter.response.defer()
         if len(self.bot.data.save['schedule']) == 0:
-            await inter.response.send_message(embed=self.bot.util.embed(title="No schedule available", color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="No schedule available", color=self.color))
         else:
             l = len(self.bot.data.save['schedule'])
             if raw == 0: l = l - (l%2) # need an even amount, skipping the last one if odd
@@ -581,9 +582,9 @@ class GranblueFantasy(commands.Cog):
                     try: # checking if the event is on going (to bold it)
                         dates = self.bot.data.save['schedule'][i].replace(' ', '').split('-')
                         ev_md = []
-                        for di in range(0, len(dates)):
-                            if "??" in dates[di]: break
-                            ev_md.append(int(dates[di].split('/')[0]) * 100 + int(dates[di].split('/')[1]))
+                        for dd in dates:
+                            if "??" in dd: break
+                            ev_md.append(int(dd.split('/')[0]) * 100 + int(dd.split('/')[1]))
                         if len(ev_md) == 2:
                             if ev_md[0] - md >= 1000: ev_md[0] -= 1200 # new year fixes
                             elif md - ev_md[1] >= 1000: ev_md[1] += 1200
@@ -637,7 +638,7 @@ class GranblueFantasy(commands.Cog):
                         msg += "{} Stream starts in **{}**".format(self.bot.emote.get('crystal'), self.bot.util.delta2str(self.bot.data.save['stream']['time'] - current_time, 2))
                 except:
                     pass
-            await inter.response.send_message(embed=self.bot.util.embed(title="🗓 Event Schedule {} {:%Y/%m/%d %H:%M} JST".format(self.bot.emote.get('clock'), self.bot.util.JST()), url="https://twitter.com/granblue_en", color=self.color, description=msg))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="🗓 Event Schedule {} {:%Y/%m/%d %H:%M} JST".format(self.bot.emote.get('clock'), self.bot.util.JST()), url="https://twitter.com/granblue_en", color=self.color, description=msg))
 
     @gbf.sub_command()
     async def koregra(self, inter: disnake.GuildCommandInteraction):
