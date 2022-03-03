@@ -199,6 +199,11 @@ class Games(commands.Cog):
         result = await self.bot.do(self.gachaRoll, **rollOptions) # do the rolling
         footer = "{}% SSR rate".format(result['rate']) # message footer
         scam = False
+        classic = rollOptions.get('classic', False)
+        if classic:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Classic Gacha not yet implemented", color=self.color))
+            await self.bot.util.clean(inter, 40)
+            return
         match rollOptions.get('mode', ''):
             case 'memerollB':
                 footer += " ▫️ until rate up"
@@ -378,24 +383,24 @@ class Games(commands.Cog):
         await self._roll(inter, ("{}" + " is rolling {} times...".format(num), "{} " + "rolled {} times".format(num)), 3, count=num, mode='ten', legfest=self.bot.gacha.isLegfest(double), classic=(classic == 1))
 
     @roll.sub_command()
-    async def gachapin(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
+    async def gachapin(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate a Gachapin Frenzy"""
-        await self._roll(inter, ("{} is rolling the Gachapin...", "{} rolled the Gachapin"), 3, count=300, mode='gachapin', legfest=self.bot.gacha.isLegfest(double))
+        await self._roll(inter, ("{} is rolling the Gachapin...", "{} rolled the Gachapin"), 3, count=300, mode='gachapin', legfest=self.bot.gacha.isLegfest(double), classic=(classic == 1))
 
     @roll.sub_command()
-    async def mukku(self, inter: disnake.GuildCommandInteraction):
+    async def mukku(self, inter: disnake.GuildCommandInteraction, classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate a Mukku Frenzy"""
-        await self._roll(inter, ("{} is rolling the Mukku...", "{} rolled the Mukku"), 3, count=300, mode='mukku')
+        await self._roll(inter, ("{} is rolling the Mukku...", "{} rolled the Mukku"), 3, count=300, mode='mukku', classic=(classic == 1))
 
     @roll.sub_command()
-    async def supermukku(self, inter: disnake.GuildCommandInteraction):
+    async def supermukku(self, inter: disnake.GuildCommandInteraction, classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate a Super Mukku Frenzy"""
-        await self._roll(inter, ("{} is rolling the Supper Mukku...", "{} rolled the Super Mukku"), 3, count=300, mode='supermukku')
+        await self._roll(inter, ("{} is rolling the Supper Mukku...", "{} rolled the Super Mukku"), 3, count=300, mode='supermukku', classic=(classic == 1))
 
     @roll.sub_command()
-    async def memeroll(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), rateup : str = commands.Param(description='Input anything to roll until a rate up SSR', default="")):
+    async def memeroll(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), rateup : str = commands.Param(description='Input anything to roll until a rate up SSR', default=""), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate rolls until a SSR"""
-        await self._roll(inter, (("{} is memerolling until a rate up SSR..." if rateup != "" else "{} is memerolling..."), ("{} memerolled {} times until a rate up SSR" if rateup != "" else "{} memerolled {} times")), 1, mode=('memerollB' if rateup != "" else 'memerollA'), legfest=self.bot.gacha.isLegfest(double))
+        await self._roll(inter, (("{} is memerolling until a rate up SSR..." if rateup != "" else "{} is memerolling..."), ("{} memerolled {} times until a rate up SSR" if rateup != "" else "{} memerolled {} times")), 1, mode=('memerollB' if rateup != "" else 'memerollA'), legfest=self.bot.gacha.isLegfest(double), classic=(classic == 1))
 
     @roll.sub_command()
     async def srssr(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
@@ -410,6 +415,7 @@ class Games(commands.Cog):
     count: Integer, number of rolls to do
     mode: String, gacha mode
     double: Integer, value for checkLegfest
+    classic: Bool, true to use the classic gacha
     
     Returns
     --------
@@ -420,8 +426,8 @@ class Games(commands.Cog):
         - count: number of R, SR and SSR rolled
         - best: best ssr we got
     """
-    def getRoulette(self, count, mode, double):
-        result = self.gachaRoll(count=count, mode=mode, legfest=self.bot.gacha.isLegfest(double))
+    def getRoulette(self, count, mode, double, classic):
+        result = self.gachaRoll(count=count, mode=mode, legfest=self.bot.gacha.isLegfest(double), classic=(classic == 1))
         footer = "{}% SSR rate".format(result['rate'])
         count = len(result['list'])
         rate = (100*result['detail'][2]/count)
@@ -441,7 +447,7 @@ class Games(commands.Cog):
         return result, rate, tmp, count, best
 
     @roll.sub_command()
-    async def roulette(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
+    async def roulette(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Imitate the GBF roulette"""
         await inter.response.defer()
         footer = ""
@@ -521,7 +527,7 @@ class Games(commands.Cog):
                     else:
                         state = 1
                 case 1: # normal rolls
-                    result, rate, tmp, count, best = await self.bot.do(self.getRoulette, roll, 'ten', double)
+                    result, rate, tmp, count, best = await self.bot.do(self.getRoulette, roll, 'ten', double, classic)
                     if best[0] > prev_best[0]:
                         prev_best = best
                         if best[0] != -1: # update thumbnail
@@ -537,7 +543,7 @@ class Games(commands.Cog):
                     if superFlag: state = 4
                     else: running = False
                 case 2: # gachapin
-                    result, rate, tmp, count, best = await self.bot.do(self.getRoulette, 300, 'gachapin', double)
+                    result, rate, tmp, count, best = await self.bot.do(self.getRoulette, 300, 'gachapin', double, classic)
                     if best[0] > prev_best[0]:
                         prev_best = best
                         if best[0] != -1: # update thumbnail
@@ -555,7 +561,7 @@ class Games(commands.Cog):
                     elif count == 30 and random.randint(1, 100) < 30: state = 3
                     else: running = False
                 case 3:
-                    result, rate, tmp, count, best = await self.bot.do(self.getRoulette, 300, 'mukku', double)
+                    result, rate, tmp, count, best = await self.bot.do(self.getRoulette, 300, 'mukku', double, classic)
                     if best[0] > prev_best[0]:
                         prev_best = best
                         if best[0] != -1: # update thumbnail
@@ -574,7 +580,7 @@ class Games(commands.Cog):
                     else:
                         running = False
                 case 4:
-                    result, rate, tmp, count, best = await self.bot.do(self.getRoulette, 300, 'supermukku', double)
+                    result, rate, tmp, count, best = await self.bot.do(self.getRoulette, 300, 'supermukku', double, classic)
                     if best[0] > prev_best[0]:
                         prev_best = best
                         if best[0] != -1: # update thumbnail
