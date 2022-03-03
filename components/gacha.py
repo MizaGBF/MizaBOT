@@ -135,6 +135,9 @@ class Gacha():
                         gacha_data['scam'] = []
                     gacha_data['scam'].append({'ratio':gratio, 'list':glist, 'rateup':grateup})
 
+            # classic gacha
+            # placeholder
+
             # add image
             gachas = ['{}/tips/description_gacha.jpg'.format(random_key), '{}/tips/description_gacha_{}.jpg'.format(random_key, logo), '{}/tips/description_{}.jpg'.format(random_key, header_images[0]), 'header/{}.png'.format(header_images[0])]
             for g in gachas:
