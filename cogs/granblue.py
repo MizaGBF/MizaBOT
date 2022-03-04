@@ -617,6 +617,8 @@ class GranblueFantasy(commands.Cog):
                     msg += "\n"
             if raw != 0: msg += "`"
             else:
+                current_time = self.bot.util.JST()
+                msg += "{} Japan Time is **{}\n**".format(self.bot.emote.get('clock'), self.bot.util.time(current_time, style='dt'))
                 if nx is not None and c < nx:
                     msg += "{} Next event approximately in **{}**\n".format(self.bot.emote.get('mark'), self.bot.util.delta2str(nx - c, 2))
                 try:
@@ -634,7 +636,6 @@ class GranblueFantasy(commands.Cog):
                 except Exception as e:
                     await self.bot.sendError("getgachatime", e)
                 try:
-                    current_time = self.bot.util.JST()
                     if current_time < self.bot.data.save['stream']['time']:
                         msg += "{} Stream at **{}**".format(self.bot.emote.get('crystal'), self.bot.util.time(self.bot.data.save['stream']['time'], style='dt', removejst=True))
                 except:
