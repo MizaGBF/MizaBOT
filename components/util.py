@@ -124,6 +124,28 @@ class Util():
     def JST(self):
         return datetime.utcnow() + timedelta(seconds=32400) - timedelta(seconds=30)
 
+    """time()
+    Format a timestamp or datetime object
+
+    Parameters
+    --------
+    to_convert: time to format
+    style: format style, see https://discord.com/developers/docs/reference#message-formatting-timestamp-styles
+           you can combine multiple styles together
+    jstshift: Bool, if True, remove 9h to the datetime
+
+    Returns
+    --------
+    str: Formatted time
+    """
+    def time(self, to_convert = None, style = 'f', removejst = False):
+        if to_convert is None: to_convert = datetime.utcnow()
+        msg = ""
+        if removejst: to_convert -= timedelta(seconds=32400)
+        for c in style:
+            msg += disnake.utils.format_dt(to_convert, c)
+            msg += " "
+        return msg[:-1]
 
     """uptime()
     Return the bot uptime

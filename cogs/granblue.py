@@ -52,7 +52,7 @@ class GranblueFantasy(commands.Cog):
             if self.bot.data.save['maintenance']['time'] is not None and current_time < self.bot.data.save['maintenance']['time']:
                 d = self.bot.data.save['maintenance']['time'] - current_time
                 if self.bot.data.save['maintenance']['duration'] == 0:
-                    msg = "{} Maintenance starts in **{}**".format(self.bot.emote.get('cog'), self.bot.util.delta2str(d, 2))
+                    msg = "{} Maintenance at **{}**".format(self.bot.emote.get('cog'), self.bot.util.time(d, style='dt', removejst=True))
                 else:
                     msg = "{} Maintenance starts in **{}**, for **{} hour(s)**".format(self.bot.emote.get('cog'), self.bot.util.delta2str(d, 2), self.bot.data.save['maintenance']['duration'])
             else:
@@ -432,7 +432,8 @@ class GranblueFantasy(commands.Cog):
     async def info(self, inter: disnake.GuildCommandInteraction):
         """Post various Granblue Fantasy informations"""
         current_time = self.bot.util.JST()
-        description = "{:} Current Time is **{:02d}:{:02d} JST**".format(self.bot.emote.get('clock'), current_time.hour, current_time.minute)
+        description = "{} Current Time is **{}**".format(self.bot.emote.get('clock'), self.bot.util.time(style='dT'))
+        description += "\n{} Japan Time is **{}**".format(self.bot.emote.get('clock'), self.bot.util.time(current_time, style='dt'))
 
         if self.bot.data.save['gbfversion'] is not None:
             description += "\n{} Version is `{}` (`{}`)".format(self.bot.emote.get('cog'), self.bot.data.save['gbfversion'], self.bot.gbf.version2str(self.bot.data.save['gbfversion']))
@@ -477,7 +478,7 @@ class GranblueFantasy(commands.Cog):
 
         try:
             if current_time < self.bot.data.save['stream']['time']:
-                description += "\n{} Stream starts in **{}**".format(self.bot.emote.get('crystal'), self.bot.util.delta2str(self.bot.data.save['stream']['time'] - current_time, 2))
+                description += "\n{} Stream at **{}**".format(self.bot.emote.get('crystal'), self.bot.util.time(self.bot.data.save['stream']['time'], style='dt', removejst=True))
         except:
             pass
 
@@ -542,7 +543,7 @@ class GranblueFantasy(commands.Cog):
             if self.bot.data.save['stream']['time'] is not None:
                 if current_time < self.bot.data.save['stream']['time']:
                     d = self.bot.data.save['stream']['time'] - current_time
-                    cd = "{}".format(self.bot.util.delta2str(d, 2))
+                    cd = "{} ({})".format(self.bot.util.delta2str(d, 2), self.bot.util.time(self.bot.data.save['stream']['time'], 'd', True))
                 else:
                     cd = "On going!!"
             else:
@@ -556,7 +557,7 @@ class GranblueFantasy(commands.Cog):
             if cd != "" and title.find('{}') != -1:
                 title = title.format(cd) + "\n"
 
-            await inter.response.send_message(embed=self.bot.util.embed(title=title, description=msg, color=self.color))
+            await inter.response.send_message(embed=self.bot.util.embed(title=title, description=msg, timestamp=self.bot.util.timestamp(), color=self.color))
 
     @gbf.sub_command()
     async def schedule(self, inter: disnake.GuildCommandInteraction, raw : int = commands.Param(default=0)):
@@ -635,10 +636,10 @@ class GranblueFantasy(commands.Cog):
                 try:
                     current_time = self.bot.util.JST()
                     if current_time < self.bot.data.save['stream']['time']:
-                        msg += "{} Stream starts in **{}**".format(self.bot.emote.get('crystal'), self.bot.util.delta2str(self.bot.data.save['stream']['time'] - current_time, 2))
+                        msg += "{} Stream at **{}**".format(self.bot.emote.get('crystal'), self.bot.util.time(self.bot.data.save['stream']['time'], style='dt', removejst=True))
                 except:
                     pass
-            await inter.edit_original_message(embed=self.bot.util.embed(title="🗓 Event Schedule {} {:%Y/%m/%d %H:%M} JST".format(self.bot.emote.get('clock'), self.bot.util.JST()), url="https://twitter.com/granblue_en", color=self.color, description=msg))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="🗓 Event Schedule {} {}".format(self.bot.emote.get('clock'), self.bot.util.time(style='dt')), url="https://twitter.com/granblue_en", color=self.color, description=msg))
 
     @gbf.sub_command()
     async def koregra(self, inter: disnake.GuildCommandInteraction):

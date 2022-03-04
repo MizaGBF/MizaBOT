@@ -285,7 +285,7 @@ class General(commands.Cog):
     @utility.sub_command()
     async def jst(self, inter: disnake.GuildCommandInteraction):
         """Post the current time, JST timezone"""
-        await inter.response.send_message(embed=self.bot.util.embed(title="{} {:%Y/%m/%d %H:%M} JST".format(self.bot.emote.get('clock'), self.bot.util.JST()), color=self.color), ephemeral=True)
+        await inter.response.send_message(embed=self.bot.util.embed(title="{} {:%Y/%m/%d %H:%M} JST".format(self.bot.emote.get('clock'), self.bot.util.JST()), timestamp=self.bot.util.timestamp(), color=self.color), ephemeral=True)
 
     @utility.sub_command()
     async def rollchance(self, inter, count : str = commands.Param(description="Amount of rolls. Leave empty to use your set spark count", default="")):
