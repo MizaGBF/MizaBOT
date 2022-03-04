@@ -230,7 +230,8 @@ class Gacha():
     
     Prameters
     --------
-    scam: Integer, to retrieve a scam gacha data (None for standard gacha)
+    scam: Integer, to retrieve a scam gacha data (None to ignore)
+    classic: Boolean, to retrieve the classic gacha (None to ignore, scam has priority)
     
     Returns
     --------
@@ -240,11 +241,16 @@ class Gacha():
         - The ssr rate, in %
         - Boolean indicating if the gacha is the real one
     """
-    def retrieve(self, scam=None):
+    def retrieve(self, scam=None, classic=None):
         try:
             data = self.get()[1]
             if scam is None:
-                gacha_data = data
+                if classic is not None and classic:
+                    if 'classic' not in data:
+                        raise Exception()
+                    gacha_data = data['classic']
+                else:
+                    gacha_data = data
             else:
                 if 'scam' not in data or scam < 0 or scam >= len(data['scam']):
                     raise Exception()

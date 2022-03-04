@@ -73,10 +73,10 @@ class Games(commands.Cog):
         - 'rate', the SSR rate used, in %
     """
     def gachaRoll(self, **options):
-        mode = {'single':0, 'srssr':1, 'memerollA':2, 'memerollB':3, 'ten':10, 'gachapin':11, 'mukku':12, 'supermukku':13, 'scam':14}[options['mode']]
+        mode = {'single':0, 'srssr':1, 'memerollA':2, 'memerollB':3, 'ten':10, 'gachapin':11, 'mukku':12, 'supermukku':13}[options['mode']]
         count = options.get('count', 300)
         if count < 1: count = 1
-        data, rateups, ssrrate, extended = self.bot.gacha.retrieve() # get current gacha (dummy one if error)
+        data, rateups, ssrrate, extended = self.bot.gacha.retrieve(classic=(options.get('extra', '') == 'classic')) # get current gacha (dummy one if error)
         legfest = options.get('legfest', True if ssrrate == 6 else False) # legfest parameter
         ssrrate = 15 if mode == 13 else (9 if mode == 12 else (6 if legfest else 3)) # set the ssr rate
         result = {'list':[], 'detail':[0, 0, 0], 'extended':extended, 'rate':ssrrate} # result container
@@ -199,14 +199,14 @@ class Games(commands.Cog):
         result = await self.bot.do(self.gachaRoll, **rollOptions) # do the rolling
         footer = "{}% SSR rate".format(result['rate']) # message footer
         scam = False
-        classic = rollOptions.get('classic', False)
-        if classic:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Classic Gacha not yet implemented", color=self.color))
-            await self.bot.util.clean(inter, 40)
-            return
-        match rollOptions.get('mode', ''):
-            case 'memerollB':
-                footer += " ▫️ until rate up"
+        classic = False
+        extra = rollOptions.get('extra', '')
+        match extra:
+            case 'classic':
+                await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Classic Gacha not yet implemented", color=self.color))
+                await self.bot.util.clean(inter, 40)
+                return
+                classic = True
             case 'scam':
                 sroll = self.scamRoll(rollOptions.get('scam', 1)-1)
                 if sroll[0] is None:
@@ -217,6 +217,9 @@ class Games(commands.Cog):
                 scam = True
             case _:
                 pass
+        mode = rollOptions.get('mode', '')
+        if mode == 'memerollB':
+            footer += " ▫️ until rate up"
         
         # select crystal image
         if (100 * result['detail'][2] / len(result['list'])) >= result['rate']: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
@@ -245,7 +248,7 @@ class Games(commands.Cog):
             counter = [0, 0, 0]
             text = ""
             best = [-1, ""]
-            if rollOptions['mode'] == 'memerollB': item_count = 5
+            if mode == 'memerollB': item_count = 5
             else: item_count = 3
             for i, v in enumerate(result['list']):
                 if i > 0 and i % item_count == 0:
@@ -360,47 +363,47 @@ class Games(commands.Cog):
     @roll.sub_command()
     async def single(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate a single draw"""
-        await self._roll(inter, ("{} did a single roll...", "{} did a single roll"), 0, count=1, mode='single', legfest=self.bot.gacha.isLegfest(double), classic=(classic == 1))
+        await self._roll(inter, ("{} did a single roll...", "{} did a single roll"), 0, count=1, mode='single', legfest=self.bot.gacha.isLegfest(double), extra=('classic' if classic == 1 else ''))
 
     @roll.sub_command()
     async def ten(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate ten draws"""
-        await self._roll(inter, ("{} did ten rolls...", "{} did ten rolls"), 2, count=10, mode='ten', legfest=self.bot.gacha.isLegfest(double), classic=(classic == 1))
+        await self._roll(inter, ("{} did ten rolls...", "{} did ten rolls"), 2, count=10, mode='ten', legfest=self.bot.gacha.isLegfest(double), extra=('classic' if classic == 1 else ''))
 
     @roll.sub_command(name="scam")
     async def scam_(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), scam_index : int = commands.Param(description='Which Scam gacha to use (Default: 1 for the first one)', default=1, ge=1)):
         """Simulate ten draws and the Scam Gacha"""
-        await self._roll(inter, ("{} is getting Scammed...", "{} got Scammed"), 2, scam=scam_index, count=10, mode='scam', legfest=self.bot.gacha.isLegfest(double))
+        await self._roll(inter, ("{} is getting Scammed...", "{} got Scammed"), 2, extra='scam', scam=scam_index, count=10, mode='ten', legfest=self.bot.gacha.isLegfest(double))
 
     @roll.sub_command()
     async def spark(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate a spark"""
-        await self._roll(inter, ("{} is sparking...", "{} sparked"), 3, count=300, mode='ten', legfest=self.bot.gacha.isLegfest(double), classic=(classic == 1))
+        await self._roll(inter, ("{} is sparking...", "{} sparked"), 3, count=300, mode='ten', legfest=self.bot.gacha.isLegfest(double), extra=('classic' if classic == 1 else ''))
 
     @roll.sub_command()
     async def count(self, inter: disnake.GuildCommandInteraction, num : int = commands.Param(description='Number of rolls', ge=1, le=600), double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate a specific amount of draw"""
-        await self._roll(inter, ("{}" + " is rolling {} times...".format(num), "{} " + "rolled {} times".format(num)), 3, count=num, mode='ten', legfest=self.bot.gacha.isLegfest(double), classic=(classic == 1))
+        await self._roll(inter, ("{}" + " is rolling {} times...".format(num), "{} " + "rolled {} times".format(num)), 3, count=num, mode='ten', legfest=self.bot.gacha.isLegfest(double), extra=('classic' if classic == 1 else ''))
 
     @roll.sub_command()
     async def gachapin(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate a Gachapin Frenzy"""
-        await self._roll(inter, ("{} is rolling the Gachapin...", "{} rolled the Gachapin"), 3, count=300, mode='gachapin', legfest=self.bot.gacha.isLegfest(double), classic=(classic == 1))
+        await self._roll(inter, ("{} is rolling the Gachapin...", "{} rolled the Gachapin"), 3, count=300, mode='gachapin', legfest=self.bot.gacha.isLegfest(double), extra=('classic' if classic == 1 else ''))
 
     @roll.sub_command()
     async def mukku(self, inter: disnake.GuildCommandInteraction, classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate a Mukku Frenzy"""
-        await self._roll(inter, ("{} is rolling the Mukku...", "{} rolled the Mukku"), 3, count=300, mode='mukku', classic=(classic == 1))
+        await self._roll(inter, ("{} is rolling the Mukku...", "{} rolled the Mukku"), 3, count=300, mode='mukku', extra=('classic' if classic == 1 else ''))
 
     @roll.sub_command()
     async def supermukku(self, inter: disnake.GuildCommandInteraction, classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate a Super Mukku Frenzy"""
-        await self._roll(inter, ("{} is rolling the Supper Mukku...", "{} rolled the Super Mukku"), 3, count=300, mode='supermukku', classic=(classic == 1))
+        await self._roll(inter, ("{} is rolling the Supper Mukku...", "{} rolled the Super Mukku"), 3, count=300, mode='supermukku', extra=('classic' if classic == 1 else ''))
 
     @roll.sub_command()
     async def memeroll(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), rateup : str = commands.Param(description='Input anything to roll until a rate up SSR', default=""), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate rolls until a SSR"""
-        await self._roll(inter, (("{} is memerolling until a rate up SSR..." if rateup != "" else "{} is memerolling..."), ("{} memerolled {} times until a rate up SSR" if rateup != "" else "{} memerolled {} times")), 1, mode=('memerollB' if rateup != "" else 'memerollA'), legfest=self.bot.gacha.isLegfest(double), classic=(classic == 1))
+        await self._roll(inter, (("{} is memerolling until a rate up SSR..." if rateup != "" else "{} is memerolling..."), ("{} memerolled {} times until a rate up SSR" if rateup != "" else "{} memerolled {} times")), 1, mode=('memerollB' if rateup != "" else 'memerollA'), legfest=self.bot.gacha.isLegfest(double), extra=('classic' if classic == 1 else ''))
 
     @roll.sub_command()
     async def srssr(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
@@ -427,7 +430,7 @@ class Games(commands.Cog):
         - best: best ssr we got
     """
     def getRoulette(self, count, mode, double, classic):
-        result = self.gachaRoll(count=count, mode=mode, legfest=self.bot.gacha.isLegfest(double), classic=(classic == 1))
+        result = self.gachaRoll(count=count, mode=mode, legfest=self.bot.gacha.isLegfest(double), extra=('classic' if classic == 1 else ''))
         footer = "{}% SSR rate".format(result['rate'])
         count = len(result['list'])
         rate = (100*result['detail'][2]/count)
@@ -472,7 +475,7 @@ class Games(commands.Cog):
             roll = forcedRollCount
             if forcedSuperMukku: superFlag = True
             if double == 1 and forced3pc:
-                try: double = (1 if int(self.bot.gacha.get()[1]['ratio'][0]) == 6 else 0)
+                try: double = (1 if int(self.bot.gacha.retrieve(classic=(classic == 1))[2]['ratio']) == 6 else 0)
                 except: pass
             
             d = 0
