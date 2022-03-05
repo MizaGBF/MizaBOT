@@ -377,13 +377,13 @@ class Gacha():
     """
     def simulate(self, simtype:str, gachatype:str, color, scamindex:int=1):
         scamdata = None
-        match gachatype:
+        match gachatype: # retrieve the data (no need to copy)
             case 'scam':
                 gachadata = self.retrieve()
                 scamdata = self.retrieve(scam=scamindex)
             case 'classic': gachadata = self.retrieve(classic=True)
             case _: gachadata = self.retrieve()
-        gsim = GachaSimulator(self.bot, gachadata, simtype, scamdata, color)
+        gsim = GachaSimulator(self.bot, gachadata, simtype, scamdata, color) # create a simulator instance
         return gsim
 
 class GachaSimulator():
@@ -399,15 +399,14 @@ class GachaSimulator():
     """
     def __init__(self, bot, gachadata:tuple, simtype:str, scamdata, color):
         self.bot = bot
-        self.data, self.rateups, self.ssrrate, self.complete = gachadata
-        self.scamdata = scamdata
+        self.data, self.rateups, self.ssrrate, self.complete = gachadata # unpack the data
+        self.scamdata = scamdata # no need to unpack the scam gacha one (assume it might be None too)
         self.color = color
-        self.mode = {'single':0, 'srssr':1, 'memerollA':2, 'memerollB':3, 'scam':4, 'ten':10, 'gachapin':11, 'mukku':12, 'supermukku':13}[simtype]
-        self.result = {}
-        self.thumbnail = None
-        self.best = [-1, ""]
-        self.exception = None
-
+        self.mode = {'single':0, 'srssr':1, 'memerollA':2, 'memerollB':3, 'scam':4, 'ten':10, 'gachapin':11, 'mukku':12, 'supermukku':13}[simtype] # kept the old modes, might change it later?
+        self.result = {} # output of generate()
+        self.thumbnail = None # thumbnail of self.best
+        self.best = [-1, ""] # best roll
+        self.exception = None # contains the last exception
 
     """changeMode()
     update self.mode with a new value
@@ -434,20 +433,20 @@ class GachaSimulator():
     """
     def check_rate(self, ssrrate):
         # calcul R,SR,SSR & total
-        proba = []
-        mods = [1, 1, 1]
+        proba = [] # store the % of R, SR and SSR
+        mods = [1, 1, 1] # modifiers vs advertised rates, 1 by default
         for r in self.data:
             proba.append(0)
             for rate in r['list']:
-                proba[-1] += float(rate) * len(r['list'][rate])
-        if ssrrate != self.data[2]['rate']:
-            mods[2] = ssrrate / proba[2]
-            tmp = proba[2] * mods[2]
-            diff = proba[2] - tmp
-            try: mods[0] = (proba[0] + diff) / proba[0]
+                proba[-1] += float(rate) * len(r['list'][rate]) # sum of rates x items
+        if ssrrate != self.data[2]['rate']: # if wanted ssr rate different from advertised one
+            mods[2] = ssrrate / proba[2] # calculate mod
+            tmp = proba[2] * mods[2] # get new proba
+            diff = proba[2] - tmp # get diff between old and new
+            try: mods[0] = (proba[0] + diff) / proba[0] # calculate lowered R rate modifer
             except: mods[0] = 1
-            proba[0] = max(0, proba[0] + diff)
-            proba[2] = tmp
+            proba[0] = max(0, proba[0] + diff) # lower R proba
+            proba[2] = tmp # store SSR proba
         return mods, proba
 
     """generate()
@@ -463,7 +462,7 @@ class GachaSimulator():
             # prep work
             legfest = self.bot.gacha.isLegfest(legfest)
             ssrrate = 15 if self.mode == 13 else (9 if self.mode == 12 else (6 if legfest else 3))
-            self.result = {}
+            self.result = {} # empty output, used for error check
             result = {'list':[], 'detail':[0, 0, 0], 'rate':ssrrate}
             mods, proba = self.check_rate(ssrrate)
             tenrollsr = False # flag for guaranted SR in ten rolls 
@@ -509,20 +508,21 @@ class GachaSimulator():
                     elif r > self.best[0]:
                         self.best = roll.copy()
                     if r == 2:
+                        # check memeroll must stop
                         if self.mode == 2: break # memeroll mode A
                         elif self.mode == 3 and result['list'][-1][1].startswith("**"): break # memeroll mode B
                 else: # using dummy gacha
-                    result['list'].append([r, ''])
+                    result['list'].append([r, '']) # '' because no item names
                     result['detail'][r] += 1
                     if r == 2:
                         if self.mode == 2 or self.mode == 3: break  # memeroll mode A and B
+                # end of a serie of 10 rolls, check for gachapin/mukku/etc...
                 if i % 10 == 9:
                     if (self.mode == 11 or self.mode == 12) and result['detail'][2] >= 1: break # gachapin and mukku mode
                     elif self.mode == 13 and result['detail'][2] >= 5: break # super mukku mode
-            self.result = result
+            self.result = result # store result
         except Exception as e:
             self.exception = e
-
 
     """updateThumbnail()
     Update self.thumbnail based on self.best content
@@ -531,7 +531,7 @@ class GachaSimulator():
     async def updateThumbnail(self):
         if self.best[0] != -1 and self.best[1] != "":
             rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(self.best[1].replace('**', '').split('>')[2:])) # retrieve the id from the wiki
-            if rid is None: self.thumbnail = None # and try to make a thumbnail
+            if rid is None: self.thumbnail = None # and update self.thumbnail accordingly
             elif rid.startswith('1'): self.thumbnail = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
             elif rid.startswith('2'): self.thumbnail = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
             else: self.thumbnail = None
@@ -546,17 +546,18 @@ class GachaSimulator():
         - loot: string, item name
     """
     def scamRoll(self):
-        data, rateups, ssrrate, extended = self.scamdata
-        roll = random.randint(1, self.bot.gacha.scam_rate)
+        data, rateups, ssrrate, extended = self.scamdata # no error check, do it before
+        roll = random.randint(1, self.bot.gacha.scam_rate) # roll a dice for the item
         loot = None
         n = 0
-        for r in self.bot.gacha.scam:
+        for r in self.bot.gacha.scam: # iterate over items with our dice value
             n += r[0]
             if roll < n:
                 loot = r
                 break
+        # pick the random ssr
         choice = random.choice(data[2]['list'][list(data[2]['list'].keys())[0]])
-        self.best = [99, choice]
+        self.best = [99, choice] # force ssr in self.best
         return choice, loot[1]
 
     """output()
@@ -569,13 +570,14 @@ class GachaSimulator():
     titles: Tuple of 2 strings. First and Second embed titles to display
     """
     async def output(self, inter, display_mode:int, titles:tuple=("{}", "{}")):
-        if 'list' not in self.result:
+        if 'list' not in self.result or self.exception is not None: # error check
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="An error occured", color=self.color))
             await self.bot.sendError("gachasim", self.exception)
             return
-        elif self.mode == 4 and (self.scamdata is None or not self.scamdata[3]):
+        elif self.mode == 4 and (self.scamdata is None or not self.scamdata[3]): # scam error check
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="No Star Premium Gachas available at selected index", color=self.color))
             return
+        # set embed footer
         footer = "{}% SSR rate".format(self.result['rate'])
         match self.mode:
             case 3:
@@ -584,8 +586,10 @@ class GachaSimulator():
                 footer += " ▫️ Selected Scam #{}".format(self.scamdata[4])
             case _:
                 pass
+        # get scam roll
         if self.scamdata is not None:
             sroll = self.scamRoll()
+        # update thumbnail
         await self.updateThumbnail()
         # select crystal image
         if (100 * self.result['detail'][2] / len(self.result['list'])) >= self.result['rate']: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
@@ -728,8 +732,12 @@ class GachaSimulator():
         await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} is spinning the Roulette".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer))
         if not enableJanken and state < 2: state = 1
         running = True
-
+        # loop
         while running:
+            if self.exception is not None:
+                await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="An error occured", color=self.color))
+                await self.bot.sendError("gachasim", self.exception)
+                return
             await asyncio.sleep(2)
             match state:
                 case 0: # RPS
