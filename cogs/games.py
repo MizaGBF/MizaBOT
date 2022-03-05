@@ -196,8 +196,7 @@ class Games(commands.Cog):
     async def _roll(self, inter, titles:tuple=("{}", "{}"), rmode:int=-1, **rollOptions):
         if rmode < 0: raise Exception('Invalid _roll() rmode {}'.format(rmode)) # invalid mode
         await inter.response.defer()
-        result = await self.bot.do(self.gachaRoll, **rollOptions) # do the rolling
-        footer = "{}% SSR rate".format(result['rate']) # message footer
+        footer = "" # message footer
         scam = False
         classic = False
         extra = rollOptions.get('extra', '')
@@ -213,10 +212,12 @@ class Games(commands.Cog):
                     await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="No Star Premium Gachas available at index #{}".format(rollOptions.get('scam', 1)), color=self.color))
                     await self.bot.util.clean(inter, 40)
                     return
-                footer += " ▫️ Selected Scam #{}".format(rollOptions.get('scam', 1))
+                footer = " ▫️ Selected Scam #{}".format(rollOptions.get('scam', 1))
                 scam = True
             case _:
                 pass
+        result = await self.bot.do(self.gachaRoll, **rollOptions) # do the rolling
+        footer = "{}% SSR rate".format(result['rate']) + footer
         mode = rollOptions.get('mode', '')
         if mode == 'memerollB':
             footer += " ▫️ until rate up"
