@@ -157,7 +157,7 @@ class Games(commands.Cog):
         await self.bot.util.clean(inter, 40)
 
     @roll.sub_command()
-    async def roulette(self, inter: disnake.GuildCommandInteraction, rate : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
+    async def roulette(self, inter: disnake.GuildCommandInteraction, legfest : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Imitate the GBF roulette"""
         await inter.response.defer()
         sim = self.bot.gacha.simulate("ten", "", self.color)
