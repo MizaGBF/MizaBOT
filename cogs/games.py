@@ -48,311 +48,6 @@ class Games(commands.Cog):
             self.scratcher_total += r * len(self.scratcher_loot[r])
             if self.scratcher_loot[r][0] == rare_divider1: self.scratcher_total_rare1 = self.scratcher_total
             if self.scratcher_loot[r][0] == rare_divider2: self.scratcher_total_rare2 = self.scratcher_total
-        
-        self.scam = [(2000, 'Sunlight Stone', 'evolution/s/20014.jpg'), (2000, 'Damascus Ingot', 'evolution/s/20005.jpg'), (6000, 'Damascus Crystal x2', 'article/s/203.jpg'), (5000, 'Brimstone Earrings x2', 'npcaugment/s/11.jpg'), (5000, 'Permafrost Earrings x2', 'npcaugment/s/12.jpg'), (5000, 'Brickearth Earrings x2', 'npcaugment/s/13.jpg'), (5000, 'Jetstream Earrings x2', 'npcaugment/s/14.jpg'), (5000, 'Sunbeam Earrings x2', 'npcaugment/s/15.jpg'), (5000, 'Nightshade Earrings x2', 'npcaugment/s/16.jpg'), (5000, 'Intracacy Ring', 'npcaugment/s/3.jpg'), (5000, 'Meteorite x10', 'article/s/137.jpg'), (5000, 'Abyssal Wing x5', 'article/s/555.jpg'), (5000, 'Tears of the Apocalypse x10', 'article/s/538.jpg'), (4000, 'Ruby Awakening Orb x2', 'npcarousal/s/1.jpg'), (4000, 'Sapphire Awakening Orb x2', 'npcarousal/s/2.jpg'), (4000, 'Citrine  Awakening Orb x2', 'npcarousal/s/3.jpg'), (4000, 'Sephira Stone x10', 'article/s/25000.jpg'), (4000, 'Weapon Plus Mark x30', 'bonusstock/s/1.jpg'), (4000, 'Summon Plus Mark x30', 'bonusstock/s/2.jpg'), (4000, 'Gold Moon x2', 'article/s/30033.jpg'), (4000, 'Half Elixir x100', 'normal/s/2.jpg'), (4000, 'Soul Berry x300', 'normal/s/5.jpg')]
-        self.scam_rate = 0
-        for r in self.scam:
-            self.scam_rate += r[0]
-
-    """gachaRoll()
-    Simulate GBF gacha and return the result.
-    
-    Parameters
-    ----------
-    options: Keyword arguments:
-        - mode : str = single, srssr, memerollA, memerollB, ten, gachapin, mukku or supermukku
-        - count : int = maximum number of rolls to do
-        - legfest : bool = True for 6% rate, False for 3% rate
-    
-    Returns
-    --------
-    dict: Containing:
-        - 'list', the full list of generated gacha rolls
-        - 'detail', a list containing the number of R, SR and SSR obtained
-        - 'extended', a boolean indicating if the gacha used was the real one
-        - 'rate', the SSR rate used, in %
-    """
-    def gachaRoll(self, **options):
-        mode = {'single':0, 'srssr':1, 'memerollA':2, 'memerollB':3, 'ten':10, 'gachapin':11, 'mukku':12, 'supermukku':13}[options['mode']]
-        count = options.get('count', 300)
-        if count < 1: count = 1
-        data, rateups, ssrrate, extended = self.bot.gacha.retrieve(classic=(options.get('extra', '') == 'classic')) # get current gacha (dummy one if error)
-        legfest = options.get('legfest', True if ssrrate == 6 else False) # legfest parameter
-        ssrrate = 15 if mode == 13 else (9 if mode == 12 else (6 if legfest else 3)) # set the ssr rate
-        result = {'list':[], 'detail':[0, 0, 0], 'extended':extended, 'rate':ssrrate} # result container
-        tenrollsr = False # flag for guaranted SR in ten rolls 
-        # calcul R,SR,SSR & total
-        proba = []
-        for r in data:
-            proba.append(0)
-            for rate in r['list']:
-                proba[-1] += float(rate) * len(r['list'][rate])
-        if extended and ssrrate != data[2]['rate']: # in case of different ssr rate set by user
-            ssr_mod = ssrrate / data[2]['rate']
-            proba[2] *= ssr_mod
-        else:
-            ssr_mod = 1
-        # rolling loop
-        for i in range(0, count):
-            d = random.randint(1, int(sum(proba) * 1000)) / 1000 # our roll
-            if mode == 1 or (mode >= 10 and (i % 10 == 9) and not tenrollsr): sr_mode = True # force sr in srssr mode OR when 10th roll of ten roll)
-            else: sr_mode = False # else doesn't set
-            if d <= proba[2]: # SSR CASE
-                r = 2
-                tenrollsr = True
-                d /= ssr_mod
-            elif (not sr_mode and d <= proba[1] + proba[2]) or sr_mode: # SR CASE
-                r = 1
-                d -= ssrrate
-                while d >= proba[1]: d -= proba[1]
-                tenrollsr = True
-            else: # R CASE
-                r = 0
-                d -= ssrrate + proba[1]
-            if i % 10 == 9: tenrollsr = False # unset flag if we did 10 rolls
-            if extended: # if we have a real gacha
-                roll = None
-                for rate in data[r]['list']: # find which item we rolled
-                    fr = float(rate)
-                    for item in data[r]['list'][rate]:
-                        if r == 2 and rate in rateups: last = "**" + self.bot.util.formatGachaItem(item) + "**"
-                        else: last = self.bot.util.formatGachaItem(item)
-                        if d <= fr:
-                            roll = [r, last]
-                            break
-                        d -= fr
-                    if roll is not None:
-                        break
-                if roll is None:
-                    roll = [r, last]
-                result['list'].append(roll) # store roll
-                result['detail'][r] += 1
-                if r == 2:
-                    if mode == 2: break # memeroll mode A
-                    elif mode == 3 and result['list'][-1][1].startswith("**"): break # memeroll mode B
-            else: # using dummy gacha
-                result['list'].append([r])
-                result['detail'][r] += 1
-                if r == 2:
-                    if mode == 2 or mode == 3: break  # memeroll mode A and B
-            if i % 10 == 9:
-                if (mode == 11 or mode == 12) and result['detail'][2] >= 1: break # gachapin and mukku mode
-                elif mode == 13 and result['detail'][2] >= 5: break # super mukku mode
-        return result
-
-    """scamRoll()
-    Simulate a Star Premium Roll
-    
-    Parameters
-    ----------
-    id: integer, index of the scam gacha to use
-    
-    Returns
-    --------
-    tuple: Contains:
-        - str: the rolled SSR
-        - str: the rolled item
-    """
-    def scamRoll(self, id):
-        data, rateups, ssrrate, extended = self.bot.gacha.retrieve(id)
-        if not extended: return None, None
-        roll = random.randint(1, self.scam_rate)
-        loot = None
-        n = 0
-        for r in self.scam:
-            n += r[0]
-            if roll < n:
-                loot = r
-                break
-        return random.choice(data[2]['list'][list(data[2]['list'].keys())[0]]), loot[1]
-
-    """getSSRList()
-    Extract the SSR from a full gacha list generated by gachaRoll()
-    
-    Parameters
-    ----------
-    result: Return value of gachaRoll()
-    
-    Returns
-    --------
-    dict: SSR List. The keys are the SSR name and the values are how many your rolled
-    """
-    def getSSRList(self, result):
-        rolls = {}
-        for r in result['list']:
-            if r[0] == 2: rolls[r[1]] = rolls.get(r[1], 0) + 1
-        return rolls
-
-    """_roll()
-    Unified function to display the simulate the GBF gacha, used by most gacha commands
-    
-    Parameters
-    ----------
-    inter: The command interaction
-    titles: The titles used in the message. Second string is for the final message
-    rmode: Display type = 0 for the single roll mode, 1 for the memeroll mode, 2 for the ten roll mode and 3 or more for anything else (spark, gachapin, ...)
-    message: The message to process
-    """
-    async def _roll(self, inter, titles:tuple=("{}", "{}"), rmode:int=-1, **rollOptions):
-        if rmode < 0: raise Exception('Invalid _roll() rmode {}'.format(rmode)) # invalid mode
-        await inter.response.defer()
-        footer = "" # message footer
-        scam = False
-        classic = False
-        extra = rollOptions.get('extra', '')
-        match extra:
-            case 'classic':
-                await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Classic Gacha not yet implemented", color=self.color))
-                await self.bot.util.clean(inter, 40)
-                return
-                classic = True
-            case 'scam':
-                sroll = self.scamRoll(rollOptions.get('scam', 1)-1)
-                if sroll[0] is None:
-                    await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="No Star Premium Gachas available at index #{}".format(rollOptions.get('scam', 1)), color=self.color))
-                    await self.bot.util.clean(inter, 40)
-                    return
-                footer = " ▫️ Selected Scam #{}".format(rollOptions.get('scam', 1))
-                scam = True
-            case _:
-                pass
-        result = await self.bot.do(self.gachaRoll, **rollOptions) # do the rolling
-        footer = "{}% SSR rate".format(result['rate']) + footer
-        mode = rollOptions.get('mode', '')
-        if mode == 'memerollB':
-            footer += " ▫️ until rate up"
-        
-        # select crystal image
-        if (100 * result['detail'][2] / len(result['list'])) >= result['rate']: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761969229095632916/3_s.png'])
-        elif (100 * result['detail'][1] / len(result['list'])) >= result['rate']: crystal = 'https://media.discordapp.net/attachments/614716155646705676/761969232866574376/2_s.png'
-        else: crystal = random.choice(['https://media.discordapp.net/attachments/614716155646705676/761969231323070494/0_s.png', 'https://media.discordapp.net/attachments/614716155646705676/761976275706445844/1_s.png'])
-
-        # startup msg
-        view = Tap(self.bot, owner_id=inter.author.id)
-        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[0].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, image=crystal, color=self.color, footer=footer), view=view)
-        await view.wait()
-
-        # display result
-        if rmode == 0: # single roll mode
-            r = result['list'][0]
-            if result['extended']:
-                rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(r[1].split('>')[2:])) # retrieve the id from the wiki
-                if rid is None: thumb = None # and try to make a thumbnail
-                elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
-                elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
-                else: thumb = None
-                # post
-                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="{}{}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0])), r[1]), color=self.color, footer=footer, thumbnail=thumb), view=None)
-            else:
-                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="{}".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(r[0]))), color=self.color, footer=footer), view=None)
-        elif rmode == 1: # memeroll mode
-            counter = [0, 0, 0]
-            text = ""
-            best = [-1, ""]
-            if mode == 'memerollB': item_count = 5
-            else: item_count = 3
-            for i, v in enumerate(result['list']):
-                if i > 0 and i % item_count == 0:
-                    await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[0].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer), view=None)
-                    await asyncio.sleep(1)
-                    text = ""
-                if result['extended']:
-                    # store what looks like the best roll
-                    if v[0] > best[0] or (v[0] == best[0] and '**' in v[1]):
-                        best = [v[0], v[1].replace('**', '')]
-                        if '**' in v[1]: best[0] += 1
-                    text += "{} {}\n".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(v[0])), v[1])
-                else:
-                    text += "{} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(v[0])))
-                counter[v[0]] += 1
-            if best[0] != -1: # make a thumbnail
-                rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[2:]))
-                if rid is None: thumb = None
-                elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
-                elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
-                else: thumb = None
-            title = titles[1].format(inter.author.display_name, len(result['list'])) if (len(result['list']) < 300) else "{} sparked".format(inter.author.display_name)
-            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':inter.author.display_avatar}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer, thumbnail=thumb), view=None)
-        elif rmode == 2: # ten roll mode
-            if result['extended']:
-                best = [-1, ""]
-                thumb = None
-                for i in range(0, 11):
-                    msg = ""
-                    for j in range(0, i):
-                        if j >= 10: break
-                        # check for best roll
-                        if result['list'][j][0] > best[0] or (result['list'][j][0] == best[0] and '**' in result['list'][j][1]):
-                            best = [result['list'][j][0], result['list'][j][1].replace('**', '')]
-                            if '**' in result['list'][j][1]: best[0] += 1
-                        # write
-                        msg += "{}{} ".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(result['list'][j][0])), result['list'][j][1])
-                        if j % 2 == 1: msg += "\n"
-                    for j in range(i, 10):
-                        msg += '{}'.format(self.bot.emote.get('crystal{}'.format(result['list'][j][0])))
-                        if j % 2 == 1: msg += "\n"
-                    if not scam and i == 10 and best[0] != -1: # make the thumbnail from best roll
-                        rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[2:]))
-                        if rid is None: thumb = None
-                        elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
-                        elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
-                        else: thumb = None
-                    if scam: msg += "{}{}\n{}".format(self.bot.emote.get('SSR'), self.bot.emote.get('crystal2'), self.bot.emote.get('red'))
-                    await asyncio.sleep(0.7)
-                    await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer, thumbnail=thumb), view=None)
-                if scam:
-                    msg = '\n'.join(msg.split('\n')[:-2])
-                    msg += "\n{}**{}**\n{}**{}**".format(self.bot.emote.get('SSR'), self.bot.util.formatGachaItem(sroll[0]), self.bot.emote.get('red'), sroll[1])
-                    rid = await self.bot.do(self.bot.util.search_wiki_for_id, sroll[0][2:])
-                    if rid is None: thumb = None
-                    elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
-                    elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
-                    else: thumb = None
-                    await asyncio.sleep(1)
-                    await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer, thumbnail=thumb), view=None)
-            else:
-                msg = ""
-                i = 0
-                for i in range(len(result['list'])):
-                    r = result['list'][i][0]
-                    if i == 5: msg += '\n'
-                    if r == 2: msg += '{}'.format(self.bot.emote.get('SSR'))
-                    elif r == 1: msg += '{}'.format(self.bot.emote.get('SR'))
-                    else: msg += '{}'.format(self.bot.emote.get('R'))
-                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
-        else: # others
-            count = len(result['list'])
-            rate = (100*result['detail'][2]/count)
-            msg = ""
-            thumb = None
-            if result['extended']:
-                best = [-1, ""]
-                rolls = self.getSSRList(result)
-                for r in rolls: # check for best roll
-                    if best[0] < 3 and '**' in r: best = [3, r.replace('**', '')]
-                    elif best[0] < 2: best = [2, r]
-                if best[0] != -1: # make thumbnail
-                    rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[2:]))
-                    if rid is None: thumb = None
-                    elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
-                    elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
-                    else: thumb = None
-                else:
-                    thumb = "https://cdn.discordapp.com/attachments/614716155646705676/928619876078219274/loser.png"
-                if len(rolls) > 0:
-                    msg = "{} ".format(self.bot.emote.get('SSR'))
-                    for item in rolls:
-                        msg += item
-                        if rolls[item] > 1: msg += " x{}".format(rolls[item])
-                        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name, count), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer), view=None)
-                        await asyncio.sleep(0.75)
-                        msg += " "
-            if rollOptions.get('mode', '') == 'gachapin': amsg = "Gachapin stopped after **{}** rolls\n".format(len(result['list']))
-            elif rollOptions.get('mode', '') == 'mukku': amsg = "Mukku stopped after **{}** rolls\n".format(len(result['list']))
-            else: amsg = ""
-            msg = "{}{:} {:} ▫️ {:} {:} ▫️ {:} {:}\n{:}\n**{:.2f}%** SSR rate".format(amsg, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), msg, rate)
-            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name, count), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer, thumbnail=thumb), view=None)
-        await self.bot.util.clean(inter, 40)
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 20, commands.BucketType.user)
@@ -362,243 +57,113 @@ class Games(commands.Cog):
         pass
 
     @roll.sub_command()
-    async def single(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
+    async def single(self, inter: disnake.GuildCommandInteraction, legfest : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate a single draw"""
-        await self._roll(inter, ("{} did a single roll...", "{} did a single roll"), 0, count=1, mode='single', legfest=self.bot.gacha.isLegfest(double), extra=('classic' if classic == 1 else ''))
+        await inter.response.defer()
+        sim = self.bot.gacha.simulate("single", ('classic' if classic == 1 else ''), self.color)
+        sim.generate(1, legfest)
+        await sim.output(inter, 0, ("{} did a single roll...", "{} did a single roll"))
+        del sim
+        await self.bot.util.clean(inter, 40)
 
     @roll.sub_command()
-    async def ten(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
+    async def ten(self, inter: disnake.GuildCommandInteraction, legfest : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate ten draws"""
-        await self._roll(inter, ("{} did ten rolls...", "{} did ten rolls"), 2, count=10, mode='ten', legfest=self.bot.gacha.isLegfest(double), extra=('classic' if classic == 1 else ''))
+        await inter.response.defer()
+        sim = self.bot.gacha.simulate("ten", ('classic' if classic == 1 else ''), self.color)
+        sim.generate(10, legfest)
+        await sim.output(inter, 1, ("{} did ten rolls...", "{} did ten rolls"))
+        del sim
+        await self.bot.util.clean(inter, 40)
 
     @roll.sub_command(name="scam")
-    async def scam_(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), scam_index : int = commands.Param(description='Which Scam gacha to use (Default: 1 for the first one)', default=1, ge=1)):
+    async def scam_(self, inter: disnake.GuildCommandInteraction, legfest : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), scam_index : int = commands.Param(description='Which Scam gacha to use (Default: 1 for the first one)', default=1, ge=1)):
         """Simulate ten draws and the Scam Gacha"""
-        await self._roll(inter, ("{} is getting Scammed...", "{} got Scammed"), 2, extra='scam', scam=scam_index, count=10, mode='ten', legfest=self.bot.gacha.isLegfest(double))
+        await inter.response.defer()
+        sim = self.bot.gacha.simulate("scam", "scam", self.color)
+        sim.generate(10, legfest)
+        await sim.output(inter, 1, ("{} is getting Scammed...", "{} got Scammed"))
+        del sim
+        await self.bot.util.clean(inter, 40)
 
     @roll.sub_command()
-    async def spark(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
+    async def spark(self, inter: disnake.GuildCommandInteraction, legfest : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate a spark"""
-        await self._roll(inter, ("{} is sparking...", "{} sparked"), 3, count=300, mode='ten', legfest=self.bot.gacha.isLegfest(double), extra=('classic' if classic == 1 else ''))
+        await inter.response.defer()
+        sim = self.bot.gacha.simulate("ten", ('classic' if classic == 1 else ''), self.color)
+        sim.generate(300, legfest)
+        await sim.output(inter, 3, ("{} is sparking...", "{} sparked"))
+        del sim
+        await self.bot.util.clean(inter, 40)
 
     @roll.sub_command()
-    async def count(self, inter: disnake.GuildCommandInteraction, num : int = commands.Param(description='Number of rolls', ge=1, le=600), double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
+    async def count(self, inter: disnake.GuildCommandInteraction, num : int = commands.Param(description='Number of rolls', ge=1, le=600), legfest : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate a specific amount of draw"""
-        await self._roll(inter, ("{}" + " is rolling {} times...".format(num), "{} " + "rolled {} times".format(num)), 3, count=num, mode='ten', legfest=self.bot.gacha.isLegfest(double), extra=('classic' if classic == 1 else ''))
+        await inter.response.defer()
+        sim = self.bot.gacha.simulate("ten", ('classic' if classic == 1 else ''), self.color)
+        sim.generate(num, legfest)
+        await sim.output(inter, 3, ("{}" + " is rolling {} times...".format(num), "{} " + "rolled {} times".format(num)))
+        del sim
+        await self.bot.util.clean(inter, 40)
 
     @roll.sub_command()
-    async def gachapin(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
+    async def gachapin(self, inter: disnake.GuildCommandInteraction, legfest : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate a Gachapin Frenzy"""
-        await self._roll(inter, ("{} is rolling the Gachapin...", "{} rolled the Gachapin"), 3, count=300, mode='gachapin', legfest=self.bot.gacha.isLegfest(double), extra=('classic' if classic == 1 else ''))
+        await inter.response.defer()
+        sim = self.bot.gacha.simulate("gachapin", ('classic' if classic == 1 else ''), self.color)
+        sim.generate(300, legfest)
+        await sim.output(inter, 3, ("{} is rolling the Gachapin...", "{} rolled the Gachapin"))
+        del sim
+        await self.bot.util.clean(inter, 40)
 
     @roll.sub_command()
     async def mukku(self, inter: disnake.GuildCommandInteraction, classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate a Mukku Frenzy"""
-        await self._roll(inter, ("{} is rolling the Mukku...", "{} rolled the Mukku"), 3, count=300, mode='mukku', extra=('classic' if classic == 1 else ''))
+        await inter.response.defer()
+        sim = self.bot.gacha.simulate("mukku", ('classic' if classic == 1 else ''), self.color)
+        sim.generate(300)
+        await sim.output(inter, 3, ("{} is rolling the Mukku...", "{} rolled the Mukku"))
+        del sim
+        await self.bot.util.clean(inter, 40)
 
     @roll.sub_command()
     async def supermukku(self, inter: disnake.GuildCommandInteraction, classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate a Super Mukku Frenzy"""
-        await self._roll(inter, ("{} is rolling the Supper Mukku...", "{} rolled the Super Mukku"), 3, count=300, mode='supermukku', extra=('classic' if classic == 1 else ''))
+        await inter.response.defer()
+        sim = self.bot.gacha.simulate("supermukku", ('classic' if classic == 1 else ''), self.color)
+        sim.generate(300)
+        await sim.output(inter, 3, ("{} is rolling the Supper Mukku...", "{} rolled the Super Mukku"))
+        del sim
+        await self.bot.util.clean(inter, 40)
 
     @roll.sub_command()
-    async def memeroll(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), rateup : str = commands.Param(description='Input anything to roll until a rate up SSR', default=""), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
+    async def memeroll(self, inter: disnake.GuildCommandInteraction, legfest : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), rateup : str = commands.Param(description='Input anything to roll until a rate up SSR', default=""), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Simulate rolls until a SSR"""
-        await self._roll(inter, (("{} is memerolling until a rate up SSR..." if rateup != "" else "{} is memerolling..."), ("{} memerolled {} times until a rate up SSR" if rateup != "" else "{} memerolled {} times")), 1, mode=('memerollB' if rateup != "" else 'memerollA'), legfest=self.bot.gacha.isLegfest(double), extra=('classic' if classic == 1 else ''))
+        await inter.response.defer()
+        sim = self.bot.gacha.simulate("memerollB" if rateup != "" else "memerollA", ('classic' if classic == 1 else ''), self.color)
+        sim.generate(300, legfest)
+        await sim.output(inter, 2, (("{} is memerolling until a rate up SSR..." if rateup != "" else "{} is memerolling..."), ("{} memerolled {} times until a rate up SSR" if rateup != "" else "{} memerolled {} times")))
+        del sim
+        await self.bot.util.clean(inter, 40)
 
     @roll.sub_command()
-    async def srssr(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
+    async def srssr(self, inter: disnake.GuildCommandInteraction, legfest : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1)):
         """Simulate a SR/SSR Ticket draw"""
-        await self._roll(inter, ("{} is using a SR/SSR ticket...", "{} used a SR/SSR ticket"), 0, count=1, mode='srssr', legfest=self.bot.gacha.isLegfest(double))
-
-    """getRoulette()
-    Return the result of a roulette part
-    
-    Parameters
-    ----------
-    count: Integer, number of rolls to do
-    mode: String, gacha mode
-    double: Integer, value for checkLegfest
-    classic: Bool, true to use the classic gacha
-    
-    Returns
-    --------
-    typle:
-        - result: list of rolls
-        - rate: SSR rate used
-        - tmp: string containing the output
-        - count: number of R, SR and SSR rolled
-        - best: best ssr we got
-    """
-    def getRoulette(self, count, mode, double, classic):
-        result = self.gachaRoll(count=count, mode=mode, legfest=self.bot.gacha.isLegfest(double), extra=('classic' if classic == 1 else ''))
-        footer = "{}% SSR rate".format(result['rate'])
-        count = len(result['list'])
-        rate = (100*result['detail'][2]/count)
-        tmp = ""
-        best = [-1, None]
-        if result['extended']:
-            ssrs = self.getSSRList(result)
-            for r in ssrs: # best roll check
-                if best[0] < 3 and '**' in r: best = [3, r.replace('**', '')]
-                elif best[0] < 2: best = [2, r]
-            if len(ssrs) > 0: # make the text
-                tmp = "\n{} ".format(self.bot.emote.get('SSR'))
-                for item in ssrs:
-                    tmp += item
-                    if ssrs[item] > 1: tmp += " x{}".format(ssrs[item])
-                    tmp += " "
-        return result, rate, tmp, count, best
+        await inter.response.defer()
+        sim = self.bot.gacha.simulate("srssr", '', self.color)
+        sim.generate(1, legfest)
+        await sim.output(inter, 0, ("{} is using a SR/SSR ticket...", "{} used a SR/SSR ticket"))
+        del sim
+        await self.bot.util.clean(inter, 40)
 
     @roll.sub_command()
-    async def roulette(self, inter: disnake.GuildCommandInteraction, double : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
+    async def roulette(self, inter: disnake.GuildCommandInteraction, rate : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), classic : int = commands.Param(description='1 to use the classic gacha', default=0, ge=0, le=1)):
         """Imitate the GBF roulette"""
         await inter.response.defer()
-        footer = ""
-        roll = 0
-        rps = ['rock', 'paper', 'scissor']
-        ct = self.bot.util.JST()
-        # customization settings
-        fixedS = ct.replace(year=2022, month=1, day=3, hour=19, minute=0, second=0, microsecond=0) # beginning of fixed rolls
-        fixedE = fixedS.replace(day=5, hour=0) # end of fixed rolls
-        forced3pc = True # force 3%
-        forcedRollCount = 200 # number of rolls during fixed rolls
-        forcedSuperMukku = True
-        enable200 = True # add 200 on wheel
-        enableJanken = True
-        maxJanken = 1 # number of RPS
-        doubleMukku = False
-        # settings end
-        state = 0
-        superFlag = False
-        if ct >= fixedS and ct < fixedE:
-            msg = "{} {} :confetti_ball: :tada: Guaranteed **{} 0 0** R O L L S :tada: :confetti_ball: {} {}\n".format(self.bot.emote.get('crystal'), self.bot.emote.get('crystal'), forcedRollCount//100, self.bot.emote.get('crystal'), self.bot.emote.get('crystal'))
-            roll = forcedRollCount
-            if forcedSuperMukku: superFlag = True
-            if double == 1 and forced3pc:
-                try: double = (1 if int(self.bot.gacha.retrieve(classic=(classic == 1))[2]['ratio']) == 6 else 0)
-                except: pass
-            
-            d = 0
-            state = 1
-        else:
-            d = random.randint(1, 36000)
-            if enable200 and d < 300:
-                msg = "{} {} :confetti_ball: :tada: **2 0 0 R O L L S** :tada: :confetti_ball: {} {}\n".format(self.bot.emote.get('crystal'), self.bot.emote.get('crystal'), self.bot.emote.get('crystal'), self.bot.emote.get('crystal'))
-                roll = 200
-            elif d < 3000:
-                msg = "**Gachapin Frenzy** :four_leaf_clover:\n"
-                roll = -1
-                state = 2
-            elif d < 4500:
-                msg = ":confetti_ball: :tada: **100** rolls!! :tada: :confetti_ball:\n"
-                roll = 100
-            elif d < 7700:
-                msg = "**30** rolls! :clap:\n"
-                roll = 30
-            elif d < 19500:
-                msg = "**20** rolls :open_mouth:\n"
-                roll = 20
-            else:
-                msg = "**10** rolls :pensive:\n"
-                roll = 10
-        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} is spinning the Roulette".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer))
-        if not enableJanken and state < 2: state = 1
-        running = True
-        prev_best = [-2, None]
-        thumb = None
-        while running:
-            await asyncio.sleep(2)
-            match state:
-                case 0: # RPS
-                    if enableJanken and d >= 2000 and random.randint(0, 2) > 0:
-                        a = 0
-                        b = 0
-                        while a == b:
-                            a = random.randint(0, 2)
-                            b = random.randint(0, 2)
-                        msg += "You got **{}**, Gachapin got **{}**".format(rps[a], rps[b])
-                        if (a == 1 and b == 0) or (a == 2 and b == 1) or (a == 0 and b == 2):
-                            msg += " :thumbsup:\nYou **won** rock paper scissor, your rolls are **doubled** :confetti_ball:\n"
-                            roll = roll * 2
-                            if roll > (200 if enable200 else 100): roll = (200 if enable200 else 100)
-                            maxJanken -= 1
-                            if maxJanken == 0:
-                                state = 1
-                        else:
-                            msg += " :pensive:\n"
-                            state = 1
-                    else:
-                        state = 1
-                case 1: # normal rolls
-                    result, rate, tmp, count, best = await self.bot.do(self.getRoulette, roll, 'ten', double, classic)
-                    if best[0] > prev_best[0]:
-                        prev_best = best
-                        if best[0] != -1: # update thumbnail
-                            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[2:]))
-                            if rid is None: thumb = None
-                            elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
-                            elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
-                            else: thumb = None
-                        else:
-                            thumb = "https://cdn.discordapp.com/attachments/614716155646705676/928619876078219274/loser.png"
-                    footer = "{}% SSR rate".format(result['rate'])
-                    msg += "{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
-                    if superFlag: state = 4
-                    else: running = False
-                case 2: # gachapin
-                    result, rate, tmp, count, best = await self.bot.do(self.getRoulette, 300, 'gachapin', double, classic)
-                    if best[0] > prev_best[0]:
-                        prev_best = best
-                        if best[0] != -1: # update thumbnail
-                            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[2:]))
-                            if rid is None: thumb = None
-                            elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
-                            elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
-                            else: thumb = None
-                        else:
-                            thumb = "https://cdn.discordapp.com/attachments/614716155646705676/928619876078219274/loser.png"
-                    footer = "{}% SSR rate".format(result['rate'])
-                    msg += "Gachapin ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
-                    if count == 10 and random.randint(1, 100) < 99: state = 3
-                    elif count == 20 and random.randint(1, 100) < 60: state = 3
-                    elif count == 30 and random.randint(1, 100) < 30: state = 3
-                    else: running = False
-                case 3:
-                    result, rate, tmp, count, best = await self.bot.do(self.getRoulette, 300, 'mukku', double, classic)
-                    if best[0] > prev_best[0]:
-                        prev_best = best
-                        if best[0] != -1: # update thumbnail
-                            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[2:]))
-                            if rid is None: thumb = None
-                            elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
-                            elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
-                            else: thumb = None
-                        else:
-                            thumb = "https://cdn.discordapp.com/attachments/614716155646705676/928619876078219274/loser.png"
-                    msg += ":confetti_ball: Mukku ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
-                    if doubleMukku:
-                        if random.randint(1, 100) < 25: pass
-                        else: running = False
-                        doubleMukku = False
-                    else:
-                        running = False
-                case 4:
-                    result, rate, tmp, count, best = await self.bot.do(self.getRoulette, 300, 'supermukku', double, classic)
-                    if best[0] > prev_best[0]:
-                        prev_best = best
-                        if best[0] != -1: # update thumbnail
-                            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(best[1].split('>')[2:]))
-                            if rid is None: thumb = None
-                            elif rid.startswith('1'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
-                            elif rid.startswith('2'): thumb = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
-                            else: thumb = None
-                        else:
-                            thumb = "https://cdn.discordapp.com/attachments/614716155646705676/928619876078219274/loser.png"
-                    msg += ":confetti_ball: **Super Mukku** ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, result['detail'][2], self.bot.emote.get('SSR'), result['detail'][1], self.bot.emote.get('SR'), result['detail'][0], self.bot.emote.get('R'), tmp, rate)
-                    running = False
-            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer, thumbnail=thumb))
-        await self.bot.util.clean(inter, 45)
+        sim = self.bot.gacha.simulate("ten", "", self.color)
+        await sim.roulette(inter, legfest)
+        del sim
+        await self.bot.util.clean(inter, 50)
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(1, 60, commands.BucketType.user)

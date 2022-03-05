@@ -520,43 +520,6 @@ class Util():
         else:
             return "{:,.1f}".format(s).replace('.0', '')
 
-    """formatGachaItem()
-    Format the item string used by the gacha simulator to add an element emoji
-    
-    Parameters
-    ----------
-    raw: string to format
-    
-    Returns
-    --------
-    str: resulting string
-    """
-    def formatGachaItem(self, raw : str):
-        if len(raw) < 3: return raw
-        res = ""
-        match raw[0]:
-            case "1": res += str(self.bot.emote.get('fire'))
-            case "2": res += str(self.bot.emote.get('water'))
-            case "3": res += str(self.bot.emote.get('earth'))
-            case "4": res += str(self.bot.emote.get('wind'))
-            case "5": res += str(self.bot.emote.get('light'))
-            case "6": res += str(self.bot.emote.get('dark'))
-            case _: pass
-        match raw[1]:
-            case "0": res += str(self.bot.emote.get('sword'))
-            case "1": res += str(self.bot.emote.get('dagger'))
-            case "2": res += str(self.bot.emote.get('spear'))
-            case "3": res += str(self.bot.emote.get('axe'))
-            case "4": res += str(self.bot.emote.get('staff'))
-            case "5": res += str(self.bot.emote.get('gun'))
-            case "6": res += str(self.bot.emote.get('melee'))
-            case "7": res += str(self.bot.emote.get('bow'))
-            case "8": res += str(self.bot.emote.get('harp'))
-            case "9": res += str(self.bot.emote.get('katana'))
-            case "S": res += str(self.bot.emote.get('summon'))
-            case _: pass
-        return res + raw[2:]
-
     """players2mentions()
     Take a list of users and return a string mentionning all of them.
     Used for Games.
