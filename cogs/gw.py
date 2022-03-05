@@ -294,27 +294,24 @@ class GuildWar(commands.Cog):
         pass
 
     @gw.sub_command()
-    async def time(self, inter: disnake.GuildCommandInteraction, gmt : int = commands.Param(description='Your timezone from GMT', ge=-12, le=14, default=9, autocomplete=[-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])):
+    async def time(self, inter: disnake.GuildCommandInteraction):
         """Post the GW schedule"""
         if self.bot.data.save['gw']['state'] == True:
             try:
                 current_time = self.bot.util.JST()
                 em = self.bot.util.formatElement(self.bot.data.save['gw']['element'])
-                title = "{} **Guild War {}** {} **{:%a. %m/%d %H:%M} TZ**\n".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em, current_time + timedelta(seconds=3600*(gmt-9)))
-                if gmt == 9: title = title.replace('TZ', 'JST')
-                elif gmt == 0: title = title.replace('TZ', 'GMT')
-                else: title = title.replace('TZ', 'GMT{0:+}'.format(gmt))
+                title = "{} **Guild War {}** {} **{}**\n".format(self.bot.emote.get('gw'), self.bot.data.save['gw']['id'], em, self.bot.util.time(current_time, style='f', removejst=True))
                 description = ""
                 day_list = self.buildDayList()
                 if current_time < self.bot.data.save['gw']['dates']["End"]:
                     for it in day_list:
                         if it[1] == "BW":
-                            d = self.bot.data.save['gw']['dates']["Preliminaries"] - timedelta(days=random.randint(1, 4)) + timedelta(seconds=3600*(gmt-9))
+                            d = self.bot.data.save['gw']['dates']["Preliminaries"] - timedelta(days=random.randint(1, 4))
                             if current_time < d and random.randint(1, 8) == 1:
-                                description += it[0] + " **{:%a. %m/%d %H:%M}**\n".format(d)
+                                description += it[0] + " **{}**\n".format(self.bot.util.time(d, style='f', removejst=True))
                         else:
                             if self.dayCheck(current_time, self.bot.data.save['gw']['dates'][it[2]], it[1]=="Day 5") or (it[1] == "Interlude" and self.dayCheck(current_time, self.bot.data.save['gw']['dates'][it[2]] + timedelta(seconds=25200), False)):
-                                description += it[0] + ": **{:%a. %m/%d %H:%M}**\n".format(self.bot.data.save['gw']['dates'][it[1]] + timedelta(seconds=3600*(gmt-9)))
+                                description += it[0] + ": **{}**\n".format(self.bot.util.time(self.bot.data.save['gw']['dates'][it[1]], style='f', removejst=True))
                 else:
                     await inter.response.send_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Not available", color=self.color))
                     with self.bot.data.lock:

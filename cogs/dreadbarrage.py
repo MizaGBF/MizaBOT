@@ -60,23 +60,20 @@ class DreadBarrage(commands.Cog):
         pass
 
     @db.sub_command()
-    async def time(self, inter: disnake.GuildCommandInteraction, gmt : int = commands.Param(description='Your timezone from GMT', ge=-12, le=14, default=9, autocomplete=[-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])):
+    async def time(self, inter: disnake.GuildCommandInteraction):
         """Post the Dread Barrage schedule"""
         if self.bot.data.save['valiant']['state'] == True:
             try:
                 current_time = self.bot.util.JST()
                 em = self.bot.util.formatElement(self.bot.data.save['valiant']['element'])
-                title = "{} **Dread Barrage {}** {} **{:%a. %m/%d %H:%M} TZ**\n".format(self.bot.emote.get('crew'), self.bot.data.save['valiant']['id'], em, current_time + timedelta(seconds=3600*(gmt-9)))
-                if gmt == 9: title = title.replace('TZ', 'JST')
-                elif gmt == 0: title = title.replace('TZ', 'GMT')
-                else: title = title.replace('TZ', 'GMT{0:+}'.format(gmt))
+                title = "{} **Dread Barrage {}** {} **{}**\n".format(self.bot.emote.get('crew'), self.bot.data.save['valiant']['id'], em, self.bot.util.time(current_time, style='f', removejst=True))
                 description = ""
                 if current_time < self.bot.data.save['valiant']['dates']["End"]:
                     if current_time < self.bot.data.save['valiant']['dates']["Day 2"]:
-                        description += "▫️ Start: **{:%a. %m/%d %H:%M}**\n".format(self.bot.data.save['valiant']['dates']['Day 1'] + timedelta(seconds=3600*(gmt-9)))
+                        description += "▫️ Start: **{}**\n".format(self.bot.util.time(self.bot.data.save['valiant']['dates']['Day 1'], style='f', removejst=True))
                     if current_time < self.bot.data.save['valiant']['dates']["Day 4"]:
-                        description += "▫️ New Foes: **{:%a. %m/%d %H:%M}**\n".format(self.bot.data.save['valiant']['dates']['New Foes'] + timedelta(seconds=3600*(gmt-9)))
-                    description += "▫️ Last day: **{:%a. %m/%d %H:%M}**\n".format(self.bot.data.save['valiant']['dates']['Day 8'] + timedelta(seconds=3600*(gmt-9)))
+                        description += "▫️ New Foes: **{}**\n".format(self.bot.util.time(self.bot.data.save['valiant']['dates']['New Foes'], style='f', removejst=True))
+                    description += "▫️ Last day: **{}**\n".format(self.bot.util.time(self.bot.data.save['valiant']['dates']['Day 8'], style='f', removejst=True))
                 else:
                     await inter.response.send_message(embed=self.bot.util.embed(title="{} **Dread Barrage**".format(self.bot.emote.get('crew')), description="Not available", color=self.color))
                     with self.bot.data.lock:
