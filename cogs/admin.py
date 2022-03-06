@@ -215,7 +215,7 @@ class Admin(commands.Cog):
         if self.bot.ban.check(id, self.bot.ban.OWNER): msg += "Banned from having the bot in its own servers\n"
         if self.bot.ban.check(id, self.bot.ban.SPARK): msg += "Banned from appearing in `rollRanking`\n"
         if self.bot.ban.check(id, self.bot.ban.PROFILE): msg += "Banned from using `setProfile`\n"
-        if self.bot.ban.check(id, self.bot.ban.OWNER): msg += "Banned from using the bot\n"
+        if self.bot.ban.check(id, self.bot.ban.USE_BOT): msg += "Banned from using the bot\n"
         if msg == "": msg = "No Bans set for this user"
         await inter.response.send_message(embed=self.bot.util.embed(title="User {}".format(id), description=msg, color=self.color), ephemeral=True)
 

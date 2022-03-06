@@ -688,13 +688,13 @@ class GachaSimulator():
         rps = ['rock', 'paper', 'scissor']
         ct = self.bot.util.JST()
         # customization settings
-        fixedS = ct.replace(year=2022, month=1, day=3, hour=19, minute=0, second=0, microsecond=0) # beginning of fixed rolls
-        fixedE = fixedS.replace(day=5, hour=0) # end of fixed rolls
+        fixedS = ct.replace(year=2022, month=3, day=22, hour=19, minute=0, second=0, microsecond=0) # beginning of fixed rolls
+        fixedE = fixedS.replace(day=24, hour=0) # end of fixed rolls
         forced3pc = True # force 3%
-        forcedRollCount = 200 # number of rolls during fixed rolls
+        forcedRollCount = 100 # number of rolls during fixed rolls
         forcedSuperMukku = True
-        enable200 = True # add 200 on wheel
-        enableJanken = True
+        enable200 = False # add 200 on wheel
+        enableJanken = False
         maxJanken = 1 # number of RPS
         doubleMukku = False
         # settings end
