@@ -431,7 +431,7 @@ class GranblueFantasy(commands.Cog):
     @gbf.sub_command()
     async def info(self, inter: disnake.GuildCommandInteraction):
         """Post various Granblue Fantasy informations"""
-        current_time = self.bot.util.JST()
+        current_time = self.bot.util.JST(delay=False)
         description = "{} Current Time is **{}**".format(self.bot.emote.get('clock'), self.bot.util.time(style='dT'))
         description += "\n{} Japan Time is **{}**".format(self.bot.emote.get('clock'), self.bot.util.time(current_time, style='dt'))
 

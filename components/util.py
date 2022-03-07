@@ -117,12 +117,17 @@ class Util():
     """JST()
     Return the current time, JST timezone
 
+    Parameters
+    --------
+    delay: Boolean, shift the clock back by 30 seconds if True (to ensure proper synchro for some functions)
+
     Returns
     --------
     datetime: Current time
     """
-    def JST(self):
-        return datetime.utcnow() + timedelta(seconds=32400) - timedelta(seconds=30)
+    def JST(self, delay=True):
+        if delay: return datetime.utcnow() + timedelta(seconds=32400) - timedelta(seconds=30)
+        else: return datetime.utcnow() + timedelta(seconds=32400)
 
     """time()
     Format a timestamp or datetime object
