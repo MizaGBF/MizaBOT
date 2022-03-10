@@ -407,7 +407,7 @@ class GachaSimulator():
         self.data, self.rateups, self.ssrrate, self.complete = gachadata # unpack the data
         self.scamdata = scamdata # no need to unpack the scam gacha one (assume it might be None too)
         self.color = color
-        self.mode = {'single':0, 'srssr':1, 'memerollA':2, 'memerollB':3, 'scam':4, 'ten':10, 'gachapin':11, 'mukku':12, 'supermukku':13}[simtype] # kept the old modes, might change it later?
+        self.mode = {'single':0, 'srssr':1, 'memerollA':2, 'memerollB':3, 'ten':10, 'gachapin':11, 'mukku':12, 'supermukku':13, 'scam':14}[simtype] # kept the old modes, might change it later?
         self.result = {} # output of generate()
         self.thumbnail = None # thumbnail of self.best
         self.best = [-1, ""] # best roll
@@ -561,7 +561,7 @@ class GachaSimulator():
                 loot = r
                 break
         # pick the random ssr
-        choice = random.choice(data[2]['list'][list(data[2]['list'].keys())[0]])
+        choice = self.bot.gacha.formatGachaItem(random.choice(data[2]['list'][list(data[2]['list'].keys())[0]]))
         self.best = [99, choice] # force ssr in self.best
         return choice, loot[1]
 
@@ -579,7 +579,7 @@ class GachaSimulator():
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="An error occured", color=self.color))
             await self.bot.sendError("gachasim", self.exception)
             return
-        elif self.mode == 4 and (self.scamdata is None or not self.scamdata[3]): # scam error check
+        elif self.mode == 14 and (self.scamdata is None or not self.scamdata[3]): # scam error check
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="No Star Premium Gachas available at selected index", color=self.color))
             return
         # set embed footer
@@ -625,7 +625,7 @@ class GachaSimulator():
                     await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer, thumbnail=(self.thumbnail if (i == 10 and self.scamdata is None) else None)), view=None)
                 if self.scamdata is not None:
                     msg = '\n'.join(msg.split('\n')[:-2])
-                    msg += "\n{}**{}**\n{}**{}**".format(self.bot.emote.get('SSR'), self.bot.gacha.formatGachaItem(sroll[0]), self.bot.emote.get('red'), sroll[1])
+                    msg += "\n{}**{}**\n{}**{}**".format(self.bot.emote.get('SSR'), sroll[0], self.bot.emote.get('red'), sroll[1])
                     await asyncio.sleep(1)
                     await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer, thumbnail=self.thumbnail), view=None)
             case 2: # meme roll display
