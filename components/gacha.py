@@ -58,10 +58,10 @@ class Gacha():
         -list, the item list
         -rateup, the rate up items
     """
-    def process(self, id, sub_id):
+    def process(self, gtype, id, sub_id):
         try:
             # draw rate
-            data = self.bot.gbf.request("http://game.granbluefantasy.jp/gacha/provision_ratio/{}/{}?PARAMS".format(id, sub_id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
+            data = self.bot.gbf.request("http://game.granbluefantasy.jp/gacha/provision_ratio/{}/{}/{}?PARAMS".format(gtype, id, sub_id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
             
             gratio = data['ratio'][0]['ratio']
             
@@ -88,7 +88,8 @@ class Gacha():
                             if 'character_name' in item and item['character_name'] is not None: grateup[appear['category_name']][item['drop_rate']].append("{}{}{}".format(item['attribute'], kind, item['character_name']))
                             else: grateup[appear['category_name']][item['drop_rate']].append("{}{}{}".format(item['attribute'], kind, item['name']))
             return gratio, glist, grateup
-        except:
+        except Exception as e:
+            print(e)
             return None, None, None
 
     """update()
@@ -129,20 +130,24 @@ class Gacha():
             id = data['legend']['lineup'][index]['id']
 
             # draw rate
-            gacha_data['ratio'], gacha_data['list'], gacha_data['rateup'] = self.process(id, 1)
+            gacha_data['ratio'], gacha_data['list'], gacha_data['rateup'] = self.process('legend', id, 1)
             if gacha_data['ratio'] is None:
                 raise Exception()
 
             # scam gachas
             for sid in scam_ids:
-                gratio, glist, grateup = self.process(sid, 3)
+                gratio, glist, grateup = self.process('legend', sid, 3)
                 if gratio is not None:
                     if 'scam' not in gacha_data:
                         gacha_data['scam'] = []
                     gacha_data['scam'].append({'ratio':gratio, 'list':glist, 'rateup':grateup})
 
             # classic gacha
-            # placeholder
+            data = self.bot.gbf.request("http://game.granbluefantasy.jp/rest/gacha/classic/toppage_data?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
+            if data is not None and 'appearance_gacha_id' in data:
+                gratio, glist, grateup = self.process('classic', data['appearance_gacha_id'], 1)
+                if gratio is not None:
+                    gacha_data['classic'] = {'ratio':gratio, 'list':glist, 'rateup':grateup}
 
             # add image
             gachas = ['{}/tips/description_gacha.jpg'.format(random_key), '{}/tips/description_gacha_{}.jpg'.format(random_key, logo), '{}/tips/description_{}.jpg'.format(random_key, header_images[0]), 'header/{}.png'.format(header_images[0])]
@@ -834,5 +839,5 @@ class GachaSimulator():
                         tmp = ""
                     msg += ":confetti_ball: **Super Mukku** ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, self.result['detail'][2], self.bot.emote.get('SSR'), self.result['detail'][1], self.bot.emote.get('SR'), self.result['detail'][0], self.bot.emote.get('R'), tmp, rate)
                     running = False
-            self.updateThumbnail()
+            await self.updateThumbnail()
             await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} spun the Roulette".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer, thumbnail=self.thumbnail))
