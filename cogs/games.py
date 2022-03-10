@@ -80,7 +80,7 @@ class Games(commands.Cog):
     async def scam_(self, inter: disnake.GuildCommandInteraction, legfest : int = commands.Param(description='0 to force 3%, 1 to force 6%, leave blank for default', default=-1, ge=-1, le=1), scam_index : int = commands.Param(description='Which Scam gacha to use (Default: 1 for the first one)', default=1, ge=1)):
         """Simulate ten draws and the Scam Gacha"""
         await inter.response.defer()
-        sim = self.bot.gacha.simulate("scam", "scam", self.color)
+        sim = self.bot.gacha.simulate("scam", "scam", self.color, scamindex=scam_index)
         sim.generate(10, legfest)
         await sim.output(inter, 1, ("{} is getting Scammed...", "{} got Scammed"))
         del sim

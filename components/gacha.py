@@ -385,7 +385,7 @@ class Gacha():
         match gachatype: # retrieve the data (no need to copy)
             case 'scam':
                 gachadata = self.retrieve()
-                scamdata = self.retrieve(scam=scamindex)
+                scamdata = self.retrieve(scam=scamindex-1)
             case 'classic': gachadata = self.retrieve(classic=True)
             case _: gachadata = self.retrieve()
         gsim = GachaSimulator(self.bot, gachadata, simtype, scamdata, color) # create a simulator instance
@@ -551,7 +551,7 @@ class GachaSimulator():
         - loot: string, item name
     """
     def scamRoll(self):
-        data, rateups, ssrrate, extended = self.scamdata # no error check, do it before
+        data, rateups, ssrrate, complete, index = self.scamdata # no error check, do it before
         roll = random.randint(1, self.bot.gacha.scam_rate) # roll a dice for the item
         loot = None
         n = 0
@@ -588,7 +588,7 @@ class GachaSimulator():
             case 3:
                 footer += " ▫️ until rate up"
             case 4:
-                footer += " ▫️ Selected Scam #{}".format(self.scamdata[4])
+                footer += " ▫️ Selected Scam #{}".format(self.scamdata[4]+1)
             case _:
                 pass
         # get scam roll
