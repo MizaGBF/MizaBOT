@@ -382,13 +382,16 @@ class Gacha():
     """
     def simulate(self, simtype:str, gachatype:str, color, scamindex:int=1):
         scamdata = None
+        isclassic = False
         match gachatype: # retrieve the data (no need to copy)
             case 'scam':
                 gachadata = self.retrieve()
                 scamdata = self.retrieve(scam=scamindex-1)
-            case 'classic': gachadata = self.retrieve(classic=True)
+            case 'classic':
+                gachadata = self.retrieve(classic=True)
+                isclassic = True
             case _: gachadata = self.retrieve()
-        gsim = GachaSimulator(self.bot, gachadata, simtype, scamdata, color) # create a simulator instance
+        gsim = GachaSimulator(self.bot, gachadata, simtype, scamdata, isclassic, color) # create a simulator instance
         return gsim
 
 class GachaSimulator():
@@ -400,12 +403,14 @@ class GachaSimulator():
     gachadata: output from Gacha.retrieve()
     simtype: value from Gacha.simulate() parameter simtype
     scamdata: Optional, output from Gacha.retrieve(scam=X). None to ignore.
+    isclassic: Boolean, indicate if classic gacha is used
     color: Embed color
     """
-    def __init__(self, bot, gachadata:tuple, simtype:str, scamdata, color):
+    def __init__(self, bot, gachadata:tuple, simtype:str, scamdata, isclassic, color):
         self.bot = bot
         self.data, self.rateups, self.ssrrate, self.complete = gachadata # unpack the data
         self.scamdata = scamdata # no need to unpack the scam gacha one (assume it might be None too)
+        self.isclassic = isclassic
         self.color = color
         self.mode = {'single':0, 'srssr':1, 'memerollA':2, 'memerollB':3, 'ten':10, 'gachapin':11, 'mukku':12, 'supermukku':13, 'scam':14}[simtype] # kept the old modes, might change it later?
         self.result = {} # output of generate()
@@ -471,6 +476,8 @@ class GachaSimulator():
             result = {'list':[], 'detail':[0, 0, 0], 'rate':ssrrate}
             mods, proba = self.check_rate(ssrrate)
             tenrollsr = False # flag for guaranted SR in ten rolls 
+            if self.mode == 3 and len(self.rateups) == 0:
+                self.mode = 2 # revert memerollB to A if no rate ups
             # rolling loop
             for i in range(0, count):
                 d = random.randint(1, int(sum(proba) * 1000)) / 1000 # our roll
@@ -483,6 +490,8 @@ class GachaSimulator():
                 elif (not sr_mode and d <= proba[1] + proba[2]) or sr_mode: # SR CASE
                     r = 1
                     d -= proba[2]
+                    while d >= proba[1]: # for forced sr
+                        d -= proba[1]
                     d /= mods[1]
                     tenrollsr = True
                 else: # R CASE
@@ -591,6 +600,8 @@ class GachaSimulator():
                 footer += " ▫️ Selected Scam #{}".format(self.scamdata[4]+1)
             case _:
                 pass
+        if self.isclassic:
+            footer += " ▫️ Classic"
         # get scam roll
         if self.scamdata is not None:
             sroll = self.scamRoll()
@@ -641,7 +652,7 @@ class GachaSimulator():
                         text = ""
                     text += "{} {}\n".format(self.bot.emote.get({0:'R', 1:'SR', 2:'SSR'}.get(v[0])), v[1])
                     counter[v[0]] += 1
-                title = titles[1].format(inter.author.display_name, len(self.result['list'])) if (len(self.result['list']) < 300) else "{} sparked".format(inter.author.display_name)
+                title = (titles[1].format(inter.author.display_name, len(self.result['list'])) if (len(self.result['list']) < 300) else "{} sparked".format(inter.author.display_name))
                 await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':inter.author.display_avatar}, description="{} {} ▫️ {} {} ▫️ {} {}\n{}".format(counter[2], self.bot.emote.get('SSR'), counter[1], self.bot.emote.get('SR'), counter[0], self.bot.emote.get('R'), text), color=self.color, footer=footer, thumbnail=self.thumbnail), view=None)
             case 3: # spark display
                 count = len(self.result['list'])

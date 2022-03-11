@@ -142,7 +142,7 @@ class Games(commands.Cog):
         await inter.response.defer()
         sim = self.bot.gacha.simulate("memerollB" if rateup != "" else "memerollA", ('classic' if classic == 1 else ''), self.color)
         sim.generate(300, legfest)
-        await sim.output(inter, 2, (("{} is memerolling until a rate up SSR..." if rateup != "" else "{} is memerolling..."), ("{} memerolled {} times until a rate up SSR" if rateup != "" else "{} memerolled {} times")))
+        await sim.output(inter, 2, ("{} is memerolling...", "{} memerolled {} times"))
         del sim
         await self.bot.util.clean(inter, 40)
 
