@@ -134,6 +134,15 @@ class Sparking(commands.Cog):
         await self._seeroll(inter, member)
         await self.bot.util.clean(inter, 30)
 
+    @commands.user_command(default_permission=True, name="GBF Spark")
+    @commands.cooldown(1, 30, commands.BucketType.user)
+    @commands.max_concurrency(4, commands.BucketType.default)
+    async def seespark(self, inter: disnake.UserCommandInteraction, member: disnake.Member):
+        """Post the user roll count"""
+        await inter.response.defer()
+        await self._seeroll(inter, member)
+        await self.bot.util.clean(inter, 30)
+
     @spark.sub_command()
     async def zero(self, inter: disnake.GuildCommandInteraction, day_difference: int = commands.Param(description="Add a number of days to today date", ge=0, default=0)):
         """Post a spark estimation based on today date"""
