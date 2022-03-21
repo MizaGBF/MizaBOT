@@ -618,7 +618,11 @@ class Util():
             if "(summon)" not in sps.lower(): # search summon names first
                 data = self.search_wiki_for_id(sps + ' (Summon)')
                 if data is not None: return data
-            data = self.bot.gbf.request("https://gbf.wiki/" + self.wiki_fixCase(sps), no_base_headers=True).decode('utf-8')
+            f = self.wiki_fixCase(sps)
+            match f:
+                case "Tiamat_(Summon)": f = "Tiamat_(Summer)"
+                case _: pass
+            data = self.bot.gbf.request("https://gbf.wiki/" + f, no_base_headers=True).decode('utf-8')
             group = self.search_re[1].findall(data)
             if len(group) > 0: return group[0]
             group = self.search_re[0].findall(data)

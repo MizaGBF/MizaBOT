@@ -708,7 +708,7 @@ class GachaSimulator():
         fixedE = fixedS.replace(day=24, hour=0) # end of fixed rolls
         forced3pc = True # force 3%
         forcedRollCount = 100 # number of rolls during fixed rolls
-        forcedSuperMukku = True
+        forcedSuperMukku = False
         enable200 = False # add 200 on wheel
         enableJanken = False
         maxJanken = 1 # number of RPS
@@ -725,26 +725,27 @@ class GachaSimulator():
             d = 0
             state = 1
         else:
-            d = random.randint(1, 36000)
-            if enable200 and d < 300:
-                msg = "{} {} :confetti_ball: :tada: **2 0 0 R O L L S** :tada: :confetti_ball: {} {}\n".format(self.bot.emote.get('crystal'), self.bot.emote.get('crystal'), self.bot.emote.get('crystal'), self.bot.emote.get('crystal'))
-                roll = 200
-            elif d < 3000:
+            d = random.randint(1, 30000)
+            if d < 600:
+                if enabled200:
+                    msg = "{} {} :confetti_ball: :tada: **2 0 0 R O L L S** :tada: :confetti_ball: {} {}\n".format(self.bot.emote.get('crystal'), self.bot.emote.get('crystal'), self.bot.emote.get('crystal'), self.bot.emote.get('crystal'))
+                    roll = 200
+                else:
+                    msg = ":confetti_ball: :tada: **100** rolls!! :tada: :confetti_ball:\n"
+                    roll = 100
+            elif d < 3600:
                 msg = "**Gachapin Frenzy** :four_leaf_clover:\n"
                 roll = -1
                 state = 2
-            elif d < 4500:
-                msg = ":confetti_ball: :tada: **100** rolls!! :tada: :confetti_ball:\n"
-                roll = 100
-            elif d < 7700:
-                msg = "**30** rolls! :clap:\n"
-                roll = 30
-            elif d < 19500:
+            elif d < 14100:
+                msg = "**10** rolls :pensive:\n"
+                roll = 10
+            elif d < 23100:
                 msg = "**20** rolls :open_mouth:\n"
                 roll = 20
             else:
-                msg = "**10** rolls :pensive:\n"
-                roll = 10
+                msg = "**30** rolls! :clap:\n"
+                roll = 30
         await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"{} is spinning the Roulette".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer))
         if not enableJanken and state < 2: state = 1
         running = True
