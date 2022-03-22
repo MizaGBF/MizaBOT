@@ -108,14 +108,14 @@ class DreadBarrage(commands.Cog):
             if tok < 1 or tok > 9999999999: raise Exception()
             b = 0
             t = tok
-            if tok >= 1600:
-                tok -= 1600
+            if tok >= 1800:
+                tok -= 1800
                 b += 1
             while b < 4 and tok >= 2400:
                 tok -= 2400
                 b += 1
-            while b < 20 and tok >= 2000:
-                tok -= 2000
+            while b < 20 and tok >= 2002:
+                tok -= 2002
                 b += 1
             while b < 40 and tok >= 10000:
                 tok -= 10000
@@ -139,9 +139,9 @@ class DreadBarrage(commands.Cog):
             t = 0
             if box_done >= box: raise Exception("Your current box count `{}` is higher or equal to your target `{}`".format(box_done, box))
             for b in range(box_done+1, box+1):
-                if b == 1: t+= 1600
+                if b == 1: t+= 1800
                 elif b <= 4: t+= 2400
-                elif b <= 20: t+= 2000
+                elif b <= 20: t+= 2002
                 elif b <= 40: t+= 10000
                 else: t+= 15000
             s1 = math.ceil(t / 52.0)
