@@ -42,10 +42,7 @@ class DreadBarrage(commands.Cog):
                 for i in range(1, len(it)):
                     if current_time > self.bot.data.save['valiant']['dates'][it[i]]:
                         msg = "{} Barrage {} is on going (Time left: **{}**)".format(self.bot.emote.get('mark_a'), it[i], self.bot.util.delta2str(self.bot.data.save['valiant']['dates'][it[i-1]] - current_time))
-                        if current_time < self.bot.data.save['valiant']['dates']['New Foes'] and current_time >= self.bot.data.save['valiant']['dates']['Day 1']:
-                            msg += "\n{} New foes available in **{}**".format(self.bot.emote.get('mark'), self.bot.util.delta2str(self.bot.data.save['valiant']['dates']['New Foes'] - current_time, 2))
-                        else:
-                            msg += "\n{} Barrage is ending in **{}**".format(self.bot.emote.get('time'), self.bot.util.delta2str(self.bot.data.save['valiant']['dates'][it[0]] - current_time, 2))
+                        msg += "\n{} Barrage is ending in **{}**".format(self.bot.emote.get('time'), self.bot.util.delta2str(self.bot.data.save['valiant']['dates'][it[0]] - current_time, 2))
                         return msg
             else:
                 return ""
@@ -71,8 +68,6 @@ class DreadBarrage(commands.Cog):
                 if current_time < self.bot.data.save['valiant']['dates']["End"]:
                     if current_time < self.bot.data.save['valiant']['dates']["Day 2"]:
                         description += "▫️ Start: **{}**\n".format(self.bot.util.time(self.bot.data.save['valiant']['dates']['Day 1'], style='f', removejst=True))
-                    if current_time < self.bot.data.save['valiant']['dates']["Day 4"]:
-                        description += "▫️ New Foes: **{}**\n".format(self.bot.util.time(self.bot.data.save['valiant']['dates']['New Foes'], style='f', removejst=True))
                     description += "▫️ Last day: **{}**\n".format(self.bot.util.time(self.bot.data.save['valiant']['dates']['Day 8'], style='f', removejst=True))
                 else:
                     await inter.response.send_message(embed=self.bot.util.embed(title="{} **Dread Barrage**".format(self.bot.emote.get('crew')), description="Not available", color=self.color))
