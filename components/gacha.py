@@ -298,13 +298,13 @@ class Gacha():
     --------
     bool: True if 6%, False if 3%
     """
-    def isLegfest(self, selected):
+    def isLegfest(self, ssrrate, selected):
         match selected:
             case 0:
                 return False
             case -1:
                 try:
-                    return (self.bot.data.save['gbfdata']['gacha']['ratio'][0] == '6')
+                    return (ssrrate == 6)
                 except:
                     return False
             case _:
@@ -470,7 +470,7 @@ class GachaSimulator():
     def generate(self, count:int, legfest:int=-1):
         try:
             # prep work
-            legfest = self.bot.gacha.isLegfest(legfest)
+            legfest = self.bot.gacha.isLegfest(self.ssrrate, legfest)
             ssrrate = 15 if self.mode == 13 else (9 if self.mode == 12 else (6 if legfest else 3))
             self.result = {} # empty output, used for error check
             result = {'list':[], 'detail':[0, 0, 0], 'rate':ssrrate}
@@ -704,11 +704,11 @@ class GachaSimulator():
         rps = ['rock', 'paper', 'scissor']
         ct = self.bot.util.JST()
         # customization settings
-        fixedS = ct.replace(year=2022, month=3, day=22, hour=19, minute=0, second=0, microsecond=0) # beginning of fixed rolls
-        fixedE = fixedS.replace(day=24, hour=0) # end of fixed rolls
+        fixedS = ct.replace(year=2022, month=3, day=29, hour=19, minute=0, second=0, microsecond=0) # beginning of fixed rolls
+        fixedE = fixedS.replace(day=31, hour=0) # end of fixed rolls
         forced3pc = True # force 3%
         forcedRollCount = 100 # number of rolls during fixed rolls
-        forcedSuperMukku = False
+        forcedSuperMukku = True
         enable200 = False # add 200 on wheel
         enableJanken = False
         maxJanken = 1 # number of RPS
