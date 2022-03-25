@@ -133,10 +133,12 @@ class DreadBarrage(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid token number", color=self.color), ephemeral=True)
 
     @db.sub_command()
-    async def box(self, inter: disnake.GuildCommandInteraction, box : int = commands.Param(description="Number of box to clear", ge=1, le=1000), box_done : int = commands.Param(description="Your current box progress, default 0 (Will be ignored if equal or higher than target)", ge=0, default=0)):
+    async def box(self, inter: disnake.GuildCommandInteraction, box : int = commands.Param(description="Number of box to clear", ge=1, le=1000), box_done : int = commands.Param(description="Your current box progress, default 0 (Will be ignored if equal or higher than target)", ge=0, default=0), with_token : str = commands.Param(description="Value to convert (support B, M and K)", default="0")):
         """Convert Dread Barrage box values"""
         try:
             t = 0
+            try: with_token = max(0, self.bot.util.strToInt(with_token))
+            except: with_token = 0
             if box_done >= box: raise Exception("Your current box count `{}` is higher or equal to your target `{}`".format(box_done, box))
             for b in range(box_done+1, box+1):
                 if b == 1: t+= 1800
@@ -144,11 +146,12 @@ class DreadBarrage(commands.Cog):
                 elif b <= 20: t+= 2002
                 elif b <= 40: t+= 10000
                 else: t+= 15000
+            t = max(0, t-with_token)
             s1 = math.ceil(t / 52.0)
             s2 = math.ceil(t / 70.0)
             s3 = math.ceil(t / 97.0)
             s4 = math.ceil(t / 146.0)
             s5 = math.ceil(t / 243.0)
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Dread Barrage Token Calculator ▫️ Box {}".format(self.bot.emote.get('crew'), box), description="**{:,}** tokens needed{}\n\n**{:,}** \⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐\⭐ (**{:,}** pots)".format(t, ("" if box_done == 0 else " from box **{}**".format(box_done)), s1, math.ceil(s1*30/75), s2, math.ceil(s2*30/75), s3, math.ceil(s3*40/75), s4, math.ceil(s4*50/75), s5, math.ceil(s5*50/75)), color=self.color), ephemeral=True)
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Dread Barrage Token Calculator ▫️ Box {}".format(self.bot.emote.get('crew'), box), description="**{:,}** tokens needed{}{}\n\n**{:,}** \⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐ (**{:,}** pots)\n**{:,}** \⭐\⭐\⭐\⭐\⭐ (**{:,}** pots)".format(t, ("" if box_done == 0 else " from box **{}**".format(box_done)), ("" if with_token == 0 else " with **{:,}** tokens".format(with_token)), s1, math.ceil(s1*30/75), s2, math.ceil(s2*30/75), s3, math.ceil(s3*40/75), s4, math.ceil(s4*50/75), s5, math.ceil(s5*50/75)), color=self.color), ephemeral=True)
         except Exception as e:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
