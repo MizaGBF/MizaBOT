@@ -133,12 +133,12 @@ class DreadBarrage(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid token number", color=self.color), ephemeral=True)
 
     @db.sub_command()
-    async def box(self, inter: disnake.GuildCommandInteraction, box : int = commands.Param(description="Number of box to clear", ge=1, le=1000), box_done : int = commands.Param(description="Your current box progress, default 0 (Will be ignored if equal or higher than target)", ge=0, default=0), with_token : str = commands.Param(description="Value to convert (support B, M and K)", default="0")):
+    async def box(self, inter: disnake.GuildCommandInteraction, box : int = commands.Param(description="Number of box to clear", ge=1, le=1000), box_done : int = commands.Param(description="Your current box progress, default 0 (Will be ignored if equal or higher than target)", ge=0, default=0), with_token : str = commands.Param(description="Your current token amount (support B, M and K)", default="0")):
         """Convert Dread Barrage box values"""
         try:
             t = 0
             try: with_token = max(0, self.bot.util.strToInt(with_token))
-            except: with_token = 0
+            except: raise Exception("Your current token amount `{}` isn't a valid number".format(with_token, box))
             if box_done >= box: raise Exception("Your current box count `{}` is higher or equal to your target `{}`".format(box_done, box))
             for b in range(box_done+1, box+1):
                 if b == 1: t+= 1800

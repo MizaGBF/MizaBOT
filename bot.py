@@ -37,7 +37,8 @@ class MizaBot(commands.Bot):
             "Crew data will now track top speed (starting GW61)",
             "`/mod announcement togglechannel` added to receive game or bot news",
             "Reworked the Gacha Simulator",
-            "`/gw time` and `/db time` now show local time"
+            "`/gw time` and `/db time` now show local time",
+            "You can now input your current amount of tokens in `/gw box` and `/db box`"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
