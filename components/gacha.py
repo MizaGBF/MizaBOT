@@ -673,6 +673,7 @@ class GachaSimulator():
                         msg += " "
                 if self.mode == 11: amsg = "Gachapin stopped after **{}** rolls\n".format(len(self.result['list']))
                 elif self.mode == 12: amsg = "Mukku stopped after **{}** rolls\n".format(len(self.result['list']))
+                elif self.mode == 13: amsg = "Super Mukku stopped after **{}** rolls\n".format(len(self.result['list']))
                 else: amsg = ""
                 msg = "{}{:} {:} ▫️ {:} {:} ▫️ {:} {:}\n{:}\n**{:.2f}%** SSR rate".format(amsg, self.result['detail'][2], self.bot.emote.get('SSR'), self.result['detail'][1], self.bot.emote.get('SR'), self.result['detail'][0], self.bot.emote.get('R'), msg, rate)
                 await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name, count), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer, thumbnail=self.thumbnail), view=None)

@@ -564,21 +564,9 @@ class Util():
         else:
             fixed = ""
             up = False
-            match term.lower():
-                case "and": # if it's just 'and', we don't don't fix anything and return a lowercase 'and'
-                    return "and"
-                case "of":
-                    return "of"
-                case "de":
-                    return "de"
-                case "the":
-                    return "the"
-                case "(sr)":
-                    return "(SR)"
-                case "(ssr)":
-                    return "(SSR)"
-                case "(r)":
-                    return "(R)"
+            special = {"and":"and", "of":"of", "de":"de", "for":"for", "the":"the", "(sr)":"(SR)", "(ssr)":"(SSR)", "(r)":"(R)"} # case where we don't don't fix anything and return it
+            if term.lower() in special:
+                return special[term.lower()]
             for c in term: # for each character
                 if c.isalpha(): # if letter
                     if c.isupper(): # is uppercase
