@@ -792,6 +792,8 @@ class GachaSimulator():
                     else:
                         tmp = ""
                     footer = "{}% SSR rate".format(self.result['rate'])
+                    if self.isclassic:
+                        footer += " ▫️ Classic"
                     msg += "{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(self.result['detail'][2], self.bot.emote.get('SSR'), self.result['detail'][1], self.bot.emote.get('SR'), self.result['detail'][0], self.bot.emote.get('R'), tmp, rate)
                     if superFlag: state = 4
                     else: running = False
@@ -810,6 +812,8 @@ class GachaSimulator():
                     else:
                         tmp = ""
                     footer = "{}% SSR rate".format(self.result['rate'])
+                    if self.isclassic:
+                        footer += " ▫️ Classic"
                     msg += "Gachapin ▫️ **{}** rolls\n{:} {:} ▫️ {:} {:} ▫️ {:} {:}{:}\n**{:.2f}%** SSR rate\n\n".format(count, self.result['detail'][2], self.bot.emote.get('SSR'), self.result['detail'][1], self.bot.emote.get('SR'), self.result['detail'][0], self.bot.emote.get('R'), tmp, rate)
                     if count == 10 and random.randint(1, 100) < 99: state = 3
                     elif count == 20 and random.randint(1, 100) < 60: state = 3
