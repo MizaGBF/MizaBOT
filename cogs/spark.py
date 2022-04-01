@@ -40,12 +40,11 @@ class Sparking(commands.Cog):
             # get the roll count
             if id in self.bot.data.save['spark']:
                 s = self.bot.data.save['spark'][id]
-                if s[0] < 0 or s[1] < 0 or s[2] < 0:
+                if s[0] < 0 or s[1] < 0 or s[2] < 0 or s[3] < 0:
                     raise Exception('Negative numbers')
-                r = (s[0] / 300) + s[1] + s[2] * 10
+                r = (s[0] / 300) + s[1] + s[2] * 10 + s[3]
                 fr = math.floor(r)
-                if len(s) > 3: timestamp = s[3]
-                else: timestamp = None
+                timestamp = s[4]
             else:
                 r = 0
                 fr = 0
@@ -60,27 +59,25 @@ class Sparking(commands.Cog):
             if s is None:
                 await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.display_avatar}, description="Update your rolls with the `/setroll` command", footer="Next spark between {} and {} from 0 rolls".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), color=self.color))
             else:
-                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.display_avatar}, description="**{} {} {} {} {} {}**\n*Expecting {} to {} rolls in {}*".format(self.bot.emote.get("crystal"), s[0], self.bot.emote.get("singledraw"), s[1], self.bot.emote.get("tendraw"), s[2], expected[0], expected[1], now.strftime("%B")), footer="Next spark between {} and {}".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), timestamp=timestamp, color=self.color))
+                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.display_avatar}, description="**{} {} {} {} {} {} {}**\n*Expecting {} to {} rolls in {}*".format(self.bot.emote.get("crystal"), s[0], self.bot.emote.get("singledraw"), s[1], self.bot.emote.get("tendraw"), s[2], ("" if s[3] == 0 else "{} {}".format(self.bot.emote.get("shrimp"), s[3])),expected[0], expected[1], now.strftime("%B")), footer="Next spark between {} and {}".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), timestamp=timestamp, color=self.color))
         except Exception as e:
             await self.bot.sendError('seeRoll', e)
             await inter.edit_original_message(embed=self.bot.util.embed(title="Critical Error", description="I warned my owner", color=self.color, footer=str(e)))
 
     @spark.sub_command()
-    async def set(self, inter: disnake.GuildCommandInteraction, crystal : int = commands.Param(description="Your amount of Crystals", ge=0, le=900000, default=0), single : int = commands.Param(description="Your amount of Single Draw Tickets", ge=0, le=1000, default=0), ten : int = commands.Param(description="Your amount of Ten Draw Tickets", ge=0, le=100, default=0)):
+    async def set(self, inter: disnake.GuildCommandInteraction, crystal : int = commands.Param(description="Your amount of Crystals", ge=0, le=700000, default=0), single : int = commands.Param(description="Your amount of Single Draw Tickets", ge=0, le=1000, default=0), ten : int = commands.Param(description="Your amount of Ten Draw Tickets", ge=0, le=100, default=0), shrimp : int = commands.Param(description="Your amount of Premium Friday Shrimps", ge=0, le=500, default=0)):
         """Set your roll count"""
         id = str(inter.author.id)
         try:
             await inter.response.defer(ephemeral=True)
-            if crystal < 0 or single < 0 or ten < 0:
+            if crystal < 0 or single < 0 or ten < 0 or shrimp < 0:
                 raise Exception('Negative numbers')
-            if crystal > 500000 or single > 1000 or ten > 100:
-                raise Exception('Big numbers')
             with self.bot.data.lock:
                 if crystal + single + ten == 0: 
                     if id in self.bot.data.save['spark']:
                         self.bot.data.save['spark'].pop(id)
                 else:
-                    self.bot.data.save['spark'][id] = [crystal, single, ten, datetime.utcnow()]
+                    self.bot.data.save['spark'][id] = [crystal, single, ten, shrimp, datetime.utcnow()]
                 self.bot.data.pending = True
             await self._seeroll(inter, inter.author)
         except:
@@ -176,9 +173,9 @@ class Sparking(commands.Cog):
                 continue
             m = await guild.get_or_fetch_member(int(id))
             if m is not None:
-                if s[0] < 0 or s[1] < 0 or s[2] < 0:
+                if s[0] < 0 or s[1] < 0 or s[2] < 0 or s[3] < 0:
                     continue
-                r = (s[0] / 300) + s[1] + s[2] * 10
+                r = (s[0] / 300) + s[1] + s[2] * 10 + s[3]
                 if r > 1800:
                     continue
                 ranking[id] = r

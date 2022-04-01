@@ -19,7 +19,7 @@ class Data():
         self.bot.drive = None
         self.config = {}
         self.save = {}
-        self.saveversion = 4
+        self.saveversion = 5
         self.pending = False
         self.autosaving = False
         self.lock = threading.Lock()
@@ -86,6 +86,15 @@ class Data():
                         data.pop('guilds', None)
                     if ver <= 3:
                         data['guilds'] = None
+                    if ver <= 4: # spark system update
+                        keys = list(data['spark'].keys())
+                        c = datetime.utcnow()
+                        for id in keys:
+                            if len(data['spark'][id]) == 3:
+                                data['spark'][id].append(0) # 0 shrimp
+                                data['spark'][id].append(c) # datetime
+                            elif len(data['spark'][id]) == 4:
+                                data['spark'][id].insert(3, 0) # 0 shrimp, pos 3
                     data['version'] = self.saveversion
                 elif ver > self.saveversion:
                     raise Exception("Save file version higher than the expected version")
@@ -207,17 +216,12 @@ class Data():
         c = datetime.utcnow()
         keys = list(self.save['spark'].keys())
         for id in keys:
-            if len(self.save['spark'][id]) == 3: # backward compatibility
+            d = c - self.save['spark'][id][4]
+            if d.days >= 30:
                 with self.lock:
-                    self.save['spark'][id].append(c)
+                    del self.save['spark'][id]
                     self.pending = True
-            else:
-                d = c - self.save['spark'][id][3]
-                if d.days >= 30:
-                    with self.lock:
-                        del self.save['spark'][id]
-                        self.pending = True
-                    count += 1
+                count += 1
         return count
 
     """clean_profile()

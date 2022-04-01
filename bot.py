@@ -38,7 +38,8 @@ class MizaBot(commands.Bot):
             "`/mod announcement togglechannel` added to receive game or bot news",
             "Reworked the Gacha Simulator",
             "`/gw time` and `/db time` now show local time",
-            "You can now input your current amount of tokens in `/gw box` and `/db box`"
+            "You can now input your current amount of tokens in `/gw box` and `/db box`",
+            "Added shrimp parameter to `/spark set`"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
