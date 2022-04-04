@@ -433,7 +433,7 @@ class GranblueFantasy(commands.Cog):
         """Post various Granblue Fantasy informations"""
         current_time = self.bot.util.JST(delay=False)
         description = "{} Current Time is **{}**".format(self.bot.emote.get('clock'), self.bot.util.time(style='dT'))
-        description += "\n{} Japan Time is **{}**".format(self.bot.emote.get('clock'), current_time.strptime("%H:%M"))
+        description += "\n{} Japan Time is **{}**".format(self.bot.emote.get('clock'), current_time.strftime("%H:%M"))
 
         if self.bot.data.save['gbfversion'] is not None:
             description += "\n{} Version is `{}` (`{}`)".format(self.bot.emote.get('cog'), self.bot.data.save['gbfversion'], self.bot.gbf.version2str(self.bot.data.save['gbfversion']))
@@ -618,7 +618,7 @@ class GranblueFantasy(commands.Cog):
             if raw != 0: msg += "`"
             else:
                 current_time = self.bot.util.JST()
-                msg += "{} Japan Time is **{}\n**".format(self.bot.emote.get('clock'), current_time.strptime("%H:%M"))
+                msg += "{} Japan Time is **{}\n**".format(self.bot.emote.get('clock'), current_time.strftime("%H:%M"))
                 if nx is not None and c < nx:
                     msg += "{} Next event approximately in **{}**\n".format(self.bot.emote.get('mark'), self.bot.util.delta2str(nx - c, 2))
                 try:
