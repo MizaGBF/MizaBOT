@@ -596,7 +596,7 @@ class GachaSimulator():
         match self.mode:
             case 3:
                 footer += " ▫️ until rate up"
-            case 4:
+            case 14:
                 footer += " ▫️ Selected Scam #{}".format(self.scamdata[4]+1)
             case _:
                 pass
