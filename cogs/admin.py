@@ -333,7 +333,7 @@ class Admin(commands.Cog):
     @_bot.sub_command()
     async def clearprofile(self, inter: disnake.GuildCommandInteraction, gbf_id : int = commands.Param(description="A valid GBF Profile ID", ge=0)):
         """Unlink a GBF id (Owner Only)"""
-        user_id = await self.bot.do(self.searchProfile, gbf_id)
+        user_id = await self.bot.do(self.bot.get_cog('GranblueFantasy').searchProfile, gbf_id)
         if user_id is None:
             await inter.response.send_message(embed=self.bot.util.embed(title="Clear Profile Error", description="ID not found", color=self.color), ephemeral=True)
         else:
