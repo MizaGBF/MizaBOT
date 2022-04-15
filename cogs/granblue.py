@@ -1052,11 +1052,12 @@ class GranblueFantasy(commands.Cog):
         layer.putalpha(layer_a)
         layer_a.close()
         layer.paste(buffers[-1], offset, buffers[-1])
-        img = Image.alpha_composite(img, layer)
+        res = Image.alpha_composite(img, layer)
+        img.close()
         layer.close()
         for buf in buffers: buf.close()
         del buffers
-        return img
+        return res
 
     """dlAndPasteImage()
     Download and image from an url and call pasteImage()
@@ -1305,8 +1306,7 @@ class GranblueFantasy(commands.Cog):
                 img.save(output, format="PNG")
                 img.close()
                 thumbnail = output.getvalue()
-        except Exception as xxe:
-            print(xxe)
+        except:
             thumbnail = None
             try: img.close()
             except: pass
