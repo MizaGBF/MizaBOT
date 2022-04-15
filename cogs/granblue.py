@@ -1046,7 +1046,7 @@ class GranblueFantasy(commands.Cog):
     def pasteImage(self, img, file, offset, resize=None): # paste an image onto another
         buffers = [Image.open(file)]
         buffers.append(buffers[-1].convert('RGBA'))
-        if resize is not None: buffers.append(buffers[-1].resize(resize, Image.LANCZOS))
+        if resize is not None: buffers.append(buffers[-1].resize(resize, Image.Resampling.LANCZOS))
         layer = Image.new('RGB', img.size, "black")
         layer_a = Image.new("L", img.size, "black")
         layer.putalpha(layer_a)
