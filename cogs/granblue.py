@@ -1043,13 +1043,20 @@ class GranblueFantasy(commands.Cog):
     offset: Tuple, coordinates
     resize: Tuple (optional), size of the file to paste
     """
-    def pasteImage(self, img, file, offset, resize=None): # paste and image onto another
+    def pasteImage(self, img, file, offset, resize=None): # paste an image onto another
         buffers = [Image.open(file)]
         buffers.append(buffers[-1].convert('RGBA'))
         if resize is not None: buffers.append(buffers[-1].resize(resize, Image.LANCZOS))
-        img.paste(buffers[-1], offset, buffers[-1])
+        layer = Image.new('RGB', img.size, "black")
+        layer_a = Image.new("L", img.size, "black")
+        layer.putalpha(layer_a)
+        layer_a.close()
+        layer.paste(buffers[-1], offset, buffers[-1])
+        img = Image.alpha_composite(img, layer)
+        layer.close()
         for buf in buffers: buf.close()
         del buffers
+        return img
 
     """dlAndPasteImage()
     Download and image from an url and call pasteImage()
@@ -1078,7 +1085,17 @@ class GranblueFantasy(commands.Cog):
         data = self.imgcache[url]
         self.imglock.release()            
         with BytesIO(data) as file_jpgdata:
-            self.pasteImage(img, file_jpgdata, offset, resize)
+            return self.pasteImage(img, file_jpgdata, offset, resize)
+
+    """text()
+    Draw text onto a Pillow Image object
+    
+    Parameters
+    ----------
+    img: Image to draw on
+    """
+    def text(self, img, *args, **kwargs):
+        ImageDraw.Draw(img, 'RGBA').text(*args, **kwargs)
 
     """processProfile()
     Process profile data into discord embed elements
@@ -1202,33 +1219,35 @@ class GranblueFantasy(commands.Cog):
             else: imgsize = (portrait_size[0]*6, portrait_size[1] + lvl_box_height + equip_size[1])
             # creating image
             img = Image.new('RGB', imgsize, "black")
-            d = ImageDraw.Draw(img, 'RGBA')
+            im_a = Image.new("L", imgsize, "black")
+            img.putalpha(im_a)
+            im_a.close()
             font = ImageFont.truetype("assets/font.ttf", 18)
 
             # MC
-            self.dlAndPasteImage(img, mc_url.replace("/talk/", "/quest/").replace(".png", ".jpg"), (0, 0), None)
-            self.pasteImage(img, "assets/chara_stat.png", (0, portrait_size[1]), (portrait_size[0], lvl_box_height))
-            d.text((3, portrait_size[1]+6), brank.replace(' ', ''), fill=(255, 255, 255), font=font)
+            img = self.dlAndPasteImage(img, mc_url.replace("/talk/", "/quest/").replace(".png", ".jpg"), (0, 0), None)
+            img = self.pasteImage(img, "assets/chara_stat.png", (0, portrait_size[1]), (portrait_size[0], lvl_box_height))
+            self.text(img, (3, portrait_size[1]+6), brank.replace(' ', ''), fill=(255, 255, 255), font=font)
 
             # mh and main summon
-            self.dlAndPasteImage(img, "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/1999999999.jpg", (0, portrait_size[1]+lvl_box_height), equip_size)
-            self.dlAndPasteImage(img, "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/2999999999.jpg", (equip_size[0], portrait_size[1]+lvl_box_height), equip_size)
+            img = self.dlAndPasteImage(img, "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/1999999999.jpg", (0, portrait_size[1]+lvl_box_height), equip_size)
+            img = self.dlAndPasteImage(img, "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/2999999999.jpg", (equip_size[0], portrait_size[1]+lvl_box_height), equip_size)
             equip = soup.find_all('div', class_='prt-equip-image')
             for eq in equip:
                 mh = eq.findChildren('img', class_='img-weapon', recursive=True)
                 if len(mh) > 0: # mainhand
-                    self.dlAndPasteImage(img, mh[0].attrs['src'].replace('img_low', 'img').replace('/ls/', '/m/'), (0, portrait_size[1]+lvl_box_height), equip_size)
+                    img = self.dlAndPasteImage(img, mh[0].attrs['src'].replace('img_low', 'img').replace('/ls/', '/m/'), (0, portrait_size[1]+lvl_box_height), equip_size)
                     plus = eq.findChildren("div", class_="prt-weapon-quality", recursive=True)
                     if len(plus) > 0:
-                        d.text((equip_size[0]-50, portrait_size[1]+lvl_box_height+equip_size[1]-30), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
+                        self.text(img, (equip_size[0]-50, portrait_size[1]+lvl_box_height+equip_size[1]-30), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
                     continue
                 ms = eq.findChildren('img', class_='img-summon', recursive=True)
                 if len(ms) > 0: # main summon
-                    self.dlAndPasteImage(img, ms[0].attrs['src'].replace('img_low', 'img').replace('/ls/', '/m/'), (equip_size[0], portrait_size[1]+lvl_box_height), equip_size)
+                    img = self.dlAndPasteImage(img, ms[0].attrs['src'].replace('img_low', 'img').replace('/ls/', '/m/'), (equip_size[0], portrait_size[1]+lvl_box_height), equip_size)
                     plus = eq.findChildren("div", class_="prt-summon-quality", recursive=True)
                     #if len(plus) > 0:
                     if len(plus) > 0:
-                        d.text((equip_size[0]+equip_size[0]-50, portrait_size[1]+lvl_box_height+equip_size[1]-30), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
+                        self.text(img, (equip_size[0]+equip_size[0]-50, portrait_size[1]+lvl_box_height+equip_size[1]-30), plus[0].text, fill=(255, 255, 95), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
                     continue
             
             # party members
@@ -1250,14 +1269,14 @@ class GranblueFantasy(commands.Cog):
                     plus = npc.findChildren("div", class_="prt-quality", recursive=True)
                     if len(plus) > 0: plus = plus[0].text
                     else: plus = ""
-                self.dlAndPasteImage(img, imtag['src'].replace('img_low', 'img'), pos)
+                img = self.dlAndPasteImage(img, imtag['src'].replace('img_low', 'img'), pos)
                 if ring:
-                    self.pasteImage(img, 'assets/ring.png', pos, (30, 30))
+                    img = self.pasteImage(img, 'assets/ring.png', pos, (30, 30))
                 if plus != "":
-                    d.text((pos[0]+portrait_size[0]-50, pos[1]+portrait_size[1]-30), plus, fill=(255, 255, 95), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
-                self.pasteImage(img, "assets/chara_stat.png", (portrait_size[0]*(i+1), portrait_size[1]), (portrait_size[0], lvl_box_height))
+                    self.text(img, (pos[0]+portrait_size[0]-50, pos[1]+portrait_size[1]-30), plus, fill=(255, 255, 95), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
+                img = self.pasteImage(img, "assets/chara_stat.png", (portrait_size[0]*(i+1), portrait_size[1]), (portrait_size[0], lvl_box_height))
                 if lvl != "":
-                    d.text((portrait_size[0]*(i+1)+3, portrait_size[1]+6), lvl, fill=(255, 255, 255), font=font)
+                    self.text(img, (portrait_size[0]*(i+1)+3, portrait_size[1]+6), lvl, fill=(255, 255, 255), font=font)
 
             # support summons
             if len(sumimg) > 0:
@@ -1266,27 +1285,28 @@ class GranblueFantasy(commands.Cog):
                     y = int(k[1])
                     s = sumimg.get(k, ['2999999999', '', '', '', None])
                     url = "http://game-a.granbluefantasy.jp/assets_en/img/sp/assets/summon/ls/{}.jpg".format(s[0])
-                    self.dlAndPasteImage(img, url, (sup_X_offset+x*sup_summon_size[0], sup_summon_size[1]*y), sup_summon_size)
+                    img = self.dlAndPasteImage(img, url, (sup_X_offset+x*sup_summon_size[0], sup_summon_size[1]*y), sup_summon_size)
                     if s[4] is not None:
                         if s[4] == "": sumstar = "assets/star_0.png"
                         else: sumstar = "assets/star_{}.png".format(s[4][-1])
-                        self.pasteImage(img, sumstar, (sup_X_offset+(x+1)*sup_summon_size[0]-33, sup_summon_size[1]*(y+1)-33))
+                        img = self.pasteImage(img, sumstar, (sup_X_offset+(x+1)*sup_summon_size[0]-33, sup_summon_size[1]*(y+1)-33))
 
             # id and stats
-            self.pasteImage(img, "assets/chara_stat.png", (equip_size[0]*2, portrait_size[1]+lvl_box_height), (portrait_size[0]*2, equip_size[1]))
-            self.pasteImage(img, "assets/atk.png", (equip_size[0]*2+5, portrait_size[1]+lvl_box_height+10), (30, 13))
-            self.pasteImage(img, "assets/hp.png", (equip_size[0]*2+5, portrait_size[1]+lvl_box_height*2), (24, 14))
-            d.text((equip_size[0]*2+30+10, portrait_size[1]+lvl_box_height+10), atk, fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
-            d.text((equip_size[0]*2+30+10, portrait_size[1]+lvl_box_height*2), hp, fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
-            d.text((equip_size[0]*2+10, portrait_size[1]+lvl_box_height*3), "{}".format(id), fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
-            self.dlAndPasteImage(img, job_icon, (0, portrait_size[1]-30), (36, 30))
+            img = self.pasteImage(img, "assets/chara_stat.png", (equip_size[0]*2, portrait_size[1]+lvl_box_height), (portrait_size[0]*2, equip_size[1]))
+            img = self.pasteImage(img, "assets/atk.png", (equip_size[0]*2+5, portrait_size[1]+lvl_box_height+10), (30, 13))
+            img = self.pasteImage(img, "assets/hp.png", (equip_size[0]*2+5, portrait_size[1]+lvl_box_height*2), (24, 14))
+            self.text(img, (equip_size[0]*2+30+10, portrait_size[1]+lvl_box_height+10), atk, fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
+            self.text(img, (equip_size[0]*2+30+10, portrait_size[1]+lvl_box_height*2), hp, fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
+            self.text(img, (equip_size[0]*2+10, portrait_size[1]+lvl_box_height*3), "{}".format(id), fill=(255, 255, 255), font=font, stroke_width=1, stroke_fill=(0, 0, 0))
+            img = self.dlAndPasteImage(img, job_icon, (0, portrait_size[1]-30), (36, 30))
             
             # saving
             with BytesIO() as output:
                 img.save(output, format="PNG")
                 img.close()
                 thumbnail = output.getvalue()
-        except:
+        except Exception as xxe:
+            print(xxe)
             thumbnail = None
             try: img.close()
             except: pass
