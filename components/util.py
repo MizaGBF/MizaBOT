@@ -416,26 +416,26 @@ class Util():
     async def str2gbfid(self, inter, target, memberTarget: disnake.Member = None):
         if memberTarget is not None:
             if str(memberTarget.id) not in self.bot.data.save['gbfids']:
-                return "`{}` didn't set its GBF profile ID".format(memberTarget.display_name)
+                return "`{}` didn't set its GBF profile ID.".format(memberTarget.display_name)
             id = self.bot.data.save['gbfids'][str(memberTarget.id)]
         elif target == "":
             if str(inter.author.id) not in self.bot.data.save['gbfids']:
-                return "You didn't set your GBF profile ID\nUse `/gbf setprofile` to link it with your Discord ID."
+                return "You didn't set your GBF profile ID.\nUse `/gbf setprofile` to link it with your Discord ID."
             id = self.bot.data.save['gbfids'][str(inter.author.id)]
         elif target.startswith('<@') and target.endswith('>'):
             try:
                 if target[2] == "!": target = str(int(target[3:-1]))
                 else: target = str(int(target[2:-1]))
                 if target not in self.bot.data.save['gbfids']:
-                    return "This member didn't set its profile ID\nTry to use `/gw find player` to search the GW Database instead"
+                    return "This member didn't set its profile ID.\nTry to use `/gw find player` to search the GW Database instead"
                 id = self.bot.data.save['gbfids'][target]
             except:
-                return "An error occured: Invalid parameter {} -> {}".format(target, type(target))
+                return "An error occured: Invalid parameter {} -> {}.".format(target, type(target))
         else:
             try: id = int(target)
-            except: return "`{}` isn't a valid target".format(target)
+            except: return "`{}` isn't a valid target.\nEither input a GBF ID or a Discord Mention.".format(target)
         if id < 0 or id >= 100000000:
-            return "Invalid ID range (ID must be between 0 and 100 000 000)"
+            return "Invalid ID range (ID must be between 0 and 100 000 000)."
         return id
 
     """formatElement()
