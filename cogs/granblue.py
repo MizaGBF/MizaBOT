@@ -1359,7 +1359,7 @@ class GranblueFantasy(commands.Cog):
         """Retrieve a GBF profile"""
         try:
             await inter.response.defer()
-            id = await self.bot.util.str2gbfid(inter, target, self.color)
+            id = await self.bot.util.str2gbfid(inter, target)
             if isinstance(id, str):
                 await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description=id, color=self.color))
             else:
@@ -1376,7 +1376,7 @@ class GranblueFantasy(commands.Cog):
         """Retrieve a GBF profile"""
         try:
             await inter.response.defer()
-            id = await self.bot.util.str2gbfid(inter, str(member.id), self.color)
+            id = await self.bot.util.str2gbfid(inter, str(member.id), memberTarget=member)
             if isinstance(id, str):
                 await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description=id, color=self.color))
             else:
@@ -1391,7 +1391,7 @@ class GranblueFantasy(commands.Cog):
         """Check if a GBF profile is restricted"""
         try:
             await inter.response.defer(ephemeral=True)
-            id = await self.bot.util.str2gbfid(inter, target, self.color)
+            id = await self.bot.util.str2gbfid(inter, target)
             if isinstance(id, str):
                 await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description=id, color=self.color))
             else:

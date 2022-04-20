@@ -407,33 +407,35 @@ class Util():
         - Empty (the author GBF ID will be used if set, doesn't work if you set inter to a channel)
         - Positive integer, representing a GBF ID
         - A Discord Mention (<@discord_id> or <@!discord_id>)
+    memberTarget: disnake.Member to search, set to None to ignore
     
     Returns
     --------
     int or str: The GBF ID or an error string if an error happened
     """
-    async def str2gbfid(self, inter, target, color):
-        if target == "":
+    async def str2gbfid(self, inter, target, memberTarget: disnake.Member = None):
+        if memberTarget is not None:
+            if str(memberTarget.id) not in self.bot.data.save['gbfids']:
+                return "`{}` didn't set its GBF profile ID".format(memberTarget.display_name)
+            id = self.bot.data.save['gbfids'][str(memberTarget.id)]
+        elif target == "":
             if str(inter.author.id) not in self.bot.data.save['gbfids']:
-                return "{} didn't set its profile ID\nUse `findplayer` to search the GW Database"
+                return "You didn't set your GBF profile ID\nUse `/gbf setprofile` to link it with your Discord ID."
             id = self.bot.data.save['gbfids'][str(inter.author.id)]
         elif target.startswith('<@') and target.endswith('>'):
             try:
-                if target[2] == "!": target = int(target[3:-1])
-                else: target = int(target[2:-1])
+                if target[2] == "!": target = str(int(target[3:-1]))
+                else: target = str(int(target[2:-1]))
                 if target not in self.bot.data.save['gbfids']:
-                    return "This member didn't set its profile ID\nUse `findplayer` to search the GW Database"
-                id = self.bot.data.save['gbfids'][str(member.id)]
+                    return "This member didn't set its profile ID\nTry to use `/gw find player` to search the GW Database instead"
+                id = self.bot.data.save['gbfids'][target]
             except:
-                return "Invalid parameter {} -> {}".format(target, type(target))
+                return "An error occured: Invalid parameter {} -> {}".format(target, type(target))
         else:
             try: id = int(target)
             except: return "`{}` isn't a valid target".format(target)
         if id < 0 or id >= 100000000:
-            try: id = self.bot.data.save['gbfids'][str(id)]
-            except: return "Invalid ID range"
-        if id < 0 or id >= 100000000:
-            return "Invalid ID range"
+            return "Invalid ID range (ID must be between 0 and 100 000 000)"
         return id
 
     """formatElement()
