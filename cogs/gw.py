@@ -1366,9 +1366,11 @@ class GuildWar(commands.Cog):
             for i, v in enumerate(sorted):
                 if i % 15 == 0: fields.append({'name':'{}'.format(self.bot.emote.get(str(len(fields)+1))), 'value':''})
                 if v[3] is None:
-                    fields[-1]['value'] += "{} \▫️ {} \▫️ **{}**\n".format(i+1, v[1], self.bot.util.valToStr(v[2]))
+                    fields[-1]['value'] += "{} \▫️ {} \▫️ **{}".format(i+1, v[1], self.bot.util.valToStr(v[2]))
                 else:
-                    fields[-1]['value'] += "#**{}** \▫️ {} \▫️ **{}**\n".format(self.bot.util.valToStr(v[3]), v[1], self.bot.util.valToStr(v[2]))
+                    fields[-1]['value'] += "#**{}** \▫️ {} \▫️ **{}".format(self.bot.util.valToStr(v[3]), v[1], self.bot.util.valToStr(v[2]))
+                if rank_by_speed: fields[-1]['value'] += "/min**\n"
+                else: fields[-1]['value'] += "**\n"
             return fields, gwid
 
     @gbfg.sub_command(name="ranking")
@@ -1377,9 +1379,9 @@ class GuildWar(commands.Cog):
         await inter.response.defer()
         fields, gwid = await self.bot.do(self._gbfgranking, (speed == 1))
         if fields is None:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ GW Ranking{}".format(self.bot.emote.get('gw'), (" ▫️ Top Speed per minute" if speed == 1 else "")), description="Unavailable", color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ GW {}Ranking".format(self.bot.emote.get('gw'), ("Top Speed " if speed == 1 else "")), description="Unavailable", color=self.color))
         else:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ GW{} Ranking{}".format(self.bot.emote.get('gw'), gwid, (" ▫️ Top Speed per minute" if speed == 1 else "")), fields=fields, inline=True, color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ GW{} {}Ranking".format(self.bot.emote.get('gw'), gwid, ("Top Speed " if speed == 1 else "")), fields=fields, inline=True, color=self.color))
         await self.bot.util.clean(inter, 60)
 
     """_recruit()
