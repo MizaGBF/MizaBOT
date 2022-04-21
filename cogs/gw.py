@@ -1318,13 +1318,17 @@ class GuildWar(commands.Cog):
     """_gbfgranking()
     Get the /gbfg/ crew contribution and rank them
     
+    Parameters
+    ----------
+    rank_by_speed: Boolean, sort by speed instead of honor
+    
     Returns
     ----------
     tuple: Containing:
         - fields: Discord Embed fields containing the data
         - gwid: Integer GW ID
     """
-    def _gbfgranking(self):
+    def _gbfgranking(self, rank_by_speed):
         crews = []
         for e in self.bot.data.config['granblue']['gbfgcrew']:
             if self.bot.data.config['granblue']['gbfgcrew'][e] in crews: continue
@@ -1340,8 +1344,12 @@ class GuildWar(commands.Cog):
                 if data is None or data[1] is None or len(data[1]) == 0:
                     continue
                 gwid = data[1][0].gw
-                if data[1][0].day != 4: tosort[c] = [c, data[1][0].name, data[1][0].current, None]
-                else: tosort[c] = [c, data[1][0].name, data[1][0].current, data[1][0].ranking] # id, name, honor, rank
+                if rank_by_speed:
+                    if data[1][0].day != 4: tosort[c] = [c, data[1][0].name, data[1][0].speed, None]
+                    else: tosort[c] = [c, data[1][0].name, data[1][0].speed, data[1][0].ranking] # id, name, honor, rank
+                else:
+                    if data[1][0].day != 4: tosort[c] = [c, data[1][0].name, data[1][0].current, None]
+                    else: tosort[c] = [c, data[1][0].name, data[1][0].current, data[1][0].ranking] # id, name, honor, rank
             sorted = []
             for c in tosort:
                 inserted = False
@@ -1362,14 +1370,14 @@ class GuildWar(commands.Cog):
             return fields, gwid
 
     @gbfg.sub_command(name="ranking")
-    async def gbfgranking(self, inter: disnake.GuildCommandInteraction):
+    async def gbfgranking(self, inter: disnake.GuildCommandInteraction, speed : int = commands.Param(description="1 to sort by speed, 0 to sort by honor (default)", ge=0, le=1, default=0)):
         """Sort and post all /gbfg/ crew per contribution"""
         await inter.response.defer()
-        fields, gwid = await self.bot.do(self._gbfgranking)
+        fields, gwid = await self.bot.do(self._gbfgranking, (speed == 1))
         if fields is None:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ GW Ranking".format(self.bot.emote.get('gw')), description="Unavailable", color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ GW Ranking{}".format(self.bot.emote.get('gw'), (" ▫️ Speed per minute" if speed == 1 else "")), description="Unavailable", color=self.color))
         else:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ GW{} Ranking".format(self.bot.emote.get('gw'), gwid), fields=fields, inline=True, color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ GW{} Ranking{}".format(self.bot.emote.get('gw'), gwid, (" ▫️ Speed per minute" if speed == 1 else "")), fields=fields, inline=True, color=self.color))
         await self.bot.util.clean(inter, 60)
 
     """_recruit()
