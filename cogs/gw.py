@@ -1375,9 +1375,9 @@ class GuildWar(commands.Cog):
         await inter.response.defer()
         fields, gwid = await self.bot.do(self._gbfgranking, (speed == 1))
         if fields is None:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ GW Ranking{}".format(self.bot.emote.get('gw'), (" ▫️ Speed per minute" if speed == 1 else "")), description="Unavailable", color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ GW Ranking{}".format(self.bot.emote.get('gw'), (" ▫️ Top Speed per minute" if speed == 1 else "")), description="Unavailable", color=self.color))
         else:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ GW{} Ranking{}".format(self.bot.emote.get('gw'), gwid, (" ▫️ Speed per minute" if speed == 1 else "")), fields=fields, inline=True, color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ GW{} Ranking{}".format(self.bot.emote.get('gw'), gwid, (" ▫️ Top Speed per minute" if speed == 1 else "")), fields=fields, inline=True, color=self.color))
         await self.bot.util.clean(inter, 60)
 
     """_recruit()
