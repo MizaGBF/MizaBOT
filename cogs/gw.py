@@ -1099,12 +1099,12 @@ class GuildWar(commands.Cog):
         pass
 
     @find.sub_command()
-    async def crew(self, inter: disnake.GuildCommandInteraction, terms : str = commands.Param(description="Search value. Add %past for past GW and %id for an ID search"), search_type : int = commands.Param(description="0 = name (default). 1 = exact name. 2 = ID. 3 = ranking.", default=0, ge=0, le=3), mode_past : int = commands.Param(description="1 to search the previous GW. 0  for the current/last (default).", default=0, ge=0, le=1), mode_all : int = commands.Param(description="1 to receive all results via DM. 0 to disable (default).", default=0, ge=0, le=1)):
+    async def crew(self, inter: disnake.GuildCommandInteraction, terms : str = commands.Param(description="What to search for"), search_type : int = commands.Param(description="0 = name (default). 1 = exact name. 2 = ID. 3 = ranking.", default=0, ge=0, le=3), mode_past : int = commands.Param(description="1 to search the previous GW. 0  for the current/last (default).", default=0, ge=0, le=1), mode_all : int = commands.Param(description="1 to receive all results via DM. 0 to disable (default).", default=0, ge=0, le=1)):
         """Search a crew or player GW score in the bot data"""
         await self.findranking(inter, True, terms, search_type, mode_past, mode_all)
 
     @find.sub_command()
-    async def player(self, inter: disnake.GuildCommandInteraction, terms : str = commands.Param(description="Search value. Add %past for past GW and %id for an ID search"), search_type : int = commands.Param(description="0 = name (default). 1 = exact name. 2 = ID. 3 = ranking.", default=0, ge=0, le=3), mode_past : int = commands.Param(description="1 to search the previous GW. 0  for the current/last (default).", default=0, ge=0, le=1), mode_all : int = commands.Param(description="1 to receive all results via DM. 0 to disable (default).", default=0, ge=0, le=1)):
+    async def player(self, inter: disnake.GuildCommandInteraction, terms : str = commands.Param(description="What to search for"), search_type : int = commands.Param(description="0 = name (default). 1 = exact name. 2 = ID. 3 = ranking.", default=0, ge=0, le=3), mode_past : int = commands.Param(description="1 to search the previous GW. 0  for the current/last (default).", default=0, ge=0, le=1), mode_all : int = commands.Param(description="1 to receive all results via DM. 0 to disable (default).", default=0, ge=0, le=1)):
         """Search a crew or player GW score in the bot data"""
         await self.findranking(inter, False, terms, search_type, mode_past, mode_all)
 
