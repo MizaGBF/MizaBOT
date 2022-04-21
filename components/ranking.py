@@ -542,7 +542,7 @@ class Ranking():
             data = c.fetchall()
             if data is None or len(data) == 0: raise Exception("Failed to retrieve data")
             d = [4, 5, 6, 7]
-            infos.append([data[0][2], data[0][d[day-2]]-data[0][d[day-2]-1]]) # name and score of the day
+            infos.append([data[0][2], data[0][d[day-2]]-data[0][d[day-2]-1], data[0][8]]) # name, score of the day, top speed
         c.close()
         conn.close()
         return infos
@@ -665,6 +665,7 @@ class Ranking():
             newtracker['top_speed'] = [0, 0]
         newtracker['names'] = [infos[0][0], infos[1][0]]
         newtracker['scores'] = [infos[0][1], infos[1][1]]
+        newtracker['max_speed'] = [infos[0][2], infos[1][2]]
         newtracker['last'] = t
         newtracker['gwid'] = self.bot.data.save['gw']['id']
         if newtracker['speed'] is not None: # save chart data

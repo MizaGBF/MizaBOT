@@ -1019,32 +1019,29 @@ class GuildWar(commands.Cog):
                 msg += "\n"
                 end_time = self.bot.data.save['matchtracker']['last'].replace(day=self.bot.data.save['matchtracker']['last'].day+1, hour=0, minute=0, second=0, microsecond=0)
                 remaining = end_time - self.bot.data.save['matchtracker']['last']
-                msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ **{:,}**".format(self.bot.data.save['matchtracker']['names'][0], you_id, self.bot.data.save['matchtracker']['scores'][0])
                 lead_speed = None
-                if self.bot.data.save['matchtracker']['speed'] is not None:
-                    lead_speed = self.bot.data.save['matchtracker']['speed'][0]
-                    if self.bot.data.save['matchtracker']['speed'][0] == self.bot.data.save['matchtracker']['top_speed'][0]:
-                        msg += "\n**Speed** ▫️ **Now {}/m** ▫️ **Top {}/m** :white_check_mark:".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][0]), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][0]))
+                for i in range(2):
+                    msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ **{:,}**".format(self.bot.data.save['matchtracker']['names'][i], (you_id if i == 0 else self.bot.data.save['matchtracker']['id']), self.bot.data.save['matchtracker']['scores'][i])
+                    
+                    if self.bot.data.save['matchtracker']['speed'] is None:
+                        msg += "\n\n"
+                        continue
+                    if i == 0: lead_speed = self.bot.data.save['matchtracker']['speed'][0]
+                    elif lead_speed is not None: lead_speed -= self.bot.data.save['matchtracker']['speed'][1]
+                    else: lead_speed = None
+                    
+                    msg += "\n**Speed** ▫️ Now {}/m ▫️ ".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][0]))
+                    if self.bot.data.save['matchtracker']['speed'][0] >= self.bot.data.save['matchtracker']['max_speed'][0]:
+                        msg += "**Max {}/m** {} ▫️ ".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['max_speed'][0]), ":white_check_mark:" if i == 0 else ":warning:")
                     else:
-                        msg += "\n**Speed** ▫ Now {}/m ▫️ Top {}/m".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][0]), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][0]))
-                    if end_time > self.bot.data.save['matchtracker']['last']:
-                        msg += "\n**Estimation** ▫ Now {} ▫️ Top {}".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][0] + self.bot.data.save['matchtracker']['speed'][0] * remaining.seconds//60), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][0] + self.bot.data.save['matchtracker']['top_speed'][0] * remaining.seconds//60))
-                msg += "\n\n"
-                msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ **{:,}**".format(self.bot.data.save['matchtracker']['names'][1], self.bot.data.save['matchtracker']['id'], self.bot.data.save['matchtracker']['scores'][1])
-                if self.bot.data.save['matchtracker']['speed'] is not None:
-                    if lead_speed is not None:
-                        lead_speed -= self.bot.data.save['matchtracker']['speed'][1]
-                    if self.bot.data.save['matchtracker']['speed'][1] == self.bot.data.save['matchtracker']['top_speed'][1]:
-                        msg += "\n**Speed** ▫️ **Now {}/m** ▫️ **Top {}/m** :warning:".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][1]), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][1]))
+                        msg += "Max {}/m ▫️ ".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['max_speed'][0]))
+                    if self.bot.data.save['matchtracker']['speed'][0] >= self.bot.data.save['matchtracker']['top_speed'][0]:
+                        msg += "**Top {}/m** {} ▫️ ".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][0]), ":white_check_mark:" if i == 0 else ":warning:")
                     else:
-                        msg += "\n**Speed** ▫️ Now {}/m ▫️ Top {}/m".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][1]), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][1]))
+                        msg += "Top {}/m ▫️ ".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][0]))
                     if end_time > self.bot.data.save['matchtracker']['last']:
-                        current_estimation = self.bot.data.save['matchtracker']['scores'][1] + self.bot.data.save['matchtracker']['speed'][1] * remaining.seconds//60
-                        top_estimation = self.bot.data.save['matchtracker']['scores'][1] + self.bot.data.save['matchtracker']['top_speed'][1] * remaining.seconds//60
-                        msg += "\n**Estimation** ▫ Now {} ▫️ Top {}".format(self.bot.util.valToStrBig(current_estimation), self.bot.util.valToStrBig(top_estimation))
-                else:
-                    lead_speed = None
-                msg += "\n\n"
+                        msg += "\n**Estimation** ▫ Now {} ▫️ Max {} ▫️ Top {}".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][0] + self.bot.data.save['matchtracker']['speed'][0] * remaining.seconds//60), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][0] + self.bot.data.save['matchtracker']['max_speed'][0] * remaining.seconds//60), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][0] + self.bot.data.save['matchtracker']['top_speed'][0] * remaining.seconds//60))
+                    msg += "\n\n"
                 lead = self.bot.data.save['matchtracker']['scores'][0] - self.bot.data.save['matchtracker']['scores'][1]
                 if lead != 0:
                     msg += "**Difference** ▫️ {:,}".format(abs(lead))
