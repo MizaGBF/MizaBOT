@@ -1345,9 +1345,11 @@ class GuildWar(commands.Cog):
                     continue
                 gwid = data[1][0].gw
                 if rank_by_speed:
+                    if data[1][0].speed is None: continue
                     if data[1][0].day != 4: tosort[c] = [c, data[1][0].name, data[1][0].speed, None]
                     else: tosort[c] = [c, data[1][0].name, data[1][0].speed, data[1][0].ranking] # id, name, honor, rank
                 else:
+                    if data[1][0].current is None: continue
                     if data[1][0].day != 4: tosort[c] = [c, data[1][0].name, data[1][0].current, None]
                     else: tosort[c] = [c, data[1][0].name, data[1][0].current, data[1][0].ranking] # id, name, honor, rank
             sorted = []
