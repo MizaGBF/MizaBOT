@@ -34,12 +34,10 @@ class MizaBot(commands.Bot):
         self.version = "9.19" # bot version
         self.changelog = [ # changelog lines
             "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
-            "Crew data will now track top speed (starting GW61)",
             "`/mod announcement togglechannel` added to receive game or bot news",
-            "Reworked the Gacha Simulator",
-            "`/gw time` and `/db time` now show local time",
-            "You can now input your current amount of tokens in `/gw box` and `/db box`",
-            "Added shrimp parameter to `/spark set`"
+            "GW Crew data displays top speed ( `/gbf crew`, `/gw crew`, `/gw find crew`)",
+            "`/gw time` and `/db time` use your local system timezone",
+            "You can input your current amount of tokens and opened boxes in `/gw box` and `/db box`"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
