@@ -1265,7 +1265,7 @@ class GuildWar(commands.Cog):
                 self.bot.data.pending = True
 
         if 'time' not in self.bot.data.save['gw']['gbfgdata'] or self.bot.util.JST() - self.bot.data.save['gw']['gbfgdata']['time'] > timedelta(days=2) or len(crews) != len(self.bot.data.save['gw']['gbfgdata']['crews']):
-            partial = len(crews) != len(self.bot.data.save['gw']['gbfgdata'].get('crews', {})) # we don't update everything if some crews are private: we'll just check every 2 days
+            partial = (self.bot.util.JST() - self.bot.data.save['gw']['gbfgdata']['time'] < timedelta(days=2)) and len(crews) != len(self.bot.data.save['gw']['gbfgdata'].get('crews', {})) # the full update is only every 2 days
             cdata = {}
             for c in crews:
                 if partial and str(c) in self.bot.data.save['gw']['gbfgdata'].get('crews', {}):
