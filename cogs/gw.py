@@ -1259,17 +1259,19 @@ class GuildWar(commands.Cog):
     dict: Content of self.bot.data.save['gw']['gbfgdata']
     """
     def updateGBFGData(self, crews):
+        if not self.isGWRunning():
+            return None
+    
         if 'gbfgdata' not in self.bot.data.save['gw']:
             with self.bot.data.lock:
                 self.bot.data.save['gw']['gbfgdata'] = {}
                 self.bot.data.pending = True
 
-        if 'time' not in self.bot.data.save['gw']['gbfgdata'] or self.bot.util.JST() - self.bot.data.save['gw']['gbfgdata']['time'] > timedelta(days=2) or len(crews) != len(self.bot.data.save['gw']['gbfgdata']['crews']):
-            partial = (self.bot.util.JST() - self.bot.data.save['gw']['gbfgdata']['time'] < timedelta(days=2)) and len(crews) != len(self.bot.data.save['gw']['gbfgdata'].get('crews', {})) # the full update is only every 2 days
+        if len(crews) != len(self.bot.data.save['gw']['gbfgdata']):
             cdata = {}
             for c in crews:
-                if partial and str(c) in self.bot.data.save['gw']['gbfgdata'].get('crews', {}):
-                    cdata[str(c)] = self.bot.data.save['gw']['gbfgdata']['crews'][str(c)]
+                if str(c) in self.bot.data.save['gw']['gbfgdata']:
+                    cdata[str(c)] = self.bot.data.save['gw']['gbfgdata'][str(c)]
                     continue
                 crew = self.getCrewData(c, 0)
                 if 'error' in crew or crew['private']:
@@ -1278,10 +1280,9 @@ class GuildWar(commands.Cog):
                 for p in crew['player']:
                     cdata[str(c)][-1].append(p['id'])
             with self.bot.data.lock:
-                self.bot.data.save['gw']['gbfgdata']['crews'] = cdata
-                self.bot.data.save['gw']['gbfgdata']['time'] = self.bot.util.JST()
+                self.bot.data.save['gw']['gbfgdata'] = cdata
                 self.bot.data.pending = True
-        return self.bot.data.save['gw']['gbfgdata']['crews']
+        return self.bot.data.save['gw']['gbfgdata']
 
     @gbfg.sub_command()
     async def playerranking(self, inter: disnake.GuildCommandInteraction):
@@ -1293,6 +1294,9 @@ class GuildWar(commands.Cog):
             crews.append(self.bot.data.config['granblue']['gbfgcrew'][e])
         ranking = []
         gbfgdata = await self.bot.do(self.updateGBFGData, crews)
+        if gbfgdata is None:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ Top Player Ranking".format(self.bot.emote.get('gw')), description="Unavailable outside of Guild War", color=self.color))
+            return
         for cid in gbfgdata:
             data = await self.bot.do(self.bot.ranking.searchGWDB, " OR id = ".join(gbfgdata[cid][3]), 2)
             if data is not None and data[1] is not None:
@@ -1331,6 +1335,9 @@ class GuildWar(commands.Cog):
             crews.append(self.bot.data.config['granblue']['gbfgcrew'][e])
         ranking = []
         gbfgdata = await self.bot.do(self.updateGBFGData, crews)
+        if gbfgdata is None:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ Dancho Ranking".format(self.bot.emote.get('gw')), description="Unavailable outside of Guild War", color=self.color))
+            return
         search = [str(gbfgdata[cid][2]) for cid in gbfgdata]
         data = await self.bot.do(self.bot.ranking.searchGWDB, " OR id = ".join(search), 2)
         del search
