@@ -31,13 +31,15 @@ except:
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.Bot):
     def __init__(self):
-        self.version = "9.19" # bot version
+        self.version = "9.20" # bot version
         self.changelog = [ # changelog lines
             "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
             "`/mod announcement togglechannel` added to receive game or bot news",
             "GW Crew data displays top speed ( `/gbf crew`, `/gw crew`, `/gw find crew`)",
             "`/gw time` and `/db time` use your local system timezone",
-            "You can input your current amount of tokens and opened boxes in `/gw box` and `/db box`"
+            "You can input your current amount of tokens and opened boxes in `/gw box` and `/db box`",
+            "`/gbfg ranking` has a speed option (to get a speed ranking)",
+            "Added `/gbfg playerranking`"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event

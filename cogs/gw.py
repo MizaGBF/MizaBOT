@@ -1240,15 +1240,15 @@ class GuildWar(commands.Cog):
 
 
     @commands.slash_command(default_permission=True)
-    @commands.cooldown(2, 30, commands.BucketType.guild)
-    @commands.max_concurrency(2, commands.BucketType.default)
+    @commands.cooldown(2, 60, commands.BucketType.guild)
+    @commands.max_concurrency(1, commands.BucketType.default)
     async def gbfg(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
 
-    """getCrewLeaders()
-    Get the /gbfg/ crew leaders from the save data.
-    If it's missing or outdated, data is refreshed.
+
+    """updateGBFGData()
+    Store the /gbfg/ crew data for later use by playerranking and danchoranking
     
     Parameters
     ------
@@ -1256,21 +1256,68 @@ class GuildWar(commands.Cog):
     
     Returns
     ----------
-    list: List of crew leader IDs
+    dict: Content of self.bot.data.save['gw']['gbfgdata']
     """
-    def getCrewLeaders(self, crews):
-        if 'leadertime' not in self.bot.data.save['gbfdata'] or 'leader' not in self.bot.data.save['gbfdata'] or self.bot.util.JST() - self.bot.data.save['gbfdata']['leadertime'] > timedelta(days=6) or len(crews) != len(self.bot.data.save['gbfdata']['leader']):
-            leaders = {}
-            for c in crews:
-                crew = self.getCrewData(c, 1)
-                if 'error' in crew:
-                    continue
-                leaders[str(c)] = [crew['name'], crew['leader'], crew['leader_id']]
+    def updateGBFGData(self, crews):
+        if 'gbfgdata' not in self.bot.data.save['gw']:
             with self.bot.data.lock:
-                self.bot.data.save['gbfdata']['leader'] = leaders
-                self.bot.data.save['gbfdata']['leadertime'] = self.bot.util.JST()
+                self.bot.data.save['gw']['gbfgdata'] = {}
                 self.bot.data.pending = True
-        return self.bot.data.save['gbfdata']['leader']
+
+        if 'time' not in self.bot.data.save['gw']['gbfgdata'] or self.bot.util.JST() - self.bot.data.save['gw']['gbfgdata']['time'] > timedelta(days=2) or len(crews) != len(self.bot.data.save['gw']['gbfgdata']['crews']):
+            cdata = {}
+            for c in crews:
+                crew = self.getCrewData(c, 0)
+                if 'error' in crew or crew['private']:
+                    continue
+                cdata[str(c)] = [crew['name'], crew['leader'], crew['leader_id'], []]
+                for p in crew['player']:
+                    cdata[str(c)][-1].append(p['id'])
+            with self.bot.data.lock:
+                self.bot.data.save['gw']['gbfgdata']['crews'] = cdata
+                self.bot.data.save['gw']['gbfgdata']['time'] = self.bot.util.JST()
+                self.bot.data.pending = True
+        return self.bot.data.save['gw']['gbfgdata']['crews']
+
+    @gbfg.sub_command()
+    async def playerranking(self, inter: disnake.GuildCommandInteraction):
+        """Sort and post the /gbfg/ Top 30 per contribution"""
+        crews = []
+        await inter.response.defer()
+        for e in self.bot.data.config['granblue']['gbfgcrew']:
+            if self.bot.data.config['granblue']['gbfgcrew'][e] in crews: continue
+            crews.append(self.bot.data.config['granblue']['gbfgcrew'][e])
+        ranking = []
+        players = await self.bot.do(self.updateGBFGData, crews)
+        for cid in players:
+            for pid in players[cid][3]:
+                data = await self.bot.do(self.bot.ranking.searchGWDB, pid, 2)
+                if data is None or data[1] is None:
+                    continue
+                gwid = ''
+                if len(data[1]) > 0:
+                    gwid = data[1][0].gw
+                    ranking.append([players[cid][0], data[1][0].name, data[1][0].current])
+        if len(ranking) == 0:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ Top Player Ranking".format(self.bot.emote.get('gw')), description="Unavailable", color=self.color))
+        else:
+            for i in range(len(ranking)): # sorting
+                for j in range(i+1, len(ranking)):
+                    if ranking[j][2] is not None and (ranking[i][2] is None or ranking[i][2] < ranking[j][2]):
+                        tmp = ranking[i]
+                        ranking[i] = ranking[j]
+                        ranking[j] = tmp
+            fields = []
+            if gwid is None: gwid = ""
+            for i, v in enumerate(ranking):
+                if i == 30: break
+                elif i % 15 == 0: fields.append({'name':'{}'.format(self.bot.emote.get(str(len(fields)+1))), 'value':''})
+                if v[2] is None:
+                    fields[-1]['value'] += "{} \▫️ {} \▫️ {} \▫️ **n/a**\n".format(i+1, v[1], v[0])
+                else:
+                    fields[-1]['value'] += "{} \▫️ {} \▫️ {} \▫️ **{}**\n".format(i+1, v[1], v[0], self.bot.util.valToStr(v[2]))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ GW{} Top Player Ranking".format(self.bot.emote.get('gw'), gwid), fields=fields, inline=True, color=self.color))
+        await self.bot.util.clean(inter, 60)
 
     @gbfg.sub_command()
     async def danchoranking(self, inter: disnake.GuildCommandInteraction):
@@ -1281,7 +1328,7 @@ class GuildWar(commands.Cog):
             if self.bot.data.config['granblue']['gbfgcrew'][e] in crews: continue
             crews.append(self.bot.data.config['granblue']['gbfgcrew'][e])
         ranking = []
-        leaders = await self.bot.do(self.getCrewLeaders, crews)
+        leaders = await self.bot.do(self.updateGBFGData, crews)
         for cid in leaders:
             data = await self.bot.do(self.bot.ranking.searchGWDB, leaders[cid][2], 2)
             if data is None or data[1] is None:
