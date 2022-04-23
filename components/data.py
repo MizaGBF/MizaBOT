@@ -116,8 +116,8 @@ class Data():
     def saveData(self): # saving (lock isn't used, use it outside!)
         try:
             with open('save.json', 'w') as outfile:
-                json.dump(self.save, outfile, default=self.bot.util.json_serial) # locally first
-                if not self.bot.drive.save(json.dumps(self.save, default=self.bot.util.json_serial)): # sending to the google drive
+                json.dump(self.save, outfile, separators=(',', ':'), default=self.bot.util.json_serial) # locally first
+                if not self.bot.drive.save(json.dumps(self.save, separators=(',', ':'), default=self.bot.util.json_serial)): # sending to the google drive
                     raise Exception("Couldn't save to google drive")
             return True
         except Exception as e:
