@@ -713,13 +713,11 @@ class Admin(commands.Cog):
         await inter.edit_original_message(embed=self.bot.util.embed(title="Guild War Databases", description=msg, timestamp=self.bot.util.timestamp(), color=self.color))
 
     @gw.sub_command()
-    async def resetleader(self, inter: disnake.GuildCommandInteraction):
-        """Reset the saved captain list (Owner Only)"""
-        with self.bot.data.lock:
-            if 'leader' in self.bot.data.save['gbfdata']:
-                self.bot.data.save['gbfdata'].pop('leader')
-            self.bot.data.pending = True
-        await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
+    async def forceupdategbfg(self, inter: disnake.GuildCommandInteraction):
+        """Force an update of the GW /gbfg/ Datta (Owner Only)"""
+        await inter.response.defer(ephemeral=True)
+        await self.bot.do(self.bot.get_cog('GuildWar').updateGBFGData, crews, True)
+        await inter.response.edit_original_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
 
     @gw.sub_command(name="disable")
     async def disable__(self, inter: disnake.GuildCommandInteraction):

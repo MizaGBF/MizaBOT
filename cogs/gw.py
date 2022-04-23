@@ -1253,12 +1253,13 @@ class GuildWar(commands.Cog):
     Parameters
     ------
     crews: List of /gbfg/ crew IDs
+    force_update: If True, update all crews
     
     Returns
     ----------
     dict: Content of self.bot.data.save['gw']['gbfgdata']
     """
-    def updateGBFGData(self, crews):
+    def updateGBFGData(self, crews, force_update=False):
         if not self.isGWRunning():
             return None
     
@@ -1267,14 +1268,18 @@ class GuildWar(commands.Cog):
                 self.bot.data.save['gw']['gbfgdata'] = {}
                 self.bot.data.pending = True
 
-        if len(crews) != len(self.bot.data.save['gw']['gbfgdata']):
+        if force_update or len(crews) != len(self.bot.data.save['gw']['gbfgdata']):
             cdata = {}
             for c in crews:
                 if str(c) in self.bot.data.save['gw']['gbfgdata']:
                     cdata[str(c)] = self.bot.data.save['gw']['gbfgdata'][str(c)]
-                    continue
+                    if not force_update:
+                        continue
                 crew = self.getCrewData(c, 0)
                 if 'error' in crew or crew['private']:
+                    crew = self.getCrewData(c, 1)
+                    if str(c) not in cdata:
+                        cdata[str(c)] = [crew['name'], crew['leader'], int(crew['leader_id']), []]
                     continue
                 cdata[str(c)] = [crew['name'], crew['leader'], int(crew['leader_id']), []]
                 for p in crew['player']:
