@@ -1265,12 +1265,16 @@ class GuildWar(commands.Cog):
                 self.bot.data.pending = True
 
         if 'time' not in self.bot.data.save['gw']['gbfgdata'] or self.bot.util.JST() - self.bot.data.save['gw']['gbfgdata']['time'] > timedelta(days=2) or len(crews) != len(self.bot.data.save['gw']['gbfgdata']['crews']):
+            partial = len(crews) != len(self.bot.data.save['gw']['gbfgdata'].get('crews', {})) # we don't update everything if some crews are private: we'll just check every 2 days
             cdata = {}
             for c in crews:
+                if partial and str(c) in self.bot.data.save['gw']['gbfgdata'].get('crews', {}):
+                    cdata[str(c)] = self.bot.data.save['gw']['gbfgdata']['crews'][str(c)]
+                    continue
                 crew = self.getCrewData(c, 0)
                 if 'error' in crew or crew['private']:
                     continue
-                cdata[str(c)] = [crew['name'], crew['leader'], crew['leader_id'], []]
+                cdata[str(c)] = [crew['name'], crew['leader'], int(crew['leader_id']), []]
                 for p in crew['player']:
                     cdata[str(c)][-1].append(p['id'])
             with self.bot.data.lock:
@@ -1281,23 +1285,21 @@ class GuildWar(commands.Cog):
 
     @gbfg.sub_command()
     async def playerranking(self, inter: disnake.GuildCommandInteraction):
-        """Sort and post the /gbfg/ Top 30 per contribution"""
+        """Post the /gbfg/ Top 30 per contribution"""
         crews = []
         await inter.response.defer()
         for e in self.bot.data.config['granblue']['gbfgcrew']:
             if self.bot.data.config['granblue']['gbfgcrew'][e] in crews: continue
             crews.append(self.bot.data.config['granblue']['gbfgcrew'][e])
         ranking = []
-        players = await self.bot.do(self.updateGBFGData, crews)
-        for cid in players:
-            for pid in players[cid][3]:
-                data = await self.bot.do(self.bot.ranking.searchGWDB, pid, 2)
-                if data is None or data[1] is None:
-                    continue
-                gwid = ''
+        gbfgdata = await self.bot.do(self.updateGBFGData, crews)
+        for cid in gbfgdata:
+            data = await self.bot.do(self.bot.ranking.searchGWDB, " OR id = ".join(gbfgdata[cid][3]), 2)
+            if data is not None and data[1] is not None:
                 if len(data[1]) > 0:
                     gwid = data[1][0].gw
-                    ranking.append([players[cid][0], data[1][0].name, data[1][0].current])
+                    for res in data[1]:
+                        ranking.append([gbfgdata[cid][0], res.name, res.current])
         if len(ranking) == 0:
             await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ Top Player Ranking".format(self.bot.emote.get('gw')), description="Unavailable", color=self.color))
         else:
@@ -1328,17 +1330,22 @@ class GuildWar(commands.Cog):
             if self.bot.data.config['granblue']['gbfgcrew'][e] in crews: continue
             crews.append(self.bot.data.config['granblue']['gbfgcrew'][e])
         ranking = []
-        leaders = await self.bot.do(self.updateGBFGData, crews)
-        for cid in leaders:
-            data = await self.bot.do(self.bot.ranking.searchGWDB, leaders[cid][2], 2)
-            if data is None or data[1] is None:
-                continue
-            gwid = ''
-            if len(data[1]) == 0:
-                ranking.append([leaders[cid][0], leaders[cid][1], None])
-            else:
+        gbfgdata = await self.bot.do(self.updateGBFGData, crews)
+        search = [str(gbfgdata[cid][2]) for cid in gbfgdata]
+        data = await self.bot.do(self.bot.ranking.searchGWDB, " OR id = ".join(search), 2)
+        del search
+        if data is not None and data[1] is not None:
+            if len(data[1]) > 0:
                 gwid = data[1][0].gw
-                ranking.append([leaders[cid][0], leaders[cid][1], data[1][0].current])
+                for cid in gbfgdata:
+                    found = False
+                    for res in data[1]:
+                        if res.id == gbfgdata[cid][2]:
+                            found = True
+                            ranking.append([gbfgdata[cid][0], gbfgdata[cid][1], res.current])
+                            break
+                    if not found:
+                        ranking.append([gbfgdata[cid][0], gbfgdata[cid][1], None])
         if len(ranking) == 0:
             await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ Dancho Ranking".format(self.bot.emote.get('gw')), description="Unavailable", color=self.color))
         else:
