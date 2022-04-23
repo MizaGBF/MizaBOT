@@ -1030,15 +1030,15 @@ class GuildWar(commands.Cog):
                     elif lead_speed is not None: lead_speed -= self.bot.data.save['matchtracker']['speed'][1]
                     else: lead_speed = None
                     
-                    msg += "\n**Speed** ▫️ Now {}/m ▫️ ".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][0]))
+                    msg += "\n**Speed** ▫️ Now {}/m".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['speed'][0]))
                     if self.bot.data.save['matchtracker']['speed'][0] >= self.bot.data.save['matchtracker']['max_speed'][0]:
-                        msg += "**Max {}/m** {} ▫️ ".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['max_speed'][0]), ":white_check_mark:" if i == 0 else ":warning:")
+                        msg += " ▫️ **Max {}/m** {}".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['max_speed'][0]), ":white_check_mark:" if i == 0 else ":warning:")
                     else:
-                        msg += "Max {}/m ▫️ ".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['max_speed'][0]))
+                        msg += " ▫️ Max {}/m".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['max_speed'][0]))
                     if self.bot.data.save['matchtracker']['speed'][0] >= self.bot.data.save['matchtracker']['top_speed'][0]:
-                        msg += "**Top {}/m** {} ▫️ ".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][0]), ":white_check_mark:" if i == 0 else ":warning:")
+                        msg += " ▫️ **Top {}/m** {}".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][0]), ":white_check_mark:" if i == 0 else ":warning:")
                     else:
-                        msg += "Top {}/m ▫️ ".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][0]))
+                        msg += " ▫️ Top {}/m".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][0]))
                     if end_time > self.bot.data.save['matchtracker']['last']:
                         msg += "\n**Estimation** ▫ Now {} ▫️ Max {} ▫️ Top {}".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][0] + self.bot.data.save['matchtracker']['speed'][0] * remaining.seconds//60), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][0] + self.bot.data.save['matchtracker']['max_speed'][0] * remaining.seconds//60), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][0] + self.bot.data.save['matchtracker']['top_speed'][0] * remaining.seconds//60))
                     msg += "\n\n"
