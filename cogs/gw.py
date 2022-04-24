@@ -1068,7 +1068,7 @@ class GuildWar(commands.Cog):
                                     if self.bot.data.save['matchtracker']['max_speed'][1] > self.bot.data.save['matchtracker']['top_speed'][1]:
                                         msg += "\n:confetti_ball: Opponent can't catch up but **can still go faster**, be careful"
                                     else:
-                                        msg += "\n:confetti_ball: Opponent can't catch up without surpassing their **top speed**"
+                                        msg += "\n:confetti_ball: Opponent can't catch up without surpassing their **max speed**"
                                 elif self.bot.data.save['matchtracker']['scores'][0] > current_estimation:
                                     msg += "\n:white_check_mark: Opponent can't catch up without increasing their **current speed**"
                                 else:
