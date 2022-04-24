@@ -384,7 +384,7 @@ class Ranking():
                     if x is not None:
                         last_val = x[3+day]
                         last_update = x[9]
-                        if diff is None or last_val is None or last_val == int(item['point']) or last_update != timestamp or new_timestamp >= timestamp + 1800:
+                        if diff is None or last_val is None or last_val == int(item['point']) or last_update != timestamp or new_timestamp == timestamp:
                             c.execute("UPDATE crews SET ranking = {}, name = '{}', {} = {}, last_time = {} WHERE id = {}".format(int(item['ranking']), item['name'].replace("'", "''"), {0:'preliminaries',1:'total_1',2:'total_2',3:'total_3',4:'total_4'}.get(day, 'undef'), int(item['point']), new_timestamp, int(item['id'])))
                         else:
                             speed = (int(item['point']) - last_val) / diff
