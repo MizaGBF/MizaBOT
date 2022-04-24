@@ -1242,7 +1242,7 @@ class GuildWar(commands.Cog):
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(2, 60, commands.BucketType.guild)
-    @commands.max_concurrency(1, commands.BucketType.default)
+    @commands.max_concurrency(2, commands.BucketType.default)
     async def gbfg(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""
         pass
