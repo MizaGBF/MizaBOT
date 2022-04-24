@@ -347,8 +347,7 @@ class Ranking():
                 c.execute("SELECT * FROM info")
                 x = c.fetchone()
                 timestamp = x[2]
-                prev_time = datetime.fromtimestamp(timestamp) - timedelta(seconds=60*20)
-                diff = self.getrank_update_time - prev_time
+                diff = self.getrank_update_time - datetime.fromtimestamp(timestamp)
                 diff = diff.seconds / 60
                 c.execute("UPDATE info SET date = {} WHERE ver = 3".format(new_timestamp))
 

@@ -1041,7 +1041,10 @@ class GuildWar(commands.Cog):
                     else:
                         msg += " ▫️ Top {}/m".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['top_speed'][i]))
                     if end_time > self.bot.data.save['matchtracker']['last']:
-                        msg += "\n**Estimation** ▫ Now {} ▫️ Max {} ▫️ Top {}".format(self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][i] + self.bot.data.save['matchtracker']['speed'][i] * remaining.seconds//60), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][i] + max_speed * remaining.seconds//60), self.bot.util.valToStrBig(self.bot.data.save['matchtracker']['scores'][i] + self.bot.data.save['matchtracker']['top_speed'][i] * remaining.seconds//60))
+                        current_estimation = self.bot.data.save['matchtracker']['scores'][i] + self.bot.data.save['matchtracker']['speed'][i] * remaining.seconds//60
+                        max_estimation = self.bot.data.save['matchtracker']['scores'][i] + max_speed * remaining.seconds//60
+                        top_estimation = self.bot.data.save['matchtracker']['scores'][i] + self.bot.data.save['matchtracker']['top_speed'][i] * remaining.seconds//60
+                        msg += "\n**Estimation** ▫ Now {} ▫️ Max {} ▫️ Top {}".format(self.bot.util.valToStrBig(current_estimation), self.bot.util.valToStrBig(max_estimation), self.bot.util.valToStrBig(top_estimation))
                     msg += "\n\n"
                 lead = self.bot.data.save['matchtracker']['scores'][0] - self.bot.data.save['matchtracker']['scores'][1]
                 if lead != 0:
@@ -1050,6 +1053,7 @@ class GuildWar(commands.Cog):
                         try:
                             if lead < 0: lead_speed *= -1
                             msg += " ▫ {}/m".format(self.bot.util.valToStrBig(lead_speed))
+                            lead_will_switch = False
                             if lead_speed < 0:
                                 minute = abs(lead) / abs(lead_speed)
                                 d = self.bot.data.save['matchtracker']['last'] + timedelta(seconds=minute*60)
@@ -1058,13 +1062,17 @@ class GuildWar(commands.Cog):
                                     if lead > 0: msg += "\n:warning: "
                                     else: msg += "\n:white_check_mark: "
                                     msg += "The Lead switches in **{}** at current speeds".format(self.bot.util.delta2str(d - ct))
-                                elif lead > 0:
-                                    if self.bot.data.save['matchtracker']['scores'][0] > top_estimation:
-                                        msg += "\n:confetti_ball: Opponent can't catch up without surpassing their **top speed**"
-                                    elif self.bot.data.save['matchtracker']['scores'][0] > current_estimation:
-                                        msg += "\n:white_check_mark: Opponent can't catch up without increasing their **current speed**"
+                                    lead_will_switch = True
+                            if not lead_will_switch and lead > 0:
+                                if self.bot.data.save['matchtracker']['scores'][0] > top_estimation:
+                                    if self.bot.data.save['matchtracker']['max_speed'][1] > self.bot.data.save['matchtracker']['top_speed'][1]:
+                                        msg += "\n:confetti_ball: Opponent can't catch up but **can still go faster**, be careful"
                                     else:
-                                        msg += "\n:ok: Opponent can't catch up at **current speeds**, keep going!"
+                                        msg += "\n:confetti_ball: Opponent can't catch up without surpassing their **top speed**"
+                                elif self.bot.data.save['matchtracker']['scores'][0] > current_estimation:
+                                    msg += "\n:white_check_mark: Opponent can't catch up without increasing their **current speed**"
+                                else:
+                                    msg += "\n:ok: Opponent can't catch up at **current speeds**, keep going!"
                         except:
                             pass
 
