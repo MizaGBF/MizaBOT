@@ -655,7 +655,14 @@ class Ranking():
         newtracker = self.bot.data.save['matchtracker'].copy()
         if newtracker['init']:
             d = t - newtracker['last']
-            speed = [(infos[0][1] - newtracker['scores'][0]) / (d.seconds//60), (infos[1][1] - newtracker['scores'][1]) / (d.seconds//60)]
+            speed = d.seconds//60
+            # rounding to multiple of 20min
+            if speed % 20 > 15:
+                speed += 20 - (speed % 20)
+            elif speed % 20 < 5:
+                speed -= (speed % 20)
+            # applying
+            speed = [(infos[0][1] - newtracker['scores'][0]) / speed, (infos[1][1] - newtracker['scores'][1]) / speed]
             if speed[0] > newtracker['top_speed'][0]: newtracker['top_speed'][0] = speed[0]
             if speed[1] > newtracker['top_speed'][1]: newtracker['top_speed'][1] = speed[1]
             newtracker['speed'] = speed
