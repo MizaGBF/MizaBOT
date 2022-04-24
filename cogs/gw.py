@@ -1312,6 +1312,7 @@ class GuildWar(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ Top Player Ranking".format(self.bot.emote.get('gw')), description="Unavailable outside of Guild War", color=self.color))
             return
         for cid in gbfgdata:
+            if len(gbfgdata[cid][3]) == 0: continue
             data = await self.bot.do(self.bot.ranking.searchGWDB, " OR id = ".join(gbfgdata[cid][3]), 2)
             if data is not None and data[1] is not None:
                 if len(data[1]) > 0:
