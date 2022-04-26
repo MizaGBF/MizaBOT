@@ -524,7 +524,7 @@ class GuildWar(commands.Cog):
         """Convert Guild War meat values"""
         try:
             meat = self.bot.util.strToInt(value)
-            if meat < 5 or meat > 100000: raise Exception()
+            if meat < 5 or meat > 400000: raise Exception()
             nm90 = meat // 5
             nm95 = meat // 10
             nm100 = meat // 20
@@ -615,7 +615,7 @@ class GuildWar(commands.Cog):
         except Exception as e:
             if str(e) != "": msg = "\nException: {}".format(e)
             else: msg = ""
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Speed Comparator Error".format(self.bot.emote.get('gw')), description="**Usage:**\nPut a list of the fight you want to compare with your speed.\nExample:\n`/gwspeed ex+=5 90=20 95=2:00`\nOnly put space between each fight, not in the formulas.\n{}".format(msg), color=self.color), ephemeral=True)
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Speed Comparator Error".format(self.bot.emote.get('gw')), description="**Usage:**\nPut a list of the fight you want to compare with your speed.\nExample:\n`/gw speed ex+=5 nm90=20 nm95=2:00`\nOnly put space between each fight, not in the formulas.\n{}".format(msg), color=self.color), ephemeral=True)
 
     """getCrewSummary()
     Get a GBF crew summary (what you see on the main page of a crew)
