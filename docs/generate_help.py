@@ -114,7 +114,7 @@ def generate_html(command_list): # main function to generate the html
         print(cmd_count - prev_count, "slash commands in Cog:", cog, "(total:", cmd_count, ")")
         prev_count = cmd_count
     print("Total:", cmd_count, "slash commands,", other_count, "other commands")
-    if cmd_count > 95:
+    if cmd_count > 50:
         print("Warning, the number of slash commands might be too high")
     for key in sub_count:
         if sub_count[key] > 10:
