@@ -827,7 +827,7 @@ class Admin(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", footer=str(e), color=self.color), ephemeral=True)
             await self.bot.sendError('setgw', e)
 
-    @gw.sub_command_group()
+    @_owner.sub_command_group()
     async def buff(self, inter: disnake.GuildCommandInteraction):
         pass
 
