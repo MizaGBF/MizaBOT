@@ -406,29 +406,6 @@ class GranblueFantasy(commands.Cog):
         await self.bot.util.clean(inter, 45)
 
     @gbf.sub_command()
-    async def leechlist(self, inter: disnake.GuildCommandInteraction):
-        """Post a link to /gbfg/ leechlist collection"""
-        ls = self.bot.data.config['strings']["leechlist()"].split(";")
-        # note: string is in the following format:
-        # button label 1###url 1;button label 2###url 2;...;button label N###url N
-        urls = []
-        for l in ls:
-            if l == "": continue
-            urls.append(l.split("###"))
-        view = UrlButton(self.bot, urls)
-        await inter.response.send_message('\u200b', view=view)
-        view.stopall()
-        await self.bot.util.clean(inter, 60)
-
-    @gbf.sub_command()
-    async def spreadsheet(self, inter: disnake.GuildCommandInteraction):
-        """Post a link to my SpreadSheet Folder"""
-        view = UrlButton(self.bot, [('SpreadSheet Folder', self.bot.data.config['strings']["sheetfolder()"])])
-        await inter.response.send_message('\u200b', view=view)
-        view.stopall()
-        await self.bot.util.clean(inter, 60)
-
-    @gbf.sub_command()
     async def info(self, inter: disnake.GuildCommandInteraction):
         """Post various Granblue Fantasy informations"""
         current_time = self.bot.util.JST(delay=False)
@@ -513,21 +490,6 @@ class GranblueFantasy(commands.Cog):
                 await inter.response.send_message(embed=self.bot.util.embed(title="Granblue Fantasy", description="No maintenance in my memory", color=self.color))
         except Exception as e:
             await self.bot.sendError("getMaintenanceStatus", e)
-
-    @gbf.sub_command()
-    async def raidfinder(self, inter: disnake.GuildCommandInteraction):
-        """Post the (You) python raidfinder"""
-        ls = self.bot.data.config['strings']["pyfinder()"].split(";")
-        # note: string is in the following format:
-        # button label 1###url 1;button label 2###url 2;...;button label N###url N
-        urls = []
-        for l in ls:
-            if l == "": continue
-            urls.append(l.split("###"))
-        view = UrlButton(self.bot, urls)
-        await inter.response.send_message('\u200b', view=view)
-        view.stopall()
-        await self.bot.util.clean(inter, 60)
 
     @gbf.sub_command()
     async def stream(self, inter: disnake.GuildCommandInteraction, op : str = commands.Param(default="")):
@@ -642,205 +604,6 @@ class GranblueFantasy(commands.Cog):
                     pass
             await inter.edit_original_message(embed=self.bot.util.embed(title="🗓 Event Schedule {} {}".format(self.bot.emote.get('clock'), self.bot.util.time(style='dt')), url="https://twitter.com/granblue_en", color=self.color, description=msg))
 
-    @gbf.sub_command()
-    async def koregra(self, inter: disnake.GuildCommandInteraction):
-        """Post the time to the next monthly dev post"""
-        c = self.bot.util.JST()
-        try:
-            if c < self.bot.data.save['stream']['time']:
-                target = self.bot.data.save['stream']['time']
-            else:
-                raise Exception()
-        except:
-            if c.day == 1:
-                if c.hour >= 12:
-                    if c.month == 12: target = datetime(year=c.year+1, month=1, day=1, hour=12, minute=0, second=0, microsecond=0)
-                    else: target = datetime(year=c.year, month=c.month+1, day=1, hour=12, minute=0, second=0, microsecond=0)
-                else:
-                    target = datetime(year=c.year, month=c.month, day=1, hour=12, minute=0, second=0, microsecond=0)
-            else:
-                if c.month == 12: target = datetime(year=c.year+1, month=1, day=1, hour=12, minute=0, second=0, microsecond=0)
-                else: target = datetime(year=c.year, month=c.month+1, day=1, hour=12, minute=0, second=0, microsecond=0)
-        delta = target - c
-        await inter.response.send_message(embed=self.bot.util.embed(title="{} Kore Kara".format(self.bot.emote.get('clock')), description="Release approximately in **{}**".format(self.bot.util.delta2str(delta, 2)),  url="https://granbluefantasy.jp/news/index.php", thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
-
-    @gbf.sub_command()
-    async def critical(self, inter: disnake.GuildCommandInteraction, weapons : str = commands.Param(description='List of weapon modifiers. Put nothing to get the list.', default='')):
-        """Calculate critical rate"""
-        values = {'small10':2, 'small15':3, 'small20':4, 'medium10':5, 'medium15':6.5, 'medium20':7.5, 'big10':8, 'big15':10, 'big20':11, 'bigii15':12, 'wamdus':20, 'hercules':11.5, 'sephira':30}
-        ts = {'small':'small15', 'med':'medium15', 'medium':'medium15', 'big':'big15', 'big2':'bigii15', 's10':'small10', 's15':'small15', 's20':'small20', 'm10':'medium10', 'm15':'medium15', 'm20':'medium20', 'med10':'medium10', 'med15':'medium15', 'med20':'medium20', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'bii10':'bigii10', 'bii15':'bigii15', 'b210':'bigii10', 'b215':'bigii15', 'big210':'bigii10', 'big215':'bigii15', 'ameno':'medium20', 'gaebulg':'medium20', 'bulg':'medium20', 'bulge':'medium20', 'gae':'medium20', 'mjolnir':'small20', 'herc':'hercules', 'ecke':'medium15', 'eckesachs':'medium15', 'sachs':'medium15', 'blut':'small15', 'blutgang':'small15', 'indra':'medium15', 'ivory':'bigii15', 'ivoryark':'bigii15', 'ark':'bigii15', 'auberon':'medium15', 'aub':'medium15', 'taisai':'big15', 'pholia':'big15', 'galilei':'medium15', 'europa':'medium15', 'benedia':'medium15', 'thunderbolt':'big15', 'shibow':'big15', 'rein':'bigii15', 'babel':'bigii15', 'mandeb':'bigii15', 'bab-el-mandeb':'bigii15', 'arca':'sephira', 'arcarum':'sephira', 'spoon':'medium15', 'coruscant':'medium15', 'crozier':'medium15', 'eva':'bigii15', 'evanescence':'bigii15', 'opus':'medium20'}
-        flats = ['wamdus', 'sephira']
-        try:
-            if weapons == "": raise Exception("Empty Parameter")
-            mods = weapons.lower().split(' ')
-            s1 = ""
-            s2 = ""
-            base = 0
-            flat = 0
-            for m in mods:
-                if ts.get(m, m) in flats:
-                    flat += values[ts.get(m, m)]
-                    s2 += "{}+".format(values[ts.get(m, m)])
-                else:
-                    if len(m) > 0 and m[0] == 'u':
-                        flat += values[ts.get(m[1:], m[1:])]
-                        s2 += "{}+".format(values[ts.get(m[1:], m[1:])])
-                    else:
-                        base += values[ts.get(m, m)]
-                        s1 += "{}+".format(values[ts.get(m, m)])
-            if s1 != "": s1 = "Boosted " + s1[:-1]
-            if s2 != "":
-                if s1 != "": s1 += ", "
-                s1 = s1 + "Unboosted " + s2[:-1]
-            msg =  "**Aura ▫️ Critical ▫️▫️ Aura ▫️ Critical**\n"
-            msg += "140% ▫️ {:.1f}% ▫️▫️ 290% ▫️ {:.1f}%\n".format(min(base*2.4 + flat, 100), min(base*3.9 + flat, 100))
-            msg += "150% ▫️ {:.1f}% ▫️▫️ 300% ▫️ {:.1f}%\n".format(min(base*2.5 + flat, 100), min(base*4 + flat, 100))
-            msg += "160% ▫️ {:.1f}% ▫️▫️ 310% ▫️ {:.1f}%\n".format(min(base*2.6 + flat, 100), min(base*4.1 + flat, 100))
-            msg += "170% ▫️ {:.1f}% ▫️▫️ 320% ▫️ {:.1f}%\n".format(min(base*2.7 + flat, 100), min(base*4.2 + flat, 100))
-            msg += "280% ▫️ {:.1f}%\n".format(min(base*3.8 + flat, 100))
-            await inter.response.send_message(embed=self.bot.util.embed(title="Critical Calculator", description=msg.replace('.0%', '%').replace('100%', '**100%**'), footer=s1, color=self.color), ephemeral=True)
-        except Exception as e:
-            if str(e) == "Empty Parameter":
-                modstr = ""
-                for m in values:
-                    modstr += "`{}`, ".format(m)
-                for m in ts:
-                    modstr += "`{}`, ".format(m)
-                await inter.response.send_message(embed=self.bot.util.embed(title="Critical Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `u` before a modifier to make it unboosted" , color=self.color), ephemeral=True)
-            else:
-                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
-
-    @gbf.sub_command()
-    async def enmity(self, inter: disnake.GuildCommandInteraction, hp : int = commands.Param(description="HP%", ge=1, le=100, default=60), weapons : str = commands.Param(description='List of weapon modifiers. Put nothing to get the list.', default='')):
-        """Calculate enmity strength at a specific hp value"""
-        values = {'small10':6, 'small15':7, 'small20':7.5, 'medium10':8, 'medium15':10, 'big10':10, 'big15':12.5, 'big20':13.5}
-        ts = {'small':'small15', 'med':'medium15', 'medium':'medium15', 'big':'big15', 's10':'small10', 's15':'small15', 's20':'small20', 'm10':'medium10', 'm15':'medium15', 'med10':'medium10', 'med15':'medium15', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'opus':'big20'}
-        flats = []
-        try:
-            if hp < 1: hp = 1
-            elif hp > 100: hp = 100
-            if weapons == "": raise Exception("Empty Parameter")
-            mods = weapons.lower().split(' ')
-            s1 = ""
-            s2 = ""
-            base = 0
-            flat = 0
-            for m in mods:
-                if ts.get(m, m) in flats:
-                    flat += values[ts.get(m, m)]
-                    s2 += "{}+".format(values[ts.get(m, m)])
-                else:
-                    if len(m) > 0 and m[0] == 'u':
-                        flat += values[ts.get(m[1:], m[1:])]
-                        s2 += "{}+".format(values[ts.get(m[1:], m[1:])])
-                    else:
-                        base += values[ts.get(m, m)]
-                        s1 += "{}+".format(values[ts.get(m, m)])
-            if s1 != "": s1 = "Boosted " + s1[:-1]
-            if s2 != "":
-                if s1 != "": s1 += ", "
-                s1 = s1 + "Unboosted " + s2[:-1]
-            hp_ratio = 1 - hp / 100.0
-            base_val = base * ((1 + 2 * hp_ratio) * hp_ratio)
-            flat_val = flat * ((1 + 2 * hp_ratio) * hp_ratio)
-            msg =  "**Aura ▫️ Enmity ▫️▫️ Aura ▫️ Enmity**\n"
-            msg += "140% ▫️ {:.1f}% ▫️▫️ 290% ▫️ {:.1f}%\n".format(base_val*2.4 + flat_val, base_val*3.9 + flat_val)
-            msg += "150% ▫️ {:.1f}% ▫️▫️ 300% ▫️ {:.1f}%\n".format(base_val*2.5 + flat_val, base_val*4 + flat_val)
-            msg += "160% ▫️ {:.1f}% ▫️▫️ 310% ▫️ {:.1f}%\n".format(base_val*2.6 + flat_val, base_val*4.1 + flat_val)
-            msg += "170% ▫️ {:.1f}% ▫️▫️ 320% ▫️ {:.1f}%\n".format(base_val*2.7 + flat_val, base_val*4.2 + flat_val)
-            msg += "280% ▫️ {:.1f}%\n".format(base_val*3.8 + flat_val)
-            await inter.response.send_message(embed=self.bot.util.embed(title="Enmity Calculator ▫️ {}% HP".format(hp), description=msg.replace('.0%', '%'), footer=s1, color=self.color), ephemeral=True)
-        except Exception as e:
-            if str(e) == "Empty Parameter":
-                modstr = ""
-                for m in values:
-                    modstr += "`{}`, ".format(m)
-                for m in ts:
-                    modstr += "`{}`, ".format(m)
-                await inter.response.send_message(embed=self.bot.util.embed(title="Enmity Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `u` before a modifier to make it unboosted" , color=self.color), ephemeral=True)
-            else:
-                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
-
-    @gbf.sub_command()
-    async def stamina(self, inter: disnake.GuildCommandInteraction, hp : int = commands.Param(description="HP%", ge=1, le=100, default=100), weapons : str = commands.Param(description='List of weapon modifiers. Put nothing to get the list.', default='')):
-        """Calculate stamina strength at a specific hp value"""
-        values = {'medium10':(10, 65), 'medium15':(15, 65), 'medium20':(20, 65), 'big10':(10, 56.4), 'big15':(15, 56.4), 'big20':(20, 56.4), 'bigii10':(10, 53.7), 'bigii15':(15, 53.7), 'ancestral':(15, 50.4), 'omegamedium10':(10, 60.4), 'omegamedium15':(15, 60.4), 'omegabig10':(10, 56.4), 'omegabig15':(15, 56.4)}
-        ts = {'med':'medium15', 'medium':'medium15', 'big':'big15', 'big2':'bigii15', 'omed':'omegamedium15', 'omedium':'omegamedium15', 'obig':'omegabig15', 'm10':'medium10', 'm15':'medium15', 'm20':'medium20', 'med10':'medium10', 'med15':'medium15', 'med20':'medium20', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'bii10':'bigii10', 'bii15':'bigii15', 'b210':'bigii10', 'b215':'bigii15', 'big210':'bigii10', 'big215':'bigii15', 'dragon':'ancestral', 'opus':'big20', 'om10':'omegamedium10', 'om15':'omegamedium15', 'omed10':'omegamedium10', 'omed15':'omegamedium15', 'ob10':'omegabig10', 'ob15':'omegabig15'}
-        flats = ['ancestral']
-        try:
-            if hp < 1: hp = 1
-            elif hp > 100: hp = 100
-            if weapons == "": raise Exception("Empty Parameter")
-            mods = weapons.lower().split(' ')
-            if hp < 25:
-                s1 = ""
-                base_val = 0
-                flat_val = 0
-            else:
-                s1 = ""
-                s2 = ""
-                base = 0
-                flat = 0
-                hp_ratio = 100.0 * hp / 100.0
-                for m in mods:
-                    if ts.get(m, m) in flats:
-                        v = values[ts.get(m, m)]
-                        if v[0] > 15: v = math.pow(hp_ratio / (v[1] - (15 + (0.4 * (v[0] - 15)))), 2.9) + 2.1
-                        else: v = math.pow(hp_ratio / (v[1] - v[0]), 2.9) + 2.1
-                        flat += v
-                        s2 += "{:.1f}+".format(v)
-                    else:
-                        if len(m) > 0 and m[0] == 'u':
-                            v = values[ts.get(m[1:], m[1:])]
-                            if v[0] > 15: v = math.pow(hp_ratio / (v[1] - (15 + (0.4 * (v[0] - 15)))), 2.9) + 2.1
-                            else: v = math.pow(hp_ratio / (v[1] - v[0]), 2.9) + 2.1
-                            flat += v
-                            s2 += "{:.1f}+".format(v)
-                        else:
-                            v = values[ts.get(m, m)]
-                            if v[0] > 15: v = math.pow(hp_ratio / (v[1] - (15 + (0.4 * (v[0] - 15)))), 2.9) + 2.1
-                            else: v = math.pow(hp_ratio / (v[1] - v[0]), 2.9) + 2.1
-                            base += v
-                            s1 += "{:.1f}+".format(v)
-                if s1 != "": s1 = "Boosted " + s1[:-1]
-                if s2 != "":
-                    if s1 != "": s1 += ", "
-                    s1 = s1 + "Unboosted " + s2[:-1]
-                base_val = base * ((1 + 2 * hp_ratio) * hp_ratio)
-                flat_val = flat * ((1 + 2 * hp_ratio) * hp_ratio)
-            msg =  "**Aura ▫️ Stamina ▫️▫️ Aura ▫️ Stamina**\n"
-            msg += "140% ▫️ {:.1f}% ▫️▫️ 290% ▫️ {:.1f}%\n".format(base_val*2.4 + flat_val, base_val*3.9 + flat_val)
-            msg += "150% ▫️ {:.1f}% ▫️▫️ 300% ▫️ {:.1f}%\n".format(base_val*2.5 + flat_val, base_val*4 + flat_val)
-            msg += "160% ▫️ {:.1f}% ▫️▫️ 310% ▫️ {:.1f}%\n".format(base_val*2.6 + flat_val, base_val*4.1 + flat_val)
-            msg += "170% ▫️ {:.1f}% ▫️▫️ 320% ▫️ {:.1f}%\n".format(base_val*2.7 + flat_val, base_val*4.2 + flat_val)
-            msg += "280% ▫️ {:.1f}%\n".format(base_val*3.8 + flat_val)
-            await inter.response.send_message(embed=self.bot.util.embed(title="Stamina Calculator ▫️ {}% HP".format(hp), description=msg.replace('.0%', '%'), footer=s1.replace('.0', ''), color=self.color), ephemeral=True)
-        except Exception as e:
-            if str(e) == "Empty Parameter":
-                modstr = ""
-                for m in values:
-                    modstr += "`{}`, ".format(m)
-                for m in ts:
-                    modstr += "`{}`, ".format(m)
-                await inter.response.send_message(embed=self.bot.util.embed(title="Stamina Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `u` before a modifier to make it unboosted" , color=self.color))
-            else:
-                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
-
-    @gbf.sub_command()
-    async def xp(self, inter: disnake.GuildCommandInteraction, start_level : int = commands.Param(description="Starting Point of the calcul", ge=1, le=149, default=1), end_level : int = commands.Param(description="Final Point of the calcul", ge=1, le=150, default=1)):
-        """Character experience calculator"""
-        xptable = [None, 30, 70, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 550, 600, 650, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 3600, 3800, 4000, 4200, 4400, 4600, 4800, 5000, 5250, 5500, 5750, 6000, 6250, 6500, 6750, 7000, 7250, 7500, 7800, 8100, 8400, 8700, 9000, 9500, 10000, 10500, 11000, 11500, 12000, 12500, 13000, 13500, 14000, 14500, 15000, 15500, 16000, 50000, 20000, 21000, 22000, 23000, 24000, 25000, 26000, 27000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000, 500000, 1000000, 1000000, 1200000, 1200000, 1200000, 1200000, 1200000, 1250000, 1250000, 1250000, 1250000, 1250000, 1300000, 1300000, 1300000, 1300000, 1300000, 1350000, 1350000, 1350000, 1350000, 1350000, 1400000, 1400000, 1400000, 1400000, 1400000, 1450000, 1450000, 1450000, 1450000, 1450000, 1500000, 1500000, 1500000, 1500000, 1500000, 1550000, 1550000, 1550000, 1550000, 1550000, 1600000, 1600000, 1600000, 1600000, 1600000, 1650000, 1650000, 1650000, 1650000, 0]
-        if start_level < 1: start_level = 1
-        elif start_level >= 150: start_level = 149
-        msg = "From level **{}**, you need:\n".format(start_level)
-        xpcount = xptable[start_level]
-        for lvl in range(start_level+1, 151):
-            if lvl in [80, 100, 110, 120, 130, 140, 150, end_level]:
-                msg += "**{:,} XP** for lvl **{:}** ({:} books or {:,} candies)\n".format(xpcount, lvl, math.ceil(xpcount / 300000), math.ceil(xpcount / 745))
-                if lvl == end_level: break
-            xpcount += xptable[lvl]
-        await inter.response.send_message(embed=self.bot.util.embed(title="Experience Calculator", description=msg, color=self.color), ephemeral=True)
-
     """getGrandList()
     Request the grand character list from the wiki page and return the list of latest released ones
     
@@ -897,42 +660,6 @@ class GranblueFantasy(commands.Cog):
                             if grand_list[grand['element']] is None or grand['date'] > grand_list[grand['element']]['date']:
                                 grand_list[grand['element']] = grand
                     return grand_list
-
-    @gbf.sub_command()
-    async def doom(self, inter: disnake.GuildCommandInteraction):
-        """Give the time elapsed of various GBF related releases"""
-        await inter.response.defer()
-        msg = ""
-        wiki_checks = ["Main_Quests", "Category:Campaign", "Surprise_Special_Draw_Set", "Damascus_Ingot", "Gold_Brick", "Sunlight_Stone", "Sephira_Evolite"]
-        regexs = ["Time since last release\\s*<\/th><\/tr>\\s*<tr>\\s*<td colspan=\"3\" style=\"text-align: center;\">(\\d+ days)", "<td>(\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(-\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td style=\"text-align: left;\">Time since last ", "<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td>(\\d+ days)<\\/td>\\s*"]
-        async with aiohttp.ClientSession() as session:
-            for w in wiki_checks:
-                async with session.get("https://gbf.wiki/{}".format(w)) as r:
-                    if r.status == 200:
-                        t = await r.text()
-                        for r in regexs:
-                            m = re.search(r, t)
-                            if m:
-                                msg += "**{}** since the last [{}](https://gbf.wiki/{})\n".format(m.group(1), w.replace("_", " ").replace("Category:", "").replace('Sunlight', 'Arcarum Sunlight').replace('Sephira', 'Arcarum Sephira').replace('Gold', 'ROTB Gold'), w)
-                                break
-
-        # summer disaster
-        c = self.bot.util.JST()
-        msg += "**{} days** since the Summer Fortune 2021\n".format(self.bot.util.delta2str(c - c.replace(year=2021, month=8, day=16, hour=19, minute=0, second=0, microsecond=0), 3).split('d')[0])
-        
-        # grand
-        try:
-            grands = await self.getGrandList()
-            for e in grands:
-                msg += "**{} days** since {} [{}](https://gbf.wiki/{})\n".format(self.bot.util.delta2str(c - grands[e]['date'], 3).split('d')[0], self.bot.emote.get(e), grands[e]['name'], grands[e]['name'].replace(' ', '_'))
-        except:
-            pass
-
-        if msg != "":
-            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, footer="Source: http://gbf.wiki/", color=self.color))
-        else:
-            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
-        await self.bot.util.clean(inter, 40)
 
     @gbf.sub_command()
     async def gacha(self, inter: disnake.GuildCommandInteraction):
@@ -1386,7 +1113,249 @@ class GranblueFantasy(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color))
         await self.bot.util.clean(inter, 60)
 
-    @gbf.sub_command()
+    @gbf.sub_command(name="crew")
+    async def _crew(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param(description="Crew ID")):
+        """Get a crew profile (Use /gw crew for contributions)"""
+        await inter.response.defer()
+        try:
+            # retrieve formatted crew data
+            crew = await self.bot.do(self.bot.get_cog('GuildWar').getCrewData, id, 0)
+
+            if 'error' in crew: # print the error if any
+                if len(crew['error']) > 0:
+                    await inter.edit_original_message(embed=self.bot.util.embed(title="Crew Error", description=crew['error'], color=self.color))
+                return
+
+            title, description, fields, footer = await self.bot.do(self.bot.get_cog('GuildWar').processCrewData, crew, 1)
+            await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=description, fields=fields, inline=True, url="http://game.granbluefantasy.jp/#guild/detail/{}".format(crew['id']), footer=footer, timestamp=crew['timestamp'], color=self.color))
+        except Exception as e:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
+        await self.bot.util.clean(inter, 60)
+
+    @gbf.sub_command_group(name="utility")
+    async def _utility(self, inter: disnake.GuildCommandInteraction):
+        pass
+
+    @_utility.sub_command()
+    async def leechlist(self, inter: disnake.GuildCommandInteraction):
+        """Post a link to /gbfg/ leechlist collection"""
+        ls = self.bot.data.config['strings']["leechlist()"].split(";")
+        # note: string is in the following format:
+        # button label 1###url 1;button label 2###url 2;...;button label N###url N
+        urls = []
+        for l in ls:
+            if l == "": continue
+            urls.append(l.split("###"))
+        view = UrlButton(self.bot, urls)
+        await inter.response.send_message('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(inter, 60)
+
+    @_utility.sub_command()
+    async def spreadsheet(self, inter: disnake.GuildCommandInteraction):
+        """Post a link to my SpreadSheet Folder"""
+        view = UrlButton(self.bot, [('SpreadSheet Folder', self.bot.data.config['strings']["sheetfolder()"])])
+        await inter.response.send_message('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(inter, 60)
+
+    @_utility.sub_command()
+    async def raidfinder(self, inter: disnake.GuildCommandInteraction):
+        """Post the (You) python raidfinder"""
+        ls = self.bot.data.config['strings']["pyfinder()"].split(";")
+        # note: string is in the following format:
+        # button label 1###url 1;button label 2###url 2;...;button label N###url N
+        urls = []
+        for l in ls:
+            if l == "": continue
+            urls.append(l.split("###"))
+        view = UrlButton(self.bot, urls)
+        await inter.response.send_message('\u200b', view=view)
+        view.stopall()
+        await self.bot.util.clean(inter, 60)
+
+    @_utility.sub_command()
+    async def critical(self, inter: disnake.GuildCommandInteraction, weapons : str = commands.Param(description='List of weapon modifiers. Put nothing to get the list.', default='')):
+        """Calculate critical rate"""
+        values = {'small10':2, 'small15':3, 'small20':4, 'medium10':5, 'medium15':6.5, 'medium20':7.5, 'big10':8, 'big15':10, 'big20':11, 'bigii15':12, 'wamdus':20, 'hercules':11.5, 'sephira':30}
+        ts = {'small':'small15', 'med':'medium15', 'medium':'medium15', 'big':'big15', 'big2':'bigii15', 's10':'small10', 's15':'small15', 's20':'small20', 'm10':'medium10', 'm15':'medium15', 'm20':'medium20', 'med10':'medium10', 'med15':'medium15', 'med20':'medium20', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'bii10':'bigii10', 'bii15':'bigii15', 'b210':'bigii10', 'b215':'bigii15', 'big210':'bigii10', 'big215':'bigii15', 'ameno':'medium20', 'gaebulg':'medium20', 'bulg':'medium20', 'bulge':'medium20', 'gae':'medium20', 'mjolnir':'small20', 'herc':'hercules', 'ecke':'medium15', 'eckesachs':'medium15', 'sachs':'medium15', 'blut':'small15', 'blutgang':'small15', 'indra':'medium15', 'ivory':'bigii15', 'ivoryark':'bigii15', 'ark':'bigii15', 'auberon':'medium15', 'aub':'medium15', 'taisai':'big15', 'pholia':'big15', 'galilei':'medium15', 'europa':'medium15', 'benedia':'medium15', 'thunderbolt':'big15', 'shibow':'big15', 'rein':'bigii15', 'babel':'bigii15', 'mandeb':'bigii15', 'bab-el-mandeb':'bigii15', 'arca':'sephira', 'arcarum':'sephira', 'spoon':'medium15', 'coruscant':'medium15', 'crozier':'medium15', 'eva':'bigii15', 'evanescence':'bigii15', 'opus':'medium20'}
+        flats = ['wamdus', 'sephira']
+        try:
+            if weapons == "": raise Exception("Empty Parameter")
+            mods = weapons.lower().split(' ')
+            s1 = ""
+            s2 = ""
+            base = 0
+            flat = 0
+            for m in mods:
+                if ts.get(m, m) in flats:
+                    flat += values[ts.get(m, m)]
+                    s2 += "{}+".format(values[ts.get(m, m)])
+                else:
+                    if len(m) > 0 and m[0] == 'u':
+                        flat += values[ts.get(m[1:], m[1:])]
+                        s2 += "{}+".format(values[ts.get(m[1:], m[1:])])
+                    else:
+                        base += values[ts.get(m, m)]
+                        s1 += "{}+".format(values[ts.get(m, m)])
+            if s1 != "": s1 = "Boosted " + s1[:-1]
+            if s2 != "":
+                if s1 != "": s1 += ", "
+                s1 = s1 + "Unboosted " + s2[:-1]
+            msg =  "**Aura ▫️ Critical ▫️▫️ Aura ▫️ Critical**\n"
+            msg += "140% ▫️ {:.1f}% ▫️▫️ 290% ▫️ {:.1f}%\n".format(min(base*2.4 + flat, 100), min(base*3.9 + flat, 100))
+            msg += "150% ▫️ {:.1f}% ▫️▫️ 300% ▫️ {:.1f}%\n".format(min(base*2.5 + flat, 100), min(base*4 + flat, 100))
+            msg += "160% ▫️ {:.1f}% ▫️▫️ 310% ▫️ {:.1f}%\n".format(min(base*2.6 + flat, 100), min(base*4.1 + flat, 100))
+            msg += "170% ▫️ {:.1f}% ▫️▫️ 320% ▫️ {:.1f}%\n".format(min(base*2.7 + flat, 100), min(base*4.2 + flat, 100))
+            msg += "280% ▫️ {:.1f}%\n".format(min(base*3.8 + flat, 100))
+            await inter.response.send_message(embed=self.bot.util.embed(title="Critical Calculator", description=msg.replace('.0%', '%').replace('100%', '**100%**'), footer=s1, color=self.color), ephemeral=True)
+        except Exception as e:
+            if str(e) == "Empty Parameter":
+                modstr = ""
+                for m in values:
+                    modstr += "`{}`, ".format(m)
+                for m in ts:
+                    modstr += "`{}`, ".format(m)
+                await inter.response.send_message(embed=self.bot.util.embed(title="Critical Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `u` before a modifier to make it unboosted" , color=self.color), ephemeral=True)
+            else:
+                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
+
+    @_utility.sub_command()
+    async def enmity(self, inter: disnake.GuildCommandInteraction, hp : int = commands.Param(description="HP%", ge=1, le=100, default=60), weapons : str = commands.Param(description='List of weapon modifiers. Put nothing to get the list.', default='')):
+        """Calculate enmity strength at a specific hp value"""
+        values = {'small10':6, 'small15':7, 'small20':7.5, 'medium10':8, 'medium15':10, 'big10':10, 'big15':12.5, 'big20':13.5}
+        ts = {'small':'small15', 'med':'medium15', 'medium':'medium15', 'big':'big15', 's10':'small10', 's15':'small15', 's20':'small20', 'm10':'medium10', 'm15':'medium15', 'med10':'medium10', 'med15':'medium15', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'opus':'big20'}
+        flats = []
+        try:
+            if hp < 1: hp = 1
+            elif hp > 100: hp = 100
+            if weapons == "": raise Exception("Empty Parameter")
+            mods = weapons.lower().split(' ')
+            s1 = ""
+            s2 = ""
+            base = 0
+            flat = 0
+            for m in mods:
+                if ts.get(m, m) in flats:
+                    flat += values[ts.get(m, m)]
+                    s2 += "{}+".format(values[ts.get(m, m)])
+                else:
+                    if len(m) > 0 and m[0] == 'u':
+                        flat += values[ts.get(m[1:], m[1:])]
+                        s2 += "{}+".format(values[ts.get(m[1:], m[1:])])
+                    else:
+                        base += values[ts.get(m, m)]
+                        s1 += "{}+".format(values[ts.get(m, m)])
+            if s1 != "": s1 = "Boosted " + s1[:-1]
+            if s2 != "":
+                if s1 != "": s1 += ", "
+                s1 = s1 + "Unboosted " + s2[:-1]
+            hp_ratio = 1 - hp / 100.0
+            base_val = base * ((1 + 2 * hp_ratio) * hp_ratio)
+            flat_val = flat * ((1 + 2 * hp_ratio) * hp_ratio)
+            msg =  "**Aura ▫️ Enmity ▫️▫️ Aura ▫️ Enmity**\n"
+            msg += "140% ▫️ {:.1f}% ▫️▫️ 290% ▫️ {:.1f}%\n".format(base_val*2.4 + flat_val, base_val*3.9 + flat_val)
+            msg += "150% ▫️ {:.1f}% ▫️▫️ 300% ▫️ {:.1f}%\n".format(base_val*2.5 + flat_val, base_val*4 + flat_val)
+            msg += "160% ▫️ {:.1f}% ▫️▫️ 310% ▫️ {:.1f}%\n".format(base_val*2.6 + flat_val, base_val*4.1 + flat_val)
+            msg += "170% ▫️ {:.1f}% ▫️▫️ 320% ▫️ {:.1f}%\n".format(base_val*2.7 + flat_val, base_val*4.2 + flat_val)
+            msg += "280% ▫️ {:.1f}%\n".format(base_val*3.8 + flat_val)
+            await inter.response.send_message(embed=self.bot.util.embed(title="Enmity Calculator ▫️ {}% HP".format(hp), description=msg.replace('.0%', '%'), footer=s1, color=self.color), ephemeral=True)
+        except Exception as e:
+            if str(e) == "Empty Parameter":
+                modstr = ""
+                for m in values:
+                    modstr += "`{}`, ".format(m)
+                for m in ts:
+                    modstr += "`{}`, ".format(m)
+                await inter.response.send_message(embed=self.bot.util.embed(title="Enmity Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `u` before a modifier to make it unboosted" , color=self.color), ephemeral=True)
+            else:
+                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
+
+    @_utility.sub_command()
+    async def stamina(self, inter: disnake.GuildCommandInteraction, hp : int = commands.Param(description="HP%", ge=1, le=100, default=100), weapons : str = commands.Param(description='List of weapon modifiers. Put nothing to get the list.', default='')):
+        """Calculate stamina strength at a specific hp value"""
+        values = {'medium10':(10, 65), 'medium15':(15, 65), 'medium20':(20, 65), 'big10':(10, 56.4), 'big15':(15, 56.4), 'big20':(20, 56.4), 'bigii10':(10, 53.7), 'bigii15':(15, 53.7), 'ancestral':(15, 50.4), 'omegamedium10':(10, 60.4), 'omegamedium15':(15, 60.4), 'omegabig10':(10, 56.4), 'omegabig15':(15, 56.4)}
+        ts = {'med':'medium15', 'medium':'medium15', 'big':'big15', 'big2':'bigii15', 'omed':'omegamedium15', 'omedium':'omegamedium15', 'obig':'omegabig15', 'm10':'medium10', 'm15':'medium15', 'm20':'medium20', 'med10':'medium10', 'med15':'medium15', 'med20':'medium20', 'b10':'big10', 'b15':'big15', 'b20':'big20', 'bii10':'bigii10', 'bii15':'bigii15', 'b210':'bigii10', 'b215':'bigii15', 'big210':'bigii10', 'big215':'bigii15', 'dragon':'ancestral', 'opus':'big20', 'om10':'omegamedium10', 'om15':'omegamedium15', 'omed10':'omegamedium10', 'omed15':'omegamedium15', 'ob10':'omegabig10', 'ob15':'omegabig15'}
+        flats = ['ancestral']
+        try:
+            if hp < 1: hp = 1
+            elif hp > 100: hp = 100
+            if weapons == "": raise Exception("Empty Parameter")
+            mods = weapons.lower().split(' ')
+            if hp < 25:
+                s1 = ""
+                base_val = 0
+                flat_val = 0
+            else:
+                s1 = ""
+                s2 = ""
+                base = 0
+                flat = 0
+                hp_ratio = 100.0 * hp / 100.0
+                for m in mods:
+                    if ts.get(m, m) in flats:
+                        v = values[ts.get(m, m)]
+                        if v[0] > 15: v = math.pow(hp_ratio / (v[1] - (15 + (0.4 * (v[0] - 15)))), 2.9) + 2.1
+                        else: v = math.pow(hp_ratio / (v[1] - v[0]), 2.9) + 2.1
+                        flat += v
+                        s2 += "{:.1f}+".format(v)
+                    else:
+                        if len(m) > 0 and m[0] == 'u':
+                            v = values[ts.get(m[1:], m[1:])]
+                            if v[0] > 15: v = math.pow(hp_ratio / (v[1] - (15 + (0.4 * (v[0] - 15)))), 2.9) + 2.1
+                            else: v = math.pow(hp_ratio / (v[1] - v[0]), 2.9) + 2.1
+                            flat += v
+                            s2 += "{:.1f}+".format(v)
+                        else:
+                            v = values[ts.get(m, m)]
+                            if v[0] > 15: v = math.pow(hp_ratio / (v[1] - (15 + (0.4 * (v[0] - 15)))), 2.9) + 2.1
+                            else: v = math.pow(hp_ratio / (v[1] - v[0]), 2.9) + 2.1
+                            base += v
+                            s1 += "{:.1f}+".format(v)
+                if s1 != "": s1 = "Boosted " + s1[:-1]
+                if s2 != "":
+                    if s1 != "": s1 += ", "
+                    s1 = s1 + "Unboosted " + s2[:-1]
+                base_val = base * ((1 + 2 * hp_ratio) * hp_ratio)
+                flat_val = flat * ((1 + 2 * hp_ratio) * hp_ratio)
+            msg =  "**Aura ▫️ Stamina ▫️▫️ Aura ▫️ Stamina**\n"
+            msg += "140% ▫️ {:.1f}% ▫️▫️ 290% ▫️ {:.1f}%\n".format(base_val*2.4 + flat_val, base_val*3.9 + flat_val)
+            msg += "150% ▫️ {:.1f}% ▫️▫️ 300% ▫️ {:.1f}%\n".format(base_val*2.5 + flat_val, base_val*4 + flat_val)
+            msg += "160% ▫️ {:.1f}% ▫️▫️ 310% ▫️ {:.1f}%\n".format(base_val*2.6 + flat_val, base_val*4.1 + flat_val)
+            msg += "170% ▫️ {:.1f}% ▫️▫️ 320% ▫️ {:.1f}%\n".format(base_val*2.7 + flat_val, base_val*4.2 + flat_val)
+            msg += "280% ▫️ {:.1f}%\n".format(base_val*3.8 + flat_val)
+            await inter.response.send_message(embed=self.bot.util.embed(title="Stamina Calculator ▫️ {}% HP".format(hp), description=msg.replace('.0%', '%'), footer=s1.replace('.0', ''), color=self.color), ephemeral=True)
+        except Exception as e:
+            if str(e) == "Empty Parameter":
+                modstr = ""
+                for m in values:
+                    modstr += "`{}`, ".format(m)
+                for m in ts:
+                    modstr += "`{}`, ".format(m)
+                await inter.response.send_message(embed=self.bot.util.embed(title="Stamina Calculator", description="**Posible modifiers:**\n" + modstr[:-2] + "\n\nModifiers must be separated by spaces\nAdd `u` before a modifier to make it unboosted" , color=self.color))
+            else:
+                await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
+
+    @_utility.sub_command()
+    async def xp(self, inter: disnake.GuildCommandInteraction, start_level : int = commands.Param(description="Starting Point of the calcul", ge=1, le=149, default=1), end_level : int = commands.Param(description="Final Point of the calcul", ge=1, le=150, default=1)):
+        """Character experience calculator"""
+        xptable = [None, 30, 70, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 550, 600, 650, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 3600, 3800, 4000, 4200, 4400, 4600, 4800, 5000, 5250, 5500, 5750, 6000, 6250, 6500, 6750, 7000, 7250, 7500, 7800, 8100, 8400, 8700, 9000, 9500, 10000, 10500, 11000, 11500, 12000, 12500, 13000, 13500, 14000, 14500, 15000, 15500, 16000, 50000, 20000, 21000, 22000, 23000, 24000, 25000, 26000, 27000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000, 500000, 1000000, 1000000, 1200000, 1200000, 1200000, 1200000, 1200000, 1250000, 1250000, 1250000, 1250000, 1250000, 1300000, 1300000, 1300000, 1300000, 1300000, 1350000, 1350000, 1350000, 1350000, 1350000, 1400000, 1400000, 1400000, 1400000, 1400000, 1450000, 1450000, 1450000, 1450000, 1450000, 1500000, 1500000, 1500000, 1500000, 1500000, 1550000, 1550000, 1550000, 1550000, 1550000, 1600000, 1600000, 1600000, 1600000, 1600000, 1650000, 1650000, 1650000, 1650000, 0]
+        if start_level < 1: start_level = 1
+        elif start_level >= 150: start_level = 149
+        msg = "From level **{}**, you need:\n".format(start_level)
+        xpcount = xptable[start_level]
+        for lvl in range(start_level+1, 151):
+            if lvl in [80, 100, 110, 120, 130, 140, 150, end_level]:
+                msg += "**{:,} XP** for lvl **{:}** ({:} books or {:,} candies)\n".format(xpcount, lvl, math.ceil(xpcount / 300000), math.ceil(xpcount / 745))
+                if lvl == end_level: break
+            xpcount += xptable[lvl]
+        await inter.response.send_message(embed=self.bot.util.embed(title="Experience Calculator", description=msg, color=self.color), ephemeral=True)
+
+    @gbf.sub_command_group()
+    async def check(self, inter: disnake.GuildCommandInteraction):
+        pass
+
+    @check.sub_command()
     async def brand(self, inter: disnake.GuildCommandInteraction, target : str = commands.Param(description="Either a valid GBF ID, discord ID or mention", default="")):
         """Check if a GBF profile is restricted"""
         try:
@@ -1416,26 +1385,43 @@ class GranblueFantasy(commands.Cog):
         except:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
 
-    @gbf.sub_command(name="crew")
-    async def _crew(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param(description="Crew ID")):
-        """Get a crew profile (Use /gw crew for contributions)"""
+    @check.sub_command()
+    async def doom(self, inter: disnake.GuildCommandInteraction):
+        """Give the time elapsed of various GBF related releases"""
         await inter.response.defer()
+        msg = ""
+        wiki_checks = ["Main_Quests", "Category:Campaign", "Surprise_Special_Draw_Set", "Damascus_Ingot", "Gold_Brick", "Sunlight_Stone", "Sephira_Evolite"]
+        regexs = ["Time since last release\\s*<\/th><\/tr>\\s*<tr>\\s*<td colspan=\"3\" style=\"text-align: center;\">(\\d+ days)", "<td>(\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(-\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(\\d+ days)<\\/td>\\s*<td>Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td style=\"text-align: left;\">Time since last", "<td>(\\d+ days)<\\/td>\\s*<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td style=\"text-align: left;\">Time since last ", "<td style=\"text-align: center;\">\\?\\?\\?<\\/td>\\s*<td>(\\d+ days)<\\/td>\\s*"]
+        async with aiohttp.ClientSession() as session:
+            for w in wiki_checks:
+                async with session.get("https://gbf.wiki/{}".format(w)) as r:
+                    if r.status == 200:
+                        t = await r.text()
+                        for r in regexs:
+                            m = re.search(r, t)
+                            if m:
+                                msg += "**{}** since the last [{}](https://gbf.wiki/{})\n".format(m.group(1), w.replace("_", " ").replace("Category:", "").replace('Sunlight', 'Arcarum Sunlight').replace('Sephira', 'Arcarum Sephira').replace('Gold', 'ROTB Gold'), w)
+                                break
+
+        # summer disaster
+        c = self.bot.util.JST()
+        msg += "**{} days** since the Summer Fortune 2021\n".format(self.bot.util.delta2str(c - c.replace(year=2021, month=8, day=16, hour=19, minute=0, second=0, microsecond=0), 3).split('d')[0])
+        
+        # grand
         try:
-            # retrieve formatted crew data
-            crew = await self.bot.do(self.bot.get_cog('GuildWar').getCrewData, id, 0)
+            grands = await self.getGrandList()
+            for e in grands:
+                msg += "**{} days** since {} [{}](https://gbf.wiki/{})\n".format(self.bot.util.delta2str(c - grands[e]['date'], 3).split('d')[0], self.bot.emote.get(e), grands[e]['name'], grands[e]['name'].replace(' ', '_'))
+        except:
+            pass
 
-            if 'error' in crew: # print the error if any
-                if len(crew['error']) > 0:
-                    await inter.edit_original_message(embed=self.bot.util.embed(title="Crew Error", description=crew['error'], color=self.color))
-                return
-
-            title, description, fields, footer = await self.bot.do(self.bot.get_cog('GuildWar').processCrewData, crew, 1)
-            await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=description, fields=fields, inline=True, url="http://game.granbluefantasy.jp/#guild/detail/{}".format(crew['id']), footer=footer, timestamp=crew['timestamp'], color=self.color))
-        except Exception as e:
+        if msg != "":
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, footer="Source: http://gbf.wiki/", color=self.color))
+        else:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
-        await self.bot.util.clean(inter, 60)
+        await self.bot.util.clean(inter, 40)
 
-    @gbf.sub_command()
+    @check.sub_command()
     async def coop(self, inter: disnake.GuildCommandInteraction):
         """Retrieve the current coop daily missions"""
         try:
@@ -1457,7 +1443,29 @@ class GranblueFantasy(commands.Cog):
         except:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
 
-    @gbf.sub_command()
+    @check.sub_command()
+    async def koregra(self, inter: disnake.GuildCommandInteraction):
+        """Post the time to the next monthly dev post"""
+        c = self.bot.util.JST()
+        try:
+            if c < self.bot.data.save['stream']['time']:
+                target = self.bot.data.save['stream']['time']
+            else:
+                raise Exception()
+        except:
+            if c.day == 1:
+                if c.hour >= 12:
+                    if c.month == 12: target = datetime(year=c.year+1, month=1, day=1, hour=12, minute=0, second=0, microsecond=0)
+                    else: target = datetime(year=c.year, month=c.month+1, day=1, hour=12, minute=0, second=0, microsecond=0)
+                else:
+                    target = datetime(year=c.year, month=c.month, day=1, hour=12, minute=0, second=0, microsecond=0)
+            else:
+                if c.month == 12: target = datetime(year=c.year+1, month=1, day=1, hour=12, minute=0, second=0, microsecond=0)
+                else: target = datetime(year=c.year, month=c.month+1, day=1, hour=12, minute=0, second=0, microsecond=0)
+        delta = target - c
+        await inter.response.send_message(embed=self.bot.util.embed(title="{} Kore Kara".format(self.bot.emote.get('clock')), description="Release approximately in **{}**".format(self.bot.util.delta2str(delta, 2)),  url="https://granbluefantasy.jp/news/index.php", thumbnail="http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
+
+    @check.sub_command()
     async def news(self, inter: disnake.GuildCommandInteraction):
         """Post the latest news posts"""
         await inter.response.defer(ephemeral=True)
@@ -1478,7 +1486,7 @@ class GranblueFantasy(commands.Cog):
         else:
             await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Latest Granblue Fantasy News", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, image=thumb, color=self.color))
 
-    @gbf.sub_command(name="4koma")
+    @check.sub_command(name="4koma")
     async def _4koma(self, inter: disnake.GuildCommandInteraction, id : int = commands.Param(description="A 4koma number", default=-123456789)):
         """Post a Granblues Episode"""
         try:

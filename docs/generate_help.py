@@ -75,6 +75,7 @@ def generate_html(command_list): # main function to generate the html
     other_count = 0
     prev_count = 0
     cmd_cache = set()
+    sub_count = {}
     # loop over the cogs
     for cog in command_list:
         commands = command_list[cog]
@@ -85,13 +86,14 @@ def generate_html(command_list): # main function to generate the html
         for c in commands:
             cn = "" # command name
             if c['type'] == 0: cn = "/" # slash command, we add / before
-            elif c['type'] == 3: cn = "/{} ".format(func_index.get(cog + "_" + c['parent'], c['parent'])) # sub command, we add / and parent(s) before
+            elif c['type'] == 3:
+                cn = "/{} ".format(func_index.get(cog + "_" + c['parent'], c['parent'])) # sub command, we add / and parent(s) before
+                sub_count[c['parent'].split(' ')[0]] = sub_count.get(c['parent'].split(' ')[0], 0) + 1
             cn += c['name']
             if cn in cmd_cache:
                 print("Warning: Command", cn, "is present twice or more")
             else:
                 cmd_cache.add(cn)
-        
             # command container
             containers += '<li class="command {}"><div class="command-name"><span style="display: inline-block;background: #{};padding: 5px;text-shadow: 2px 2px 2px rgba(0,0,0,0.5);">{}</span>&nbsp;<span style="display: inline-block;background: #{};padding: 3px;text-shadow: 2px 2px 2px rgba(0,0,0,0.5); font-size: 14px;">{}</span>&nbsp;&nbsp;{}'.format(cog.lower(), c.get('color', '615d5d'), cog, cmd_color_type[c['type']], cmd_type[c['type']], cn)
             if c.get('comment', '') != '': # add description
@@ -114,6 +116,9 @@ def generate_html(command_list): # main function to generate the html
     print("Total:", cmd_count, "slash commands,", other_count, "other commands")
     if cmd_count > 95:
         print("Warning, the number of slash commands might be too high")
+    for key in sub_count:
+        if sub_count[key] > 10:
+            print("Warning,", key, "has too many sub commands (", sub_count[key], ")")
     filters += '</div><br><input type="text" id="textSelection" onkeyup="searchSelection()" placeholder="Search a command"><br>\n'
     containers += '</ul>\n'
     commandList = '<div id="Commands" class="tabcontent">' + filters + containers + '</div>\n'

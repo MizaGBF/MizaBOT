@@ -449,174 +449,6 @@ class GuildWar(commands.Cog):
             await self.bot.sendError("estimation", e)
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color))
 
-    @gw.sub_command()
-    async def box(self, inter: disnake.GuildCommandInteraction, box : int = commands.Param(description="Number of box to clear", ge=1, le=1000), box_done : int = commands.Param(description="Your current box progress, default 0 (Will be ignored if equal or higher than target)", ge=0, default=0), with_token : str = commands.Param(description="Your current token amount (support B, M and K)", default="0")):
-        """Convert Guild War box values"""
-        try:
-            t = 0
-            try: with_token = max(0, self.bot.util.strToInt(with_token))
-            except: raise Exception("Your current token amount `{}` isn't a valid number".format(with_token, box))
-            if box_done >= box: raise Exception("Your current box count `{}` is higher or equal to your target `{}`".format(box_done, box))
-            for b in range(box_done+1, box+1):
-                if b == 1: t+= 1600
-                elif b <= 4: t+= 2400
-                elif b <= 45: t+= 2000
-                elif b <= 80: t+= 10000
-                else: t+= 15000
-            t = max(0, t-with_token)
-            ex = math.ceil(t / 56.0)
-            explus = math.ceil(t / 66.0)
-            n90 = math.ceil(t / 83.0)
-            n95 = math.ceil(t / 111.0)
-            n100 = math.ceil(t / 168.0)
-            n150 = math.ceil(t / 257.0)
-            wanpan = math.ceil(t / 48.0)
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War Token Calculator ▫️ Box {}".format(self.bot.emote.get('gw'), box), description="**{:,}** tokens needed{:}{:}\n\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(t, ("" if box_done == 0 else " from box **{}**".format(box_done)), ("" if with_token == 0 else " with **{:,}** tokens".format(with_token)), ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color), ephemeral=True)
-        except Exception as e:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
-
-    @gw.sub_command()
-    async def token(self, inter: disnake.GuildCommandInteraction, token_target : str = commands.Param(description="Number of tokens you want (support B, M and K)"), final_rally : int = commands.Param(description="1 to include final rally (default), 0 to disable", default=1, le=1, ge=0)):
-        """Convert Guild War token values"""
-        try:
-            final_rally = (final_rally == 1)
-            tok = self.bot.util.strToInt(token_target)
-            if tok < 1 or tok > 9999999999: raise Exception()
-            b = 0
-            t = tok
-            if tok >= 1600:
-                tok -= 1600
-                b += 1
-            while b < 4 and tok >= 2400:
-                tok -= 2400
-                b += 1
-            while b < 46 and tok >= 2000:
-                tok -= 2000
-                b += 1
-            while b < 81 and tok >= 10000:
-                tok -= 10000
-                b += 1
-            while tok >= 15000:
-                tok -= 15000
-                b += 1
-            base = [
-                ['EX', 30, 0, 56, 3.06], # name, AP, tokens, FR token
-                ['EX+', 30, 0, 66, 4.85],
-                ['NM90', 30, 5, 83, 15.6],
-                ['NM95', 40, 10, 111, 54.6],
-                ['NM100', 50, 20, 168, 159],
-                ['NM150', 50, 20, 257, 246],
-            ]
-            msg = "**{:,}** box(s) and **{:,}** leftover tokens\n\n".format(b, tok)
-            for bv in base:
-                if final_rally: v = math.ceil(t / (bv[3]+bv[4]))
-                else: v = math.ceil(t / bv[3])
-                if bv[2] == 0: msg += "**{:,}** {:} (**{:,}** pots)\n".format(v, bv[0], v*bv[1])
-                else: msg += "**{:,}** {:} (**{:,}** pots, **{:,}** meats)\n".format(v, bv[0], v*bv[1], v*bv[2])
-            v = math.ceil(t / 48.0)
-            msg += "**{:,}** NM100 leeching (**{:}** BP)".format(v, v*3)
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War Token Calculator ▫️ {} tokens".format(self.bot.emote.get('gw'), t), description=msg, footer=("Imply you solo all your hosts and clear the final rally" if final_rally else ""), color=self.color), ephemeral=True)
-        except:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid token number", color=self.color), ephemeral=True)
-
-    @gw.sub_command()
-    async def meat(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
-        """Convert Guild War meat values"""
-        try:
-            meat = self.bot.util.strToInt(value)
-            if meat < 5 or meat > 400000: raise Exception()
-            nm90 = meat // 5
-            nm95 = meat // 10
-            nm100 = meat // 20
-            nm150 = meat // 20
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Meat Calculator ▫️ {} meats".format(self.bot.emote.get('gw'), meat), description="**{:,}** NM90 or **{:}** honors\n**{:,}** NM95 or **{:}** honors\n**{:}** NM100 or **{:}** honors\n**{:,}** NM150 or **{:}** honors\n".format(nm90, self.bot.util.valToStr(nm90*260000), nm95, self.bot.util.valToStr(nm95*910000), nm100, self.bot.util.valToStr(nm100*2650000), nm150, self.bot.util.valToStr(nm150*4100000)), color=self.color), ephemeral=True)
-        except:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid meat number", color=self.color), ephemeral=True)
-
-    @gw.sub_command()
-    async def honor(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
-        """Convert Guild War honor values"""
-        try:
-            target = self.bot.util.strToInt(value)
-            if target < 10000: raise Exception()
-            exp = math.ceil(target / 80800)
-            nm90 = math.ceil(target / 260000)
-            nm95 = math.ceil(target / 910000)
-            nm100 = math.ceil(target / 2650000)
-            nm150 = math.ceil(target / 4100000)
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Honor Calculator ▫️ {} honors".format(self.bot.emote.get('gw'), self.bot.util.valToStr(target)), description="**{:,}** EX+ (**{:,}** AP)\n**{:,}** NM90 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM95 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM100 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM150 (**{:,}** AP, **{:,}** meats)\n".format(exp, exp * 30, nm90, nm90 * 30, nm90 * 5, nm95, nm95 * 40, nm95 * 10, nm100, nm100 * 50, nm100 * 20, nm150, nm150 * 50, nm150* 20), color=self.color), ephemeral=True)
-        except:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid honor number", color=self.color), ephemeral=True)
-
-    @gw.sub_command()
-    async def honorplanning(self, inter: disnake.GuildCommandInteraction, target : str = commands.Param(description="Number of honors (support B, M and K)")):
-        """Calculate how many NM95 and 150 you need for your targeted honor"""
-        try:
-            target = self.bot.util.strToInt(target)
-            if target < 10000: raise Exception()
-            honor = [0, 0, 0]
-            ex = 0
-            meat_per_ex_average = 6.2
-            meat = 0
-            total_meat = 0
-            nm = [0, 0]
-            day_target = [target * 0.2, target * 0.3] # sum = 0.5
-            meat_use = [10, 20]
-            honor_per_nm = [910000, 4100000]
-
-            for i in [1, 0]:
-                daily = 0
-                while daily < day_target[i]:
-                    if meat < meat_use[i]:
-                        meat += meat_per_ex_average
-                        total_meat += meat_per_ex_average
-                        ex += 1
-                        daily += 80800
-                        honor[0] += 80800
-                    else:
-                        meat -= meat_use[i]
-                        nm[i] += 1
-                        daily += honor_per_nm[i]
-                        honor[i+1] += honor_per_nm[i]
-
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Honor Planning ▫️ {} honors".format(self.bot.emote.get('gw'), self.bot.util.valToStr(target)), description="Preliminaries & Interlude ▫️ **{:,}** meats (around **{:,}** EX+ and **{:}** honors)\nDay 1 and 2 total ▫️ **{:,}** NM95 (**{:}** honors)\nDay 3 and 4 total ▫️ **{:,}** NM150 (**{:}** honors)".format(math.ceil(total_meat*2), ex*2, self.bot.util.valToStr(honor[0]*2), nm[0]*2, self.bot.util.valToStr(honor[1]*2), nm[1]*2, self.bot.util.valToStr(honor[2]*2)), footer="Assuming {} meats / EX+ on average".format(meat_per_ex_average), color=self.color), ephemeral=True)
-        except:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid honor number", color=self.color), ephemeral=True)
-
-    @gw.sub_command()
-    async def speed(self, inter: disnake.GuildCommandInteraction, params : str = commands.Param(description="Leave empty to see the guide", default="")):
-        """Compare multiple GW fights based on your speed"""
-        try:
-            if params == "": raise Exception()
-            params = params.lower()
-            fightdata = {'ex':[30, 3, 51000, 56], 'ex+':[30, 4, 80800, 66], 'nm90':[30, -5, 260000, 83], 'nm95':[40, -10, 910000, 111], 'nm100':[50, -20, 2650000, 168], 'nm150':[50, -20, 4100000, 257]}
-            fights = params.split(' ')
-            msg = ""
-            for f in fights:
-                if f != '':
-                    elems = f.split('=')
-                    if len(elems) != 2: raise Exception("Invalid string `{}`".format(f))
-                    elif elems[0] not in fightdata: raise Exception("Invalid fight name `{}`".format(elems[0]))
-                    time = elems[1].split(":")
-                    if len(time) == 1:
-                        try: time = int(time[0])
-                        except: raise Exception("Invalid time `{}`".format(elems[1]))
-                    elif len(time) == 2:
-                        try:
-                            time = int(time[0]) * 60 + int(time[1])
-                        except: raise Exception("Invalid time `{}`".format(elems[1]))
-                    if time <= 0: raise Exception()
-                    mod = (3600 / time)
-                    compare = [self.bot.util.valToStr(mod*i) for i in fightdata[elems[0]]]
-                    msg += "**{}** ▫️ **{}** \▫️ **{}** AP \▫️ **{}** Token \▫️ **{}** Meat".format(elems[0].upper(), compare[2], compare[0], compare[3], compare[1])
-                    msg += "\n"
-            if msg == '': raise Exception()
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Speed Comparator".format(self.bot.emote.get('gw')), description="**Per hour**\n" + msg, color=self.color), ephemeral=True)
-        except Exception as e:
-            if str(e) != "": msg = "\nException: {}".format(e)
-            else: msg = ""
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Speed Comparator Error".format(self.bot.emote.get('gw')), description="**Usage:**\nPut a list of the fight you want to compare with your speed.\nExample:\n`/gw speed ex+=5 nm90=20 nm95=2:00`\nOnly put space between each fight, not in the formulas.\n{}".format(msg), color=self.color), ephemeral=True)
-
     """getCrewSummary()
     Get a GBF crew summary (what you see on the main page of a crew)
     
@@ -1079,7 +911,182 @@ class GuildWar(commands.Cog):
                 await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.emote.get('gw'), self.bot.data.save['matchtracker']['gwid'], self.bot.data.save['matchtracker']['day']-1), description=msg, timestamp=self.bot.util.timestamp(), thumbnail=self.bot.data.save['matchtracker'].get('chart', None), color=self.color))
                 await self.bot.util.clean(inter, 90)
 
-    @gw.sub_command()
+    @commands.slash_command(default_permission=True)
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    @commands.max_concurrency(8, commands.BucketType.default)
+    async def gwutility(self, inter: disnake.GuildCommandInteraction):
+        """Command Group"""
+        pass
+
+    @gwutility.sub_command()
+    async def box(self, inter: disnake.GuildCommandInteraction, box : int = commands.Param(description="Number of box to clear", ge=1, le=1000), box_done : int = commands.Param(description="Your current box progress, default 0 (Will be ignored if equal or higher than target)", ge=0, default=0), with_token : str = commands.Param(description="Your current token amount (support B, M and K)", default="0")):
+        """Convert Guild War box values"""
+        try:
+            t = 0
+            try: with_token = max(0, self.bot.util.strToInt(with_token))
+            except: raise Exception("Your current token amount `{}` isn't a valid number".format(with_token, box))
+            if box_done >= box: raise Exception("Your current box count `{}` is higher or equal to your target `{}`".format(box_done, box))
+            for b in range(box_done+1, box+1):
+                if b == 1: t+= 1600
+                elif b <= 4: t+= 2400
+                elif b <= 45: t+= 2000
+                elif b <= 80: t+= 10000
+                else: t+= 15000
+            t = max(0, t-with_token)
+            ex = math.ceil(t / 56.0)
+            explus = math.ceil(t / 66.0)
+            n90 = math.ceil(t / 83.0)
+            n95 = math.ceil(t / 111.0)
+            n100 = math.ceil(t / 168.0)
+            n150 = math.ceil(t / 257.0)
+            wanpan = math.ceil(t / 48.0)
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War Token Calculator ▫️ Box {}".format(self.bot.emote.get('gw'), box), description="**{:,}** tokens needed{:}{:}\n\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(t, ("" if box_done == 0 else " from box **{}**".format(box_done)), ("" if with_token == 0 else " with **{:,}** tokens".format(with_token)), ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color), ephemeral=True)
+        except Exception as e:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
+
+    @gwutility.sub_command()
+    async def token(self, inter: disnake.GuildCommandInteraction, token_target : str = commands.Param(description="Number of tokens you want (support B, M and K)"), final_rally : int = commands.Param(description="1 to include final rally (default), 0 to disable", default=1, le=1, ge=0)):
+        """Convert Guild War token values"""
+        try:
+            final_rally = (final_rally == 1)
+            tok = self.bot.util.strToInt(token_target)
+            if tok < 1 or tok > 9999999999: raise Exception()
+            b = 0
+            t = tok
+            if tok >= 1600:
+                tok -= 1600
+                b += 1
+            while b < 4 and tok >= 2400:
+                tok -= 2400
+                b += 1
+            while b < 46 and tok >= 2000:
+                tok -= 2000
+                b += 1
+            while b < 81 and tok >= 10000:
+                tok -= 10000
+                b += 1
+            while tok >= 15000:
+                tok -= 15000
+                b += 1
+            base = [
+                ['EX', 30, 0, 56, 3.06], # name, AP, tokens, FR token
+                ['EX+', 30, 0, 66, 4.85],
+                ['NM90', 30, 5, 83, 15.6],
+                ['NM95', 40, 10, 111, 54.6],
+                ['NM100', 50, 20, 168, 159],
+                ['NM150', 50, 20, 257, 246],
+            ]
+            msg = "**{:,}** box(s) and **{:,}** leftover tokens\n\n".format(b, tok)
+            for bv in base:
+                if final_rally: v = math.ceil(t / (bv[3]+bv[4]))
+                else: v = math.ceil(t / bv[3])
+                if bv[2] == 0: msg += "**{:,}** {:} (**{:,}** pots)\n".format(v, bv[0], v*bv[1])
+                else: msg += "**{:,}** {:} (**{:,}** pots, **{:,}** meats)\n".format(v, bv[0], v*bv[1], v*bv[2])
+            v = math.ceil(t / 48.0)
+            msg += "**{:,}** NM100 leeching (**{:}** BP)".format(v, v*3)
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War Token Calculator ▫️ {} tokens".format(self.bot.emote.get('gw'), t), description=msg, footer=("Imply you solo all your hosts and clear the final rally" if final_rally else ""), color=self.color), ephemeral=True)
+        except:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid token number", color=self.color), ephemeral=True)
+
+    @gwutility.sub_command()
+    async def meat(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
+        """Convert Guild War meat values"""
+        try:
+            meat = self.bot.util.strToInt(value)
+            if meat < 5 or meat > 400000: raise Exception()
+            nm90 = meat // 5
+            nm95 = meat // 10
+            nm100 = meat // 20
+            nm150 = meat // 20
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Meat Calculator ▫️ {} meats".format(self.bot.emote.get('gw'), meat), description="**{:,}** NM90 or **{:}** honors\n**{:,}** NM95 or **{:}** honors\n**{:}** NM100 or **{:}** honors\n**{:,}** NM150 or **{:}** honors\n".format(nm90, self.bot.util.valToStr(nm90*260000), nm95, self.bot.util.valToStr(nm95*910000), nm100, self.bot.util.valToStr(nm100*2650000), nm150, self.bot.util.valToStr(nm150*4100000)), color=self.color), ephemeral=True)
+        except:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid meat number", color=self.color), ephemeral=True)
+
+    @gwutility.sub_command()
+    async def honor(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
+        """Convert Guild War honor values"""
+        try:
+            target = self.bot.util.strToInt(value)
+            if target < 10000: raise Exception()
+            exp = math.ceil(target / 80800)
+            nm90 = math.ceil(target / 260000)
+            nm95 = math.ceil(target / 910000)
+            nm100 = math.ceil(target / 2650000)
+            nm150 = math.ceil(target / 4100000)
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Honor Calculator ▫️ {} honors".format(self.bot.emote.get('gw'), self.bot.util.valToStr(target)), description="**{:,}** EX+ (**{:,}** AP)\n**{:,}** NM90 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM95 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM100 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM150 (**{:,}** AP, **{:,}** meats)\n".format(exp, exp * 30, nm90, nm90 * 30, nm90 * 5, nm95, nm95 * 40, nm95 * 10, nm100, nm100 * 50, nm100 * 20, nm150, nm150 * 50, nm150* 20), color=self.color), ephemeral=True)
+        except:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid honor number", color=self.color), ephemeral=True)
+
+    @gwutility.sub_command()
+    async def honorplanning(self, inter: disnake.GuildCommandInteraction, target : str = commands.Param(description="Number of honors (support B, M and K)")):
+        """Calculate how many NM95 and 150 you need for your targeted honor"""
+        try:
+            target = self.bot.util.strToInt(target)
+            if target < 10000: raise Exception()
+            honor = [0, 0, 0]
+            ex = 0
+            meat_per_ex_average = 6.2
+            meat = 0
+            total_meat = 0
+            nm = [0, 0]
+            day_target = [target * 0.2, target * 0.3] # sum = 0.5
+            meat_use = [10, 20]
+            honor_per_nm = [910000, 4100000]
+
+            for i in [1, 0]:
+                daily = 0
+                while daily < day_target[i]:
+                    if meat < meat_use[i]:
+                        meat += meat_per_ex_average
+                        total_meat += meat_per_ex_average
+                        ex += 1
+                        daily += 80800
+                        honor[0] += 80800
+                    else:
+                        meat -= meat_use[i]
+                        nm[i] += 1
+                        daily += honor_per_nm[i]
+                        honor[i+1] += honor_per_nm[i]
+
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Honor Planning ▫️ {} honors".format(self.bot.emote.get('gw'), self.bot.util.valToStr(target)), description="Preliminaries & Interlude ▫️ **{:,}** meats (around **{:,}** EX+ and **{:}** honors)\nDay 1 and 2 total ▫️ **{:,}** NM95 (**{:}** honors)\nDay 3 and 4 total ▫️ **{:,}** NM150 (**{:}** honors)".format(math.ceil(total_meat*2), ex*2, self.bot.util.valToStr(honor[0]*2), nm[0]*2, self.bot.util.valToStr(honor[1]*2), nm[1]*2, self.bot.util.valToStr(honor[2]*2)), footer="Assuming {} meats / EX+ on average".format(meat_per_ex_average), color=self.color), ephemeral=True)
+        except:
+            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid honor number", color=self.color), ephemeral=True)
+
+    @gwutility.sub_command()
+    async def speed(self, inter: disnake.GuildCommandInteraction, params : str = commands.Param(description="Leave empty to see the guide", default="")):
+        """Compare multiple GW fights based on your speed"""
+        try:
+            if params == "": raise Exception()
+            params = params.lower()
+            fightdata = {'ex':[30, 3, 51000, 56], 'ex+':[30, 4, 80800, 66], 'nm90':[30, -5, 260000, 83], 'nm95':[40, -10, 910000, 111], 'nm100':[50, -20, 2650000, 168], 'nm150':[50, -20, 4100000, 257]}
+            fights = params.split(' ')
+            msg = ""
+            for f in fights:
+                if f != '':
+                    elems = f.split('=')
+                    if len(elems) != 2: raise Exception("Invalid string `{}`".format(f))
+                    elif elems[0] not in fightdata: raise Exception("Invalid fight name `{}`".format(elems[0]))
+                    time = elems[1].split(":")
+                    if len(time) == 1:
+                        try: time = int(time[0])
+                        except: raise Exception("Invalid time `{}`".format(elems[1]))
+                    elif len(time) == 2:
+                        try:
+                            time = int(time[0]) * 60 + int(time[1])
+                        except: raise Exception("Invalid time `{}`".format(elems[1]))
+                    if time <= 0: raise Exception()
+                    mod = (3600 / time)
+                    compare = [self.bot.util.valToStr(mod*i) for i in fightdata[elems[0]]]
+                    msg += "**{}** ▫️ **{}** \▫️ **{}** AP \▫️ **{}** Token \▫️ **{}** Meat".format(elems[0].upper(), compare[2], compare[0], compare[3], compare[1])
+                    msg += "\n"
+            if msg == '': raise Exception()
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Speed Comparator".format(self.bot.emote.get('gw')), description="**Per hour**\n" + msg, color=self.color), ephemeral=True)
+        except Exception as e:
+            if str(e) != "": msg = "\nException: {}".format(e)
+            else: msg = ""
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Speed Comparator Error".format(self.bot.emote.get('gw')), description="**Usage:**\nPut a list of the fight you want to compare with your speed.\nExample:\n`/gw speed ex+=5 nm90=20 nm95=2:00`\nOnly put space between each fight, not in the formulas.\n{}".format(msg), color=self.color), ephemeral=True)
+
+    @gwutility.sub_command()
     async def nm95(self, inter: disnake.GuildCommandInteraction, hp_percent : int = commands.Param(description="HP% of NM95 you want to do", default=100, le=100, ge=1)):
         """Give the dragon solo equivalent of NM95"""
         todo = (131250000 * hp_percent) // 100
@@ -1100,7 +1107,7 @@ class GuildWar(commands.Cog):
         await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War ▫️ NM95 Simulation".format(self.bot.emote.get('gw')), description=msg, color=self.color))
         await self.bot.util.clean(inter, 90)
 
-    @gw.sub_command_group()
+    @gwutility.sub_command_group()
     async def find(self, inter: disnake.GuildCommandInteraction):
         pass
 
@@ -1246,7 +1253,6 @@ class GuildWar(commands.Cog):
                 if str(e) != "Returning":
                     await self.bot.sendError('findranking (search: {})'.format(terms), e)
                     await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="An error occured", color=self.color))
-
 
     @commands.slash_command(default_permission=True)
     @commands.cooldown(2, 60, commands.BucketType.guild)
