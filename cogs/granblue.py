@@ -673,6 +673,10 @@ class GranblueFantasy(commands.Cog):
             if str(e) != 'No Gacha': await self.bot.sendError("getcurrentgacha", e)
             await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Unavailable", color=self.color))
 
+    @gbf.sub_command_group()
+    async def profile(self, inter: disnake.GuildCommandInteraction):
+        pass
+
     """getProfileData()
     Request a GBF profile
     
@@ -709,7 +713,7 @@ class GranblueFantasy(commands.Cog):
                 return uid
         return None
 
-    @gbf.sub_command()
+    @profile.sub_command(name="unset")
     async def unsetprofile(self, inter: disnake.GuildCommandInteraction):
         """Unlink your GBF id"""
         if str(inter.author.id) not in self.bot.data.save['gbfids']:
@@ -723,7 +727,7 @@ class GranblueFantasy(commands.Cog):
                 pass
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 
-    @gbf.sub_command()
+    @profile.sub_command(name="set")
     async def setprofile(self, inter: disnake.GuildCommandInteraction, id : int = commands.Param(description="A valid GBF Profile ID. Usurpation will result in ban.", ge=0)):
         """Link your GBF id to your Discord ID"""
         try:
@@ -747,7 +751,7 @@ class GranblueFantasy(commands.Cog):
                     uid = await self.bot.do(self.searchprofile, id)
                     if uid is not None:
                         if uid == id:
-                            await inter.response.send_message(embed=self.bot.util.embed(title="Information", description="Your profile is already set to ID `{}`.\nUse `/gbf unsetprofile` if you wish to remove it.".format(id), color=self.color), ephemeral=True)
+                            await inter.response.send_message(embed=self.bot.util.embed(title="Information", description="Your profile is already set to ID `{}`.\nUse `/gbf profile unset` if you wish to remove it.".format(id), color=self.color), ephemeral=True)
                         else:
                             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="This id is already in use, use the bug_report command if it's a case of griefing", color=self.color), ephemeral=True)
                         return
@@ -1081,8 +1085,8 @@ class GranblueFantasy(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=description, image=thumbnail, url="http://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
         await self.bot.util.clean(inter, 45)
 
-    @gbf.sub_command()
-    async def profile(self, inter: disnake.GuildCommandInteraction, target : str = commands.Param(description="Either a valid GBF ID, discord ID or mention", default="")):
+    @profile.sub_command()
+    async def see(self, inter: disnake.GuildCommandInteraction, target : str = commands.Param(description="Either a valid GBF ID, discord ID or mention", default="")):
         """Retrieve a GBF profile"""
         try:
             await inter.response.defer()

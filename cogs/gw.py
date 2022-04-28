@@ -911,14 +911,11 @@ class GuildWar(commands.Cog):
                 await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War {} ▫️ Day {}**".format(self.bot.emote.get('gw'), self.bot.data.save['matchtracker']['gwid'], self.bot.data.save['matchtracker']['day']-1), description=msg, timestamp=self.bot.util.timestamp(), thumbnail=self.bot.data.save['matchtracker'].get('chart', None), color=self.color))
                 await self.bot.util.clean(inter, 90)
 
-    @commands.slash_command(default_permission=True)
-    @commands.cooldown(1, 10, commands.BucketType.user)
-    @commands.max_concurrency(8, commands.BucketType.default)
-    async def gwutility(self, inter: disnake.GuildCommandInteraction):
-        """Command Group"""
+    @gw.sub_command_group()
+    async def utility(self, inter: disnake.GuildCommandInteraction):
         pass
 
-    @gwutility.sub_command()
+    @utility.sub_command()
     async def box(self, inter: disnake.GuildCommandInteraction, box : int = commands.Param(description="Number of box to clear", ge=1, le=1000), box_done : int = commands.Param(description="Your current box progress, default 0 (Will be ignored if equal or higher than target)", ge=0, default=0), with_token : str = commands.Param(description="Your current token amount (support B, M and K)", default="0")):
         """Convert Guild War box values"""
         try:
@@ -944,7 +941,7 @@ class GuildWar(commands.Cog):
         except Exception as e:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
 
-    @gwutility.sub_command()
+    @utility.sub_command()
     async def token(self, inter: disnake.GuildCommandInteraction, token_target : str = commands.Param(description="Number of tokens you want (support B, M and K)"), final_rally : int = commands.Param(description="1 to include final rally (default), 0 to disable", default=1, le=1, ge=0)):
         """Convert Guild War token values"""
         try:
@@ -988,7 +985,7 @@ class GuildWar(commands.Cog):
         except:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid token number", color=self.color), ephemeral=True)
 
-    @gwutility.sub_command()
+    @utility.sub_command()
     async def meat(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
         """Convert Guild War meat values"""
         try:
@@ -1002,7 +999,7 @@ class GuildWar(commands.Cog):
         except:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid meat number", color=self.color), ephemeral=True)
 
-    @gwutility.sub_command()
+    @utility.sub_command()
     async def honor(self, inter: disnake.GuildCommandInteraction, value : str = commands.Param(description="Value to convert (support B, M and K)")):
         """Convert Guild War honor values"""
         try:
@@ -1017,7 +1014,7 @@ class GuildWar(commands.Cog):
         except:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid honor number", color=self.color), ephemeral=True)
 
-    @gwutility.sub_command()
+    @utility.sub_command()
     async def honorplanning(self, inter: disnake.GuildCommandInteraction, target : str = commands.Param(description="Number of honors (support B, M and K)")):
         """Calculate how many NM95 and 150 you need for your targeted honor"""
         try:
@@ -1052,7 +1049,7 @@ class GuildWar(commands.Cog):
         except:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid honor number", color=self.color), ephemeral=True)
 
-    @gwutility.sub_command()
+    @utility.sub_command()
     async def speed(self, inter: disnake.GuildCommandInteraction, params : str = commands.Param(description="Leave empty to see the guide", default="")):
         """Compare multiple GW fights based on your speed"""
         try:
@@ -1084,9 +1081,9 @@ class GuildWar(commands.Cog):
         except Exception as e:
             if str(e) != "": msg = "\nException: {}".format(e)
             else: msg = ""
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Speed Comparator Error".format(self.bot.emote.get('gw')), description="**Usage:**\nPut a list of the fight you want to compare with your speed.\nExample:\n`/gw speed ex+=5 nm90=20 nm95=2:00`\nOnly put space between each fight, not in the formulas.\n{}".format(msg), color=self.color), ephemeral=True)
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Speed Comparator Error".format(self.bot.emote.get('gw')), description="**Usage:**\nPut a list of the fight you want to compare with your speed.\nExample:\n`/gw utility speed ex+=5 nm90=20 nm95=2:00`\nOnly put space between each fight, not in the formulas.\n{}".format(msg), color=self.color), ephemeral=True)
 
-    @gwutility.sub_command()
+    @utility.sub_command()
     async def nm95(self, inter: disnake.GuildCommandInteraction, hp_percent : int = commands.Param(description="HP% of NM95 you want to do", default=100, le=100, ge=1)):
         """Give the dragon solo equivalent of NM95"""
         todo = (131250000 * hp_percent) // 100
@@ -1107,7 +1104,7 @@ class GuildWar(commands.Cog):
         await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War ▫️ NM95 Simulation".format(self.bot.emote.get('gw')), description=msg, color=self.color))
         await self.bot.util.clean(inter, 90)
 
-    @gwutility.sub_command_group()
+    @gw.sub_command_group()
     async def find(self, inter: disnake.GuildCommandInteraction):
         pass
 

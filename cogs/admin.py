@@ -827,11 +827,11 @@ class Admin(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", footer=str(e), color=self.color), ephemeral=True)
             await self.bot.sendError('setgw', e)
 
-    @_owner.sub_command_group()
-    async def gwbuff(self, inter: disnake.GuildCommandInteraction):
+    @gw.sub_command_group()
+    async def buff(self, inter: disnake.GuildCommandInteraction):
         pass
 
-    @gwbuff.sub_command()
+    @buff.sub_command()
     async def check(self, inter: disnake.GuildCommandInteraction): # debug stuff
         """List the GW buff list for (You) (Owner Only)"""
         try:
@@ -847,7 +847,7 @@ class Admin(commands.Cog):
         except:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error, buffs aren't set.", color=self.color), ephemeral=True)
 
-    @gwbuff.sub_command()
+    @buff.sub_command()
     async def newtask(self, inter: disnake.GuildCommandInteraction):
         """Start a new checkGWBuff() task (Owner Only)"""
         try: self.bot.runTask('check_buff', self.bot.get_cog('GuildWar').checkGWBuff)
@@ -855,7 +855,7 @@ class Admin(commands.Cog):
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 
 
-    @gw.sub_command()
+    @buff.sub_command()
     async def skip(self, inter: disnake.GuildCommandInteraction):
         """The bot will skip the next GW buff call (Owner Only)"""
         if not self.bot.data.save['gw']['skip']:
@@ -866,7 +866,7 @@ class Admin(commands.Cog):
         else:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="The next set of buffs is already beind skipped", color=self.color), ephemeral=True)
 
-    @gw.sub_command()
+    @buff.sub_command()
     async def cancel(self, inter: disnake.GuildCommandInteraction):
         """Cancel the GW buff call skipping (Owner Only)"""
         if self.bot.data.save['gw']['skip']:
