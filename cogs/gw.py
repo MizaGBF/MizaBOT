@@ -1092,7 +1092,7 @@ class GuildWar(commands.Cog):
             'water':('Wilnas (Solo)', 165000000),
             'earth':('Wamdus (Solo)', 182000000),
             'wind':('Galleon (Solo)', 196000000),
-            'light': None,
+            'light': ('Dark Angel Olivia (Impossible)', 200000000),
             'dark':('Lu Woh (Solo)', 192000000)
         }
         msg = "To do **{}% of NM95**, you must have:\n".format(hp_percent)
