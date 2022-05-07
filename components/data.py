@@ -39,6 +39,9 @@ class Data():
             with open('config.json') as f:
                 data = json.load(f, object_pairs_hook=self.bot.util.json_deserial_dict) # deserializer here
                 self.config = data
+                # basic validity check
+                for check in ['tokens', 'ids', 'emotes', 'games']:
+                    if check not in self.config: raise Exception("'{}' section not found in 'config.json', please check the example".format(check))
             return True
         except Exception as e:
             print('loadConfig(): {}\nCheck your \'config.json\' for the above error.'.format(self.bot.util.pexc(e)))
