@@ -70,7 +70,7 @@ class GranblueFantasy(commands.Cog):
                         msg = "{} Maintenance ends in **{}**".format(self.bot.emote.get('cog'), self.bot.util.delta2str(d, 2))
         return msg
 
-    @commands.slash_command(default_permission=True)
+    @commands.slash_command()
     @commands.cooldown(2, 20, commands.BucketType.user)
     @commands.max_concurrency(8, commands.BucketType.default)
     async def gbf(self, inter: disnake.GuildCommandInteraction):
@@ -1100,7 +1100,7 @@ class GranblueFantasy(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color))
         await self.bot.util.clean(inter, 60)
 
-    @commands.user_command(default_permission=True, name="GBF Profile")
+    @commands.user_command(name="GBF Profile")
     @commands.cooldown(1, 30, commands.BucketType.user)
     @commands.max_concurrency(4, commands.BucketType.default)
     async def gbfprofile(self, inter: disnake.UserCommandInteraction, member: disnake.Member):
@@ -1501,7 +1501,7 @@ class GranblueFantasy(commands.Cog):
         except:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Invalid 4koma number", color=self.color))
 
-    @commands.slash_command(default_permission=True)
+    @commands.slash_command()
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def guide(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""

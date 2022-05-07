@@ -107,7 +107,7 @@ class Admin(commands.Cog):
         if msg != "":
             await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.display_avatar, color=self.color))
 
-    @commands.slash_command(default_permission=True, name="owner")
+    @commands.slash_command(name="owner")
     @isOwner()
     async def _owner(self, inter: disnake.GuildCommandInteraction):
         """Command Group (Owner Only)"""

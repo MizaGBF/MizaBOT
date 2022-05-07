@@ -49,7 +49,7 @@ class Games(commands.Cog):
             if self.scratcher_loot[r][0] == rare_divider1: self.scratcher_total_rare1 = self.scratcher_total
             if self.scratcher_loot[r][0] == rare_divider2: self.scratcher_total_rare2 = self.scratcher_total
 
-    @commands.slash_command(default_permission=True)
+    @commands.slash_command()
     @commands.cooldown(1, 20, commands.BucketType.user)
     @commands.max_concurrency(10, commands.BucketType.default)
     async def roll(self, inter: disnake.GuildCommandInteraction):
@@ -155,7 +155,7 @@ class Games(commands.Cog):
         del sim
         await self.bot.util.clean(inter, 50)
 
-    @commands.slash_command(default_permission=True)
+    @commands.slash_command()
     @commands.cooldown(1, 60, commands.BucketType.user)
     @commands.max_concurrency(5, commands.BucketType.default)
     async def game(self, inter: disnake.GuildCommandInteraction):
@@ -605,7 +605,7 @@ class Games(commands.Cog):
                 await asyncio.sleep(10)
         await self.bot.util.clean(inter, 60)
 
-    @commands.slash_command(default_permission=True, name="random")
+    @commands.slash_command(name="random")
     @commands.cooldown(1, 50, commands.BucketType.user)
     @commands.max_concurrency(4, commands.BucketType.default)
     async def _random(self, inter: disnake.GuildCommandInteraction):
@@ -758,7 +758,7 @@ class Games(commands.Cog):
         await inter.response.send_message(embed=self.bot.util.embed(title="Today, Xil's main element is", description="{} **{}**".format(self.bot.emote.get(e), e.capitalize()), color=self.color))
         await self.bot.util.clean(inter, 30)
 
-    @commands.slash_command(default_permission=True)
+    @commands.slash_command()
     @commands.cooldown(1, 15, commands.BucketType.user)
     @commands.max_concurrency(4, commands.BucketType.default)
     async def ask(self, inter: disnake.GuildCommandInteraction):
@@ -789,7 +789,7 @@ class Games(commands.Cog):
         await inter.response.send_message(embed=self.bot.util.embed(author={'name':"{} asked".format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description="`When {}`\n{}".format(question, random.choice(["Never", "Soon:tm:", "Ask again tomorrow", "Can't compute", "42", "One day, my friend", "Next year", "It's a secret to everybody", "Soon enough", "When it's ready", "Five minutes", "This week, surely", "My sources say next month", "NOW!", "I'm not so sure", "In three days"])), color=self.color))
         await self.bot.util.clean(inter, 45)
 
-    @commands.message_command(default_permission=True, name="UwU")
+    @commands.message_command(name="UwU")
     @commands.cooldown(6, 180, commands.BucketType.guild)
     async def uwu(self, inter: disnake.MessageCommandInteraction, message: disnake.Message):
         """UwU-tize a message"""

@@ -29,23 +29,23 @@ class Moderation(commands.Cog):
                 return False
         return commands.check(predicate)
 
-    @commands.user_command(default_permission=True, name="Profile Picture")
+    @commands.user_command(name="Profile Picture")
     async def avatar(self, inter: disnake.UserCommandInteraction, user: disnake.User):
         """Retrieve the profile picture of an user"""
         await inter.response.send_message(user.display_avatar.url, ephemeral=True)
 
-    @commands.user_command(default_permission=True, name="Server Join Date")
+    @commands.user_command(name="Server Join Date")
     async def joined(self, inter: disnake.UserCommandInteraction, member: disnake.Member):
         """Retrieve the date at which a member joined this server"""
         await inter.response.send_message(embed=self.bot.util.embed(author={'name':inter.author.display_name, 'icon_url':inter.author.display_avatar}, description="Joined at `{0.joined_at}`".format(member, member), color=self.color), ephemeral=True)
 
-    @commands.message_command(default_permission=True, name="Channel Info")
+    @commands.message_command(name="Channel Info")
     @commands.cooldown(1, 30, commands.BucketType.user)
     async def channelinfo(self, inter: disnake.MessageCommandInteraction, message: disnake.Message):
         """Give informations on the current channel"""
         await inter.response.send_message(embed=self.bot.util.embed(title=inter.guild.name, description="Channel: `{}`\nID: `{}`".format(inter.channel.name, inter.channel.id), footer="Guild ID {}".format(inter.guild.id), color=self.color), ephemeral=True)
 
-    @commands.message_command(default_permission=True, name="Server Info")
+    @commands.message_command(name="Server Info")
     @commands.cooldown(1, 30, commands.BucketType.user)
     async def serverinfo(self, inter: disnake.MessageCommandInteraction, message: disnake.Message):
         """Get informations on the current guild"""
@@ -54,7 +54,7 @@ class Moderation(commands.Cog):
         except: icon = None
         await inter.response.send_message(embed=self.bot.util.embed(title=guild.name + " status", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Members** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, guild.member_count, len(guild.text_channels), len(guild.voice_channels), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=icon, timestamp=guild.created_at, color=self.color), ephemeral=True)
 
-    @commands.slash_command(default_permission=True)
+    @commands.slash_command()
     @commands.max_concurrency(10, commands.BucketType.default)
     @isMod()
     async def mod(self, inter: disnake.GuildCommandInteraction):

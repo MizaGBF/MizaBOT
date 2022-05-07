@@ -14,7 +14,7 @@ class Roles(commands.Cog):
         self.bot = bot
         self.color = 0x17e37a
 
-    @commands.slash_command(default_permission=True)
+    @commands.slash_command()
     @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.max_concurrency(4, commands.BucketType.default)
     async def role(self, inter: disnake.GuildCommandInteraction):

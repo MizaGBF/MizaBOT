@@ -286,7 +286,7 @@ class GuildWar(commands.Cog):
                     return msg
         return ""
 
-    @commands.slash_command(default_permission=True)
+    @commands.slash_command()
     @commands.cooldown(1, 10, commands.BucketType.user)
     @commands.max_concurrency(8, commands.BucketType.default)
     async def gw(self, inter: disnake.GuildCommandInteraction):
@@ -1251,7 +1251,7 @@ class GuildWar(commands.Cog):
                     await self.bot.sendError('findranking (search: {})'.format(terms), e)
                     await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="An error occured", color=self.color))
 
-    @commands.slash_command(default_permission=True)
+    @commands.slash_command()
     @commands.cooldown(2, 60, commands.BucketType.guild)
     @commands.max_concurrency(2, commands.BucketType.default)
     async def gbfg(self, inter: disnake.GuildCommandInteraction):

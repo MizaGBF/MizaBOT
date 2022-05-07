@@ -17,7 +17,7 @@ class Sparking(commands.Cog):
         self.bot = bot
         self.color = 0xeba834
 
-    @commands.slash_command(default_permission=True)
+    @commands.slash_command()
     @commands.cooldown(2, 10, commands.BucketType.user)
     @commands.max_concurrency(4, commands.BucketType.default)
     async def spark(self, inter: disnake.GuildCommandInteraction):
@@ -131,7 +131,7 @@ class Sparking(commands.Cog):
         await self._seeroll(inter, member)
         await self.bot.util.clean(inter, 30)
 
-    @commands.user_command(default_permission=True, name="GBF Spark")
+    @commands.user_command(name="GBF Spark")
     @commands.cooldown(1, 30, commands.BucketType.user)
     @commands.max_concurrency(4, commands.BucketType.default)
     async def seespark(self, inter: disnake.UserCommandInteraction, member: disnake.Member):
