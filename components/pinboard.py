@@ -33,31 +33,6 @@ class Pinboard():
                 break
         return idx
 
-    """fetch()
-    Transform a raw payload into a message and the matching pinboard guild id
-    
-    Parameters
-    ----------
-    payload: Raw message payload
-    
-    Returns
-    --------
-    tuple:
-        - disnake.Message
-        - matched Guild ID
-    """
-    async def fetch(self, payload):
-        try:
-            idx = self.match_channel_id(payload.channel_id)
-            if idx is None:
-                return None, None
-            message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
-            return message, idx
-        except Exception as e:
-            if  'Missing Access' not in str(e):
-                await self.bot.sendError('pinboard fetch', e)
-            return None, None
-
     """check()
     Check if the message and guild id are valid for pinning
     

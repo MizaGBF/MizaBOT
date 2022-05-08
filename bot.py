@@ -597,17 +597,6 @@ class MizaBot(commands.InteractionBot):
     async def on_message_command_error(self, inter, error):
         await self.application_error_handling(inter, error)
 
-    """on_raw_reaction_add()
-    Event. Called when a new reaction is added by an user
-    
-    Parameters
-    ----------
-    payload: Raw payload
-    """
-    async def on_raw_reaction_add(self, payload):
-        msg, idx = await self.pinboard.fetch(payload)
-        await self.pinboard.check(msg, idx)
-
 
 if __name__ == "__main__":
     bot = MizaBot()
