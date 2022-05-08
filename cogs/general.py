@@ -449,3 +449,13 @@ class General(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(title="/hgg2d/ latest thread(s)", description=msg, footer="Have fun, fellow 4channeler", color=self.color))
         else:
             await inter.edit_original_message(embed=self.bot.util.embed(title="/hgg2d/ Error", description="I couldn't find a single /hgg2d/ thread 😔", color=self.color))
+
+    @commands.message_command(name="Pin Message")
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def pinmessage(self, inter: disnake.MessageCommandInteraction, message: disnake.Message):
+        """Add a message to the pinboard"""
+        await inter.response.defer(ephemeral=True)
+        if await self.bot.pinboard.pin(message):
+            await inter.edit_original_message(embed=self.bot.util.embed(title="The command ran with success", description="The selected message has been added to the Pinboard", color=self.color))
+        else:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="This message can't be added to the pinboard", color=self.color))

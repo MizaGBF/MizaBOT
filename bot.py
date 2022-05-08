@@ -38,7 +38,8 @@ class MizaBot(commands.InteractionBot):
             "Reworked the command list because Discord decided to limit the sub commands to 10",
             "`/roll single` is back, `/roll srssr` is gone",
             "Added `/guide defense`",
-            "The bot switched to disnake 2.5.0, please `/bug_report` if you see any weird behaviors"
+            "The bot switched to disnake 2.5.0, please `/bug_report` if you see any weird behaviors",
+            "Pinboard requires the use of the Pin Message command to complete the process (right click on message > Apps)"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
@@ -604,7 +605,8 @@ class MizaBot(commands.InteractionBot):
     payload: Raw payload
     """
     async def on_raw_reaction_add(self, payload):
-        await self.pinboard.check(payload)
+        msg, idx = await self.pinboard.fetch(payload)
+        await self.pinboard.check(msg, idx)
 
 
 if __name__ == "__main__":

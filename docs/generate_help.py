@@ -170,7 +170,11 @@ mod_bypass allows a mod to force the pin just by reacting with that emote. Set i
 pinning_channel is the ID of the pinboard channel you created.<br>
 <br>
 You can redo the /mod pinboard enable command to change those settings or use /mod pinboard disable to disable it.<br>
-Finally, /mod pinboard see lets you see your current server pinboard settings.</p>
+Finally, /mod pinboard see lets you see your current server pinboard settings.<br>
+<br>
+Pinning a message is then easy: People must react to the message with the corresponding emoji.<br>
+<b>Once it meets the required amount of reactions you set</b>, someone must go under the Apps menu of the message and click on Pin message.<br>
+<img src="img/guide_pinboard.png"></p>
 
 <p>3) You can setup a channel to receive notifications about game updates or important news for the bot.<br>
 First, setup a channel for the bot to post in (makes sure its permissions are alright) or select a general channel where you think it would be ok for the bot to post.<br>
