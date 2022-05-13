@@ -13,22 +13,6 @@ class Moderation(commands.Cog):
         self.bot = bot
         self.color = 0x2eced1
 
-    """isMod()
-    Command decorator, to check if the command is used by a server moderator
-    
-    Returns
-    --------
-    command check
-    """
-    def isMod(): # for decorators
-        async def predicate(inter):
-            if inter.bot.isMod(inter):
-                return True
-            else:
-                await inter.response.send_message(embed=inter.bot.util.embed(title="Error", description="You lack the permission to use this command"), ephemeral=True)
-                return False
-        return commands.check(predicate)
-
     @commands.user_command(name="Profile Picture")
     async def avatar(self, inter: disnake.UserCommandInteraction, user: disnake.User):
         """Retrieve the profile picture of an user"""
