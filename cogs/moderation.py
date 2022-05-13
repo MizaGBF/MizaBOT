@@ -33,6 +33,7 @@ class Moderation(commands.Cog):
         await inter.response.send_message(embed=self.bot.util.embed(title=inter.guild.name, description="Channel: `{}`\nID: `{}`".format(inter.channel.name, inter.channel.id), footer="Guild ID {}".format(inter.guild.id), color=self.color), ephemeral=True)
 
     @commands.message_command(name="Server Info")
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 30, commands.BucketType.user)
     async def serverinfo(self, inter: disnake.MessageCommandInteraction, message: disnake.Message):
         """Get informations on the current guild"""

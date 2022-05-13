@@ -794,6 +794,7 @@ class Games(commands.Cog):
         await self.bot.util.clean(inter, 45)
 
     @commands.message_command(name="UwU")
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(6, 180, commands.BucketType.guild)
     async def uwu(self, inter: disnake.MessageCommandInteraction, message: disnake.Message):
         """UwU-tize a message"""

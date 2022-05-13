@@ -459,6 +459,7 @@ class General(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(title="/hgg2d/ Error", description="I couldn't find a single /hgg2d/ thread 😔", color=self.color))
 
     @commands.message_command(name="Pin Message")
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def pinmessage(self, inter: disnake.MessageCommandInteraction, message: disnake.Message):
         """Add a message to the pinboard"""
