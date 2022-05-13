@@ -2,6 +2,8 @@ from importlib import import_module
 import os
 import re
 
+DEBUG_SERVER_ID = None
+
 def loadCogFile(bot, p, f, r, relative="", package=None):
     try:
         with open(p, mode='r', encoding='utf-8') as py:
@@ -25,6 +27,12 @@ def loadCogFile(bot, p, f, r, relative="", package=None):
     return False
 
 def load(bot): # load all cogs in the 'cog' folder
+    global DEBUG_SERVER_ID
+    try: # try to set debug server id for modules needing it
+        DEBUG_SERVER_ID = bot.data.config['ids']['debug_server']
+    except:
+        print("Warning: 'debug_server' ID not set in 'config.json'")
+        DEBUG_SERVER_ID = None
     r = re.compile("^class ([a-zA-Z0-9_]*)\\(commands\\.Cog\\):", re.MULTILINE) # to search the name class
     count = 0 # number of attempt at loading cogs
     failed = 0 # number of loading failed (ignore debug and test cogs)

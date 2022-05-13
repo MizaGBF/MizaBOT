@@ -1,6 +1,7 @@
 ﻿import disnake
 from disnake.ext import commands
 import asyncio
+from cogs import DEBUG_SERVER_ID
 from datetime import datetime, timedelta
 import random
 import gc
@@ -14,6 +15,8 @@ import os
 
 class Admin(commands.Cog):
     """Owner only."""
+    if DEBUG_SERVER_ID is None: guild_ids = []
+    else: guild_ids = [DEBUG_SERVER_ID]
     def __init__(self, bot):
         self.bot = bot
         self.color = 0x7a1472
@@ -107,7 +110,7 @@ class Admin(commands.Cog):
         if msg != "":
             await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.display_avatar, color=self.color))
 
-    @commands.slash_command(name="owner")
+    @commands.slash_command(name="owner", guild_ids=guild_ids)
     @commands.default_member_permissions(send_messages=True, read_messages=True)
     @isOwner()
     async def _owner(self, inter: disnake.GuildCommandInteraction):
