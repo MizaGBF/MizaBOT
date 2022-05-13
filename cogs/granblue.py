@@ -1102,6 +1102,7 @@ class GranblueFantasy(commands.Cog):
         await self.bot.util.clean(inter, 60)
 
     @commands.user_command(name="GBF Profile")
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 30, commands.BucketType.user)
     @commands.max_concurrency(4, commands.BucketType.default)
     async def gbfprofile(self, inter: disnake.UserCommandInteraction, member: disnake.Member):

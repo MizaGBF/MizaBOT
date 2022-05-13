@@ -14,16 +14,19 @@ class Moderation(commands.Cog):
         self.color = 0x2eced1
 
     @commands.user_command(name="Profile Picture")
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     async def avatar(self, inter: disnake.UserCommandInteraction, user: disnake.User):
         """Retrieve the profile picture of an user"""
         await inter.response.send_message(user.display_avatar.url, ephemeral=True)
 
     @commands.user_command(name="Server Join Date")
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     async def joined(self, inter: disnake.UserCommandInteraction, member: disnake.Member):
         """Retrieve the date at which a member joined this server"""
         await inter.response.send_message(embed=self.bot.util.embed(author={'name':inter.author.display_name, 'icon_url':inter.author.display_avatar}, description="Joined at `{0.joined_at}`".format(member, member), color=self.color), ephemeral=True)
 
     @commands.message_command(name="Channel Info")
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 30, commands.BucketType.user)
     async def channelinfo(self, inter: disnake.MessageCommandInteraction, message: disnake.Message):
         """Give informations on the current channel"""
