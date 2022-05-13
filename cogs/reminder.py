@@ -71,6 +71,7 @@ class Reminder(commands.Cog):
             await asyncio.sleep(50)
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
     @commands.max_concurrency(4, commands.BucketType.default)
     async def remind(self, inter: disnake.GuildCommandInteraction):

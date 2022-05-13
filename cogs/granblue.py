@@ -71,6 +71,7 @@ class GranblueFantasy(commands.Cog):
         return msg
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(2, 20, commands.BucketType.user)
     @commands.max_concurrency(8, commands.BucketType.default)
     async def gbf(self, inter: disnake.GuildCommandInteraction):
@@ -1502,6 +1503,7 @@ class GranblueFantasy(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Invalid 4koma number", color=self.color))
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def guide(self, inter: disnake.GuildCommandInteraction):
         """Command Group"""

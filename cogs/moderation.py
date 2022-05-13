@@ -55,8 +55,8 @@ class Moderation(commands.Cog):
         await inter.response.send_message(embed=self.bot.util.embed(title=guild.name + " status", description="**ID** ▫️ `{}`\n**Owner** ▫️ `{}`\n**Members** ▫️ {}\n**Text Channels** ▫️ {}\n**Voice Channels** ▫️ {}\n**Roles** ▫️ {}\n**Emojis** ▫️ {}\n**Boosted** ▫️ {}\n**Boost Tier** ▫️ {}".format(guild.id, guild.owner_id, guild.member_count, len(guild.text_channels), len(guild.voice_channels), len(guild.roles), len(guild.emojis), guild.premium_subscription_count, guild.premium_tier), thumbnail=icon, timestamp=guild.created_at, color=self.color), ephemeral=True)
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True, manage_messages=True)
     @commands.max_concurrency(10, commands.BucketType.default)
-    @isMod()
     async def mod(self, inter: disnake.GuildCommandInteraction):
         """Command Group (Mod Only)"""
         pass

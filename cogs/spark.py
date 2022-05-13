@@ -18,6 +18,7 @@ class Sparking(commands.Cog):
         self.color = 0xeba834
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(2, 10, commands.BucketType.user)
     @commands.max_concurrency(4, commands.BucketType.default)
     async def spark(self, inter: disnake.GuildCommandInteraction):

@@ -56,6 +56,7 @@ class DreadBarrage(commands.Cog):
             return ""
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
     @commands.max_concurrency(4, commands.BucketType.default)
     async def db(self, inter: disnake.GuildCommandInteraction):

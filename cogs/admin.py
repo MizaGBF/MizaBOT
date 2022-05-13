@@ -14,9 +14,11 @@ import os
 
 class Admin(commands.Cog):
     """Owner only."""
+    guild_ids = [] # to make the command local to my server
     def __init__(self, bot):
         self.bot = bot
         self.color = 0x7a1472
+        self.guild_ids.append(self.bot.data.config['ids']['debug_server'])
 
     def startTasks(self):
         self.bot.runTask('status', self.status)
@@ -107,7 +109,7 @@ class Admin(commands.Cog):
         if msg != "":
             await self.bot.send('debug', embed=self.bot.util.embed(title=self.bot.user.name, description=msg, thumbnail=self.bot.user.display_avatar, color=self.color))
 
-    @commands.slash_command(name="owner")
+    @commands.slash_command(name="owner", guild_ids=guild_ids)
     @isOwner()
     async def _owner(self, inter: disnake.GuildCommandInteraction):
         """Command Group (Owner Only)"""

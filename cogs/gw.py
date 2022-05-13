@@ -287,6 +287,7 @@ class GuildWar(commands.Cog):
         return ""
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 10, commands.BucketType.user)
     @commands.max_concurrency(8, commands.BucketType.default)
     async def gw(self, inter: disnake.GuildCommandInteraction):
@@ -1252,6 +1253,7 @@ class GuildWar(commands.Cog):
                     await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="An error occured", color=self.color))
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(2, 60, commands.BucketType.guild)
     @commands.max_concurrency(2, commands.BucketType.default)
     async def gbfg(self, inter: disnake.GuildCommandInteraction):

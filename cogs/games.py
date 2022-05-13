@@ -50,6 +50,7 @@ class Games(commands.Cog):
             if self.scratcher_loot[r][0] == rare_divider2: self.scratcher_total_rare2 = self.scratcher_total
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 20, commands.BucketType.user)
     @commands.max_concurrency(10, commands.BucketType.default)
     async def roll(self, inter: disnake.GuildCommandInteraction):
@@ -156,6 +157,7 @@ class Games(commands.Cog):
         await self.bot.util.clean(inter, 50)
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 60, commands.BucketType.user)
     @commands.max_concurrency(5, commands.BucketType.default)
     async def game(self, inter: disnake.GuildCommandInteraction):
@@ -606,6 +608,7 @@ class Games(commands.Cog):
         await self.bot.util.clean(inter, 60)
 
     @commands.slash_command(name="random")
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 50, commands.BucketType.user)
     @commands.max_concurrency(4, commands.BucketType.default)
     async def _random(self, inter: disnake.GuildCommandInteraction):
@@ -759,6 +762,7 @@ class Games(commands.Cog):
         await self.bot.util.clean(inter, 30)
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 15, commands.BucketType.user)
     @commands.max_concurrency(4, commands.BucketType.default)
     async def ask(self, inter: disnake.GuildCommandInteraction):

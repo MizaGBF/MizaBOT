@@ -20,6 +20,7 @@ class General(commands.Cog):
         self.color = 0xd12e57
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 100, commands.BucketType.user)
     async def invite(self, inter: disnake.GuildCommandInteraction):
         """Get the MizaBOT invite link"""
@@ -31,6 +32,7 @@ class General(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title=inter.guild.me.name, description="{}\nCurrently only servers of 25 members or more can be added.\nMisuses of this link will result in a server-wide ban.".format(self.bot.data.config['strings']["invite()"]), thumbnail=inter.guild.me.display_avatar, timestamp=self.bot.util.timestamp(), color=self.color), ephemeral=True)
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 30, commands.BucketType.user)
     async def bug_report(self, inter: disnake.GuildCommandInteraction, report : str = commands.Param()):
         """Send a bug report or feedback to the developer"""
@@ -99,6 +101,7 @@ class General(commands.Cog):
                 result.append({"name":name, "description":description, "options":options, "type":cmd_type}) # we append our command
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def help(self, inter: disnake.GuildCommandInteraction, search : str = commands.Param(description="What are you searching for?", default="")):
         """Get the bot help"""
@@ -166,12 +169,14 @@ class General(commands.Cog):
         await inter.edit_original_message(embed=self.bot.util.embed(title=self.bot.user.name + " Help", description=msg, thumbnail=self.bot.user.display_avatar, color=self.color, url="https://mizagbf.github.io/MizaBOT/"))
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 30, commands.BucketType.user)
     async def mizabot(self, inter: disnake.GuildCommandInteraction):
         """Post the bot status"""
         await inter.response.send_message(embed=self.bot.util.embed(title="{} is Ready".format(self.bot.user.display_name), description=self.bot.util.statusString(), thumbnail=self.bot.user.display_avatar, timestamp=self.bot.util.timestamp(), color=self.color), ephemeral=True)
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 30, commands.BucketType.user)
     async def changelog(self, inter: disnake.GuildCommandInteraction):
         """Post the bot changelog"""
@@ -184,6 +189,7 @@ class General(commands.Cog):
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="No Changelog available", color=self.color), ephemeral=True)
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 100, commands.BucketType.guild)
     @commands.max_concurrency(2, commands.BucketType.default)
     async def poll(self, inter: disnake.GuildCommandInteraction):
@@ -256,6 +262,7 @@ class General(commands.Cog):
             except: await inter.edit_original_message(embed=self.bot.util.embed(title="Poll error", description="{}".format(e), color=self.color))
 
     @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(3, 10, commands.BucketType.guild)
     @commands.max_concurrency(4, commands.BucketType.default)
     async def utility(self, inter: disnake.GuildCommandInteraction):
@@ -379,6 +386,7 @@ class General(commands.Cog):
             return []
 
     @commands.slash_command(name="4chan")
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
     @commands.cooldown(1, 2, commands.BucketType.default)
     @commands.max_concurrency(4, commands.BucketType.default)
     async def fourchan(self, inter: disnake.GuildCommandInteraction):
