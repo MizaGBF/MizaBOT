@@ -2,6 +2,7 @@ from importlib import import_module
 import os
 import re
 
+# configuration variables
 DEBUG_SERVER_ID = None
 
 def loadCogFile(bot, p, f, r, relative="", package=None):

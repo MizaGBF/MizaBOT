@@ -58,7 +58,7 @@ class Sparking(commands.Cog):
             if fr != 1: title += "s"
             # sending
             if s is None:
-                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.display_avatar}, description="Update your rolls with the `/setroll` command", footer="Next spark between {} and {} from 0 rolls".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), color=self.color))
+                await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.display_avatar}, description="Update your rolls with the `/spark set` command", footer="Next spark between {} and {} from 0 rolls".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), color=self.color))
             else:
                 await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':member.display_avatar}, description="**{} {} {} {} {} {} {}**\n*Expecting {} to {} rolls in {}*".format(self.bot.emote.get("crystal"), s[0], self.bot.emote.get("singledraw"), s[1], self.bot.emote.get("tendraw"), s[2], ("" if s[3] == 0 else "{} {}".format(self.bot.emote.get("shrimp"), s[3])),expected[0], expected[1], now.strftime("%B")), footer="Next spark between {} and {}".format(t_min.strftime("%y/%m/%d"), t_max.strftime("%y/%m/%d")), timestamp=timestamp, color=self.color))
         except Exception as e:

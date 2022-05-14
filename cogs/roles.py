@@ -128,7 +128,7 @@ class Roles(commands.Cog):
             if id not in self.bot.data.save['assignablerole']:
                 self.bot.data.save['assignablerole'][id] = {}
             if role.name.lower() in self.bot.data.save['assignablerole'][id]:
-                await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Role `{}` is already a self-assignable role.\nDid you mean `/rsar` ?".format(role_name), color=self.color))
+                await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Role `{}` is already a self-assignable role.\nDid you mean `/role remove` ?".format(role_name), color=self.color))
                 return
             self.bot.data.save['assignablerole'][id][role.name.lower()] = role.id
             self.bot.data.pending = True
@@ -154,7 +154,7 @@ class Roles(commands.Cog):
             if id not in self.bot.data.save['assignablerole']:
                 self.bot.data.save['assignablerole'][id] = {}
             if role.name.lower() not in self.bot.data.save['assignablerole'][id]:
-                await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Role `{}` isn't a self-assignable role.\nDid you mean `/asar` ?".format(role_name), color=self.color))
+                await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Role `{}` isn't a self-assignable role.\nDid you mean `/role add` ?".format(role_name), color=self.color))
                 return
             self.bot.data.save['assignablerole'][id].pop(role.name.lower())
             self.bot.data.pending = True

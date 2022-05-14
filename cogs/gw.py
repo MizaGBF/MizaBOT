@@ -1140,7 +1140,7 @@ class GuildWar(commands.Cog):
         await inter.response.defer(ephemeral=True)
         
         if terms == "": # no search terms so we print how to use it
-            await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="**Usage**\n`/find {} [{}name]` to search a {} by name\n`/find {} %eq [{}name]` or `/find {} %== [{}name]` for an exact match\n`/find {} %id [{}id]` for an id search\n`/find {} %rank [ranking]` for a ranking search\n`/find {} %all ...` to receive all the results by direct message".replace('{}', txt), color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="**Usage**\n`/gw find {} [{}name]` to search a {} by name\n`/gw find {} %eq [{}name]` or `/gw find {} %== [{}name]` for an exact match\n`/gw find {} %id [{}id]` for an id search\n`/gw find {} %rank [ranking]` for a ranking search\n`/gw find {} %all ...` to receive all the results by direct message".replace('{}', txt), color=self.color))
         else:
             try:
                 all = (mode_all == 1)

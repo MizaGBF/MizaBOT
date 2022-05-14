@@ -420,7 +420,7 @@ class Util():
             id = self.bot.data.save['gbfids'][str(memberTarget.id)]
         elif target == "":
             if str(inter.author.id) not in self.bot.data.save['gbfids']:
-                return "You didn't set your GBF profile ID.\nUse `/gbf setprofile` to link it with your Discord ID."
+                return "You didn't set your GBF profile ID.\nUse `/gbf profile set` to link it with your Discord ID."
             id = self.bot.data.save['gbfids'][str(inter.author.id)]
         elif target.startswith('<@') and target.endswith('>'):
             try:
