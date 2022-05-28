@@ -68,7 +68,7 @@ class Data():
                             newserver = data.pop('newserver', None)
                             if 'guilds' not in data:
                                 data['guilds'] = {"owners": newserver.get('owners', []), "pending": newserver.get('pending', {}), "banned": newserver.get('servers', [])}
-                        for id in data['reminders']:
+                        for id in data.get('reminders', {}):
                             for r in data['reminders'][id]:
                                 if len(r) == 2:
                                     r.append("")
@@ -78,26 +78,38 @@ class Data():
                         except: pass
                     if ver <= 1:
                         data['ban'] = {}
-                        for i in data['guilds']['owners']:
-                            data['ban'][str(i)] = 0b1
-                        data['guilds'].pop('owners', None)
-                        for i in data['spark'][1]:
-                            data['ban'][str(i)] = 0b10 | data['ban'].get(str(i), 0)
-                        data['spark'] = data['spark'][0]
+                        if 'guilds' in data:
+                            for i in data['guilds']['owners']:
+                                data['ban'][str(i)] = 0b1
+                            data['guilds'].pop('owners', None)
+                        else:
+                            data['guilds'] = {}
+                        if 'spark' in data:
+                            for i in data['spark'][1]:
+                                data['ban'][str(i)] = 0b10 | data['ban'].get(str(i), 0)
+                            data['spark'] = data['spark'][0]
+                        else:
+                            data['spark'] = {}
                     if ver <= 2:
-                        data['banned_guilds'] = data['guilds']['banned']
+                        if 'guilds' in data:
+                            data['banned_guilds'] = data['guilds'].get('banned', [])
+                        else:
+                            data['banned_guilds'] = []
                         data.pop('guilds', None)
                     if ver <= 3:
                         data['guilds'] = None
                     if ver <= 4: # spark system update
-                        keys = list(data['spark'].keys())
-                        c = datetime.utcnow()
-                        for id in keys:
-                            if len(data['spark'][id]) == 3:
-                                data['spark'][id].append(0) # 0 shrimp
-                                data['spark'][id].append(c) # datetime
-                            elif len(data['spark'][id]) == 4:
-                                data['spark'][id].insert(3, 0) # 0 shrimp, pos 3
+                        if 'spark' in data:
+                            keys = list(data['spark'].keys())
+                            c = datetime.utcnow()
+                            for id in keys:
+                                if len(data['spark'][id]) == 3:
+                                    data['spark'][id].append(0) # 0 shrimp
+                                    data['spark'][id].append(c) # datetime
+                                elif len(data['spark'][id]) == 4:
+                                    data['spark'][id].insert(3, 0) # 0 shrimp, pos 3
+                        else:
+                            data['spark'] = {}
                     data['version'] = self.saveversion
                 elif ver > self.saveversion:
                     raise Exception("Save file version higher than the expected version")
