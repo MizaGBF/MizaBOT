@@ -4,7 +4,7 @@ if __name__ == "__main__":
     try:
         gauth = GoogleAuth()
         gauth.LoadCredentialsFile("credentials.json")
-        if self.gauth.credentials is None:
+        if gauth.credentials is None:
             gauth.LocalWebserverAuth()
             gauth.SaveCredentialsFile("credentials.json")
             print("Credentials.json has been created")
