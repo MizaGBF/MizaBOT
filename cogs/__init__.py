@@ -45,6 +45,6 @@ def load(bot): # load all cogs in the 'cog' folder
             if loadCogFile(bot, p, f, r, relative=".", package='cogs'): count += 1
             else: failed += 1
     # optional dev files
-    if loadCogFile(bot, "debug.py", "debug.py", r, silent=True): count += 1
-    if loadCogFile(bot, "test.py", "test.py", r, silent=True): count += 1
+    if loadCogFile(bot, "debug.py", "debug.py", r, silent=('debug' not in bot.data.config)): count += 1
+    if loadCogFile(bot, "test.py", "test.py", r, silent=('debug' not in bot.data.config)): count += 1
     return count, failed # return attempts
