@@ -21,7 +21,7 @@ Check the [Online Help](https://mizagbf.github.io/MizaBOT/) for details.
   
 It's designed to be used on [Heroku](https://www.heroku.com) and isn't intended to be setup and used by anyone. Still, if you are interested, details are available on the [Wiki](https://github.com/MizaGBF/MizaBOT/wiki) and in this [issue](https://github.com/MizaGBF/MizaBOT/issues/1).  
   
-[![Invite Card](https://mizagbf.github.io/MizaBOT/img/invite.png)](https://discord.com/api/oauth2/authorize?client_id=614723060100104193&permissions=545394785367&scope=bot%20applications.commands)  
+[![Invite Card](https://mizagbf.github.io/MizaBOT/img/invite.png)](https://discord.com/api/oauth2/authorize?client_id=614723060100104193&permissions=1644905889015&scope=bot%20applications.commands)  
 Currently open to servers of at least 25 members, **up to 90 servers**. Again, check the [Online Help](https://mizagbf.github.io/MizaBOT/) for details.    
   
 ### Features  

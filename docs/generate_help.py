@@ -132,7 +132,7 @@ As a result, slots 91 to 100 will be reserved for my personal use.<br>
 I also reserve myself the right to make the bot leave your server if the need arise.<br>
 Here's the invitation link:<br>
 <br>
-<a href="https://discord.com/api/oauth2/authorize?client_id=614723060100104193&permissions=545394785367&scope=bot%20applications.commands"><img src="img/invite.png"></a><br>
+<a href="https://discord.com/api/oauth2/authorize?client_id=614723060100104193&permissions=1644905889015&scope=bot%20applications.commands"><img src="img/invite.png"></a><br>
 <br>
 <b>If the bot leaves your server on its own</b>, it means you don't satisfy the requirements, the invitations are closed OR you or your server has been banned from using the Bot.<br>
 The reason will be sent to the server owner (if the bot can send it a DM).<br>
