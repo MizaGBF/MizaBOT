@@ -20,7 +20,7 @@ import asyncio
 import time
 import concurrent.futures
 import functools
-from signal import SIGTERM, SIGINT
+import signal
 # conditional import
 try:
     import uvloop # unix only
@@ -109,8 +109,12 @@ class MizaBot(commands.InteractionBot):
             return
         # graceful exit setup
         graceful_exit = self.loop.create_task(self.exit_gracefully())
-        for s in [SIGTERM, SIGINT]:
-            self.loop.add_signal_handler(s, graceful_exit.cancel)
+        try:
+            for s in [signal.SIGTERM, signal.SIGINT]:
+                self.loop.add_signal_handler(s, graceful_exit.cancel)
+        except: # windows
+            for s in [signal.SIGTERM, signal.SIGINT]:
+                signal.signal(s, graceful_exit.cancel)
         # main loop
         while self.running:
             try:

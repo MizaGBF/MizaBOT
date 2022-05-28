@@ -5,7 +5,7 @@ import re
 # configuration variables
 DEBUG_SERVER_ID = None
 
-def loadCogFile(bot, p, f, r, relative="", package=None):
+def loadCogFile(bot, p, f, r, relative="", package=None, silent=False):
     try:
         with open(p, mode='r', encoding='utf-8') as py:
             all = r.findall(str(py.read())) # search all matches
@@ -19,12 +19,14 @@ def loadCogFile(bot, p, f, r, relative="", package=None):
                     bot.add_cog(_class(bot)) # instantiate and add to the bot
                     return True
                 except Exception as e:
-                    print("Cog Import Exception in file", p, ":", e)
-                    print("Cog Import Exception in file", p, ":", bot.util.pexc(e))
+                    if not silent:
+                        print("Cog Import Exception in file", p, ":", e)
+                        print("Cog Import Exception in file", p, ":", bot.util.pexc(e))
                     return False
     except Exception as e2:
-        print("Cog Import Failed for file", p, ":", e2)
-        print("Cog Import Exception", p, ":", bot.util.pexc(e2))
+        if not silent:
+            print("Cog Import Failed for file", p, ":", e2)
+            print("Cog Import Exception", p, ":", bot.util.pexc(e2))
     return False
 
 def load(bot): # load all cogs in the 'cog' folder
@@ -43,6 +45,6 @@ def load(bot): # load all cogs in the 'cog' folder
             if loadCogFile(bot, p, f, r, relative=".", package='cogs'): count += 1
             else: failed += 1
     # optional dev files
-    if loadCogFile(bot, "debug.py", "debug.py", r): count += 1
-    if loadCogFile(bot, "test.py", "test.py", r): count += 1
+    if loadCogFile(bot, "debug.py", "debug.py", r, silent=True): count += 1
+    if loadCogFile(bot, "test.py", "test.py", r, silent=True): count += 1
     return count, failed # return attempts
