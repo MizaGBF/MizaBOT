@@ -409,6 +409,7 @@ class GranblueFantasy(commands.Cog):
     @gbf.sub_command()
     async def info(self, inter: disnake.GuildCommandInteraction):
         """Post various Granblue Fantasy informations"""
+        await inter.response.defer()
         current_time = self.bot.util.JST(delay=False)
         description = "{} Current Time is **{}**".format(self.bot.emote.get('clock'), self.bot.util.time(style='dT'))
         description += "\n{} Japan Time is **{}**".format(self.bot.emote.get('clock'), current_time.strftime("%H:%M"))
@@ -478,7 +479,7 @@ class GranblueFantasy(commands.Cog):
         except Exception as e:
             await self.bot.sendError("getnextbuff", e)
 
-        await inter.response.send_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
+        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"http://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
 
     @gbf.sub_command()
     async def maintenance(self, inter: disnake.GuildCommandInteraction):
