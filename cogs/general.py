@@ -5,6 +5,7 @@ import json
 import re
 import html
 import math
+from urllib import request
 from views.poll import Poll
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -340,6 +341,27 @@ class General(commands.Cog):
             if sc[1:] not in tier2: tier2.append(sc[1:])
             if sc not in tier1: tier1.append(sc)
         await inter.edit_original_message(embed=self.bot.util.embed(title="Summer Fortune Calculator", description="Your chances of winning at least one\n**Tier 3** ▫️ {:.2f}%\n**Tier 2** ▫️ {:.2f}%\n**Tier 1** ▫️ {:.2f}%".format(100*(1-math.pow(1-0.03, len(tier3))), 100*(1-math.pow(1-0.02, len(tier2))), 100*(1-math.pow(1-0.002, len(tier1)))), color=self.color))
+
+    @utility.sub_command()
+    async def yen(self, inter):
+        """Retrieve the current yen conversion rate"""
+        await inter.response.defer(ephemeral=True)
+        try:
+            req = request.Request("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml")
+            with request.urlopen(req) as response:
+               data = response.read().decode('utf-8').split('<Cube time="')
+            response.close()
+            rates = ([None, None], [None, None])
+            date = data[1].split('">')[0]
+            for i in range(0, 2):
+                rates[0][i] = float(data[i+1].split('<Cube currency="JPY" rate="')[1].split('"/>')[0])
+                rates[1][i] = rates[0][i] * float(data[i+1].split('<Cube currency="USD" rate="')[1].split('"/>')[0])
+            for i in range(0, 2):
+                rates[i][1] = 100 * rates[i][0] / rates[i][1] - 100
+            
+            await inter.edit_original_message(embed=self.bot.util.embed(title=":coin: Yen Rate ▫️ " + date, description="▫️ 1 EUR \↔️ {:.2f} JPY ({:+.2f}%)\n▫️ 1 USD \↔️ {:.2f} JPY ({:+.2f}%)".format(rates[0][0], rates[0][1], rates[1][0], rates[1][1]), color=self.color))
+        except:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="An unexpected error occured", color=self.color), ephemeral=True)
 
     """cleanhtml()
     Clean the html and escape the string properly

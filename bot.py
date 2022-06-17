@@ -34,13 +34,9 @@ class MizaBot(commands.InteractionBot):
         self.version = "9.25" # bot version
         self.changelog = [ # changelog lines
             "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
-            "`/mod announcement togglechannel` added to receive game or bot news",
-            "Reworked the command list because Discord decided to limit the sub commands to 10",
-            "`/roll single` is back, `/roll srssr` is gone",
-            "Added `/guide defense`",
             "The bot switched to disnake 2.5.0, please `/bug_report` if you see any weird behaviors",
             "Pinboard requires the use of the Pin Message command to complete the process (right click on message > Apps)",
-            "Made the bot compliant with the new permission system"
+            "Added `/utility yen`"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
