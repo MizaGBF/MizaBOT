@@ -355,7 +355,7 @@ class General(commands.Cog):
             date = data[1].split('">')[0]
             for i in range(0, 2):
                 rates[0][i] = float(data[i+1].split('<Cube currency="JPY" rate="')[1].split('"/>')[0])
-                rates[1][i] = rates[0][i] * float(data[i+1].split('<Cube currency="USD" rate="')[1].split('"/>')[0])
+                rates[1][i] = rates[0][i] / float(data[i+1].split('<Cube currency="USD" rate="')[1].split('"/>')[0])
             for i in range(0, 2):
                 rates[i][1] = 100 * rates[i][0] / rates[i][1] - 100
             
