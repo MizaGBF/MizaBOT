@@ -588,6 +588,7 @@ class Ranking():
             miny = math.floor(min(miny, p[1], p[2]))
             maxy = math.ceil(max(maxy, p[1], p[2]))
         deltay= maxy - miny
+        if deltay <= 0: return None
         tvar = maxy
         for i in range(0, 5):
             d.text((10, 40+125*i),"{:.2f}".format(float(tvar)).replace('.00', '').replace('.10', '.1').replace('.20', '.2').replace('.30', '.3').replace('.40', '.4').replace('.50', '.5').replace('.60', '.6').replace('.70', '.7').replace('.80', '.8').replace('.90', '.9').replace('.0', '').rjust(6),font=font,fill=(0,0,0))
@@ -597,6 +598,7 @@ class Ranking():
         maxx = plot[-1][0]
         deltax = maxx - minx
         deltax = (deltax.seconds + deltax.days * 86400)
+        if deltax <= 0: return None
         tvar = minx
         for i in range(0, 11):
             d.text((35+70*i, 560),"{:02d}:{:02d}".format(tvar.hour, tvar.minute),font=font,fill=(0,0,0))
