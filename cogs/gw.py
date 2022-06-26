@@ -850,7 +850,10 @@ class GuildWar(commands.Cog):
                 msg = "Updated: **{}** ago".format(self.bot.util.delta2str(d, 0))
                 if d.seconds >= 1200 and d.seconds <= 1800: msg += " ▫ *updating*"
                 msg += "\n"
-                end_time = self.bot.data.save['matchtracker']['last'].replace(day=self.bot.data.save['matchtracker']['last'].day+1, hour=0, minute=0, second=0, microsecond=0)
+                if self.bot.data.save['matchtracker']['last'].hour < 7:
+                    end_time = self.bot.data.save['matchtracker']['last'].replace(hour=0, minute=0, second=0, microsecond=0)
+                else:
+                    end_time = self.bot.data.save['matchtracker']['last'].replace(day=self.bot.data.save['matchtracker']['last'].day+1, hour=0, minute=0, second=0, microsecond=0)
                 remaining = end_time - self.bot.data.save['matchtracker']['last']
                 lead_speed = None
                 for i in range(2):
@@ -974,7 +977,7 @@ class GuildWar(commands.Cog):
                 ['NM95', 40, 10, 111, 54.6],
                 ['NM100', 50, 20, 168, 159],
                 ['NM150', 50, 20, 257, 246],
-                ['NM200', 50, 30, 338, 600]
+                ['NM200', 50, 30, 338, 612]
             ]
             msg = "**{:,}** box(s) and **{:,}** leftover tokens\n\n".format(b, tok)
             for bv in base:
