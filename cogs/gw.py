@@ -937,8 +937,9 @@ class GuildWar(commands.Cog):
             n95 = math.ceil(t / 111.0)
             n100 = math.ceil(t / 168.0)
             n150 = math.ceil(t / 257.0)
+            n200 = math.ceil(t / 338.0)
             wanpan = math.ceil(t / 48.0)
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War Token Calculator ▫️ Box {}".format(self.bot.emote.get('gw'), box), description="**{:,}** tokens needed{:}{:}\n\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(t, ("" if box_done == 0 else " from box **{}**".format(box_done)), ("" if with_token == 0 else " with **{:,}** tokens".format(with_token)), ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, wanpan, wanpan*3), color=self.color), ephemeral=True)
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War Token Calculator ▫️ Box {}".format(self.bot.emote.get('gw'), box), description="**{:,}** tokens needed{:}{:}\n\n**{:,}** EX (**{:,}** pots)\n**{:,}** EX+ (**{:,}** pots)\n**{:,}** NM90 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM95 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM150 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM200 (**{:,}** pots, **{:,}** meats)\n**{:,}** NM100 join (**{:}** BP)".format(t, ("" if box_done == 0 else " from box **{}**".format(box_done)), ("" if with_token == 0 else " with **{:,}** tokens".format(with_token)), ex, math.ceil(ex*30/75), explus, math.ceil(explus*30/75), n90, math.ceil(n90*30/75), n90*5, n95, math.ceil(n95*40/75), n95*10, n100, math.ceil(n100*50/75), n100*20, n150, math.ceil(n150*50/75), n150*20, n200, math.ceil(n200*50/75), n200*30, wanpan, wanpan*3), color=self.color), ephemeral=True)
         except Exception as e:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description=str(e), color=self.color), ephemeral=True)
 
@@ -967,12 +968,13 @@ class GuildWar(commands.Cog):
                 tok -= 15000
                 b += 1
             base = [
-                ['EX', 30, 0, 56, 3.06], # name, AP, tokens, FR token
+                ['EX', 30, 0, 56, 3.06], # name, AP, meat, tokens, FR token
                 ['EX+', 30, 0, 66, 4.85],
                 ['NM90', 30, 5, 83, 15.6],
                 ['NM95', 40, 10, 111, 54.6],
                 ['NM100', 50, 20, 168, 159],
                 ['NM150', 50, 20, 257, 246],
+                ['NM200', 50, 30, 338, 600]
             ]
             msg = "**{:,}** box(s) and **{:,}** leftover tokens\n\n".format(b, tok)
             for bv in base:
@@ -996,8 +998,8 @@ class GuildWar(commands.Cog):
             nm95 = meat // 10
             nm100 = meat // 20
             nm150 = meat // 20
-            nm200 = 0 # placeholder
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Meat Calculator ▫️ {} meats".format(self.bot.emote.get('gw'), meat), description="**{:,}** NM90 or **{:}** honors\n**{:,}** NM95 or **{:}** honors\n**{:}** NM100 or **{:}** honors\n**{:,}** NM150 or **{:}** honors\n**{:,}** NM200 or **{:}** honors\n".format(nm90, self.bot.util.valToStr(nm90*260000), nm95, self.bot.util.valToStr(nm95*910000), nm100, self.bot.util.valToStr(nm100*2650000), nm150, self.bot.util.valToStr(nm150*4100000), nm200, self.bot.util.valToStr(nm200*4100000)), color=self.color), ephemeral=True)
+            nm200 = meat // 30
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Meat Calculator ▫️ {} meats".format(self.bot.emote.get('gw'), meat), description="**{:,}** NM90 or **{:}** honors\n**{:,}** NM95 or **{:}** honors\n**{:}** NM100 or **{:}** honors\n**{:,}** NM150 or **{:}** honors\n**{:,}** NM200 or **{:}** honors\n".format(nm90, self.bot.util.valToStr(nm90*260000), nm95, self.bot.util.valToStr(nm95*910000), nm100, self.bot.util.valToStr(nm100*2650000), nm150, self.bot.util.valToStr(nm150*4100000), nm200, self.bot.util.valToStr(nm200*10200000)), color=self.color), ephemeral=True)
         except:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid meat number", color=self.color), ephemeral=True)
 
@@ -1012,7 +1014,7 @@ class GuildWar(commands.Cog):
             nm95 = math.ceil(target / 910000)
             nm100 = math.ceil(target / 2650000)
             nm150 = math.ceil(target / 4100000)
-            nm200 = 0 # placeholder
+            nm200 = math.ceil(target / 10200000)
             await inter.response.send_message(embed=self.bot.util.embed(title="{} Honor Calculator ▫️ {} honors".format(self.bot.emote.get('gw'), self.bot.util.valToStr(target)), description="**{:,}** EX+ (**{:,}** AP)\n**{:,}** NM90 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM95 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM100 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM150 (**{:,}** AP, **{:,}** meats)\n**{:,}** NM200 (**{:,}** AP, **{:,}** meats)".format(exp, exp * 30, nm90, nm90 * 30, nm90 * 5, nm95, nm95 * 40, nm95 * 10, nm100, nm100 * 50, nm100 * 20, nm150, nm150 * 50, nm150* 20, nm200, nm200 * 50, nm200* 20), color=self.color), ephemeral=True)
         except:
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid honor number", color=self.color), ephemeral=True)
@@ -1021,6 +1023,8 @@ class GuildWar(commands.Cog):
     async def honorplanning(self, inter: disnake.GuildCommandInteraction, target : str = commands.Param(description="Number of honors (support B, M and K)")):
         """Calculate how many NM95 and 150 you need for your targeted honor"""
         try:
+            await inter.response.send_message(embed=self.bot.util.embed(title="{} Honor Planning ▫️ {} honors".format(self.bot.emote.get('gw'), self.bot.util.valToStr(target)), description="Outdated command, it will be updated at a later date", color=self.color), ephemeral=True)
+            return
             target = self.bot.util.strToInt(target)
             if target < 10000: raise Exception()
             honor = [0, 0, 0]
@@ -1058,7 +1062,7 @@ class GuildWar(commands.Cog):
         try:
             if params == "": raise Exception()
             params = params.lower()
-            fightdata = {'ex':[30, 3, 51000, 56], 'ex+':[30, 4, 80800, 66], 'nm90':[30, -5, 260000, 83], 'nm95':[40, -10, 910000, 111], 'nm100':[50, -20, 2650000, 168], 'nm150':[50, -20, 4100000, 257]} # NOTE: add NM200 later
+            fightdata = {'ex':[30, 3, 51000, 56], 'ex+':[30, 4, 80800, 66], 'nm90':[30, -5, 260000, 83], 'nm95':[40, -10, 910000, 111], 'nm100':[50, -20, 2650000, 168], 'nm150':[50, -20, 4100000, 257], 'nm200':[50, -30, 10200000, 338]}
             fights = params.split(' ')
             msg = ""
             for f in fights:
