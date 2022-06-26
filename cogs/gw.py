@@ -1023,21 +1023,21 @@ class GuildWar(commands.Cog):
     async def honorplanning(self, inter: disnake.GuildCommandInteraction, target : str = commands.Param(description="Number of honors (support B, M and K)")):
         """Calculate how many NM95 and 150 you need for your targeted honor"""
         try:
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Honor Planning ▫️ {} honors".format(self.bot.emote.get('gw'), self.bot.util.valToStr(target)), description="Outdated command, it will be updated at a later date", color=self.color), ephemeral=True)
-            return
+            await inter.response.defer(ephemeral=True)
             target = self.bot.util.strToInt(target)
-            if target < 10000: raise Exception()
-            honor = [0, 0, 0]
+            if target < 1000000: raise Exception()
+            
+            honor = [0, 0, 0, 0, 0]
             ex = 0
             meat_per_ex_average = 6.2
+            day_target = [target * 0.15, target * 0.25, target * 0.3, target * 0.3]
+            honor_per_nm = [910000, 4100000, 10200000, 10200000]
+            meat_use = [10, 20, 30, 30]
+            nm = [0, 0, 0, 0]
             meat = 0
             total_meat = 0
-            nm = [0, 0]
-            day_target = [target * 0.2, target * 0.3] # sum = 0.5
-            meat_use = [10, 20]
-            honor_per_nm = [910000, 4100000]
 
-            for i in [1, 0]:
+            for i in [3, 2, 1, 0]:
                 daily = 0
                 while daily < day_target[i]:
                     if meat < meat_use[i]:
@@ -1052,9 +1052,9 @@ class GuildWar(commands.Cog):
                         daily += honor_per_nm[i]
                         honor[i+1] += honor_per_nm[i]
 
-            await inter.response.send_message(embed=self.bot.util.embed(title="{} Honor Planning ▫️ {} honors".format(self.bot.emote.get('gw'), self.bot.util.valToStr(target)), description="Preliminaries & Interlude ▫️ **{:,}** meats (around **{:,}** EX+ and **{:}** honors)\nDay 1 and 2 total ▫️ **{:,}** NM95 (**{:}** honors)\nDay 3 and 4 total ▫️ **{:,}** NM150 (**{:}** honors)".format(math.ceil(total_meat*2), ex*2, self.bot.util.valToStr(honor[0]*2), nm[0]*2, self.bot.util.valToStr(honor[1]*2), nm[1]*2, self.bot.util.valToStr(honor[2]*2)), footer="Assuming {} meats / EX+ on average".format(meat_per_ex_average), color=self.color), ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="{} Honor Planning ▫️ {} honors".format(self.bot.emote.get('gw'), self.bot.util.valToStr(target)), description="Preliminaries & Interlude ▫️ **{:,}** meats (around **{:,}** EX+ and **{:}** honors)\nDay 1 ▫️ **{:,}** NM95 (**{:}** honors)\nDay 2 ▫️ **{:,}** NM150 (**{:}** honors)\nDay 3 ▫️ **{:,}** NM200 (**{:}** honors)\nDay 4 ▫️ **{:,}** NM200 (**{:}** honors)".format(math.ceil(total_meat), ex, self.bot.util.valToStr(honor[0]), nm[0], self.bot.util.valToStr(honor[1]), nm[1], self.bot.util.valToStr(honor[2]), nm[2], self.bot.util.valToStr(honor[3]), nm[3], self.bot.util.valToStr(honor[4])), footer="Assuming {} meats / EX+ on average".format(meat_per_ex_average), color=self.color))
         except:
-            await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid honor number", color=self.color), ephemeral=True)
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Invalid honor number", color=self.color))
 
     @utility.sub_command()
     async def speed(self, inter: disnake.GuildCommandInteraction, params : str = commands.Param(description="Leave empty to see the guide", default="")):
