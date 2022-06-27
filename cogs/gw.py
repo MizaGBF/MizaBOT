@@ -984,7 +984,7 @@ class GuildWar(commands.Cog):
                 if final_rally: v = math.ceil(t / (bv[3]+bv[4]))
                 else: v = math.ceil(t / bv[3])
                 if bv[2] == 0: msg += "**{:,}** {:} (**{:,}** pots)\n".format(v, bv[0], v*bv[1])
-                else: msg += "**{:,}** {:} (**{:,}** pots, **{:,}** meats)\n".format(v, bv[0], v*bv[1], v*bv[2])
+                else: msg += "**{:,}** {:} (**{:,}** AP, **{:,}** meats)\n".format(v, bv[0], v*bv[1], v*bv[2])
             v = math.ceil(t / 48.0)
             msg += "**{:,}** NM100 leeching (**{:}** BP)".format(v, v*3)
             await inter.response.send_message(embed=self.bot.util.embed(title="{} Guild War Token Calculator ▫️ {} tokens".format(self.bot.emote.get('gw'), t), description=msg, footer=("Imply you solo all your hosts and clear the final rally" if final_rally else ""), color=self.color), ephemeral=True)
