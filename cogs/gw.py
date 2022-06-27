@@ -408,7 +408,7 @@ class GuildWar(commands.Cog):
                 fields = [{'name':'**Crew Ranking**', 'value':''}, {'name':'**Player Ranking**', 'value':''}]
                 modifiers = [
                     (1.00 + (0.7 * (seconds_left // 3600) + 0.5 * (seconds_left // 7200) + 0.5 * (seconds_left // 10800)) / 10), # minimum
-                    (1.08 + (1.4 * (seconds_left // 3600) + 1.0 * (seconds_left // 7200) + 0.6 * (seconds_left // 10800)) / 10)  # maximum
+                    (1.08 + (1.3 * (seconds_left // 3600) + 0.9 * (seconds_left // 7200) + 0.6 * (seconds_left // 10800)) / 10)  # maximum
                 ]
                 for x in [0, 1]:
                     for c in self.bot.data.save['gw']['ranking'][x]:
