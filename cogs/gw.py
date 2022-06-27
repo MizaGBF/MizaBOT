@@ -983,7 +983,7 @@ class GuildWar(commands.Cog):
             for bv in base:
                 if final_rally: v = math.ceil(t / (bv[3]+bv[4]))
                 else: v = math.ceil(t / bv[3])
-                if bv[2] == 0: msg += "**{:,}** {:} (**{:,}** pots)\n".format(v, bv[0], v*bv[1])
+                if bv[2] == 0: msg += "**{:,}** {:} (**{:,}** AP)\n".format(v, bv[0], v*bv[1])
                 else: msg += "**{:,}** {:} (**{:,}** AP, **{:,}** meats)\n".format(v, bv[0], v*bv[1], v*bv[2])
             v = math.ceil(t / 48.0)
             msg += "**{:,}** NM100 leeching (**{:}** BP)".format(v, v*3)
