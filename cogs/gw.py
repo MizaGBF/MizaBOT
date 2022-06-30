@@ -881,6 +881,8 @@ class GuildWar(commands.Cog):
                         max_estimation = self.bot.data.save['matchtracker']['scores'][i] + max_speed * remaining.seconds//60
                         top_estimation = self.bot.data.save['matchtracker']['scores'][i] + self.bot.data.save['matchtracker']['top_speed'][i] * remaining.seconds//60
                         msg += "\n**Estimation** ▫ Now {} ▫️ Top {} ▫️ Max {}".format(self.bot.util.valToStrBig(current_estimation), self.bot.util.valToStrBig(top_estimation), self.bot.util.valToStrBig(max_estimation))
+                    else:
+                        lead_speed = None # disable lead check if the match ended
                     msg += "\n\n"
                 lead = self.bot.data.save['matchtracker']['scores'][0] - self.bot.data.save['matchtracker']['scores'][1]
                 if lead != 0:
