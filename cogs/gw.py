@@ -66,7 +66,7 @@ class GuildWar(commands.Cog):
                                     msg += '*Buffs in* **5 minutes**'
                                 else:
                                     msg += 'Buffs now!'
-                            msg += "\nhttp://game.granbluefantasy.jp/#event/teamraid{}/guild_ability".format(str(self.bot.data.save['gw']['id']).zfill(3))
+                            msg += "\nhttps://game.granbluefantasy.jp/#event/teamraid{}/guild_ability".format(str(self.bot.data.save['gw']['id']).zfill(3))
                             if self.bot.data.save['gw']['skip']:
                                 msg = ""
                             if not self.bot.data.save['gw']['buffs'][0][3]:
@@ -462,7 +462,7 @@ class GuildWar(commands.Cog):
     dict: Crew data, None if error
     """
     def getCrewSummary(self, id):
-        res = self.bot.gbf.request("http://game.granbluefantasy.jp/guild_main/content/detail/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True)
+        res = self.bot.gbf.request("https://game.granbluefantasy.jp/guild_main/content/detail/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True)
         if res is None: return None
         else:
             soup = BeautifulSoup(unquote(res['data']), 'html.parser')
@@ -545,7 +545,7 @@ class GuildWar(commands.Cog):
                         crew['private'] = False # in preparation
                         crew['name'] = html.unescape(get['guild_name'])
                         crew['rank'] = get['guild_rank']
-                        crew['ship'] = "http://game-a.granbluefantasy.jp/assets_en/img/sp/guild/thumb/top/{}.png".format(get['ship_img'])
+                        crew['ship'] = "https://game-a.granbluefantasy.jp/assets_en/img/sp/guild/thumb/top/{}.png".format(get['ship_img'])
                         crew['ship_element'] = {"10001":"wind", "20001":"fire", "30001":"water", "40001":"earth", "50001":"light", "60001":"dark"}.get(get['ship_img'].split('_')[0], 'gw')
                         crew['leader'] = html.unescape(get['leader_name'])
                         crew['leader_id'] = get['leader_user_id']
@@ -612,7 +612,7 @@ class GuildWar(commands.Cog):
             description += "\n{}".format(s)
 
         if crew['private']:
-            description += '\n{} [{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ *Crew is private*'.format(self.bot.emote.get('captain'), crew['leader'], crew['leader_id'])
+            description += '\n{} [{}](https://game.granbluefantasy.jp/#profile/{}) ▫️ *Crew is private*'.format(self.bot.emote.get('captain'), crew['leader'], crew['leader_id'])
         else:
             footer = "Public crew member lists are updated at least once per day"
             # get GW data
@@ -670,7 +670,7 @@ class GuildWar(commands.Cog):
                     case "3": r = "atkace"
                     case "4": r = "deface"
                     case _: r = "ensign"
-                entry = '{} [{}](http://game.granbluefantasy.jp/#profile/{})'.format(self.bot.emote.get(r), self.escape(self.bot.util.shortenName(p['name'])), p['id'])
+                entry = '{} [{}](https://game.granbluefantasy.jp/#profile/{})'.format(self.bot.emote.get(r), self.escape(self.bot.util.shortenName(p['name'])), p['id'])
                 if gwstate:  entry += " - {}".format(self.bot.util.valToStr(p['honor']))
                 else: entry += " - r**{}**".format(p['level'])
                 entry += "\n"
@@ -691,7 +691,7 @@ class GuildWar(commands.Cog):
                 return
 
             title, description, fields, footer = await self.bot.do(self.processCrewData, crew, mode)
-            await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=description, fields=fields, inline=True, url="http://game.granbluefantasy.jp/#guild/detail/{}".format(crew['id']), footer=footer, timestamp=crew['timestamp'], color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=description, fields=fields, inline=True, url="https://game.granbluefantasy.jp/#guild/detail/{}".format(crew['id']), footer=footer, timestamp=crew['timestamp'], color=self.color))
         except Exception as e:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="A critical error occured, wait for a fix if the error persists", color=self.color))
             await self.bot.sendError('crew', e)
@@ -747,7 +747,7 @@ class GuildWar(commands.Cog):
             if i >= 30: break
             if i % 10 == 0:
                 fields.append({'name':'{}'.format(self.bot.emote.get(str(len(fields)+1))), 'value':''})
-            fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) \▫️ **{}**\n".format(v[1],v[0], self.bot.util.valToStr(v[2]))
+            fields[-1]['value'] += "[{}](https://game.granbluefantasy.jp/#profile/{}) \▫️ **{}**\n".format(v[1],v[0], self.bot.util.valToStr(v[2]))
             total += v[2]
         if gwid is None: gwid = ""
         await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Top 30 of {}".format(inter.guild.name), 'icon_url':icon}, description="{} GW**{}** ▫️ Player Total **{}** ▫️ Average **{}**".format(self.bot.emote.get('question'), gwid, self.bot.util.valToStr(total), self.bot.util.valToStr(total // min(30, len(members)))), fields=fields, inline=True, color=self.color))
@@ -766,8 +766,8 @@ class GuildWar(commands.Cog):
     dict: Resulting data, None if error
     """
     def requestCrew(self, id : int, page : int): # get crew data
-        if page == 0: return self.bot.gbf.request("http://game.granbluefantasy.jp/guild_other/guild_info/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
-        else: return self.bot.gbf.request("http://game.granbluefantasy.jp/guild_other/member_list/{}/{}?PARAMS".format(page, id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
+        if page == 0: return self.bot.gbf.request("https://game.granbluefantasy.jp/guild_other/guild_info/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
+        else: return self.bot.gbf.request("https://game.granbluefantasy.jp/guild_other/member_list/{}/{}?PARAMS".format(page, id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
 
     @gw.sub_command()
     async def lead(self, inter: disnake.GuildCommandInteraction, id_crew_1 : str = commands.Param(description="A crew ID"), id_crew_2 : str = commands.Param(description="A crew ID")):
@@ -802,11 +802,11 @@ class GuildWar(commands.Cog):
                 result = data[1]
                 gwnum = ''
                 if len(result) == 0:
-                    msg += "Crew [{}](http://game.granbluefantasy.jp/#guild/detail/{}) not found\n".format(sid, id)
+                    msg += "Crew [{}](https://game.granbluefantasy.jp/#guild/detail/{}) not found\n".format(sid, id)
                     lead = -1
                 else:
                     gwnum = result[0].gw
-                    msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ {:,}\n".format(result[0].name, id, result[0].current_day)
+                    msg += "[{:}](https://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ {:,}\n".format(result[0].name, id, result[0].current_day)
                     if lead is None: lead = result[0].current_day
                     elif lead >= 0: lead = abs(lead - (result[0].current_day))
         if lead is not None and lead >= 0:
@@ -857,7 +857,7 @@ class GuildWar(commands.Cog):
                 remaining = end_time - self.bot.data.save['matchtracker']['last']
                 lead_speed = None
                 for i in range(2):
-                    msg += "[{:}](http://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ **{:,}**".format(self.bot.data.save['matchtracker']['names'][i], (you_id if i == 0 else self.bot.data.save['matchtracker']['id']), self.bot.data.save['matchtracker']['scores'][i])
+                    msg += "[{:}](https://game.granbluefantasy.jp/#guild/detail/{:}) ▫️ **{:,}**".format(self.bot.data.save['matchtracker']['names'][i], (you_id if i == 0 else self.bot.data.save['matchtracker']['id']), self.bot.data.save['matchtracker']['scores'][i])
                     
                     if self.bot.data.save['matchtracker']['speed'] is None:
                         msg += "\n\n"
@@ -1222,7 +1222,7 @@ class GuildWar(commands.Cog):
                         if result[i].day4 is not None: fields[-1]['value'] += "{}▫️{:,}\n".format(self.bot.emote.get('4'), result[i].day4)
                         if result[i].speed is not None: fields[-1]['value'] += "{}▫️{}/min\n".format(self.bot.emote.get('clock'), self.bot.util.valToStr(result[i].speed))
                         if fields[-1]['value'] == "": fields[-1]['value'] = "No data"
-                        fields[-1]['value'] = "[{}](http://game.granbluefantasy.jp/#guild/detail/{}){}".format(result[i].id, result[i].id, fields[-1]['value'])
+                        fields[-1]['value'] = "[{}](https://game.granbluefantasy.jp/#guild/detail/{}){}".format(result[i].id, result[i].id, fields[-1]['value'])
                         gwnum = result[i].gw
                         # sending via dm if %all is set
                         if all and ((i % max_crew) == max_crew - 1 or i == x - 1):
@@ -1236,9 +1236,9 @@ class GuildWar(commands.Cog):
                         if i % (max_player // 3) == 0:
                             fields.append({'name':'Page {}'.format(self.bot.emote.get(str(((i // 5) % 3) + 1))), 'value':''})
                         if result[i].ranking is None:
-                            fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{})\n".format(self.escape(result[i].name), result[i].id)
+                            fields[-1]['value'] += "[{}](https://game.granbluefantasy.jp/#profile/{})\n".format(self.escape(result[i].name), result[i].id)
                         else:
-                            fields[-1]['value'] += "[{}](http://game.granbluefantasy.jp/#profile/{}) ▫️ **#{}**\n".format(self.escape(result[i].name), result[i].id, result[i].ranking)
+                            fields[-1]['value'] += "[{}](https://game.granbluefantasy.jp/#profile/{}) ▫️ **#{}**\n".format(self.escape(result[i].name), result[i].id, result[i].ranking)
                         if result[i].current is not None: fields[-1]['value'] += "{:,}\n".format(result[i].current)
                         else: fields[-1]['value'] += "n/a\n"
                         gwnum = result[i].gw

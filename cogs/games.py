@@ -356,16 +356,16 @@ class Games(commands.Cog):
             else:
                 if prize[0] > 0:
                     desc += '\n:confetti_ball: '
-                    thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/article/m/30041.jpg'
+                    thumb = 'https://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/article/m/30041.jpg'
                 elif prize[1] > 0:
                     desc += '\n:clap: '
-                    thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/normal/m/gem.jpg'
+                    thumb = 'https://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/normal/m/gem.jpg'
                 elif prize[2] > 0:
                     desc += '\n:hushed: '
-                    thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/1040004600.jpg'
+                    thumb = 'https://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/1040004600.jpg'
                 elif prize[3] > 0:
                     desc += '\n:pensive: '
-                    thumb = 'http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/article/m/30033.jpg'
+                    thumb = 'https://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/article/m/30033.jpg'
                 add_comma = False
                 for i in range(0, 4):
                     if prize[3-i] > 0:
@@ -404,8 +404,9 @@ class Games(commands.Cog):
     @game.sub_command()
     async def fortune(self, inter: disnake.GuildCommandInteraction, usercards : str = commands.Param(description='List your cards here', default="")):
         """Imitate the GBF summer fortune game from Summer 2021"""
+        await inter.response.defer()
         title = '{} is tempting fate...'.format(inter.author.display_name)
-        await inter.response.send_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':inter.author.display_avatar}, description="The winning numbers are...", color=self.color))
+        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':title, 'icon_url':inter.author.display_avatar}, description="The winning numbers are...", color=self.color))
         cards, winning = await self.bot.do(self.genLoto)
         cvt = []
         usercards = usercards.split(" ")

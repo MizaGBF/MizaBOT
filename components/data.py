@@ -284,14 +284,15 @@ class Data():
             time.sleep(d.seconds) # wait until koregra to try to get the schedule
             count = 0
             c = self.bot.util.JST() # update the timer
-            while count < 5:
+            while count < 10:
                 month, new_schedule, created_at = self.bot.twitter.get_schedule_from_granblue_en()
+                print(created_at.month == c.month) # TEST, REMOVE LATER
                 if new_schedule is not None and len(new_schedule) > 0 and created_at.month == c.month:
                     break
                 else:
                     new_schedule = []
                     count += 1
-                    time.sleep(2000)
+                    time.sleep(3600)
         else: # else, just clean up old entries
             for i in range(0, ((len(self.save['schedule'])//2)*2), 2):
                 try:

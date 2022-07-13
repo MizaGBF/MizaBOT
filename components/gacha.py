@@ -61,7 +61,7 @@ class Gacha():
     def process(self, gtype, id, sub_id):
         try:
             # draw rate
-            data = self.bot.gbf.request("http://game.granbluefantasy.jp/gacha/provision_ratio/{}/{}/{}?PARAMS".format(gtype, id, sub_id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
+            data = self.bot.gbf.request("https://game.granbluefantasy.jp/gacha/provision_ratio/{}/{}/{}?PARAMS".format(gtype, id, sub_id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
             
             gratio = data['ratio'][0]['ratio']
             
@@ -105,7 +105,7 @@ class Gacha():
         try:
             c = self.bot.util.JST()
             #gacha page
-            data = self.bot.gbf.request("http://game.granbluefantasy.jp/gacha/list?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
+            data = self.bot.gbf.request("https://game.granbluefantasy.jp/gacha/list?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
             if data is None: raise Exception()
             # will contain the data
             gacha_data = {}
@@ -143,7 +143,7 @@ class Gacha():
                     gacha_data['scam'].append({'ratio':gratio, 'list':glist, 'rateup':grateup})
 
             # classic gacha
-            data = self.bot.gbf.request("http://game.granbluefantasy.jp/rest/gacha/classic/toppage_data?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
+            data = self.bot.gbf.request("https://game.granbluefantasy.jp/rest/gacha/classic/toppage_data?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
             if data is not None and 'appearance_gacha_id' in data:
                 gratio, glist, grateup = self.process('classic', data['appearance_gacha_id'], 1)
                 if gratio is not None:
@@ -152,7 +152,7 @@ class Gacha():
             # add image
             gachas = ['{}/tips/description_gacha.jpg'.format(random_key), '{}/tips/description_gacha_{}.jpg'.format(random_key, logo), '{}/tips/description_{}.jpg'.format(random_key, header_images[0]), 'header/{}.png'.format(header_images[0])]
             for g in gachas:
-                data = self.bot.gbf.request("http://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(g), no_base_headers=True)
+                data = self.bot.gbf.request("https://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(g), no_base_headers=True)
                 if data is not None:
                     gacha_data['image'] = g
                     break
@@ -229,7 +229,7 @@ class Gacha():
                                         break
                                     description += self.formatGachaItem(item) + " "
                             description += "\n"
-                return description, "http://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(content[1]['image'])
+                return description, "https://game-a.granbluefantasy.jp/assets_en/img/sp/gacha/{}".format(content[1]['image'])
             return None, None
         except Exception as e:
             raise e
@@ -546,8 +546,8 @@ class GachaSimulator():
         if self.best[0] != -1 and self.best[1] != "":
             rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(self.best[1].replace('**', '').split('>')[2:])) # retrieve the id from the wiki
             if rid is None: self.thumbnail = None # and update self.thumbnail accordingly
-            elif rid.startswith('1'): self.thumbnail = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
-            elif rid.startswith('2'): self.thumbnail = "http://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
+            elif rid.startswith('1'): self.thumbnail = "https://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
+            elif rid.startswith('2'): self.thumbnail = "https://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
             else: self.thumbnail = None
 
     """scamRoll()

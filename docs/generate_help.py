@@ -121,7 +121,7 @@ def generate_html(command_list): # main function to generate the html
 <div id="Guide" class="tabcontent">
 <h1>Guide</h1>
 <h2>What is this?</h2>
-<p>MizaBOT is a <a href="http://game.granbluefantasy.jp">Granblue Fantasty</a> themed <a href="https://discord.com/">Discord</a> Bot.<br>
+<p>MizaBOT is a <a href="https://game.granbluefantasy.jp">Granblue Fantasty</a> themed <a href="https://discord.com/">Discord</a> Bot.<br>
 It's open source and available on <a href="https://github.com/MizaGBF/MizaBOT">GitHub</a>.<br>
 It provides various commands, ranging from utilty to recreative ones, related (or not) to the game.<br></p>
 

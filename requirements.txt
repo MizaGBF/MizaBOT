@@ -1,7 +1,7 @@
 disnake==2.5.1
-pydrive2==1.10.0
+pydrive2==1.10.1
 psutil==5.9.0
 beautifulsoup4==4.10.0
 tweepy==4.10.0
-pillow==9.1.1
+pillow==9.2.0
 uvloop==0.16.0; sys_platform == 'linux'

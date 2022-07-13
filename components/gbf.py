@@ -32,8 +32,8 @@ class GBF():
                 headers['Accept-Language'] = 'en'
                 headers['Connection'] = 'close'
                 headers['Host'] = 'game.granbluefantasy.jp'
-                headers['Origin'] = 'http://game.granbluefantasy.jp'
-                headers['Referer'] = 'http://game.granbluefantasy.jp/'
+                headers['Origin'] = 'https://game.granbluefantasy.jp'
+                headers['Referer'] = 'https://game.granbluefantasy.jp/'
             if "headers" in options: headers = headers | options["headers"]
             id = options.get('account', None)
             if id is not None:
@@ -148,7 +148,7 @@ class GBF():
             return False
 
     def version(self): # retrieve the game version
-        res = self.request('http://game.granbluefantasy.jp/', headers={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36', 'Accept-Language':'en', 'Accept-Encoding':'gzip, deflate', 'Host':'game.granbluefantasy.jp', 'Connection':'keep-alive'}, decompress=True, no_base_headers=True)
+        res = self.request('https://game.granbluefantasy.jp/', headers={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36', 'Accept-Language':'en', 'Accept-Encoding':'gzip, deflate', 'Host':'game.granbluefantasy.jp', 'Connection':'keep-alive'}, decompress=True, no_base_headers=True)
         if res is None: return None
         try:
             return int(self.vregex.findall(str(res))[0])
