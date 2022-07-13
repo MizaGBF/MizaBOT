@@ -356,16 +356,16 @@ class Games(commands.Cog):
             else:
                 if prize[0] > 0:
                     desc += '\n:confetti_ball: '
-                    thumb = 'https://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/article/m/30041.jpg'
+                    thumb = 'https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/assets/item/article/m/30041.jpg'
                 elif prize[1] > 0:
                     desc += '\n:clap: '
-                    thumb = 'https://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/normal/m/gem.jpg'
+                    thumb = 'https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/assets/item/normal/m/gem.jpg'
                 elif prize[2] > 0:
                     desc += '\n:hushed: '
-                    thumb = 'https://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/1040004600.jpg'
+                    thumb = 'https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/assets/weapon/m/1040004600.jpg'
                 elif prize[3] > 0:
                     desc += '\n:pensive: '
-                    thumb = 'https://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/item/article/m/30033.jpg'
+                    thumb = 'https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/assets/item/article/m/30033.jpg'
                 add_comma = False
                 for i in range(0, 4):
                     if prize[3-i] > 0:

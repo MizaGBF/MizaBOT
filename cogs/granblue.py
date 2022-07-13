@@ -479,7 +479,7 @@ class GranblueFantasy(commands.Cog):
         except Exception as e:
             await self.bot.sendError("getnextbuff", e)
 
-        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"https://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
+        await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"https://prd-game-a-granbluefantasy.akamaized.net/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
 
     @gbf.sub_command()
     async def maintenance(self, inter: disnake.GuildCommandInteraction):
@@ -487,7 +487,7 @@ class GranblueFantasy(commands.Cog):
         try:
             description = self.getMaintenanceStatus()
             if len(description) > 0:
-                await inter.response.send_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"https://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
+                await inter.response.send_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"https://prd-game-a-granbluefantasy.akamaized.net/assets_en/img/sp/touch_icon.png"}, description=description, color=self.color))
             else:
                 await inter.response.send_message(embed=self.bot.util.embed(title="Granblue Fantasy", description="No maintenance in my memory", color=self.color))
         except Exception as e:
@@ -670,10 +670,10 @@ class GranblueFantasy(commands.Cog):
             await inter.response.defer()
             description, thumbnail = await self.bot.do(self.bot.gacha.summary)
             if description is None: raise Exception('No Gacha')
-            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"https://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=description, thumbnail=thumbnail, color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"https://prd-game-a-granbluefantasy.akamaized.net/assets_en/img/sp/touch_icon.png"}, description=description, thumbnail=thumbnail, color=self.color))
         except Exception as e:
             if str(e) != 'No Gacha': await self.bot.sendError("getcurrentgacha", e)
-            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"https://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description="Unavailable", color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"https://prd-game-a-granbluefantasy.akamaized.net/assets_en/img/sp/touch_icon.png"}, description="Unavailable", color=self.color))
 
     @gbf.sub_command_group()
     async def profile(self, inter: disnake.GuildCommandInteraction):
@@ -964,8 +964,8 @@ class GranblueFantasy(commands.Cog):
             self.text(img, (3, portrait_size[1]+6), brank.replace(' ', ''), fill=(255, 255, 255), font=font)
 
             # mh and main summon
-            img = self.dlAndPasteImage(img, "https://game-a.granbluefantasy.jp/assets_en/img/sp/assets/weapon/m/1999999999.jpg", (0, portrait_size[1]+lvl_box_height), equip_size)
-            img = self.dlAndPasteImage(img, "https://game-a.granbluefantasy.jp/assets_en/img/sp/assets/summon/m/2999999999.jpg", (equip_size[0], portrait_size[1]+lvl_box_height), equip_size)
+            img = self.dlAndPasteImage(img, "https://prd-game-a-granbluefantasy.akamaized.net/assets_en/img/sp/assets/weapon/m/1999999999.jpg", (0, portrait_size[1]+lvl_box_height), equip_size)
+            img = self.dlAndPasteImage(img, "https://prd-game-a-granbluefantasy.akamaized.net/assets_en/img/sp/assets/summon/m/2999999999.jpg", (equip_size[0], portrait_size[1]+lvl_box_height), equip_size)
             equip = soup.find_all('div', class_='prt-equip-image')
             for eq in equip:
                 mh = eq.findChildren('img', class_='img-weapon', recursive=True)
@@ -991,7 +991,7 @@ class GranblueFantasy(commands.Cog):
             for i in range(0, 5):
                 pos = (portrait_size[0]*(i+1), 0)
                 if i >= len(party):
-                    imgtag = "https://game-a.granbluefantasy.jp/assets_en/img/sp/assets/npc/quest/3999999999.jpg"
+                    imgtag = "https://prd-game-a-granbluefantasy.akamaized.net/assets_en/img/sp/assets/npc/quest/3999999999.jpg"
                     lvl = ""
                     ring = False
                     plus = ""
@@ -1018,7 +1018,7 @@ class GranblueFantasy(commands.Cog):
                     x = (int(k[0]) + 6) % 7
                     y = int(k[1])
                     s = sumimg.get(k, ['2999999999', '', '', '', None])
-                    url = "https://game-a.granbluefantasy.jp/assets_en/img/sp/assets/summon/ls/{}.jpg".format(s[0])
+                    url = "https://prd-game-a-granbluefantasy.akamaized.net/assets_en/img/sp/assets/summon/ls/{}.jpg".format(s[0])
                     img = self.dlAndPasteImage(img, url, (sup_X_offset+x*sup_summon_size[0], sup_summon_size[1]*y), sup_summon_size)
                     if s[4] is not None:
                         if s[4] == "": sumstar = "assets/star_0.png"
@@ -1388,7 +1388,7 @@ class GranblueFantasy(commands.Cog):
                                     status = "Account isn't restricted"
                             except:
                                 status = "Account isn't restricted"
-                            await inter.edit_original_message(embed=self.bot.util.embed(title="{} {}".format(self.bot.emote.get('gw'), self.bot.util.shortenName(data['user']['nickname'])), description=status, thumbnail="https://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/leader/talk/{}.png".format(data['user']['image']), url="https://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
+                            await inter.edit_original_message(embed=self.bot.util.embed(title="{} {}".format(self.bot.emote.get('gw'), self.bot.util.shortenName(data['user']['nickname'])), description=status, thumbnail="https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/assets/leader/talk/{}.png".format(data['user']['image']), url="https://game.granbluefantasy.jp/#profile/{}".format(id), color=self.color))
         except:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
 
@@ -1423,7 +1423,7 @@ class GranblueFantasy(commands.Cog):
             pass
 
         if msg != "":
-            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"https://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, footer="Source: http://gbf.wiki/", color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Granblue Fantasy", 'icon_url':"https://prd-game-a-granbluefantasy.akamaized.net/assets_en/img/sp/touch_icon.png"}, description=msg, footer="Source: http://gbf.wiki/", color=self.color))
         else:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
         await self.bot.util.clean(inter, 40)
@@ -1446,7 +1446,7 @@ class GranblueFantasy(commands.Cog):
                     msg += '{} {}\n'.format(self.bot.emote.get(quests.get(id, 'misc')), data[i]['description'])
                 else:
                     msg += '{} {}\n'.format(self.bot.emote.get(str(i+1)), data[i]['description'])
-            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Daily Coop Missions", 'icon_url':"https://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Daily Coop Missions", 'icon_url':"https://prd-game-a-granbluefantasy.akamaized.net/assets_en/img/sp/touch_icon.png"}, description=msg, color=self.color))
         except:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
 
@@ -1470,7 +1470,7 @@ class GranblueFantasy(commands.Cog):
                 if c.month == 12: target = datetime(year=c.year+1, month=1, day=1, hour=12, minute=0, second=0, microsecond=0)
                 else: target = datetime(year=c.year, month=c.month+1, day=1, hour=12, minute=0, second=0, microsecond=0)
         delta = target - c
-        await inter.response.send_message(embed=self.bot.util.embed(title="{} Kore Kara".format(self.bot.emote.get('clock')), description="Release approximately in **{}**".format(self.bot.util.delta2str(delta, 2)),  url="https://granbluefantasy.jp/news/index.php", thumbnail="https://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png", color=self.color))
+        await inter.response.send_message(embed=self.bot.util.embed(title="{} Kore Kara".format(self.bot.emote.get('clock')), description="Release approximately in **{}**".format(self.bot.util.delta2str(delta, 2)),  url="https://granbluefantasy.jp/news/index.php", thumbnail="https://prd-game-a-granbluefantasy.akamaized.net/assets_en/img/sp/touch_icon.png", color=self.color))
 
     @check.sub_command()
     async def news(self, inter: disnake.GuildCommandInteraction):
@@ -1491,7 +1491,7 @@ class GranblueFantasy(commands.Cog):
         if msg == "":
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
         else:
-            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Latest Granblue Fantasy News", 'icon_url':"https://game-a.granbluefantasy.jp/assets_en/img/sp/touch_icon.png"}, description=msg, image=thumb, color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(author={'name':"Latest Granblue Fantasy News", 'icon_url':"https://prd-game-a-granbluefantasy.akamaized.net/assets_en/img/sp/touch_icon.png"}, description=msg, image=thumb, color=self.color))
 
     @check.sub_command(name="4koma")
     async def _4koma(self, inter: disnake.GuildCommandInteraction, id : int = commands.Param(description="A 4koma number", default=-123456789)):
@@ -1500,7 +1500,7 @@ class GranblueFantasy(commands.Cog):
             await inter.response.defer(ephemeral=True)
             if id == -123456789: id = int(self.bot.data.save['gbfdata']['4koma'])
             if id < 0 or id > int(self.bot.data.save['gbfdata']['4koma']): raise Exception()
-            await inter.edit_original_message(embed=self.bot.util.embed(title="Granblue Episode {}".format(id), url="https://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/comic/episode/episode_{}.jpg".format(id), image="https://game-a1.granbluefantasy.jp/assets_en/img/sp/assets/comic/thumbnail/thum_{}.png".format(str(id).zfill(5)), color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Granblue Episode {}".format(id), url="https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/assets/comic/episode/episode_{}.jpg".format(id), image="https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/assets/comic/thumbnail/thum_{}.png".format(str(id).zfill(5)), color=self.color))
         except:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Invalid 4koma number", color=self.color))
 
@@ -1519,24 +1519,24 @@ class GranblueFantasy(commands.Cog):
     @guide.sub_command()
     async def lucilius(self, inter: disnake.GuildCommandInteraction):
         """Post the Lucilius HL Triggers"""
-        await inter.response.send_message(embed=self.bot.util.embed(title="Dark Rapture (Hard)", url="https://gbf.wiki/Lucilius_(Raid)#Impossible_.28Hard.29", fields = [{'name': "{} Black Wings".format(self.bot.emote.get('1')), 'value':'**N **{} Phosphosrus (single)\n**OD**{} Iblis (multi, debuffs)\n**OD, both**▫️ Paradise Lost (party)\n**Join**{} Paradise Lost (30K)\n**70%**▫️ Sephiroth (debuff wipe)\n**50%**{} Seven Trumpets (**12 Labors**)\n**1-6**{} increase damage [10M]\n**7**{} use superior element [2M plain]\n**8**{} nullify phalanx [OverChain]\n**9**{} heal [30 hits]\n**10**{} random debuff [10 debuffs]\n**11**{} dispel 2 buffs [trigger PL]\n**12**{} deal plain damage [all labors]'.format(self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('misc'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'))}, {'name': "{} Lucilius".format(self.bot.emote.get('2')), 'value':'**95%**{} Phosphosrus (single)\n**85%**{} Axion (multi)\n**70%**♦️ charge diamonds\n**60%**{} Axion (**party**)\n**55%**♦️ charge diamonds\n**25%**{} Gopherwood Ark (racial check)\n**20 & 15%**{} Axion Apocalypse (multi)\n**10 & 3%**{} Paradise Lost (999k)\n\n*Click the title for more details*'.format(self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'))}], inline=True, footer="Your fate is over", color=self.color, thumbnail="https://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/303281.png"), ephemeral=True)
+        await inter.response.send_message(embed=self.bot.util.embed(title="Dark Rapture (Hard)", url="https://gbf.wiki/Lucilius_(Raid)#Impossible_.28Hard.29", fields = [{'name': "{} Black Wings".format(self.bot.emote.get('1')), 'value':'**N **{} Phosphosrus (single)\n**OD**{} Iblis (multi, debuffs)\n**OD, both**▫️ Paradise Lost (party)\n**Join**{} Paradise Lost (30K)\n**70%**▫️ Sephiroth (debuff wipe)\n**50%**{} Seven Trumpets (**12 Labors**)\n**1-6**{} increase damage [10M]\n**7**{} use superior element [2M plain]\n**8**{} nullify phalanx [OverChain]\n**9**{} heal [30 hits]\n**10**{} random debuff [10 debuffs]\n**11**{} dispel 2 buffs [trigger PL]\n**12**{} deal plain damage [all labors]'.format(self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('misc'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'), self.bot.emote.get('labor'))}, {'name': "{} Lucilius".format(self.bot.emote.get('2')), 'value':'**95%**{} Phosphosrus (single)\n**85%**{} Axion (multi)\n**70%**♦️ charge diamonds\n**60%**{} Axion (**party**)\n**55%**♦️ charge diamonds\n**25%**{} Gopherwood Ark (racial check)\n**20 & 15%**{} Axion Apocalypse (multi)\n**10 & 3%**{} Paradise Lost (999k)\n\n*Click the title for more details*'.format(self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'), self.bot.emote.get('lucilius'))}], inline=True, footer="Your fate is over", color=self.color, thumbnail="https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/quest/assets/lobby/303281.png"), ephemeral=True)
 
     @guide.sub_command()
     async def beelzebub(self, inter: disnake.GuildCommandInteraction):
         """Post the Beelzebub HL Triggers"""
-        await inter.response.send_message(embed=self.bot.util.embed(title="Long Live the King", url="https://gbf.wiki/Beelzebub_(Raid)", description="**100% & OD**▫️ Chaoscaliber (party, stun) [30 hits]\n**N **▫️ Unisonic (multi, counter) [10M]\n**75, 60% & OD**▫️ Karma (summonless) [FC]\n**N **▫️ Black Flies (multi, slashed) [10M]\n**50%**{} Langelaan Field (4T, reflect 2K, doesn't attack) [5M+20M/death]\n**OD**▫️ Chaoscaliber (party x2, stun) [FC]\n**N **▫️ Just Execution (24 hits, -1T to buff/hit) [FC]\n**30 & 15%**▫️ Black Spear (party, defenless) [FC]\n**25 & 10%**▫️ Chaos Legion (party, 10k guarded) [FC]\n**King's Religion**{} Total turns reached 30xPlayer Count".format(self.bot.emote.get('misc'), self.bot.emote.get('misc')), footer="Qilin Fantasy", color=self.color, thumbnail="https://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/305181.png"), ephemeral=True)
+        await inter.response.send_message(embed=self.bot.util.embed(title="Long Live the King", url="https://gbf.wiki/Beelzebub_(Raid)", description="**100% & OD**▫️ Chaoscaliber (party, stun) [30 hits]\n**N **▫️ Unisonic (multi, counter) [10M]\n**75, 60% & OD**▫️ Karma (summonless) [FC]\n**N **▫️ Black Flies (multi, slashed) [10M]\n**50%**{} Langelaan Field (4T, reflect 2K, doesn't attack) [5M+20M/death]\n**OD**▫️ Chaoscaliber (party x2, stun) [FC]\n**N **▫️ Just Execution (24 hits, -1T to buff/hit) [FC]\n**30 & 15%**▫️ Black Spear (party, defenless) [FC]\n**25 & 10%**▫️ Chaos Legion (party, 10k guarded) [FC]\n**King's Religion**{} Total turns reached 30xPlayer Count".format(self.bot.emote.get('misc'), self.bot.emote.get('misc')), footer="Qilin Fantasy", color=self.color, thumbnail="https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/quest/assets/lobby/305181.png"), ephemeral=True)
 
     @guide.sub_command()
     async def belial(self, inter: disnake.GuildCommandInteraction):
         """Post the Belial HL Triggers"""
-        await inter.response.send_message(embed=self.bot.util.embed(title="The Fallen Angel of Cunning", url="https://gbf.wiki/Belial_(Raid)", description="**On Join**{}️ Lemegeton (20K Plain)\n**75, 50, 25%**▫️ Debuff Wipe\n**65%** ▫️ Asmodeus (multi, debuff, omega fruit) [Dispel]\n**50% Form** ▫️ Triple elemental absorption\nGroups: {}{} / {}{} / {}{}\n**50%** ▫️ Anagenesis (dark dmg based on stack)\n**30%** ▫️ Goetia (multi, slashed/supp debuff) [FC]\n**5%** ▫️ Lemegeton (Let you continue, Full diamond)\n**Before 50%**\n**N & OD**▫️ Amadeus (party, perma debuffs)\n**Turn 3**▫️ Goetia (multi, slashed/supp debuff) [15M]\n**Turn 6**▫️ Lemegeton (party, dispel x2, diamond+1) [35 hits]\n**After 50%**\n**N & OD**{} Amadeus (**Raid Wipe**)\n**Turn 3**▫️ Goetia (multi, atk up, stack up) [FC]\n**Turn 6**▫️ Lemegeton (30K, skill & CA seal) [Dispel]\nTurn Triggers above **repeat every 6 turns**\n**Every 3T**▫️ Random fruit applied to party".format(self.bot.emote.get('misc'), self.bot.emote.get('fire'), self.bot.emote.get('wind'), self.bot.emote.get('water'), self.bot.emote.get('earth'), self.bot.emote.get('light'), self.bot.emote.get('dark'), self.bot.emote.get('misc')), footer="Delay to win", color=self.color, thumbnail="https://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/305281.png"), ephemeral=True)
+        await inter.response.send_message(embed=self.bot.util.embed(title="The Fallen Angel of Cunning", url="https://gbf.wiki/Belial_(Raid)", description="**On Join**{}️ Lemegeton (20K Plain)\n**75, 50, 25%**▫️ Debuff Wipe\n**65%** ▫️ Asmodeus (multi, debuff, omega fruit) [Dispel]\n**50% Form** ▫️ Triple elemental absorption\nGroups: {}{} / {}{} / {}{}\n**50%** ▫️ Anagenesis (dark dmg based on stack)\n**30%** ▫️ Goetia (multi, slashed/supp debuff) [FC]\n**5%** ▫️ Lemegeton (Let you continue, Full diamond)\n**Before 50%**\n**N & OD**▫️ Amadeus (party, perma debuffs)\n**Turn 3**▫️ Goetia (multi, slashed/supp debuff) [15M]\n**Turn 6**▫️ Lemegeton (party, dispel x2, diamond+1) [35 hits]\n**After 50%**\n**N & OD**{} Amadeus (**Raid Wipe**)\n**Turn 3**▫️ Goetia (multi, atk up, stack up) [FC]\n**Turn 6**▫️ Lemegeton (30K, skill & CA seal) [Dispel]\nTurn Triggers above **repeat every 6 turns**\n**Every 3T**▫️ Random fruit applied to party".format(self.bot.emote.get('misc'), self.bot.emote.get('fire'), self.bot.emote.get('wind'), self.bot.emote.get('water'), self.bot.emote.get('earth'), self.bot.emote.get('light'), self.bot.emote.get('dark'), self.bot.emote.get('misc')), footer="Delay to win", color=self.color, thumbnail="https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/quest/assets/lobby/305281.png"), ephemeral=True)
 
     @guide.sub_command()
     async def subaha(self, inter: disnake.GuildCommandInteraction):
         """Post the Super Ultimate Bahamut HL Triggers"""
-        await inter.response.send_message(embed=self.bot.util.embed(title="Rage of Super Ultimate Bahamut", url="https://gbf.wiki/Super_Ultimate_Bahamut_(Raid)", description="{} Each element must cancel omens to reduces the Tenet stacks\n**75-51%**▫️Immune to delay\n{} **Special Attacks**\n**100-76%**▫️Termination Flare (23 hits, Burn/Fear/Cut to buff duration) [15M]\n**75-51%**▫️Verse Ruler (Single DMG. & Swap lowest HP chara.) [20M]\n**51-11**%▫️Crisis Crunch (100% Plain to highest HP chara., can't be revived) [20M]\n**10-0%**▫️Genesis Nova (AOE 999k Plain)\n{} **Cycle Every 6 Turns**\n**100-51%**\nArcadia Foteinos (AOE DMG., Purging Light buff) [10 debuffs]\nArcadia Gnosis (AOE DMG., Godsight buff) [60 hits]\nArcadia Skliros (AOE DMG., DMG Cuts nullified) [20M CA]\nArcadia Laimargos (AOE DMG., Superior Element buff) [20M Skill]\n**50-11%**\nArcadia Tromos (AOE DMG., No guard debuff) [6 Chain]\nArcadia Eclipse (AOE DMG., Max HP capped to 20k) [3.33M Plain]\nArcadia Apocryphos (AOE DMG., Can't summon debuff) [12 skill casts]\n{} **Triggers**\n**75%**▫️Daedalus Drive (AOE 40K Plain)\n**51%**▫️Omnipotent Cocoon (Doesn't attack, Generate Tenets, 5T) [50M]\n**After Cocoon**▫️Double Strike/All Foe Attack, Gain Local Echo of elements at stack 5+, Apply the debuffs from missed 6T Triggers\n**10%**▫️Sirius Origin (4x99k plain, Drain/2->9\\♦️, Apply the debuffs from missed 6T Triggers)".format(self.bot.emote.get('mark'), self.bot.emote.get('skill1'), self.bot.emote.get('mark'), self.bot.emote.get('skill2')), footer="and Knuckles", color=self.color, thumbnail="https://game-a1.granbluefantasy.jp/assets_en/img/sp/quest/assets/lobby/305311.png"), ephemeral=True)
+        await inter.response.send_message(embed=self.bot.util.embed(title="Rage of Super Ultimate Bahamut", url="https://gbf.wiki/Super_Ultimate_Bahamut_(Raid)", description="{} Each element must cancel omens to reduces the Tenet stacks\n**75-51%**▫️Immune to delay\n{} **Special Attacks**\n**100-76%**▫️Termination Flare (23 hits, Burn/Fear/Cut to buff duration) [15M]\n**75-51%**▫️Verse Ruler (Single DMG. & Swap lowest HP chara.) [20M]\n**51-11**%▫️Crisis Crunch (100% Plain to highest HP chara., can't be revived) [20M]\n**10-0%**▫️Genesis Nova (AOE 999k Plain)\n{} **Cycle Every 6 Turns**\n**100-51%**\nArcadia Foteinos (AOE DMG., Purging Light buff) [10 debuffs]\nArcadia Gnosis (AOE DMG., Godsight buff) [60 hits]\nArcadia Skliros (AOE DMG., DMG Cuts nullified) [20M CA]\nArcadia Laimargos (AOE DMG., Superior Element buff) [20M Skill]\n**50-11%**\nArcadia Tromos (AOE DMG., No guard debuff) [6 Chain]\nArcadia Eclipse (AOE DMG., Max HP capped to 20k) [3.33M Plain]\nArcadia Apocryphos (AOE DMG., Can't summon debuff) [12 skill casts]\n{} **Triggers**\n**75%**▫️Daedalus Drive (AOE 40K Plain)\n**51%**▫️Omnipotent Cocoon (Doesn't attack, Generate Tenets, 5T) [50M]\n**After Cocoon**▫️Double Strike/All Foe Attack, Gain Local Echo of elements at stack 5+, Apply the debuffs from missed 6T Triggers\n**10%**▫️Sirius Origin (4x99k plain, Drain/2->9\\♦️, Apply the debuffs from missed 6T Triggers)".format(self.bot.emote.get('mark'), self.bot.emote.get('skill1'), self.bot.emote.get('mark'), self.bot.emote.get('skill2')), footer="and Knuckles", color=self.color, thumbnail="https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/quest/assets/lobby/305311.png"), ephemeral=True)
 
     @guide.sub_command()
     async def defense(self, inter: disnake.GuildCommandInteraction):
         """Post some known defense values"""
-        await inter.response.send_message(embed=self.bot.util.embed(title="Defense Values", description="**8.5**▫️ Fediel Solo\n**9.5**▫️ Fediel HL\n**10** ▫️ Estimate Calculator / Trial / Story / Event / EX+\n**11** ▫️ PBaha N / UBaha HL / Xeno\n**12** ▫️ M1 HL / Kirin HL / Metatron / Avatar / GO HL / Lindwurm\n**13** ▫️ Normal / Hard / T2 / Primarchs N & HL / UBaha N / M2\n**15** ▫️ T1 HL / Malice / Menace / Akasha / Lucilius / Astaroth / Pride / NM90-100\n**18** ▫️ Rose Queen / Other Dragons Solo & HL\n**20** ▫️ PBaha HL / Lucilius Hard / Belial\n**22** ▫️ Celeste (Mist)\n**25** ▫️ Beelzebub / NM150\n**30** ▫️ Rose Queen (Dark)", footer="20 def = Take half the damage of 10 def", color=self.color, thumbnail="https://game-a1.granbluefantasy.jp/assets_en/img/sp/ui/icon/status/x64/status_1019.png"), ephemeral=True)
+        await inter.response.send_message(embed=self.bot.util.embed(title="Defense Values", description="**8.5**▫️ Fediel Solo\n**9.5**▫️ Fediel HL\n**10** ▫️ Estimate Calculator / Trial / Story / Event / EX+\n**11** ▫️ PBaha N / UBaha HL / Xeno\n**12** ▫️ M1 HL / Kirin HL / Metatron / Avatar / GO HL / Lindwurm\n**13** ▫️ Normal / Hard / T2 / Primarchs N & HL / UBaha N / M2\n**15** ▫️ T1 HL / Malice / Menace / Akasha / Lucilius / Astaroth / Pride / NM90-100\n**18** ▫️ Rose Queen / Other Dragons Solo & HL\n**20** ▫️ PBaha HL / Lucilius Hard / Belial\n**22** ▫️ Celeste (Mist)\n**25** ▫️ Beelzebub / NM150\n**30** ▫️ Rose Queen (Dark)", footer="20 def = Take half the damage of 10 def", color=self.color, thumbnail="https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/ui/icon/status/x64/status_1019.png"), ephemeral=True)

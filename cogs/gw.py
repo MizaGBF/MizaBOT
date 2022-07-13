@@ -545,7 +545,7 @@ class GuildWar(commands.Cog):
                         crew['private'] = False # in preparation
                         crew['name'] = html.unescape(get['guild_name'])
                         crew['rank'] = get['guild_rank']
-                        crew['ship'] = "https://game-a.granbluefantasy.jp/assets_en/img/sp/guild/thumb/top/{}.png".format(get['ship_img'])
+                        crew['ship'] = "https://prd-game-a-granbluefantasy.akamaized.net/assets_en/img/sp/guild/thumb/top/{}.png".format(get['ship_img'])
                         crew['ship_element'] = {"10001":"wind", "20001":"fire", "30001":"water", "40001":"earth", "50001":"light", "60001":"dark"}.get(get['ship_img'].split('_')[0], 'gw')
                         crew['leader'] = html.unescape(get['leader_name'])
                         crew['leader_id'] = get['leader_user_id']
