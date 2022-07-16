@@ -243,7 +243,8 @@ class Util():
             "Task Count": str(len(asyncio.all_tasks())),
             "Server Count": str(len(self.bot.guilds)),
             "Cogs Loaded": "{}/{}".format(len(self.bot.cogs), self.bot.cogn) if (len(self.bot.cogs) == self.bot.cogn) else "**{}**/{}".format(len(self.bot.cogs), self.bot.cogn),
-            "Twitter": ("Disabled" if (self.bot.twitter.client is None) else "Online")
+            "Twitter": ("Disabled" if (self.bot.twitter.client is None) else "Online"),
+            "GBF HTTPS": ("Enabled" if (self.bot.data.save['https']) else "Disabled")
         }
 
     """statusString()
