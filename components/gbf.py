@@ -41,6 +41,8 @@ class GBF():
                 if not options.get('force_down', False) and acc[3] == 2: return "Down"
             if options.get('check', False): ver = self.version()
             else: ver = self.data.save['gbfversion']
+            if not self.bot.data.save['https'] and ('granbluefantasy.jp' in url or 'granbluefantasy.akamaized.net' in url):
+                url = url.replace('https://', 'http://')
             url = url.replace("PARAMS", "_=TS1&t=TS2&uid=ID")
             if ver == "Maintenance": return "Maintenance"
             elif ver is not None: url = url.replace("VER", "{}".format(ver))

@@ -177,7 +177,8 @@ class Data():
             'pinboard': {},
             'invite': {'state':0, 'limit':50},
             'ban': {},
-            'announcement': {}
+            'announcement': {},
+            'https': True
         }
         for k in list(data.keys()): # remove useless
             if k not in expected:
