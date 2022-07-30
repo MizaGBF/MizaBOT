@@ -42,7 +42,7 @@ class GBF():
             if options.get('check', False): ver = self.version()
             else: ver = self.data.save['gbfversion']
             host = url.split('://')[1].split('/')[0]
-            if not self.bot.data.save['https'] and ('granbluefantasy.jp' in host or 'granbluefantasy.akamaized.net' in host):
+            if not self.bot.data.save['https'] and (host.endswith('granbluefantasy.jp') or host.endswith('granbluefantasy.akamaized.net')):
                 url = url.replace('https://', 'http://')
             url = url.replace("PARAMS", "_=TS1&t=TS2&uid=ID")
             if ver == "Maintenance": return "Maintenance"
