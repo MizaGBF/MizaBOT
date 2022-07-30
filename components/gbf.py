@@ -71,7 +71,7 @@ class GBF():
             if timeout is None or not isinstance(timeout, int): timeout = 20
             url_handle = request.urlopen(req, timeout=timeout)
             if id is not None: self.refresh(id, url_handle.info()['Set-Cookie'])
-            if options.get('decompress', False): data = zlib.decompress(url_handle.read(), 16+zlib.MAX_WBITS)
+            if options.get('decompress', False) and url_handle.info()['Content-Encoding'] == 'gzip': data = zlib.decompress(url_handle.read(), 16+zlib.MAX_WBITS)
             else: data = url_handle.read()
             url_handle.close()
             if options.get('load_json', False): data = json.loads(data)
