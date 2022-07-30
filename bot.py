@@ -34,9 +34,7 @@ class MizaBot(commands.InteractionBot):
         self.version = "9.26" # bot version
         self.changelog = [ # changelog lines
             "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
-            "The bot switched to disnake 2.5.0, please `/bug_report` if you see any weird behaviors",
-            "Pinboard requires the use of the Pin Message command to complete the process (right click on message > Apps)",
-            "Added `/utility yen`"
+            "Pinboard requires the use of the Pin Message command to complete the process (right click on message > Apps)"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event
