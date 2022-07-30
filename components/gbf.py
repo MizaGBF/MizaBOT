@@ -32,8 +32,8 @@ class GBF():
                 headers['Accept-Language'] = 'en'
                 headers['Connection'] = 'close'
                 headers['Host'] = 'game.granbluefantasy.jp'
-                headers['Origin'] = 'https://game.granbluefantasy.jp'
-                headers['Referer'] = 'https://game.granbluefantasy.jp/'
+                headers['Origin'] = 'https://game.granbluefantasy.jp' if self.bot.data.save['https'] else 'http://game.granbluefantasy.jp'
+                headers['Referer'] = 'https://game.granbluefantasy.jp/' if self.bot.data.save['https'] else 'http://game.granbluefantasy.jp/'
             if "headers" in options: headers = headers | options["headers"]
             id = options.get('account', None)
             if id is not None:
@@ -41,7 +41,8 @@ class GBF():
                 if not options.get('force_down', False) and acc[3] == 2: return "Down"
             if options.get('check', False): ver = self.version()
             else: ver = self.data.save['gbfversion']
-            if not self.bot.data.save['https'] and ('granbluefantasy.jp' in url or 'granbluefantasy.akamaized.net' in url):
+            host = url.split('://')[1].split('/')[0]
+            if not self.bot.data.save['https'] and ('granbluefantasy.jp' in host or 'granbluefantasy.akamaized.net' in host):
                 url = url.replace('https://', 'http://')
             url = url.replace("PARAMS", "_=TS1&t=TS2&uid=ID")
             if ver == "Maintenance": return "Maintenance"
