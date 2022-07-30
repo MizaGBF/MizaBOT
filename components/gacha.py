@@ -61,7 +61,7 @@ class Gacha():
     def process(self, gtype, id, sub_id):
         try:
             # draw rate
-            data = self.bot.gbf.request("https://game.granbluefantasy.jp/gacha/provision_ratio/{}/{}/{}?PARAMS".format(gtype, id, sub_id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
+            data = self.bot.gbf.request("https://game.granbluefantasy.jp/gacha/provision_ratio/{}/{}/{}?PARAMS".format(gtype, id, sub_id), account=self.bot.data.save['gbfcurrent'], check_update=True)
             
             gratio = data['ratio'][0]['ratio']
             
@@ -105,7 +105,7 @@ class Gacha():
         try:
             c = self.bot.util.JST()
             #gacha page
-            data = self.bot.gbf.request("https://game.granbluefantasy.jp/gacha/list?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
+            data = self.bot.gbf.request("https://game.granbluefantasy.jp/gacha/list?PARAMS", account=self.bot.data.save['gbfcurrent'], check_update=True)
             if data is None: raise Exception()
             # will contain the data
             gacha_data = {}
@@ -143,7 +143,7 @@ class Gacha():
                     gacha_data['scam'].append({'ratio':gratio, 'list':glist, 'rateup':grateup})
 
             # classic gacha
-            data = self.bot.gbf.request("https://game.granbluefantasy.jp/rest/gacha/classic/toppage_data?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check_update=True)
+            data = self.bot.gbf.request("https://game.granbluefantasy.jp/rest/gacha/classic/toppage_data?PARAMS", account=self.bot.data.save['gbfcurrent'], check_update=True)
             if data is not None and 'appearance_gacha_id' in data:
                 gratio, glist, grateup = self.process('classic', data['appearance_gacha_id'], 1)
                 if gratio is not None:

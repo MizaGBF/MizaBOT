@@ -71,10 +71,10 @@ class GBF():
             if timeout is None or not isinstance(timeout, int): timeout = 20
             url_handle = request.urlopen(req, timeout=timeout)
             if id is not None: self.refresh(id, url_handle.info()['Set-Cookie'])
-            if options.get('decompress', False) and url_handle.info()['Content-Encoding'] == 'gzip': data = zlib.decompress(url_handle.read(), 16+zlib.MAX_WBITS)
+            if url_handle.info()['Content-Encoding'] == 'gzip': data = zlib.decompress(url_handle.read(), 16+zlib.MAX_WBITS)
             else: data = url_handle.read()
             url_handle.close()
-            if options.get('load_json', False): data = json.loads(data)
+            if url_handle.info()['Content-Type'] == 'application/json': data = json.loads(data)
             return data
         except:
             try: url_handle.close()
@@ -150,7 +150,7 @@ class GBF():
             return False
 
     def version(self): # retrieve the game version
-        res = self.request('https://game.granbluefantasy.jp/', headers={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36', 'Accept-Language':'en', 'Accept-Encoding':'gzip, deflate', 'Host':'game.granbluefantasy.jp', 'Connection':'keep-alive'}, decompress=True, no_base_headers=True)
+        res = self.request('https://game.granbluefantasy.jp/', headers={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36', 'Accept-Language':'en', 'Accept-Encoding':'gzip, deflate', 'Host':'game.granbluefantasy.jp', 'Connection':'keep-alive'}, no_base_headers=True)
         if res is None: return None
         try:
             return int(self.vregex.findall(str(res))[0])
