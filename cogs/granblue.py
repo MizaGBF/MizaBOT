@@ -1543,10 +1543,9 @@ class GranblueFantasy(commands.Cog):
         """Post some known defense values"""
         await inter.response.send_message(embed=self.bot.util.embed(title="Defense Values", description="**8.5**▫️ Fediel Solo\n**9.5**▫️ Fediel HL\n**10** ▫️ Estimate Calculator / Trial / Story / Event / EX+\n**11** ▫️ PBaha N / UBaha HL / Xeno\n**12** ▫️ M1 HL / Kirin HL / Metatron / Avatar / GO HL / Lindwurm\n**13** ▫️ Normal / Hard / T2 / Primarchs N & HL / UBaha N / M2\n**15** ▫️ T1 HL / Malice / Menace / Akasha / Lucilius / Astaroth / Pride / NM90-100\n**18** ▫️ Rose Queen / Other Dragons Solo & HL\n**20** ▫️ PBaha HL / Lucilius Hard / Belial\n**22** ▫️ Celeste (Mist)\n**25** ▫️ Beelzebub / NM150\n**30** ▫️ Rose Queen (Dark)", footer="20 def = Take half the damage of 10 def", color=self.color, thumbnail="https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/ui/icon/status/x64/status_1019.png"), ephemeral=True)
 
-    @commands.slash_command()
-    @commands.default_member_permissions(send_messages=True, read_messages=True)
-    @commands.cooldown(1, 40, commands.BucketType.guild)
-    @commands.max_concurrency(8, commands.BucketType.default)
+    # temporary ==============================
+    
+    @gbf.sub_command()
     async def crystal(self, inter: disnake.GuildCommandInteraction):
         """Granblue Summer Festival - Crystal Countdown"""
         await inter.response.defer()
