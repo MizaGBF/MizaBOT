@@ -693,7 +693,7 @@ class GranblueFantasy(commands.Cog):
     def getProfileData(self, id : int): # get player data
         if not self.bot.gbf.isAvailable():
             return "Maintenance"
-        res = self.bot.gbf.request("https://game.granbluefantasy.jp/profile/content/index/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'])
+        res = self.bot.gbf.request("https://game.granbluefantasy.jp/profile/content/index/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], expect_JSON=True)
         if res is not None: return unquote(res['data'])
         else: return res
 
@@ -1373,7 +1373,7 @@ class GranblueFantasy(commands.Cog):
             if isinstance(id, str):
                 await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description=id, color=self.color))
             else:
-                data = await self.bot.do(self.bot.gbf.request, "https://game.granbluefantasy.jp/forum/search_users_id?PARAMS", account=self.bot.data.save['gbfcurrent'], check=True, payload={"special_token":None,"user_id":int(id)})
+                data = await self.bot.do(self.bot.gbf.request, "https://game.granbluefantasy.jp/forum/search_users_id?PARAMS", account=self.bot.data.save['gbfcurrent'], expect_JSON=True, check=True, payload={"special_token":None,"user_id":int(id)})
                 match data:
                     case "Maintenance":
                         await inter.edit_original_message(embed=self.bot.util.embed(title="Profile Error", description="Game is in maintenance", color=self.color))
@@ -1435,7 +1435,7 @@ class GranblueFantasy(commands.Cog):
         """Retrieve the current coop daily missions"""
         try:
             await inter.response.defer(ephemeral=True)
-            data = (await self.bot.do(self.bot.gbf.request, 'https://game.granbluefantasy.jp/coopraid/daily_mission?PARAMS', account=self.bot.data.save['gbfcurrent'], check=True))['daily_mission']
+            data = (await self.bot.do(self.bot.gbf.request, 'https://game.granbluefantasy.jp/coopraid/daily_mission?PARAMS', account=self.bot.data.save['gbfcurrent'], expect_JSON=True, check=True))['daily_mission']
             msg = ""
             for i in range(len(data)):
                 if data[i]['category'] == '2':

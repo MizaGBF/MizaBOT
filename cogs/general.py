@@ -393,7 +393,7 @@ class General(commands.Cog):
     def get4chan(self, board : str, search : str): # be sure to not abuse it, you are not supposed to call the api more than once per second
         try:
             search = search.lower()
-            data = self.bot.gbf.request('http://a.4cdn.org/{}/catalog.json'.format(board), no_base_headers=True)
+            data = self.bot.gbf.request('http://a.4cdn.org/{}/catalog.json'.format(board), expect_JSON=True, no_base_headers=True)
             threads = []
             for p in data:
                 for t in p["threads"]:
