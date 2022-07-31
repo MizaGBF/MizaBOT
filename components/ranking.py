@@ -83,11 +83,11 @@ class Ranking():
             return None
         match mode:
             case 0: # crew
-                res = self.bot.gbf.request("https://game.granbluefantasy.jp/teamraid{}/rest/ranking/totalguild/detail/{}/0?PARAMS".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'])
+                res = self.bot.gbf.request("https://game.granbluefantasy.jp/teamraid{}/rest/ranking/totalguild/detail/{}/0?PARAMS".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], expect_JSON=True)
             case 1: # prelim crew
-                res = self.bot.gbf.request("https://game.granbluefantasy.jp/teamraid{}/rest/ranking/guild/detail/{}/0?PARAMS".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'])
+                res = self.bot.gbf.request("https://game.granbluefantasy.jp/teamraid{}/rest/ranking/guild/detail/{}/0?PARAMS".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], expect_JSON=True)
             case 2: # player
-                res = self.bot.gbf.request("https://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?PARAMS".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'])
+                res = self.bot.gbf.request("https://game.granbluefantasy.jp/teamraid{}/rest_ranking_user/detail/{}/0?PARAMS".format(str(self.bot.data.save['gw']['id']).zfill(3), page), account=self.bot.data.save['gbfcurrent'], expect_JSON=True)
         return res
 
     """updateRankingThread()
