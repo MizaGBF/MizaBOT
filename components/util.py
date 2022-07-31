@@ -599,14 +599,15 @@ class Util():
     Parameters
     ----------
     sps: Target name
+    summon_check: if True, it will check for a (Summon) page first (if not present in the target)
     
     Returns
     --------
     str: Target ID, None if error/not found
     """
-    def search_wiki_for_id(self, sps: str):
+    def search_wiki_for_id(self, sps: str, summon_check=True):
         try:
-            if "(summon)" not in sps.lower(): # search summon names first
+            if summon_check and "(summon)" not in sps.lower(): # search summon names first
                 data = self.search_wiki_for_id(sps + ' (Summon)')
                 if data is not None: return data
             f = self.wiki_fixCase(sps)

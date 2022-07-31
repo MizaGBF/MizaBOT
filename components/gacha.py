@@ -550,31 +550,27 @@ class GachaSimulator():
             match search:
                 case "Belial":
                     if self.best[1][:2] == "1S": search = "Belial (Summer)"
-                    elif self.best[1][:2] == "6S": search = "Belial" # placeholder for playable version later
                 case "Freyr":
                     if self.best[1][:2] == "3S": search = "Freyr (Yukata)"
-                    elif self.best[1][:2] == "4S": search = "Freyr (Summon)"
                 case "Kaguya":
                     if self.best[1][:2] == "5S": search = "Kaguya (Summer)"
-                    elif self.best[1][:2] == "2S": search = "Kaguya" # placeholder for playable version later
                 case "Athena":
                     if not self.isclassic: search = "Athena (Summer)"
-                    else: search = "Athena (Summon)"
+                    else: pass
                 case "Satyr":
                     if not self.isclassic: search = "Satyr (Summer)"
-                    else: search = "Satyr (Summon)"
+                    else: pass
                 case "Macula":
                     if not self.isclassic: search = "Macula (Summer)"
-                    else: search = "Macula (Summon)"
+                    else: pass
                 case "Mandrake":
-                    search = "Mandrake (Summer)"
+                    if self.best[0] >= 2: search = "Mandrake (Summer)"
                 case "Yggdrasil":
                     search = "Yggdrasil (Summer)"
                 case "Tiamat":
                     search = "Tiamat (Summer)"
                 case "Rose Queen":
-                    if not self.isclassic: search = "Rose Queen (Summer)"
-                    else: search = "Rose Queen" # placeholder for playable version later # NOTE: not in the classic gacha yet
+                    if not self.isclassic: search = "Rose Queen (Summer)" # NOTE: regular version not in the classic gacha yet, so this fix will be a bit hit or miss
                 case _:
                     pass
             rid = await self.bot.do(self.bot.util.search_wiki_for_id, search) # retrieve the id from the wiki
