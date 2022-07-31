@@ -1565,9 +1565,11 @@ class GranblueFantasy(commands.Cog):
                 if crystal <= 0:
                     msg = "{} No crystals remaining".format(self.bot.emote.get('crystal'))
                 else:
-                    msg = "{:} **{:,} crystals remaining**\n".format(self.bot.emote.get('crystal'), crystal)
+                    consumed = (10000000000 - crystal)
+                    players = (consumed / ((c - start).days + 1)) / 1500
+                    msg = "{:} **{:,}** crystals remaining (Average **{:}** players/day)\n".format(self.bot.emote.get('crystal'), crystal, self.bot.util.valToStr(players))
                     msg += "Event is ending in **{}**\n".format(self.bot.util.delta2str(end - c, 2))
-                    t = timedelta(seconds = crystal / ((10000000000 - crystal) / ((c - start).days * 86400 + (c - start).seconds)))
+                    t = timedelta(seconds = crystal / (consumed / ((c - start).days * 86400 + (c - start).seconds)))
                     msg += "Crystals will be exhausted APPROXIMATELY in **{}**, at current pace".format(self.bot.util.delta2str(t, 2))
         except:
             msg = "An error occured, try again later"
