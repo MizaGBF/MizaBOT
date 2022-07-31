@@ -693,7 +693,7 @@ class GranblueFantasy(commands.Cog):
     def getProfileData(self, id : int): # get player data
         if not self.bot.gbf.isAvailable():
             return "Maintenance"
-        res = self.bot.gbf.request("https://game.granbluefantasy.jp/profile/content/index/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
+        res = self.bot.gbf.request("https://game.granbluefantasy.jp/profile/content/index/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'])
         if res is not None: return unquote(res['data'])
         else: return res
 
@@ -1373,7 +1373,7 @@ class GranblueFantasy(commands.Cog):
             if isinstance(id, str):
                 await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description=id, color=self.color))
             else:
-                data = await self.bot.do(self.bot.gbf.request, "https://game.granbluefantasy.jp/forum/search_users_id?PARAMS", account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True, payload={"special_token":None,"user_id":int(id)})
+                data = await self.bot.do(self.bot.gbf.request, "https://game.granbluefantasy.jp/forum/search_users_id?PARAMS", account=self.bot.data.save['gbfcurrent'], check=True, payload={"special_token":None,"user_id":int(id)})
                 match data:
                     case "Maintenance":
                         await inter.edit_original_message(embed=self.bot.util.embed(title="Profile Error", description="Game is in maintenance", color=self.color))
@@ -1435,7 +1435,7 @@ class GranblueFantasy(commands.Cog):
         """Retrieve the current coop daily missions"""
         try:
             await inter.response.defer(ephemeral=True)
-            data = (await self.bot.do(self.bot.gbf.request, 'https://game.granbluefantasy.jp/coopraid/daily_mission?PARAMS', account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True))['daily_mission']
+            data = (await self.bot.do(self.bot.gbf.request, 'https://game.granbluefantasy.jp/coopraid/daily_mission?PARAMS', account=self.bot.data.save['gbfcurrent'], check=True))['daily_mission']
             msg = ""
             for i in range(len(data)):
                 if data[i]['category'] == '2':
@@ -1542,3 +1542,35 @@ class GranblueFantasy(commands.Cog):
     async def defense(self, inter: disnake.GuildCommandInteraction):
         """Post some known defense values"""
         await inter.response.send_message(embed=self.bot.util.embed(title="Defense Values", description="**8.5**▫️ Fediel Solo\n**9.5**▫️ Fediel HL\n**10** ▫️ Estimate Calculator / Trial / Story / Event / EX+\n**11** ▫️ PBaha N / UBaha HL / Xeno\n**12** ▫️ M1 HL / Kirin HL / Metatron / Avatar / GO HL / Lindwurm\n**13** ▫️ Normal / Hard / T2 / Primarchs N & HL / UBaha N / M2\n**15** ▫️ T1 HL / Malice / Menace / Akasha / Lucilius / Astaroth / Pride / NM90-100\n**18** ▫️ Rose Queen / Other Dragons Solo & HL\n**20** ▫️ PBaha HL / Lucilius Hard / Belial\n**22** ▫️ Celeste (Mist)\n**25** ▫️ Beelzebub / NM150\n**30** ▫️ Rose Queen (Dark)", footer="20 def = Take half the damage of 10 def", color=self.color, thumbnail="https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/ui/icon/status/x64/status_1019.png"), ephemeral=True)
+
+    @commands.slash_command()
+    @commands.default_member_permissions(send_messages=True, read_messages=True)
+    @commands.cooldown(1, 40, commands.BucketType.guild)
+    @commands.max_concurrency(8, commands.BucketType.default)
+    async def crystal(self, inter: disnake.GuildCommandInteraction):
+        """Granblue Summer Festival - Crystal Countdown"""
+        await inter.response.defer()
+        try:
+            c = self.bot.util.JST()
+            start = c.replace(year=2022, month=8, day=1, hour=5, minute=0, second=0, microsecond=0)
+            end = c.replace(year=2022, month=8, day=13, hour=4, minute=59, second=59, microsecond=0)
+            if c > end:
+                msg = "The event has ended"
+            else:
+                data = unquote((await self.bot.do(self.bot.gbf.request, "http://game.granbluefantasy.jp/campaign/dividecrystal/content/index?PARAMS", account=self.bot.data.save['gbfcurrent']))['data'])
+                s = data.find('<div class="txt-amount">')
+                if s == -1: raise Exception()
+                s += len('<div class="txt-amount">')
+                crystal = int(data[s:].split('/')[0].replace(',', ''))
+            
+                if crystal <= 0:
+                    msg = "{} No crystals remaining".format(self.bot.emote.get('crystal'))
+                else:
+                    msg = "{:} **{:,} crystals remaining**\n".format(self.bot.emote.get('crystal'), crystal)
+                    msg += "Event is ending in **{}**\n".format(self.bot.util.delta2str(end - c, 2))
+                    t = timedelta(seconds = crystal / ((10000000000 - crystal) / ((c - start).days * 86400 + (c - start).seconds)))
+                    msg += "Crystals will be exhausted APPROXIMATELY in **{}**, at current pace".format(self.bot.util.delta2str(t, 2))
+        except:
+            msg = "An error occured, try again later"
+        await inter.edit_original_message(embed=self.bot.util.embed(title="Granblue Summer Festival", description=msg, url="https://game.granbluefantasy.jp/#campaign/division", color=self.color))
+        await self.bot.util.clean(inter, 40)

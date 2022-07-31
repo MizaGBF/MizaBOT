@@ -462,7 +462,7 @@ class GuildWar(commands.Cog):
     dict: Crew data, None if error
     """
     def getCrewSummary(self, id):
-        res = self.bot.gbf.request("https://game.granbluefantasy.jp/guild_main/content/detail/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True, check=True)
+        res = self.bot.gbf.request("https://game.granbluefantasy.jp/guild_main/content/detail/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], check=True)
         if res is None: return None
         else:
             soup = BeautifulSoup(unquote(res['data']), 'html.parser')
@@ -766,8 +766,8 @@ class GuildWar(commands.Cog):
     dict: Resulting data, None if error
     """
     def requestCrew(self, id : int, page : int): # get crew data
-        if page == 0: return self.bot.gbf.request("https://game.granbluefantasy.jp/guild_other/guild_info/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
-        else: return self.bot.gbf.request("https://game.granbluefantasy.jp/guild_other/member_list/{}/{}?PARAMS".format(page, id), account=self.bot.data.save['gbfcurrent'], decompress=True, load_json=True)
+        if page == 0: return self.bot.gbf.request("https://game.granbluefantasy.jp/guild_other/guild_info/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'])
+        else: return self.bot.gbf.request("https://game.granbluefantasy.jp/guild_other/member_list/{}/{}?PARAMS".format(page, id), account=self.bot.data.save['gbfcurrent'])
 
     @gw.sub_command()
     async def lead(self, inter: disnake.GuildCommandInteraction, id_crew_1 : str = commands.Param(description="A crew ID"), id_crew_2 : str = commands.Param(description="A crew ID")):
