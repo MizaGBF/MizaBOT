@@ -1569,8 +1569,12 @@ class GranblueFantasy(commands.Cog):
                     players = (consumed / ((c - start).days + 1)) / 1500
                     msg = "{:} **{:,}** crystals remaining (Average **{:}** players/day)\n".format(self.bot.emote.get('crystal'), crystal, self.bot.util.valToStr(players))
                     msg += "Event is ending in **{}**\n".format(self.bot.util.delta2str(end - c, 2))
-                    t = timedelta(seconds = crystal / (consumed / ((c - start).days * 86400 + (c - start).seconds)))
-                    msg += "Crystals will be exhausted APPROXIMATELY in **{}**, at current pace".format(self.bot.util.delta2str(t, 2))
+                    elapsed = c - start
+                    if elapsed.days > 2:
+                        t = timedelta(seconds = crystal / (consumed / (elapsed.days * 86400 + elapsed.seconds)))
+                        msg += "Crystals will be exhausted APPROXIMATELY in **{}**, at current pace".format(self.bot.util.delta2str(t, 2))
+                    else:
+                        msg += "Crystal estimation will open on the third day"
         except:
             msg = "An error occured, try again later"
         await inter.edit_original_message(embed=self.bot.util.embed(title="Granblue Summer Festival", description=msg, url="https://game.granbluefantasy.jp/#campaign/division", color=self.color))
