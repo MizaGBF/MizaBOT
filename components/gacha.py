@@ -415,7 +415,7 @@ class GachaSimulator():
         self.mode = {'single':0, 'srssr':1, 'memerollA':2, 'memerollB':3, 'ten':10, 'gachapin':11, 'mukku':12, 'supermukku':13, 'scam':14}[simtype] # kept the old modes, might change it later?
         self.result = {} # output of generate()
         self.thumbnail = None # thumbnail of self.best
-        self.best = [-1, ""] # best roll
+        self.best = [-1, "", False] # best roll
         self.exception = None # contains the last exception
 
     """changeMode()
@@ -504,17 +504,18 @@ class GachaSimulator():
                     for rate in self.data[r]['list']: # find which item we rolled
                         fr = float(rate)
                         for item in self.data[r]['list'][rate]:
-                            if r == 2 and rate in self.rateups: last = "**" + self.bot.gacha.formatGachaItem(item) + "**"
-                            else: last = self.bot.gacha.formatGachaItem(item)
+                            rateupitem = False 
+                            if r == 2 and rate in self.rateups: rateupitem = True
                             if d <= fr:
-                                roll = [r, last]
+                                roll = [r, item, rateupitem]
                                 break
                             d -= fr
                         if roll is not None:
                             break
                     if roll is None:
-                        roll = [r, last]
-                    result['list'].append(roll) # store roll
+                        roll = [r, itemn, rateupitem]
+                    if roll[2]: result['list'].append([roll[0], "**" + self.bot.gacha.formatGachaItem(roll[1]) + "**"])
+                    else: result['list'].append([roll[0], self.bot.gacha.formatGachaItem(roll[1])])
                     result['detail'][r] += 1
                     if rate in self.rateups and r + 1 > self.best[0]:
                         self.best = roll.copy()
@@ -544,7 +545,39 @@ class GachaSimulator():
     """
     async def updateThumbnail(self):
         if self.best[0] != -1 and self.best[1] != "":
-            rid = await self.bot.do(self.bot.util.search_wiki_for_id, '>'.join(self.best[1].replace('**', '').split('>')[2:])) # retrieve the id from the wiki
+            search = self.best[1][2:]
+            # summer hotfix
+            match search:
+                case "Belial":
+                    if self.best[1][:2] == "1S": search = "Belial (Summer)"
+                    elif self.best[1][:2] == "6S": search = "Belial" # placeholder for playable version later
+                case "Freyr":
+                    if self.best[1][:2] == "3S": search = "Freyr (Yukata)"
+                    elif self.best[1][:2] == "4S": search = "Freyr (Summon)"
+                case "Kaguya":
+                    if self.best[1][:2] == "5S": search = "Kaguya (Summer)"
+                    elif self.best[1][:2] == "2S": search = "Kaguya" # placeholder for playable version later
+                case "Athena":
+                    if not self.isclassic: search = "Athena (Summer)"
+                    else: search = "Athena (Summon)"
+                case "Satyr":
+                    if not self.isclassic: search = "Satyr (Summer)"
+                    else: search = "Satyr (Summon)"
+                case "Macula":
+                    if not self.isclassic: search = "Macula (Summer)"
+                    else: search = "Macula (Summon)"
+                case "Mandrake":
+                    search = "Mandrake (Summer)"
+                case "Yggdrasil":
+                    search = "Yggdrasil (Summer)"
+                case "Tiamat":
+                    search = "Tiamat (Summer)"
+                case "Rose Queen":
+                    if not self.isclassic: search = "Rose Queen (Summer)"
+                    else: search = "Rose Queen" # placeholder for playable version later # NOTE: not in the classic gacha yet
+                case _:
+                    pass
+            rid = await self.bot.do(self.bot.util.search_wiki_for_id, search) # retrieve the id from the wiki
             if rid is None: self.thumbnail = None # and update self.thumbnail accordingly
             elif rid.startswith('1'): self.thumbnail = "https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/assets/weapon/m/{}.jpg".format(rid)
             elif rid.startswith('2'): self.thumbnail = "https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/assets/summon/m/{}.jpg".format(rid)
@@ -570,9 +603,8 @@ class GachaSimulator():
                 loot = r
                 break
         # pick the random ssr
-        choice = self.bot.gacha.formatGachaItem(random.choice(data[2]['list'][list(data[2]['list'].keys())[0]]))
-        self.best = [99, choice] # force ssr in self.best
-        return choice, loot[1]
+        self.best = [99, random.choice(data[2]['list'][list(data[2]['list'].keys())[0]]), True] # force ssr in self.best
+        return self.best[1], loot[1]
 
     """output()
     Output the result via a disnake Interaction
@@ -636,7 +668,7 @@ class GachaSimulator():
                     await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer, thumbnail=(self.thumbnail if (i == 10 and self.scamdata is None) else None)), view=None)
                 if self.scamdata is not None:
                     msg = '\n'.join(msg.split('\n')[:-2])
-                    msg += "\n{}**{}**\n{}**{}**".format(self.bot.emote.get('SSR'), sroll[0], self.bot.emote.get('red'), sroll[1])
+                    msg += "\n{}**{}**\n{}**{}**".format(self.bot.emote.get('SSR'), self.bot.gacha.formatGachaItem(sroll[0]), self.bot.emote.get('red'), sroll[1])
                     await asyncio.sleep(1)
                     await inter.edit_original_message(embed=self.bot.util.embed(author={'name':titles[1].format(inter.author.display_name), 'icon_url':inter.author.display_avatar}, description=msg, color=self.color, footer=footer, thumbnail=self.thumbnail), view=None)
             case 2: # meme roll display
