@@ -1571,7 +1571,10 @@ class GranblueFantasy(commands.Cog):
                     msg += "{} Event is ending in **{}**\n".format(self.bot.emote.get('clock'), self.bot.util.delta2str(end - c, 2))
                     elapsed = c - start
                     duration = end - start
-                    msg += "Progress ▫️ **{:.2f}%** {:} ▫️ **{:.2f}%** {:}\n".format(consumed / 100000000, self.bot.emote.get('crystal'),  100 * (elapsed.days * 86400 + elapsed.seconds) / (duration.days * 86400 + duration.seconds), self.bot.emote.get('clock'))
+                    progresses = [100 * (consumed / 10000000000), 100 * (elapsed.days * 86400 + elapsed.seconds) / (duration.days * 86400 + duration.seconds)]
+                    msg += "Progress ▫️ **{:.2f}%** {:} ▫️ **{:.2f}%** {:} ▫️ ".format(progresses[0], self.bot.emote.get('crystal'), progresses[1], self.bot.emote.get('clock'))
+                    if progresses[1] > progresses[0]: msg += "✅\n" # white check mark
+                    else: msg += "⚠️\n"
                     if elapsed.days > 2:
                         t = timedelta(seconds = crystal / (consumed / (elapsed.days * 86400 + elapsed.seconds)))
                         msg += "Crystals will be exhausted APPROXIMATELY in **{}**, at current pace".format(self.bot.util.delta2str(t, 2))
