@@ -1553,6 +1553,7 @@ class GranblueFantasy(commands.Cog):
             c = self.bot.util.JST()
             start = c.replace(year=2022, month=8, day=1, hour=5, minute=0, second=0, microsecond=0)
             end = c.replace(year=2022, month=8, day=13, hour=4, minute=59, second=59, microsecond=0)
+            available_crystal = 10000000000
             if c > end:
                 msg = "The event has ended"
             else:
@@ -1565,21 +1566,22 @@ class GranblueFantasy(commands.Cog):
                 if crystal <= 0:
                     msg = "{} No crystals remaining".format(self.bot.emote.get('crystal'))
                 else:
-                    consumed = (10000000000 - crystal)
+                    consumed = (available_crystal - crystal)
                     players = (consumed / ((c - start).days + 1)) / 1500
                     msg = "{:} **{:,}** crystals remaining (Average **{:}** players/day)\n".format(self.bot.emote.get('crystal'), crystal, self.bot.util.valToStr(players))
                     msg += "{} Event is ending in **{}**\n".format(self.bot.emote.get('clock'), self.bot.util.delta2str(end - c, 2))
                     elapsed = c - start
                     duration = end - start
-                    progresses = [100 * (consumed / 10000000000), 100 * (elapsed.days * 86400 + elapsed.seconds) / (duration.days * 86400 + duration.seconds)]
+                    progresses = [100 * (consumed / available_crystal), 100 * (elapsed.days * 86400 + elapsed.seconds) / (duration.days * 86400 + duration.seconds)]
                     msg += "Progress ▫️ **{:.2f}%** {:} ▫️ **{:.2f}%** {:} ▫️ ".format(progresses[0], self.bot.emote.get('crystal'), progresses[1], self.bot.emote.get('clock'))
-                    if progresses[1] > progresses[0]: msg += "✅\n" # white check mark
-                    else: msg += "⚠️\n"
-                    if elapsed.days > 2:
-                        t = timedelta(seconds = crystal / (consumed / (elapsed.days * 86400 + elapsed.seconds)))
-                        msg += "Crystals will be exhausted APPROXIMATELY in **{}**, at current pace".format(self.bot.util.delta2str(t, 2))
+                    if progresses[1] > progresses[0]:
+                        msg += "✅\n" # white check mark
+                        leftover = available_crystal * (100 - (progresses[0] * 100 / progresses[1])) / 100
+                        msg += "Estimating between **{:,}** and **{:,}** bonus crystals/player at the end".format(int(leftover / (1.25 * players)), int(leftover / (1.1 * players)))
                     else:
-                        msg += "Crystal estimation will open on the third day"
+                        msg += "⚠️\n"
+                        t = timedelta(seconds = (duration.days * 86400 + duration.seconds) * (100 - (progresses[1] * 100 / progresses[0])) / 100)
+                        msg += "Crystals will run out **{}** before the end".format(self.bot.util.delta2str(t, 2))
         except Exception as e:
             msg = "An error occured, try again later"
             await self.bot.sendError('crystal', e)
