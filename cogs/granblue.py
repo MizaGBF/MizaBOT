@@ -1577,7 +1577,7 @@ class GranblueFantasy(commands.Cog):
                     if progresses[1] > progresses[0]:
                         msg += "✅\n" # white check mark
                         leftover = available_crystal * (100 - (progresses[0] * 100 / progresses[1])) / 100
-                        msg += "Estimating between **{:,}** and **{:,}** bonus crystals/player at the end".format(int(leftover / (1.25 * players)), int(leftover / (1.1 * players)))
+                        msg += "Estimating between **{:,}** and **{:,}** bonus crystals/player at the end".format(int(leftover / 620000), int(leftover / 500000))
                     else:
                         msg += "⚠️\n"
                         t = timedelta(seconds = (duration.days * 86400 + duration.seconds) * (100 - (progresses[1] * 100 / progresses[0])) / 100)
