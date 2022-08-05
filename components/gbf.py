@@ -121,7 +121,7 @@ class GBF():
                 if id < 0 or id >= len(self.data.save['gbfaccounts']):
                     return False
                 self.data.save['gbfaccounts'].pop(id)
-                if self.gbfcurrent >= id and self.gbfcurrent >= 0: self.gbfcurrent -= 1
+                if self.bot.data.save['gbfcurrent'] >= id and self.bot.data.save['gbfcurrent'] >= 0: self.bot.data.save['gbfcurrent'] -= 1
                 self.data.pending = True
             return True
         except:
