@@ -766,8 +766,8 @@ class GuildWar(commands.Cog):
     dict: Resulting data, None if error
     """
     def requestCrew(self, id : int, page : int): # get crew data
-        if page == 0: return self.bot.gbf.request("https://game.granbluefantasy.jp/guild_other/guild_info/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'])
-        else: return self.bot.gbf.request("https://game.granbluefantasy.jp/guild_other/member_list/{}/{}?PARAMS".format(page, id), account=self.bot.data.save['gbfcurrent'])
+        if page == 0: return self.bot.gbf.request("https://game.granbluefantasy.jp/guild_other/guild_info/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], expect_JSON=True)
+        else: return self.bot.gbf.request("https://game.granbluefantasy.jp/guild_other/member_list/{}/{}?PARAMS".format(page, id), account=self.bot.data.save['gbfcurrent'], expect_JSON=True)
 
     @gw.sub_command()
     async def lead(self, inter: disnake.GuildCommandInteraction, id_crew_1 : str = commands.Param(description="A crew ID"), id_crew_2 : str = commands.Param(description="A crew ID")):
