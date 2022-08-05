@@ -462,7 +462,7 @@ class GuildWar(commands.Cog):
     dict: Crew data, None if error
     """
     def getCrewSummary(self, id):
-        res = self.bot.gbf.request("https://game.granbluefantasy.jp/guild_main/content/detail/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], check=True)
+        res = self.bot.gbf.request("https://game.granbluefantasy.jp/guild_main/content/detail/{}?PARAMS".format(id), account=self.bot.data.save['gbfcurrent'], expect_JSON=True, check=True)
         if res is None: return None
         else:
             soup = BeautifulSoup(unquote(res['data']), 'html.parser')

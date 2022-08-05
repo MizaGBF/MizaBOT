@@ -31,7 +31,7 @@ except:
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.InteractionBot):
     def __init__(self):
-        self.version = "9.27" # bot version
+        self.version = "9.28" # bot version
         self.changelog = [ # changelog lines
             "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
             "Pinboard requires the use of the Pin Message command to complete the process (right click on message > Apps)",
