@@ -228,7 +228,7 @@ class Gacha():
                                         description += " and **{} more!**".format(len(content[1]['rateup'][k][r]) - i)
                                         break
                                     description += self.formatGachaItem(item) + " "
-                            description += "\n"
+                                description += "\n"
                 return description, "https://prd-game-a-granbluefantasy.akamaized.net/assets_en/img/sp/gacha/{}".format(content[1]['image'])
             return None, None
         except Exception as e:
