@@ -537,7 +537,7 @@ class Admin(commands.Cog):
                 return
             r = await self.bot.do(self.bot.gbf.request, self.bot.data.config['gbfwatch']['test'], account=id, expect_JSON=True, check=True, force_down=True)
             if r is None or r.get('user_id', None) != acc[0]:
-                await inter.response.send_message('debug', embed=self.bot.util.embed(title="GBF Account status", description="Account #{} is down\nck: `{}`\nuid: `{}`\nua: `{}`\n".format(id, acc[0], acc[1], acc[2]) , color=self.color), ephemeral=True)
+                await inter.response.send_message(embed=self.bot.util.embed(title="GBF Account status", description="Account #{} is down\nck: `{}`\nuid: `{}`\nua: `{}`\n".format(id, acc[0], acc[1], acc[2]) , color=self.color), ephemeral=True)
                 with self.bot.data.lock:
                     self.bot.data.save['gbfaccounts'][id][3] = 2
                     self.bot.data.pending = True
