@@ -573,7 +573,7 @@ class Admin(commands.Cog):
         if ua == "":
             await inter.response.send_message(embed=self.bot.util.embed(title="Error", description="Invalid parameter {}".format(ua), color=self.color), ephemeral=True)
             return
-        self.bot.gbf.add(uid, ck, str)
+        self.bot.gbf.add(uid, ck, ua)
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 
     @account.sub_command()

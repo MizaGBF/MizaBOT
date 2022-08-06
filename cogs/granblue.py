@@ -1557,7 +1557,7 @@ class GranblueFantasy(commands.Cog):
             if c > end:
                 msg = "The event has ended"
             else:
-                data = unquote((await self.bot.do(self.bot.gbf.request, "http://game.granbluefantasy.jp/campaign/dividecrystal/content/index?PARAMS", account=self.bot.data.save['gbfcurrent']))['data'])
+                data = unquote((await self.bot.do(self.bot.gbf.request, "http://game.granbluefantasy.jp/campaign/dividecrystal/content/index?PARAMS", account=self.bot.data.save['gbfcurrent'], expect_JSON=True))['data'])
                 s = data.find('<div class="txt-amount">')
                 if s == -1: raise Exception()
                 s += len('<div class="txt-amount">')
