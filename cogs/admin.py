@@ -67,11 +67,11 @@ class Admin(commands.Cog):
             if acc[3] == 0 or (acc[3] == 1 and (acc[5] is None or current_time - acc[5] >= timedelta(seconds=1800))):
                 r = self.bot.gbf.request("https://game.granbluefantasy.jp/user/user_id/1?PARAMS", account=i, check=True, expect_JSON=True, force_down=True)
                 with self.bot.data.lock:
-                    if r is None or str(r.get('user_id', None)) != str(acc[0]):
+                    if r == "Maintenance":
+                        return []
+                    elif r is None or str(r.get('user_id', None)) != str(acc[0]):
                         res.append(i)
                         self.bot.data.save['gbfaccounts'][i][3] = 2
-                    elif r == "Maintenance":
-                        break
                     else:
                         self.bot.data.save['gbfaccounts'][i][3] = 1
                         self.bot.data.save['gbfaccounts'][i][5] = current_time
