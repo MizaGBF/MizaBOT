@@ -30,26 +30,53 @@ class Admin(commands.Cog):
     """
     async def status(self): # background task changing the bot status and calling autosave()
         await self.bot.change_presence(status=disnake.Status.online, activity=disnake.activity.Game(name='I rebooted, /changelog for news'))
+        num = 0
         while True:
             try:
-                await asyncio.sleep(3600)
-                await self.bot.change_presence(status=disnake.Status.online, activity=disnake.activity.Game(name=random.choice(self.bot.data.config['games'])))
-                gc.collect()
-                # check if it's time for the bot maintenance for me (every 2 weeks or so)
-                c = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-                if self.bot.data.save['bot_maintenance'] and c > self.bot.data.save['bot_maintenance'] and c.day == 16:
-                    await self.bot.send('debug', self.bot.owner.mention + " ▫️ Time for maintenance!")
-                    with self.bot.data.lock:
-                        self.bot.data.save['bot_maintenance'] = c
-                        self.bot.data.pending = True
-                # autosave
+                await asyncio.sleep(900)
+                if num == 0: # status / maintenance check every hour
+                    await self.bot.change_presence(status=disnake.Status.online, activity=disnake.activity.Game(name=random.choice(self.bot.data.config['games'])))
+                    # check if it's time for the bot maintenance for me (every 2 weeks or so)
+                    c = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+                    if self.bot.data.save['bot_maintenance'] and c > self.bot.data.save['bot_maintenance'] and c.day == 16:
+                        await self.bot.send('debug', self.bot.owner.mention + " ▫️ Time for maintenance!")
+                        with self.bot.data.lock:
+                            self.bot.data.save['bot_maintenance'] = c
+                            self.bot.data.pending = True
+                    res = await self.bot.do(self._refresh)
+                    for i in res:
+                        await self.bot.send('debug', embed=self.bot.util.embed(title="Account refresh", description="Account #{} is down".format(i) , color=self.color))
+                num = (num + 1) % 4
+                # autosave every quarter hour
                 if self.bot.data.pending and self.bot.running:
                     await self.bot.data.autosave()
+                gc.collect()
             except asyncio.CancelledError:
                 await self.bot.sendError('statustask', 'cancelled')
                 return
             except Exception as e:
                 await self.bot.sendError('statustask', e)
+
+    """_refresh()
+    """
+    def _refresh(self):
+        res = []
+        current_time = self.bot.util.JST()
+        for i in range(0, len(self.bot.data.save['gbfaccounts'])):
+            acc = self.bot.data.save['gbfaccounts'][i]
+            if acc[3] == 0 or (acc[3] == 1 and (acc[5] is None or current_time - acc[5] >= timedelta(seconds=1800))):
+                r = self.bot.gbf.request("https://game.granbluefantasy.jp/user/user_id/1?PARAMS", account=i, check=True, expect_JSON=True, force_down=True)
+                with self.bot.data.lock:
+                    if r is None or str(r.get('user_id', None)) != str(acc[0]):
+                        res.append(i)
+                        self.bot.data.save['gbfaccounts'][i][3] = 2
+                    elif r == "Maintenance":
+                        break
+                    else:
+                        self.bot.data.save['gbfaccounts'][i][3] = 1
+                        self.bot.data.save['gbfaccounts'][i][5] = current_time
+                    self.bot.data.pending = True
+        return res
 
     """clean()
     Bot Task managing the autocleanup of the save data
