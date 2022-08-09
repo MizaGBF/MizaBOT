@@ -1554,6 +1554,7 @@ class GranblueFantasy(commands.Cog):
             start = c.replace(year=2022, month=8, day=1, hour=5, minute=0, second=0, microsecond=0)
             end = c.replace(year=2022, month=8, day=13, hour=4, minute=59, second=59, microsecond=0)
             available_crystal = 10000000000
+            footer = ""
             if c > end:
                 msg = "The event has ended"
             else:
@@ -1567,8 +1568,9 @@ class GranblueFantasy(commands.Cog):
                     msg = "{} No crystals remaining".format(self.bot.emote.get('crystal'))
                 else:
                     consumed = (available_crystal - crystal)
-                    players = (consumed / ((c - start).days + 1)) / 1500
-                    msg = "{:} **{:,}** crystals remaining (Average **{:}** players/day)\n".format(self.bot.emote.get('crystal'), crystal, self.bot.util.valToStr(players))
+                    avg_completion_crystal = 1250
+                    players = (consumed / ((c - start).days + 1)) / avg_completion_crystal # assuming 1200 crystals average completion rate
+                    msg = "{:} **{:,}** crystals remaining (Average **{:}** players/day, at {:,} crystals average)\n".format(self.bot.emote.get('crystal'), crystal, self.bot.util.valToStr(players), avg_completion_crystal)
                     msg += "{} Event is ending in **{}**\n".format(self.bot.emote.get('clock'), self.bot.util.delta2str(end - c, 2))
                     elapsed = c - start
                     duration = end - start
@@ -1577,7 +1579,8 @@ class GranblueFantasy(commands.Cog):
                     if progresses[1] > progresses[0]:
                         msg += "✅\n" # white check mark
                         leftover = available_crystal * (100 - (progresses[0] * 100 / progresses[1])) / 100
-                        msg += "Estimating between **{:,}** and **{:,}** bonus crystals/player at the end".format(int(leftover / 620000), int(leftover / 500000))
+                        msg += "Estimating between **{:,}** and **{:,}** bonus crystals/player at the end".format(int(leftover / 630000), int(leftover / 550000))
+                        footer = "Estimate 550~630k players"
                     else:
                         msg += "⚠️\n"
                         t = timedelta(seconds = (duration.days * 86400 + duration.seconds) * (100 - (progresses[1] * 100 / progresses[0])) / 100)
@@ -1585,4 +1588,4 @@ class GranblueFantasy(commands.Cog):
         except Exception as e:
             msg = "An error occured, try again later"
             await self.bot.sendError('crystal', e)
-        await inter.edit_original_message(embed=self.bot.util.embed(title="Granblue Summer Festival", description=msg, url="https://game.granbluefantasy.jp/#campaign/division", color=self.color))
+        await inter.edit_original_message(embed=self.bot.util.embed(title="Granblue Summer Festival", description=msg, url="https://game.granbluefantasy.jp/#campaign/division", footer=footer, color=self.color))
