@@ -83,7 +83,7 @@ class Moderation(commands.Cog):
         """Ban an user from the roll ranking (Mod Only)"""
         self.bot.ban.set(member.id, self.bot.ban.SPARK)
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success.\nMy owner has been notified.", color=self.color), ephemeral=True)
-        await self.bot.send('debug', embed=self.bot.util.embed(title="{} ▫️ {}".format(member.display_name, id), description="Banned from all roll rankings by {}\nValues: `{}`".format(inter.author.display_name, self.bot.data.save['spark'][str(member.id)]), thumbnail=member.display_avatar, color=self.color, footer=inter.guild.name))
+        await self.bot.send('debug', embed=self.bot.util.embed(title="{} ▫️ {}".format(member.display_name, id), description="Banned from all roll rankings by {}\nValues: `{}`".format(inter.author.display_name, self.bot.data.save['spark'].get(str(member.id), 'No Data')), thumbnail=member.display_avatar, color=self.color, footer=inter.guild.name))
 
     @mod.sub_command_group()
     async def cleanup(self, inter: disnake.GuildCommandInteraction):
