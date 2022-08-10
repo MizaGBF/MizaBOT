@@ -1516,7 +1516,9 @@ class GuildWar(commands.Cog):
             slots = 0
             for i, v in enumerate(sortedcrew):
                 if i % size == 0: fields.append({'name':'{}'.format(self.bot.emote.get(str(len(fields)+1))), 'value':''})
-                fields[-1]['value'] += "Rank **{}** \▫️  **{}** \▫️ **{}** slots\n".format(v['average'], v['name'], 30-v['count'])
+                fields[-1]['value'] += "Rank **{}** \▫️  **{}** \▫️ **{}** slot".format(v['average'], v['name'], 30-v['count'])
+                if 30-v['count'] != 1: fields[-1]['value'] += "s"
+                fields[-1]['value'] += "\n"
                 slots += 30-v['count']
             await inter.edit_original_message(embed=self.bot.util.embed(title="{} /gbfg/ recruiting crews ▫️ {} slots".format(self.bot.emote.get('crew'), slots), fields=fields, inline=True, color=self.color, timestamp=self.bot.util.timestamp()))
         await self.bot.util.clean(inter, 90)
