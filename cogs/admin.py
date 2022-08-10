@@ -248,8 +248,8 @@ class Admin(commands.Cog):
         """ID Based Check if an user has a ban registered in the bot (Owner Only)"""
         msg = ""
         if self.bot.ban.check(id, self.bot.ban.OWNER): msg += "Banned from having the bot in its own servers\n"
-        if self.bot.ban.check(id, self.bot.ban.SPARK): msg += "Banned from appearing in `rollRanking`\n"
-        if self.bot.ban.check(id, self.bot.ban.PROFILE): msg += "Banned from using `setProfile`\n"
+        if self.bot.ban.check(id, self.bot.ban.SPARK): msg += "Banned from appearing in `/spark ranking`\n"
+        if self.bot.ban.check(id, self.bot.ban.PROFILE): msg += "Banned from using `/gbf profile`\n"
         if self.bot.ban.check(id, self.bot.ban.USE_BOT): msg += "Banned from using the bot\n"
         if msg == "": msg = "No Bans set for this user"
         await inter.response.send_message(embed=self.bot.util.embed(title="User {}".format(id), description=msg, color=self.color), ephemeral=True)
@@ -262,13 +262,13 @@ class Admin(commands.Cog):
 
     @ban.sub_command()
     async def profile(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param()):
-        """ID based Ban for $setProfile (Owner Only)"""
+        """ID based Ban for /gbf profile (Owner Only)"""
         self.bot.ban.set(id, self.bot.ban.PROFILE)
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 
     @ban.sub_command()
     async def rollid(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param()):
-        """ID based Ban for $rollranking (Owner Only)"""
+        """ID based Ban for /spark ranking (Owner Only)"""
         self.bot.ban.set(id, self.bot.ban.SPARK)
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 
@@ -284,7 +284,7 @@ class Admin(commands.Cog):
 
     @unban.sub_command(name="profile")
     async def _profile(self, inter: disnake.GuildCommandInteraction, id : str = commands.Param()):
-        """ID based Unban for $setProfile (Owner Only)"""
+        """ID based Unban for /gbf profile (Owner Only)"""
         self.bot.ban.unset(id, self.bot.ban.PROFILE)
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
 

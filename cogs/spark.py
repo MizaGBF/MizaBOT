@@ -218,7 +218,7 @@ class Sparking(commands.Cog):
             try: icon = guild.icon.url
             except: icon = None
             await inter.edit_original_message(embed=self.bot.util.embed(title="{} Spark ranking of {}".format(self.bot.emote.get('crown'), guild.name), color=self.color, description=msg, footer=footer, thumbnail=icon))
-            await self.bot.util.clean(inter, 30)
+            await self.bot.util.clean(inter, 40)
         except Exception as e:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Sorry, something went wrong :bow:", footer=str(e)))
             await self.bot.sendError("rollRanking", e)

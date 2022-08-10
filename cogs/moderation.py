@@ -78,12 +78,12 @@ class Moderation(commands.Cog):
     async def ban(self, inter: disnake.GuildCommandInteraction):
         pass
 
-    @ban.sub_command(name="roll")
-    async def banroll(self, inter: disnake.GuildCommandInteraction, member: disnake.Member):
-        """Ban an user from the roll ranking (Mod Only)"""
+    @ban.sub_command(name="spark")
+    async def banspark(self, inter: disnake.GuildCommandInteraction, member: disnake.Member):
+        """Ban an user from the spark ranking (Mod Only)"""
         self.bot.ban.set(member.id, self.bot.ban.SPARK)
         await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success.\nMy owner has been notified.", color=self.color), ephemeral=True)
-        await self.bot.send('debug', embed=self.bot.util.embed(title="{} ▫️ {}".format(member.display_name, id), description="Banned from all roll rankings by {}\nValues: `{}`".format(inter.author.display_name, self.bot.data.save['spark'].get(str(member.id), 'No Data')), thumbnail=member.display_avatar, color=self.color, footer=inter.guild.name))
+        await self.bot.send('debug', embed=self.bot.util.embed(title="{} ▫️ {}".format(member.display_name, id), description="Banned from all spark rankings by {}\nValues: `{}`".format(inter.author.display_name, self.bot.data.save['spark'].get(str(member.id), 'No Data')), thumbnail=member.display_avatar, color=self.color, footer=inter.guild.name))
 
     @mod.sub_command_group()
     async def cleanup(self, inter: disnake.GuildCommandInteraction):
