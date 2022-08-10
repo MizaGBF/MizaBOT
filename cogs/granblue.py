@@ -1569,7 +1569,7 @@ class GranblueFantasy(commands.Cog):
                 else:
                     consumed = (available_crystal - crystal)
                     avg_completion_crystal = 1250
-                    players = (consumed / ((c - start).days + 1)) / avg_completion_crystal # assuming 1200 crystals average completion rate
+                    players = (consumed / ((c - start).days + 1)) / avg_completion_crystal
                     msg = "{:} **{:,}** crystals remaining (Average **{:}** players/day, at {:,} crystals average)\n".format(self.bot.emote.get('crystal'), crystal, self.bot.util.valToStr(players), avg_completion_crystal)
                     msg += "{} Event is ending in **{}**\n".format(self.bot.emote.get('clock'), self.bot.util.delta2str(end - c, 2))
                     elapsed = c - start
