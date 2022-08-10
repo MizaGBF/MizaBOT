@@ -142,7 +142,7 @@ class GranblueFantasy(commands.Cog):
                     if str(tr).find("ID") != -1:
                         try:
                             if tr.findChildren("th")[0].text.strip() == "ID" and 'id' not in data:
-                                data['id'] = tr.findChildren("td")[0].text
+                                data['id'] = tr.findChildren("td")[0].text.replace(' ', '')
                         except: pass
             except:
                 pass
@@ -328,9 +328,10 @@ class GranblueFantasy(commands.Cog):
                         data, tables = await self.bot.do(self.processWikiMatch, soup)
 
                         x = data.get('object', None)
+                        gbfal = "" if data.get('id', None) is None else "\n[Assets](https://mizagbf.github.io/GBFAL/?id={})".format(data['id'])
                         match x:
                             case None: # if no match
-                                await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=data.get('description', ''), image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
+                                await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=data.get('description', '') + '\n' + gbfal, image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
                             case 0: # character
                                 if 'title' in data: title = title + ", " + data['title']
                                 if 'rarity' in data: title = "{} {}".format(self.bot.emote.get(data['rarity']), title)
@@ -345,9 +346,9 @@ class GranblueFantasy(commands.Cog):
                                     desc = "This character has other versions\n"
                                     for e in elems:
                                         desc += "[{}](https://gbf.wiki/{})\n".format(e, e.replace(" ", "_"))
-                                    await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=desc, image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
+                                    await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=desc + gbfal, image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
                                 except: # if none, just send the link
-                                    await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=data.get('description', ''), image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
+                                    await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=data.get('description', '') + gbfal, image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
                             case _: # summon and weapon
                                 data = await self.bot.do(self.processWikiItem, data, tables)
                                 # final message
@@ -376,7 +377,7 @@ class GranblueFantasy(commands.Cog):
                                 if 'aura' in data: desc += "{} **Aura**▫️{}\n".format(self.bot.emote.get('skill2'), data['aura'])
                                 if 'subaura' in data: desc += "{} **Sub Aura**▫️{}\n".format(self.bot.emote.get('skill2'), data['subaura'])
 
-                                await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=desc, thumbnail=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
+                                await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=desc + gbfal, thumbnail=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
         await self.bot.util.clean(inter, 80)
 
     @gbf.sub_command()
