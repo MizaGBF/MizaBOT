@@ -35,7 +35,6 @@ class MizaBot(commands.InteractionBot):
         self.changelog = [ # changelog lines
             "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
             "Pinboard requires the use of the Pin Message command to complete the process (right click on message > Apps)",
-            "Added `/gbf crystal` for the duration of the event",
             "Renamed `/ban roll` into `/ban spark`"
         ]
         self.running = True # is False when the bot is shutting down

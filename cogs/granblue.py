@@ -328,7 +328,7 @@ class GranblueFantasy(commands.Cog):
                         data, tables = await self.bot.do(self.processWikiMatch, soup)
 
                         x = data.get('object', None)
-                        gbfal = "" if data.get('id', None) is None else "\n[Assets](https://mizagbf.github.io/GBFAL/?id={})".format(data['id'])
+                        gbfal = "" if data.get('id', None) is None else "\n[Assets](https://mizagbf.github.io/GBFAL/search.html?id={})".format(data['id'])
                         match x:
                             case None: # if no match
                                 await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=data.get('description', '') + '\n' + gbfal, image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
@@ -1543,50 +1543,3 @@ class GranblueFantasy(commands.Cog):
     async def defense(self, inter: disnake.GuildCommandInteraction):
         """Post some known defense values"""
         await inter.response.send_message(embed=self.bot.util.embed(title="Defense Values", description="**8.5**▫️ Fediel Solo\n**9.5**▫️ Fediel HL\n**10** ▫️ Estimate Calculator / Trial / Story / Event / EX+\n**11** ▫️ PBaha N / UBaha HL / Xeno\n**12** ▫️ M1 HL / Kirin HL / Metatron / Avatar / GO HL / Lindwurm\n**13** ▫️ Normal / Hard / T2 / Primarchs N & HL / UBaha N / M2\n**15** ▫️ T1 HL / Malice / Menace / Akasha / Lucilius / Astaroth / Pride / NM90-100\n**18** ▫️ Rose Queen / Other Dragons Solo & HL\n**20** ▫️ PBaha HL / Lucilius Hard / Belial\n**22** ▫️ Celeste (Mist)\n**25** ▫️ Beelzebub / NM150\n**30** ▫️ Rose Queen (Dark)", footer="20 def = Take half the damage of 10 def", color=self.color, thumbnail="https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/ui/icon/status/x64/status_1019.png"), ephemeral=True)
-
-    # temporary ==============================
-    
-    @gbf.sub_command()
-    async def crystal(self, inter: disnake.GuildCommandInteraction):
-        """Granblue Summer Festival - Crystal Countdown"""
-        await inter.response.defer()
-        try:
-            c = self.bot.util.JST()
-            start = c.replace(year=2022, month=8, day=1, hour=5, minute=0, second=0, microsecond=0)
-            end = c.replace(year=2022, month=8, day=13, hour=4, minute=59, second=59, microsecond=0)
-            available_crystal = 10000000000
-            footer = ""
-            if c > end:
-                msg = "The event has ended"
-            else:
-                data = unquote((await self.bot.do(self.bot.gbf.request, "http://game.granbluefantasy.jp/campaign/dividecrystal/content/index?PARAMS", account=self.bot.data.save['gbfcurrent'], expect_JSON=True))['data'])
-                s = data.find('<div class="txt-amount">')
-                if s == -1: raise Exception()
-                s += len('<div class="txt-amount">')
-                crystal = int(data[s:].split('/')[0].replace(',', ''))
-            
-                if crystal <= 0:
-                    msg = "{} No crystals remaining".format(self.bot.emote.get('crystal'))
-                else:
-                    consumed = (available_crystal - crystal)
-                    avg_completion_crystal = 1250
-                    players = (consumed / ((c - start).days + 1)) / avg_completion_crystal
-                    msg = "{:} **{:,}** crystals remaining (Average **{:}** players/day, at {:,} crystals average)\n".format(self.bot.emote.get('crystal'), crystal, self.bot.util.valToStr(players), avg_completion_crystal)
-                    msg += "{} Event is ending in **{}**\n".format(self.bot.emote.get('clock'), self.bot.util.delta2str(end - c, 2))
-                    elapsed = c - start
-                    duration = end - start
-                    progresses = [100 * (consumed / available_crystal), 100 * (elapsed.days * 86400 + elapsed.seconds) / (duration.days * 86400 + duration.seconds)]
-                    msg += "Progress ▫️ **{:.2f}%** {:} ▫️ **{:.2f}%** {:} ▫️ ".format(progresses[0], self.bot.emote.get('crystal'), progresses[1], self.bot.emote.get('clock'))
-                    if progresses[1] > progresses[0]:
-                        msg += "✅\n" # white check mark
-                        leftover = available_crystal * (100 - (progresses[0] * 100 / progresses[1])) / 100
-                        msg += "Estimating between **{:,}** and **{:,}** bonus crystals/player at the end".format(int(leftover / 630000), int(leftover / 550000))
-                        footer = "Assuming 550~630k eligible players"
-                    else:
-                        msg += "⚠️\n"
-                        t = timedelta(seconds = (duration.days * 86400 + duration.seconds) * (100 - (progresses[1] * 100 / progresses[0])) / 100)
-                        msg += "Crystals will run out **{}** before the end".format(self.bot.util.delta2str(t, 2))
-        except Exception as e:
-            msg = "An error occured, try again later"
-            await self.bot.sendError('crystal', e)
-        await inter.edit_original_message(embed=self.bot.util.embed(title="Granblue Summer Festival", description=msg, url="https://game.granbluefantasy.jp/#campaign/division", footer=footer, color=self.color))
