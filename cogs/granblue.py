@@ -328,7 +328,15 @@ class GranblueFantasy(commands.Cog):
                         data, tables = await self.bot.do(self.processWikiMatch, soup)
 
                         x = data.get('object', None)
-                        gbfal = "" if data.get('id', None) is None else "\n[Assets](https://mizagbf.github.io/GBFAL/search.html?id={})".format(data['id'])
+                        if data.get('id', None) is not None: 
+                            gbfal = "\n[Assets](https://mizagbf.github.io/GBFAL/search.html?id={})".format(data['id'])
+                            try:
+                                if str(data['id'])[:3] in ['302', '303', '304', '371']:
+                                    gbfal += "▫️[Animation](https://mizagbf.github.io/GBFAP/?id={})".format(data['id'])
+                            except:
+                                pass
+                        else:
+                            gbfal = ""
                         match x:
                             case None: # if no match
                                 await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=data.get('description', '') + '\n' + gbfal, image=data.get('image', ''), url=url, footer=data.get('id', ''), color=self.color))
