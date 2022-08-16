@@ -45,14 +45,17 @@ class GBF():
             if not self.bot.data.save['https'] and (host.endswith('granbluefantasy.jp') or host.endswith('granbluefantasy.akamaized.net')):
                 url = url.replace('https://', 'http://')
             url = url.replace("PARAMS", "_=TS1&t=TS2&uid=ID")
-            if ver == "Maintenance": return "Maintenance"
-            elif ver is not None: url = url.replace("VER", "{}".format(ver))
+            if ver == "Maintenance": 
+                url = url.replace("VER/", "")
+                ver = None
+            elif ver is not None:
+                url = url.replace("VER/", "{}/".format(ver))
             ts = int(datetime.utcnow().timestamp() * 1000)
             url = url.replace("TS1", "{}".format(ts))
             url = url.replace("TS2", "{}".format(ts+300))
             if id is not None:
                 if ver is None or acc is None:
-                    return None
+                    return "Maintenance"
                 url = url.replace("ID", "{}".format(acc[0]))
                 if 'Cookie' not in headers: headers['Cookie'] = acc[1]
                 if 'User-Agent' not in headers: headers['User-Agent'] = acc[2]
@@ -154,10 +157,14 @@ class GBF():
     def version(self): # retrieve the game version
         res = self.request('https://game.granbluefantasy.jp/', headers={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36', 'Accept-Language':'en', 'Accept-Encoding':'gzip, deflate', 'Host':'game.granbluefantasy.jp', 'Connection':'keep-alive'}, no_base_headers=True)
         if res is None: return None
+        res = str(res)
         try:
-            return int(self.vregex.findall(str(res))[0])
+            return int(self.vregex.findall(res)[0])
         except:
-            return "Maintenance" # if not found on the page, return "Maintenance"
+            if 'maintenance' in res.lower():
+                return "Maintenance"
+            else:
+                return None
 
     def updateVersion(self, v): # compare version with given value, then update and return a value depending on difference
         try:
