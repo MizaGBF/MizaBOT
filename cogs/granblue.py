@@ -1423,7 +1423,7 @@ class GranblueFantasy(commands.Cog):
 
         # summer disaster
         c = self.bot.util.JST()
-        msg += "**{} days** since the Summer Fortune 2021\n".format(self.bot.util.delta2str(c - c.replace(year=2021, month=8, day=16, hour=19, minute=0, second=0, microsecond=0), 3).split('d')[0])
+        msg += "**{} days** since the Summer Fortune 2021 results\n".format(self.bot.util.delta2str(c - c.replace(year=2021, month=8, day=16, hour=19, minute=0, second=0, microsecond=0), 3).split('d')[0])
         
         # grand
         try:

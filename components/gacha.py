@@ -569,6 +569,8 @@ class GachaSimulator():
                     search = "Yggdrasil (Summer)"
                 case "Tiamat":
                     search = "Tiamat (Summer)"
+                case "Sleepyhead":
+                    if self.best[0] >= 2: search = "Sleepyhead (Summer)"
                 case "Rose Queen":
                     if not self.isclassic: search = "Rose Queen (Summer)" # NOTE: regular version not in the classic gacha yet, so this fix will be a bit hit or miss
                 case _:
