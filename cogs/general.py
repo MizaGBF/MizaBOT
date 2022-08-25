@@ -322,6 +322,22 @@ class General(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(title="Roll Chance Calculator Error", description=str(e), color=self.color))
 
     @utility.sub_command()
+    async def dropchance(self, inter, chance : str = commands.Param(description="Drop rate of the item (Format: Either XX% or X.X)"), tries : int = commands.Param(description="Amount of tries, default is 1", default=1, ge=1, le=10000000)):
+        """Calculate your chance of dropping an item."""
+        await inter.response.defer(ephemeral=True)
+        try:
+            if chance.endswith('%'):
+                chance = float(chance[:-1]) / 100
+            else:
+                chance = float(chance)
+            if chance >= 1:
+                await inter.edit_original_message(embed=self.bot.util.embed(title="Drop Chance Calculator Error", description="Chance can't be higher than 100% or 1", color=self.color))
+            else:
+                await inter.edit_original_message(embed=self.bot.util.embed(title="Drop Chance Calculator", description="Your chance of getting at least one {:.1f}% chance item with **{:}** tries is **{:.3f}%**".format(chance*100, tries, 100*(1-math.pow(1-chance, tries))).replace('100.000%', '99.999%'), color=self.color))
+        except Exception as e:
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Drop Chance Calculator Error", description=str(e), color=self.color))
+
+    @utility.sub_command()
     async def fortunechance(self, inter, cards : str = commands.Param(description="Your list of cards, separated by spaces")):
         """Calculate your chance at the GBF summer fortune game from Summer 2021"""
         await inter.response.defer(ephemeral=True)
