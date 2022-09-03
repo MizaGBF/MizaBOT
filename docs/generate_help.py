@@ -124,7 +124,7 @@ def generate_html(command_list): # main function to generate the html
 <p>MizaBOT is a <a href="https://game.granbluefantasy.jp">Granblue Fantasty</a> themed <a href="https://discord.com/">Discord</a> Bot.<br>
 It's open source and available on <a href="https://github.com/MizaGBF/MizaBOT">GitHub</a>.<br>
 It provides various commands, ranging from utilty to recreative ones, related (or not) to the game.<br></p>
-
+<!--
 <h2>How to invite?</h2>
 <p><b>Invitations are only open to servers of 25 or more people, UP TO A TOTAL OF 90 SERVERS.</b><br>
 Discord doesn't allow you to grow past 100 servers without having to go through a verification process asking for your personal informations, and there is no way I'm giving them that.<br>
@@ -137,7 +137,7 @@ Here's the invitation link:<br>
 <b>If the bot leaves your server on its own</b>, it means you don't satisfy the requirements, the invitations are closed OR you or your server has been banned from using the Bot.<br>
 The reason will be sent to the server owner (if the bot can send it a DM).<br>
 Finally, I don't recommend tweaking the invite link permissions. If you add more roles to the bot, make sure those roles don't disable permissions that the bot needs.</p>
-
+!-->
 <h2>What to do after inviting the bot?</h2>
 <p>1) Don't panic if you can't use the bot yet! The commands can take up to one hour to show up.(It's an innate Discord limitation, sadly).<br>
 <br>
