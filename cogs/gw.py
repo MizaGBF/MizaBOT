@@ -1034,7 +1034,7 @@ class GuildWar(commands.Cog):
             
             honor = [0, 0, 0, 0, 0]
             ex = 0
-            meat_per_ex_average = 6.2
+            meat_per_ex_average = 7.6
             day_target = [target * 0.15, target * 0.25, target * 0.3, target * 0.3]
             honor_per_nm = [910000, 4100000, 10200000, 10200000]
             meat_use = [10, 20, 30, 30]
