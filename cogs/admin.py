@@ -735,8 +735,12 @@ class Admin(commands.Cog):
 
     @gw.sub_command()
     async def forceupdategbfg(self, inter: disnake.GuildCommandInteraction):
-        """Force an update of the GW /gbfg/ Datta (Owner Only)"""
+        """Force an update of the GW /gbfg/ Data (Owner Only)"""
         await inter.response.defer(ephemeral=True)
+        crews = []
+        for e in self.bot.data.config['granblue']['gbfgcrew']:
+            if self.bot.data.config['granblue']['gbfgcrew'][e] in crews: continue
+            crews.append(self.bot.data.config['granblue']['gbfgcrew'][e])
         await self.bot.do(self.bot.get_cog('GuildWar').updateGBFGData, crews, True)
         await inter.response.edit_original_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
 
