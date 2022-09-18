@@ -21,12 +21,16 @@ import time
 import concurrent.futures
 import functools
 import signal
+import sys
 # conditional import
 try:
     import uvloop # unix only
     uvloop.install()
 except:
     pass
+
+# unsure if needed (python 3.10.7 related, see https://github.com/python/cpython/issues/95778)
+sys.set_int_max_str_digits(0)
 
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.InteractionBot):
