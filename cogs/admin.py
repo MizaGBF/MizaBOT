@@ -346,10 +346,15 @@ class Admin(commands.Cog):
         await inter.response.send_message('\u200b', delete_after=0)
 
     @_bot.sub_command()
-    async def setstatus(self, inter: disnake.GuildCommandInteraction, *, terms : str):
-        """Change the bot status (Owner Only)"""
-        await self.bot.change_presence(status=disnake.Status.online, activity=disnake.activity.Game(name=terms))
-        await inter.response.send_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color), ephemeral=True)
+    async def shutdown(self, inter: disnake.GuildCommandInteraction):
+        """Shutdown the bot cleanly (Owner Only)"""
+        await inter.response.defer(ephemeral=True)
+        await self.bot.data.autosave(True)
+        await inter.edit_original_message(embed=self.bot.util.embed(title="Data has been saved, shuting down...", color=self.color))
+        self.bot.running = False
+        try: self.bot.loop.close()
+        except: pass
+        exit(1)
 
     @_bot.sub_command()
     async def cleanroll(self, inter: disnake.GuildCommandInteraction):

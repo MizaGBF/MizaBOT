@@ -113,8 +113,7 @@ class MizaBot(commands.InteractionBot):
             for s in [signal.SIGTERM, signal.SIGINT]:
                 self.loop.add_signal_handler(s, graceful_exit.cancel)
         except: # windows
-            for s in [signal.SIGTERM, signal.SIGINT]:
-                signal.signal(s, graceful_exit.cancel)
+            signal.signal(s, graceful_exit.cancel)
         # main loop
         while self.running:
             try:
