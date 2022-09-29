@@ -419,15 +419,6 @@ class Admin(commands.Cog):
             await self.bot.sendError('getfile', e)
             await inter.response.send_message(embed=self.bot.util.embed(title="An unexpected error occured", color=self.color), ephemeral=True)
 
-    @_bot.sub_command()
-    async def togglehttps(self, inter: disnake.GuildCommandInteraction):
-        """Toggle the use of HTTPS for GBF related urls (Owner Only)"""
-        await inter.response.defer(ephemeral=True)
-        with self.bot.data.lock:
-            self.bot.data.save['https'] = not self.bot.data.save['https']
-            self.bot.data.pending = True
-            await inter.edit_original_message(embed=self.bot.util.embed(title="The command ran with success\nSetting is set to `{}`".format(self.bot.data.save['https']), color=self.color))
-
     @_owner.sub_command_group()
     async def maintenance(self, inter: disnake.GuildCommandInteraction):
         pass

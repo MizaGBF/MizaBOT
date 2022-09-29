@@ -815,8 +815,6 @@ class GranblueFantasy(commands.Cog):
         self.imglock.acquire()
         if url not in self.imgcache:
             self.imglock.release()
-            if not self.bot.data.save['https'] and 'granbluefantasy.akamaized.net' in url:
-                url = url.replace('https://', 'http://')
             req = request.Request(url)
             url_handle = request.urlopen(req)
             data = url_handle.read()
