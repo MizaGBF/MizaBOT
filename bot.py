@@ -35,12 +35,9 @@ sys.set_int_max_str_digits(0)
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.InteractionBot):
     def __init__(self):
-        self.version = "9.29" # bot version
+        self.version = "9.30" # bot version
         self.changelog = [ # changelog lines
-            "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem",
-            "Pinboard requires the use of the Pin Message command to complete the process (right click on message > Apps)",
-            "Renamed `/ban roll` into `/ban spark`",
-            "Added `/utility dropchance`"
+            "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem"
         ]
         self.running = True # is False when the bot is shutting down
         self.booted = False # goes up to True after the first on_ready event

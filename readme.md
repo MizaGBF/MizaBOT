@@ -11,6 +11,7 @@
 * [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/).  
 * [Tweepy](https://github.com/tweepy/tweepy).  
 * [Pillow](https://pillow.readthedocs.io/en/stable/).  
+* [httpx](https://www.python-httpx.org/).  
 * [uvloop](https://github.com/MagicStack/uvloop) (UNIX only).  
 * `pip install -r requirements.txt` to install all the modules.  
   

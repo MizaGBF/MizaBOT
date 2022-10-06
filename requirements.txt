@@ -4,4 +4,5 @@ psutil==5.9.2
 beautifulsoup4==4.11.1
 tweepy==4.10.1
 pillow==9.2.0
+httpx[http2]==0.23.0
 uvloop==0.17.0; sys_platform == 'linux'

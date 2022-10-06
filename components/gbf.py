@@ -1,7 +1,6 @@
 import re
 import json
-import zlib
-from urllib import request
+import httpx
 from datetime import datetime, timedelta
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -18,6 +17,7 @@ class GBF():
         self.bot = bot
         self.data = None
         self.vregex = re.compile("Game\.version = \"(\d+)\";") # for the gbf version check
+        self.client = httpx.Client(http2=True)
 
     def init(self):
         self.data = self.bot.data
@@ -41,7 +41,6 @@ class GBF():
                 if not options.get('force_down', False) and acc[3] == 2: return "Down"
             if options.get('check', False): ver = self.version()
             else: ver = self.data.save['gbfversion']
-            host = url.split('://')[1].split('/')[0]
             url = url.replace("PARAMS", "_=TS1&t=TS2&uid=ID")
             if ver == "Maintenance": 
                 url = url.replace("VER/", "")
@@ -58,9 +57,12 @@ class GBF():
                 if 'Cookie' not in headers: headers['Cookie'] = acc[1]
                 if 'User-Agent' not in headers: headers['User-Agent'] = acc[2]
                 if 'X-Requested-With' not in headers: headers['X-Requested-With'] = 'XMLHttpRequest'
-                if 'X-VERSION' not in headers: headers['X-VERSION'] = ver
+                if 'X-VERSION' not in headers: headers['X-VERSION'] = str(ver)
             payload = options.get('payload', None)
-            if payload is None: req = request.Request(url, headers=headers)
+            timeout = options.get('timeout', None)
+            if timeout is None or not isinstance(timeout, int): timeout = 20
+            if payload is None:
+                response = self.client.get(url, headers=headers, timeout=timeout)
             else:
                 if not options.get('no_base_headers', False) and 'Content-Type' not in headers: headers['Content-Type'] = 'application/json'
                 if 'user_id' in payload:
@@ -68,20 +70,14 @@ class GBF():
                         case "ID": payload['user_id'] = acc[0]
                         case "SID": payload['user_id'] = str(acc[0])
                         case "IID": payload['user_id'] = int(acc[0])
-                req = request.Request(url, headers=headers, data=json.dumps(payload).encode('utf-8'))
-            timeout = options.get('timeout', None)
-            if timeout is None or not isinstance(timeout, int): timeout = 20
-            url_handle = request.urlopen(req, timeout=timeout)
-            if id is not None: self.refresh(id, url_handle.info()['Set-Cookie'])
-            if url_handle.info().get('Content-Type', '') != 'application/json' and options.get('expect_JSON', False): raise Exception()
-            if url_handle.info().get('Content-Encoding', '') == 'gzip': data = zlib.decompress(url_handle.read(), 16+zlib.MAX_WBITS)
-            else: data = url_handle.read()
-            url_handle.close()
-            if url_handle.info()['Content-Type'] == 'application/json': data = json.loads(data)
+                response = self.client.post(url, headers=headers, timeout=timeout, data=payload)
+            if response.status_code >= 400 or response.status_code < 200: raise Exception()
+            if id is not None: self.refresh(id, response.headers['set-cookie'])
+            if response.headers.get('content-type', '') != 'application/json' and options.get('expect_JSON', False): raise Exception()
+            if response.headers['content-type'] == 'application/json': data = response.json()
+            else: data = response.content
             return data
         except:
-            try: url_handle.close()
-            except: pass
             return None
 
     def get(self, id : int = 0):
