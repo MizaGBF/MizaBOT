@@ -5,7 +5,6 @@ import json
 import re
 import html
 import math
-from urllib import request
 from views.poll import Poll
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -363,10 +362,7 @@ class General(commands.Cog):
         """Retrieve the current yen conversion rate"""
         await inter.response.defer(ephemeral=True)
         try:
-            req = request.Request("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml")
-            with request.urlopen(req) as response:
-               data = response.read().decode('utf-8').split('<Cube time="')
-            response.close()
+            data = self.bot.gbf.request("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml", no_base_headers=True).decode('utf-8').split('<Cube time="')
             rates = ([None, None], [None, None])
             date = data[1].split('">')[0]
             for i in range(0, 2):

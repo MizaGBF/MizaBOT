@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import random
 import re
 from bs4 import BeautifulSoup
-from urllib import request, parse
+from urllib import parse
 from urllib.parse import unquote
 import html
 from PIL import Image, ImageFont, ImageDraw
@@ -815,10 +815,7 @@ class GranblueFantasy(commands.Cog):
         self.imglock.acquire()
         if url not in self.imgcache:
             self.imglock.release()
-            req = request.Request(url)
-            url_handle = request.urlopen(req)
-            data = url_handle.read()
-            url_handle.close()
+            data = self.bot.gbf.request(url, no_base_headers=True)
             self.imglock.acquire()
             self.imgcache[url] = data
             if len(self.imgcache) >= 50:
