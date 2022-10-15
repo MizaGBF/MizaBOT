@@ -17,7 +17,7 @@ class GBF():
         self.bot = bot
         self.data = None
         self.vregex = re.compile("Game\.version = \"(\d+)\";") # for the gbf version check
-        limits = httpx.Limits(max_keepalive_connections=2, max_connections=100, keepalive_expiry=10)
+        limits = httpx.Limits(max_keepalive_connections=100, max_connections=100, keepalive_expiry=10)
         self.client = httpx.Client(http2=True, limits=limits)
 
     def init(self):
