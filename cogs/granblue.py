@@ -122,16 +122,6 @@ class GranblueFantasy(commands.Cog):
                 if data['object'] < 2: data['element'] = {0:'fire', 1:'water', 2:'earth', 3:'wind', 4:'dark', 5:'light', 6:'misc'}.get(n%10, "") # retrieve the element here for chara and summon
                 else: data['type'] = k[len('/Category:'):k.find('_Weapons')].lower().replace('sabre', 'sword') # retrieve the wpn type here
                 break
-        # retrieve thumbnail if any
-        try:
-            i = soup.find_all("script", type="application/ld+json")[0].string
-            s = i.find("\"image\" : \"")
-            if s != -1:
-                s += len("\"image\" : \"")
-                e = i.find("\"", s)
-                data['image'] = i[s:e]
-        except:
-            pass
 
         # retrieve ID
         tables = soup.find_all("table", class_='wikitable') # iterate all wikitable
@@ -143,7 +133,18 @@ class GranblueFantasy(commands.Cog):
                         try:
                             if tr.findChildren("th")[0].text.strip() == "ID" and 'id' not in data:
                                 data['id'] = tr.findChildren("td")[0].text.replace(' ', '')
-                        except: pass
+                                if len(data['id']) == 10:
+                                    match data['id'][0]:
+                                        case '1':
+                                            data['image'] = "https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/assets/weapon/m/{}.jpg".format(data['id'])
+                                        case '2':
+                                            data['image'] = "https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/assets/summon/m/{}.jpg".format(data['id'])
+                                        case '3':
+                                            data['image'] = "https://prd-game-a1-granbluefantasy.akamaized.net/assets_en/img/sp/assets/npc/m/{}_01.jpg".format(data['id'])
+                                        case _:
+                                            pass
+                        except:
+                            pass
             except:
                 pass
 
