@@ -1,5 +1,4 @@
 import re
-import json
 import httpx
 from datetime import datetime, timedelta
 
@@ -63,7 +62,7 @@ class GBF():
             timeout = options.get('timeout', None)
             if timeout is None or not isinstance(timeout, int): timeout = 20
             if payload is None:
-                response = self.client.get(url, headers=headers, timeout=timeout)
+                response = self.client.get(url, headers=headers, timeout=timeout, follow_redirects=options.get('follow_redirects', False))
             else:
                 if not options.get('no_base_headers', False) and 'Content-Type' not in headers: headers['Content-Type'] = 'application/json'
                 if 'user_id' in payload:

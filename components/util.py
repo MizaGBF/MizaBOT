@@ -1,6 +1,5 @@
 ﻿import disnake
 import asyncio
-import random
 from datetime import datetime, timedelta
 import psutil
 import os
@@ -339,7 +338,7 @@ class Util():
     disnake.Embed: The created embed
     """
     def embed(self, **options): # make a full embed
-        embed = disnake.Embed(title=options.get('title', ""), description=options.pop('description', ""), url=options.pop('url', ""), color=options.pop('color', random.randint(0, 16777216)))
+        embed = disnake.Embed(title=options.get('title', ""), description=options.pop('description', ""), url=options.pop('url', ""), color=options.pop('color', 16777215))
         fields = options.pop('fields', [])
         inline = options.pop('inline', False)
         for f in fields:
