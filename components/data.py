@@ -314,7 +314,7 @@ class Data():
         return False
 
     """clean_others()
-    Coroutine to clean st/cleanup/pinboard datas
+    Coroutine to clean the save data
     
     Parameters
     --------
@@ -341,6 +341,14 @@ class Data():
             for gid in list(self.save['announcement'].keys()):
                 if gid not in guild_ids:
                     self.save['announcement'].pop(gid)
+                    count += 1
+            for gid in list(self.save['assignablerole'].keys()):
+                if gid not in guild_ids:
+                    self.save['assignablerole'].pop(gid)
+                    count += 1
+            for gid in list(self.save['news'].keys()):
+                if gid not in guild_ids:
+                    self.save['news'].pop(gid)
                     count += 1
             if count != 0:
                 self.pending = True
