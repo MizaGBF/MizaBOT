@@ -738,7 +738,7 @@ class Admin(commands.Cog):
             if self.bot.data.config['granblue']['gbfgcrew'][e] in crews: continue
             crews.append(self.bot.data.config['granblue']['gbfgcrew'][e])
         await self.bot.do(self.bot.get_cog('GuildWar').updateGBFGData, crews, True)
-        await inter.response.edit_original_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
+        await inter.edit_original_message(embed=self.bot.util.embed(title="The command ran with success", color=self.color))
 
     @gw.sub_command(name="disable")
     async def disable__(self, inter: disnake.GuildCommandInteraction):
