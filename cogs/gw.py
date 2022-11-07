@@ -392,7 +392,8 @@ class GuildWar(commands.Cog):
         """Estimate the GW ranking at the end of current day"""
         try:
             await inter.response.defer()
-            if self.bot.data.save['gw']['state'] == False or self.bot.util.JST() < self.bot.data.save['gw']['dates']["Preliminaries"] or self.bot.data.save['gw']['ranking'] is None:
+            current_time = self.bot.util.JST()
+            if self.bot.data.save['gw']['state'] == False or current_time < self.bot.data.save['gw']['dates']["Preliminaries"] or self.bot.data.save['gw']['ranking'] is None:
                 await inter.edit_original_message(embed=self.bot.util.embed(title="Estimation unavailable", color=self.color))
             else:
                 em = self.bot.util.formatElement(self.bot.data.save['gw']['element'])
@@ -407,8 +408,8 @@ class GuildWar(commands.Cog):
                 seconds_left = self.getGWTimeLeft(self.bot.data.save['gw']['ranking'][4]).seconds
                 fields = [{'name':'**Crew Ranking**', 'value':''}, {'name':'**Player Ranking**', 'value':''}]
                 modifiers = [
-                    (1.00 + (0.7 * (seconds_left // 3600) + 0.5 * (seconds_left // 7200) + 0.5 * (seconds_left // 10800)) / 10), # minimum
-                    (1.08 + (1.3 * (seconds_left // 3600) + 0.9 * (seconds_left // 7200) + 0.6 * (seconds_left // 10800)) / 10)  # maximum
+                    (1.00 + (0.7 * (seconds_left // 3600) + 0.6 * (seconds_left // 7200) + 0.6 * (seconds_left // 10800)) / 10), # minimum
+                    (1.08 + (1.3 * (seconds_left // 3600) + 1.0 * (seconds_left // 7200) + 0.7 * (seconds_left // 10800)) / 10)  # maximum
                 ]
                 for x in [0, 1]:
                     for c in self.bot.data.save['gw']['ranking'][x]:
