@@ -162,6 +162,7 @@ class Moderation(commands.Cog):
                 self.bot.data.save['announcement'].pop(gid)
             else:
                 self.bot.data.save['announcement'][gid] = cid
+            self.bot.channel.update_announcement_channels()
             self.bot.data.pending = True
         if b:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Announcement Setting", description="This channel will now receive notifications.\n**Please** make sure the bot is allowed to post messages in this channel.\nUse this command again to disable, or in another channel to change it.", footer=inter.guild.name + " ▫️ " + str(inter.guild.id), color=self.color))

@@ -35,7 +35,7 @@ sys.set_int_max_str_digits(0)
 # Main Bot Class (overload commands.Bot)
 class MizaBot(commands.InteractionBot):
     def __init__(self):
-        self.version = "9.30" # bot version
+        self.version = "9.31" # bot version
         self.changelog = [ # changelog lines
             "Please use `/bug_report` or the [help](https://mizagbf.github.io/MizaBOT/) if you have a problem"
         ]

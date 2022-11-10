@@ -351,5 +351,6 @@ class Data():
                     self.save['news'].pop(gid)
                     count += 1
             if count != 0:
+                self.bot.channel.update_announcement_channels()
                 self.pending = True
         return count

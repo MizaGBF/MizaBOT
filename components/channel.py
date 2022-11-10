@@ -8,9 +8,17 @@ class Channel():
     def __init__(self, bot):
         self.bot = bot
         self.cache = {}
+        self.announcements = []
 
     def init(self):
         self.cache = {}
+        self.update_announcement_channels()
+
+    """update_announcement_channels()
+    Update announcements
+    """
+    def update_announcement_channels(self):
+        self.announcements = list(self.bot.data.save['announcement'].values())
 
     """set()
     Register a channel with a name
