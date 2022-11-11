@@ -1,3 +1,7 @@
+# Important  
+The project has been discontinued.  
+More details [here](https://twitter.com/mizak0/status/1571202365641875456).  
+
 # MizaBOT  
 * [Granblue Fantasy](https://game.granbluefantasy.jp) Discord Bot.  
 * Command List and Help available [Here](https://mizagbf.github.io/MizaBOT/).  
