@@ -89,7 +89,7 @@ class MizaBot(commands.InteractionBot):
         self.gacha.init()
 
         # init base class
-        super().__init__(max_messages=None, intents=disnake.Intents.default(), command_sync_flags=commands.CommandSyncFlags.none())
+        super().__init__(max_messages=None, intents=disnake.Intents.default(), command_sync_flags=commands.CommandSyncFlags.default())
         self.add_app_command_check(self.global_check, slash_commands=True, user_commands=True, message_commands=True)
 
     """go()
