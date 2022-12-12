@@ -2,7 +2,7 @@
 The project has been discontinued.  
 More details [here](https://twitter.com/mizak0/status/1571202365641875456).  
   
-*12/12/2022*: A privately hosted closed-source exists under the name [Rosetta](https://github.com/MizaGBF/Rosetta-Public), from which I backported some of the fixes to MizaBOT for the version named 9.99.  
+*12/12/2022*: A privately hosted closed-source fork exists under the name [Rosetta](https://github.com/MizaGBF/Rosetta-Public), from which I backported some of the fixes to MizaBOT for the version named 9.99.  
 
 # MizaBOT  
 * [Granblue Fantasy](https://game.granbluefantasy.jp) Discord Bot.  
