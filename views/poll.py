@@ -1,7 +1,7 @@
 from . import BaseView
 import disnake
 import asyncio
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 # ----------------------------------------------------------------------------------------------------------------
 # Poll View

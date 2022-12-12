@@ -146,7 +146,7 @@ class Pinboard():
             except Exception as x:
                 if 'Missing Access' in str(x) or 'Missing Permissions' in str(x):
                     try:
-                        c = await self.bot.get_channel(payload.channel_id)
+                        c = await self.bot.get_channel(message.channel_id)
                         await c.send(mbed=self.bot.util.embed(title="Pinboard error", description="Note to the moderators: I'm not permitted to post in the pinboard channel"))
                     except:
                         pass

@@ -2,8 +2,7 @@
 from disnake.ext import commands
 import asyncio
 import random
-from datetime import datetime, timedelta
-from views.roll_tap import Tap
+from datetime import datetime
 from views.scratcher import Scratcher
 from views.chest_rush import ChestRush
 from views.join_game import JoinGame
@@ -245,7 +244,6 @@ class Games(commands.Cog):
     async def chestrush(self, inter: disnake.GuildCommandInteraction):
         """Imitate the GBF treasure game from Summer 2020"""
         await inter.response.defer()
-        message = None
         loot = {
             'Murgleis':150, 'Benedia':150, 'Gambanteinn':150, 'Love Eternal':150, 'AK-4A':150, 'Reunion':150, 'Ichigo-Hitofuri':150, 'Taisai Spirit Bow':150, 'Unheil':150, 'Sky Ace':150, 'Ivory Ark':150, 'Blutgang':150, 'Eden':150, 'Parazonium':150, 'Ixaba':150, 'Blue Sphere':150, 'Certificus':150, 'Fallen Sword':150, 'Mirror-Blade Shard':150, 'Galilei\'s Insight':150, 'Purifying Thunderbolt':150, 'Vortex of the Void':150, 'Sacred Standard':150, 'Bab-el-Mandeb':150, 'Cute Ribbon':150, 'Kerak':150, 'Sunya':150, 'Fist of Destruction':150, 'Yahata\'s Naginata':150,
             'Ruler of Fate':150, 'Ancient Bandages':150, 'Gottfried':150, 'Acid Bolt Shooter':150, 'Mystic Spray Gun':150, 'Metal Destroyer':150, 'Gangsta Knife':150, 'Vagabond':150, 'Heavenly Fawn Bow':150, 'Another Sky':150,
@@ -391,7 +389,6 @@ class Games(commands.Cog):
     """
     def checkLotoWin(self, card, winning):
         for i in range(0, 4):
-            lost = False
             match i:
                 case 0: x = card
                 case 1: x = card[1:]

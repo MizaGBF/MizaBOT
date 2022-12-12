@@ -1,5 +1,4 @@
-﻿import disnake
-import asyncio
+﻿import asyncio
 import random
 from datetime import datetime, timedelta
 from views.roll_tap import Tap
@@ -513,7 +512,7 @@ class GachaSimulator():
                         if roll is not None:
                             break
                     if roll is None:
-                        roll = [r, itemn, rateupitem]
+                        roll = [r, item, rateupitem]
                     if roll[2]: result['list'].append([roll[0], "**" + self.bot.gacha.formatGachaItem(roll[1]) + "**"])
                     else: result['list'].append([roll[0], self.bot.gacha.formatGachaItem(roll[1])])
                     result['detail'][r] += 1
@@ -758,7 +757,7 @@ class GachaSimulator():
         else:
             d = random.randint(1, 30000)
             if d < 600:
-                if enabled200:
+                if enable200:
                     msg = "{} {} :confetti_ball: :tada: **2 0 0 R O L L S** :tada: :confetti_ball: {} {}\n".format(self.bot.emote.get('crystal'), self.bot.emote.get('crystal'), self.bot.emote.get('crystal'), self.bot.emote.get('crystal'))
                     roll = 200
                 else:

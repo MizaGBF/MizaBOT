@@ -779,7 +779,6 @@ class GuildWar(commands.Cog):
             await inter.edit_original_message(embed=self.bot.util.embed(title="{} **Guild War**".format(self.bot.emote.get('gw')), description="Unavailable", color=self.color))
             return
         if day >= 10: day = day % 10
-        ver = None
         msg = ""
         lead = None
         crew_id_list = {**(self.bot.data.config['granblue']['gbfgcrew']), **(self.bot.data.config['granblue'].get('othercrew', {}))}
@@ -928,7 +927,7 @@ class GuildWar(commands.Cog):
         try:
             t = 0
             try: with_token = max(0, self.bot.util.strToInt(with_token))
-            except: raise Exception("Your current token amount `{}` isn't a valid number".format(with_token, box))
+            except: raise Exception("Your current token amount `{}` isn't a valid number".format(with_token))
             if box_done >= box: raise Exception("Your current box count `{}` is higher or equal to your target `{}`".format(box_done, box))
             for b in range(box_done+1, box+1):
                 if b == 1: t+= 1600

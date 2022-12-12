@@ -5,7 +5,6 @@ from cogs import DEBUG_SERVER_ID
 from datetime import datetime, timedelta
 import random
 import gc
-import os
 
 # ----------------------------------------------------------------------------------------------------------------
 # Admin Cog
@@ -337,7 +336,7 @@ class Admin(commands.Cog):
             await self.bot.send('debug', embed=self.bot.util.embed(title=inter.me.name, description="save.json reloaded", color=self.color))
         else:
             await self.bot.send('debug', embed=self.bot.util.embed(title=inter.me.name, description="save.json loading failed", color=self.color))
-        await edit_original_message(embed=self.bot.util.embed(title="The command finished running", color=self.color))
+        await inter.edit_original_message(embed=self.bot.util.embed(title="The command finished running", color=self.color))
 
     @_bot.sub_command()
     async def guilds(self, inter: disnake.GuildCommandInteraction):

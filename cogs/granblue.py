@@ -2,7 +2,6 @@
 from disnake.ext import commands
 import aiohttp
 from datetime import datetime, timedelta
-import random
 import re
 from bs4 import BeautifulSoup
 from urllib import parse
@@ -998,7 +997,7 @@ class GranblueFantasy(commands.Cog):
             for i in range(0, 5):
                 pos = (portrait_size[0]*(i+1), 0)
                 if i >= len(party):
-                    imgtag = "https://prd-game-a-granbluefantasy.akamaized.net/assets_en/img/sp/assets/npc/quest/3999999999.jpg"
+                    imtag = "https://prd-game-a-granbluefantasy.akamaized.net/assets_en/img/sp/assets/npc/quest/3999999999.jpg"
                     lvl = ""
                     ring = False
                     plus = ""
@@ -1080,7 +1079,6 @@ class GranblueFantasy(commands.Cog):
         if name is None:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Profile is Private", color=self.color))
         else:
-            x = ""
             title, description, thumbnail = await self.bot.do(self.processProfile, id, data)
             try:
                 with BytesIO(thumbnail) as f:
@@ -1142,7 +1140,7 @@ class GranblueFantasy(commands.Cog):
 
             title, description, fields, footer = await self.bot.do(self.bot.get_cog('GuildWar').processCrewData, crew, 1)
             await inter.edit_original_message(embed=self.bot.util.embed(title=title, description=description, fields=fields, inline=True, url="https://game.granbluefantasy.jp/#guild/detail/{}".format(crew['id']), footer=footer, timestamp=crew['timestamp'], color=self.color))
-        except Exception as e:
+        except:
             await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Unavailable", color=self.color))
         await self.bot.util.clean(inter, 60)
 

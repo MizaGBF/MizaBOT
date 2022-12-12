@@ -3,7 +3,6 @@ from disnake.ext import commands
 from datetime import datetime, timedelta
 import math
 from operator import itemgetter
-from views.url_button import UrlButton
 
 # ----------------------------------------------------------------------------------------------------------------
 # Spark Cog

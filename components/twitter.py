@@ -1,6 +1,5 @@
 import tweepy
 import tweepy.asynchronous
-import asyncio
 import html
 
 # ----------------------------------------------------------------------------------------------------------------

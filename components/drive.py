@@ -74,14 +74,13 @@ def compressJSON(inputString):
         bio.write(inputString.encode("utf-8"))
         bio.seek(0)
         buffers = []
-        with io.BytesIO() as stream:
-            compressor = lzma.LZMACompressor()
-            while True:  # until EOF
-                chunk = bio.read(8192)
-                if not chunk: # EOF?
-                    buffers.append(compressor.flush())
-                    return b"".join(buffers)
-                buffers.append(compressor.compress(chunk))
+        compressor = lzma.LZMACompressor()
+        while True:  # until EOF
+            chunk = bio.read(8192)
+            if not chunk: # EOF?
+                buffers.append(compressor.flush())
+                return b"".join(buffers)
+            buffers.append(compressor.compress(chunk))
 
 """access()
 Return a valid GoogleDrive instance
@@ -242,7 +241,6 @@ def overwriteFile(target, mime, name, folder, ret): # write a file from the loca
         file_list = drive.ListFile({'q': "'" + folder + "' in parents and trashed=false"}).GetList() # get the file list in our folder
         for s in file_list:
             if s['title'] == name:
-                new_file = drive.CreateFile({'id': s['id']})
                 with open(target, "rb") as stream:
                     s.content = stream
                     s.Upload()

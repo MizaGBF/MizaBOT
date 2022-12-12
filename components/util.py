@@ -3,7 +3,6 @@ import asyncio
 from datetime import datetime, timedelta
 import psutil
 import os
-from shutil import copyfile
 import traceback
 import re
 

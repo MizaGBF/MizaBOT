@@ -23,7 +23,7 @@ class Moderation(commands.Cog):
     @commands.default_member_permissions(send_messages=True, read_messages=True)
     async def joined(self, inter: disnake.UserCommandInteraction, member: disnake.Member):
         """Retrieve the date at which a member joined this server"""
-        await inter.response.send_message(embed=self.bot.util.embed(author={'name':inter.author.display_name, 'icon_url':inter.author.display_avatar}, description="Joined at `{0.joined_at}`".format(member, member), color=self.color), ephemeral=True)
+        await inter.response.send_message(embed=self.bot.util.embed(author={'name':inter.author.display_name, 'icon_url':inter.author.display_avatar}, description="Joined at `{0.joined_at}`".format(member), color=self.color), ephemeral=True)
 
     @commands.message_command(name="Channel Info")
     @commands.default_member_permissions(send_messages=True, read_messages=True)

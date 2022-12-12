@@ -1,7 +1,6 @@
 ﻿import disnake
 from disnake.ext import commands
-import itertools
-import json
+import asyncio
 import re
 import html
 import math
@@ -124,7 +123,7 @@ class General(commands.Cog):
                 self.checkCommand(cmd, 2, result, stack, t, status, owner)
         msg = ""
         if t == "": # empty string
-            msg = "Online Help [here](https://mizagbf.github.io/MizaBOT/)\nGithub [here](https://github.com/MizaGBF/MizaBOT)".format(search)
+            msg = "Online Help [here](https://mizagbf.github.io/MizaBOT/)\nGithub [here](https://github.com/MizaGBF/MizaBOT)"
         elif len(result) == 0: # no results
             msg = "No results found for `{}`\n**For more help:**\nOnline Help [here](https://mizagbf.github.io/MizaBOT/)\nGithub [here](https://github.com/MizaGBF/MizaBOT)".format(search)
         elif len(result) == 1: # one result

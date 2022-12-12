@@ -1,7 +1,6 @@
 from . import BaseView
 import disnake
 import random
-import asyncio
 
 # ----------------------------------------------------------------------------------------------------------------
 # RPS View

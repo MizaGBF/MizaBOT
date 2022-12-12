@@ -113,7 +113,7 @@ class Roles(commands.Cog):
         """Add a role to the list of self-assignable roles (Mod Only)"""
         await inter.response.defer(ephemeral=True)
         if not self.bot.isMod(inter):
-            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Only moderators can make a role self-assignable".format(role_name), color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Only moderators can make a role self-assignable", color=self.color))
             return
         role = None
         for r in inter.guild.roles:
@@ -139,7 +139,7 @@ class Roles(commands.Cog):
         """Remove a role from the list of self-assignable roles (Mod Only)"""
         await inter.response.defer(ephemeral=True)
         if not self.bot.isMod(inter):
-            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Only moderators can make a role self-assignable".format(role_name), color=self.color))
+            await inter.edit_original_message(embed=self.bot.util.embed(title="Error", description="Only moderators can make a role self-assignable", color=self.color))
             return
         role = None
         for r in inter.guild.roles:
